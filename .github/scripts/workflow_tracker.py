@@ -674,28 +674,31 @@ def get_todays_commits(repo, branch, timezone):
     print(f"\n=== Getting Today's Commits for {branch} ===")
     
     try:
-        # 특정 브랜치의 커밋만 가져오기
-        commits = repo.get_commits(sha=branch, path=None)
+        # 브랜치 객체를 먼저 가져옴
+        branch_obj = repo.get_branch(branch)
+        if not branch_obj:
+            logger.error(f"Branch not found: {branch}")
+            return []
+            
+        # 해당 브랜치의 커밋들을 가져옴
+        commits = repo.get_commits(sha=branch_obj.commit.sha)
         todays_commits = []
         
         for commit in commits:
             commit_date = commit.commit.author.date.replace(tzinfo=pytz.UTC).astimezone(tz).date()
             commit_time = commit.commit.author.date.replace(tzinfo=pytz.UTC).astimezone(tz)
             
-            # 오늘 날짜의 커밋만 필터링
             if commit_date == today:
                 if not is_merge_commit_message(commit.commit.message):
-                    # 현재 브랜치의 커밋인지 확인
-                    if commit.sha in [c.sha for c in repo.get_commits(sha=branch)]:
-                        todays_commits.append((commit_time, commit))
-                        logger.debug(f"Found commit in {branch}: [{commit.sha[:7]}] {commit.commit.message.split('\n')[0]}")
+                    todays_commits.append((commit_time, commit))
+                    logger.debug(f"Found commit: [{commit.sha[:7]}] {commit.commit.message.split('\n')[0]}")
             elif commit_date < today:
                 break
         
         todays_commits.sort(key=lambda x: x[0], reverse=True)
         sorted_commits = [commit for _, commit in todays_commits]
         
-        logger.debug(f"\nFound {len(sorted_commits)} commits for {branch} today")
+        logger.debug(f"\nFound {len(sorted_commits)} commits for today")
         return sorted_commits
         
     except Exception as e:
