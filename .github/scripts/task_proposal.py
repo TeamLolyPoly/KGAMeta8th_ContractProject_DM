@@ -56,7 +56,7 @@ def read_csv_data(file_path):
     section_content = ""
     
     # 인코딩 시도 순서 수정
-    encodings = ['utf-8', 'euc-kr', 'cp949']
+    encodings = ['euc-kr', 'utf-8', 'cp949']
     
     for encoding in encodings:
         try:
