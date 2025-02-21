@@ -73,7 +73,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python .github/scripts/process_approval.py
+          python .github/scripts/task_report.py
 
       - name: Send Notifications
         env:
