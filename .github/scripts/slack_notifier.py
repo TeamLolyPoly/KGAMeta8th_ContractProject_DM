@@ -2,7 +2,7 @@ import os
 import json
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-from datetime import datetime
+from datetime import datetimeg
 import pytz
 
 def format_task_message(issue_data, event_type):
