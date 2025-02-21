@@ -55,7 +55,8 @@ def read_csv_data(file_path):
     current_section = None
     section_content = ""
     
-    encodings = ['utf-8', 'euc-kr']
+    # 인코딩 시도 순서 수정
+    encodings = ['utf-8', 'euc-kr', 'cp949']
     
     for encoding in encodings:
         try:
@@ -63,9 +64,17 @@ def read_csv_data(file_path):
             print(f"파일 경로: {file_path}")
             
             with open(file_path, 'r', encoding=encoding) as f:
-                lines = f.readlines()
-            
+                content = f.read()
+                
+            # 파일 내용이 비어있는지 확인
+            if not content.strip():
+                print("파일이 비어있습니다")
+                continue
+                
             print(f"파일 읽기 성공 (인코딩: {encoding})")
+            print(f"파일 내용 미리보기:\n{content[:200]}...")  # 디버깅용
+            
+            lines = content.split('\n')
             
             # 기본 정보 처리
             for line in lines:
