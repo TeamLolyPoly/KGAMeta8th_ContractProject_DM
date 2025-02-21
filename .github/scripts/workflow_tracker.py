@@ -561,46 +561,30 @@ def get_merge_commits(repo, merge_commit):
         logger.debug("Not a merge commit - skipping")
         return []
     
-    parent1 = merge_commit.parents[0]
-    parent2 = merge_commit.parents[1]
+    target_parent = merge_commit.parents[0]  # 머지를 받는 브랜치
+    source_parent = merge_commit.parents[1]  # 머지되는 브랜치
     
     logger.debug(f"\n=== Merge Commit Analysis ===")
     logger.debug(f"Merge commit SHA: {merge_commit.sha}")
-    logger.debug(f"Parent1 SHA: {parent1.sha}")
-    logger.debug(f"Parent2 SHA: {parent2.sha}")
+    logger.debug(f"Target branch SHA: {target_parent.sha}")
+    logger.debug(f"Source branch SHA: {source_parent.sha}")
     
     try:
-        comparison1 = repo.compare(parent1.sha, merge_commit.sha)
-        comparison2 = repo.compare(parent2.sha, merge_commit.sha)
+        # 메인 브랜치와 피처 브랜치의 분기점을 찾음
+        comparison = repo.compare(target_parent.sha, source_parent.sha)
         
-        commits1 = list(comparison1.commits)
-        commits2 = list(comparison2.commits)
-        
-        logger.debug(f"\n=== Commit Analysis ===")
-        logger.debug(f"Parent1 commits count: {len(commits1)}")
-        logger.debug("Parent1 commits:")
-        for c in commits1:
-            logger.debug(f"- [{c.sha[:7]}] {c.commit.message.split('\n')[0]}")
-        
-        logger.debug(f"\nParent2 commits count: {len(commits2)}")
-        logger.debug("Parent2 commits:")
-        for c in commits2:
-            logger.debug(f"- [{c.sha[:7]}] {c.commit.message.split('\n')[0]}")
-        
+        # 피처 브랜치에만 있는 커밋들을 가져옴
         unique_commits = []
         seen_messages = set()
         
-        for commit_list in [commits1, commits2]:
-            for commit in commit_list:
-                msg = commit.commit.message.strip()
-                if not is_merge_commit_message(msg) and msg not in seen_messages:
-                    seen_messages.add(msg)
-                    unique_commits.append(commit)
-
-        logger.debug(f"\nUnique commits found: {len(unique_commits)}")
-        for c in unique_commits:
-            logger.debug(f"- [{c.sha[:7]}] {c.commit.message.split('\n')[0]}")
+        for commit in comparison.commits:
+            msg = commit.commit.message.strip()
+            if not is_merge_commit_message(msg) and msg not in seen_messages:
+                seen_messages.add(msg)
+                unique_commits.append(commit)
+                logger.debug(f"Found unique commit: [{commit.sha[:7]}] {msg.split('\n')[0]}")
         
+        logger.debug(f"\nUnique commits found: {len(unique_commits)}")
         return unique_commits
         
     except Exception as e:
