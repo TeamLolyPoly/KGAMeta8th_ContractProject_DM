@@ -728,6 +728,9 @@ def main():
     repo = g.get_repo(repository)
     branch = os.environ['GITHUB_REF'].replace('refs/heads/', '')
     
+    logger.debug(f"Current branch: {branch}")  # 브랜치 이름 로깅
+    logger.debug(f"GITHUB_REF: {os.environ['GITHUB_REF']}")  # GitHub ref 로깅
+    
     tz = pytz.timezone(timezone)
     now = datetime.now(tz)
     date_string = now.strftime('%Y-%m-%d')
