@@ -17,10 +17,24 @@ def update_project_board():
         event = json.load(f)
     logger.debug(f"Event data: {json.dumps(event, indent=2)}")
     
-    repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
-    project_name = repo.name
-    logger.info(f"Looking for project: {project_name}")
-    project = get_project(repo, project_name)
+    repo_name = os.environ["GITHUB_REPOSITORY"]
+    repo = g.get_repo(repo_name)
+    
+    # Project 이름에서 특수문자 제거하고 정규화
+    project_name = repo.name.replace('.', ' ').strip()
+    
+    logger.info(f"Repository: {repo_name}")
+    logger.info(f"Project name to search: {project_name}")
+    
+    project = find_project(repo, project_name)
+    if not project:
+        # Organization 프로젝트를 한 번 더 확인
+        try:
+            org = repo.organization
+            if org:
+                project = find_project(org, project_name)
+        except Exception as e:
+            logger.warning(f"Error checking organization: {str(e)}")
     
     if not project:
         logger.warning(f"Project '{project_name}' not found")
@@ -86,14 +100,34 @@ def handle_commit_todos(commit, columns, repo):
                 columns["To Do"].create_card(content_id=issue.id, content_type="Issue")
                 logger.info(f"Added card for issue #{issue.number} to To Do column")
 
-def get_project(repo, name):
-    """프로젝트 가져오기"""
-    logger.info(f"Searching for project: {name}")
-    for project in repo.get_projects():
-        if project.name == name:
-            logger.info(f"Found project: {name}")
-            return project
-    logger.warning(f"Project not found: {name}")
+def find_project(repo, project_name):
+    logger.info(f"Looking for project: {project_name}")
+    
+    # 1. 먼저 레포지토리 레벨에서 찾기
+    try:
+        logger.info(f"Searching in repository projects")
+        projects = repo.get_projects()
+        for project in projects:
+            logger.debug(f"Found project: {project.name}")
+            if project.name.lower() == project_name.lower():
+                return project
+    except Exception as e:
+        logger.warning(f"Error searching repository projects: {str(e)}")
+
+    # 2. Organization 레벨에서 찾기
+    try:
+        org = repo.organization
+        if org:
+            logger.info(f"Searching in organization projects")
+            org_projects = org.get_projects()
+            for project in org_projects:
+                logger.debug(f"Found org project: {project.name}")
+                if project.name.lower() == project_name.lower():
+                    return project
+    except Exception as e:
+        logger.warning(f"Error searching organization projects: {str(e)}")
+
+    logger.warning(f"Project not found: {project_name}")
     return None
 
 def get_or_create_column(project, name):
