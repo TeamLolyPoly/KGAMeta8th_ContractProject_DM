@@ -21,12 +21,17 @@ permissions:
   contents: write
   pull-requests: write
   repository-projects: write
+  actions: read
+  checks: write
+  statuses: write
 
 env:
   TIMEZONE: "Asia/Seoul"
   ISSUE_PREFIX: "📅"
   ISSUE_LABEL: "DSR"
   EXCLUDED_COMMITS: "^(chore|docs|style):"
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  PAT: ${{ secrets.PAT }}
 
 jobs:
   process-workflow:

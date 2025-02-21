@@ -717,15 +717,24 @@ def find_active_dsr_issue(repo: Repository, date_string: str, issue_title: str) 
     return None
 
 def main():
-    github_token = os.environ['GITHUB_TOKEN']
+    # PAT를 우선적으로 사용
+    github_token = os.environ.get('PAT') or os.environ['GITHUB_TOKEN']
+    
+    g = Github(github_token)
+    repository = os.environ['GITHUB_REPOSITORY']
+    repo = g.get_repo(repository)
+    
+    # 디버그 정보 추가
+    try:
+        test_commit = repo.get_commits()[0]  # 최신 커밋 하나 가져오기 시도
+        logger.debug(f"Repository access test - latest commit: {test_commit.sha[:7]}")
+    except Exception as e:
+        logger.error(f"Repository access error: {str(e)}")
+    
     timezone = os.environ.get('TIMEZONE', 'Asia/Seoul')
     issue_prefix = os.environ.get('ISSUE_PREFIX', '📅')
     excluded_pattern = os.environ.get('EXCLUDED_COMMITS', '^(chore|docs|style):')
 
-    g = Github(github_token)
-    
-    repository = os.environ['GITHUB_REPOSITORY']
-    repo = g.get_repo(repository)
     branch = os.environ['GITHUB_REF'].replace('refs/heads/', '')
     
     logger.debug(f"Current branch: {branch}")  # 브랜치 이름 로깅
