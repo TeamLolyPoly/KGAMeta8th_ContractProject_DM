@@ -32,6 +32,9 @@ class WorkflowLogger:
     
     def debug(self, message: str) -> None:
         print(f"DEBUG: {message}")
+        
+    def error(self, message: str) -> None:
+        print(f"ERROR: {message}")
 
 logger = WorkflowLogger()
 
