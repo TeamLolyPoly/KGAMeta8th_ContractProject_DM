@@ -23,14 +23,14 @@ def update_project_board():
         project_name = repo.name.replace('.', ' ').strip()
         logger.info(f"Looking for project with name: {project_name}")
         
-        # GitHub 프로젝트 검색
-        project = find_project(repo, project_name)
+        # GitHub 프로젝트 검색 - Github 객체 전달
+        project = find_project(repo, project_name, g)
         
         # 프로젝트를 찾지 못한 경우 저장소 이름으로 한 번 더 시도
         if not project:
             alt_project_name = os.environ["GITHUB_REPOSITORY"].split('/')[-1]
             logger.info(f"Trying alternative project name: {alt_project_name}")
-            project = find_project(repo, alt_project_name)
+            project = find_project(repo, alt_project_name, g)
             
         if not project:
             logger.error(f"Could not find project: {project_name}")
@@ -112,7 +112,7 @@ Original TODO item: {todo_text}""",
                         logger.error(f"Failed to create issue for TODO: {todo_text}")
                         logger.error(f"Error: {str(e)}")
 
-def find_project(repo, project_name):
+def find_project(repo, project_name, github_obj):
     """프로젝트 검색 로직 개선"""
     logger.info(f"Looking for project: {project_name}")
     
@@ -130,11 +130,11 @@ def find_project(repo, project_name):
     except Exception as e:
         logger.warning(f"Error searching repository projects: {str(e)}")
 
-    # 2. 조직 프로젝트 검색 (수정된 부분)
+    # 2. 조직 프로젝트 검색
     try:
         org_name = repo.organization.login if repo.organization else None
         if org_name:
-            org = g.get_organization(org_name)
+            org = github_obj.get_organization(org_name)
             for project in org.get_projects(state='open'):
                 if match_project_name(project):
                     logger.info(f"Found organization project: {project.name}")
@@ -151,7 +151,7 @@ def find_project(repo, project_name):
                 return project
                 
         if org_name:
-            org = g.get_organization(org_name)
+            org = github_obj.get_organization(org_name)
             for project in org.get_projects(state='open'):
                 if project.name.lower().replace('_', ' ').replace('-', ' ') == normalized_name:
                     logger.info(f"Found organization project with normalized name: {project.name}")
