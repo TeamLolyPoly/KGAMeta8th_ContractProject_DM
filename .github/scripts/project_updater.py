@@ -2,10 +2,104 @@ import os
 import json
 import logging
 from github import Github
+import requests
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+def get_project_v2(github_token, org_name, project_number):
+    """GitHub Projects v2 접근을 위한 GraphQL 쿼리"""
+    headers = {
+        "Authorization": f"Bearer {github_token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    
+    # GraphQL 쿼리
+    query = """
+    query($org: String!, $number: Int!) {
+        organization(login: $org) {
+            projectV2(number: $number) {
+                id
+                title
+                url
+                fields(first: 20) {
+                    nodes {
+                        ... on ProjectV2Field {
+                            id
+                            name
+                        }
+                        ... on ProjectV2SingleSelectField {
+                            id
+                            name
+                            options {
+                                id
+                                name
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    """
+    
+    variables = {
+        "org": org_name,
+        "number": project_number
+    }
+    
+    try:
+        response = requests.post(
+            'https://api.github.com/graphql',
+            json={'query': query, 'variables': variables},
+            headers=headers
+        )
+        response.raise_for_status()
+        result = response.json()
+        
+        if 'errors' in result:
+            logger.error(f"GraphQL errors: {result['errors']}")
+            return None
+            
+        return result['data']['organization']['projectV2']
+    except Exception as e:
+        logger.error(f"Error fetching project v2: {str(e)}")
+        return None
+
+def add_issue_to_project_v2(github_token, project_id, issue_node_id):
+    """이슈를 프로젝트에 추가"""
+    headers = {
+        "Authorization": f"Bearer {github_token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    
+    mutation = """
+    mutation($project: ID!, $issue: ID!) {
+        addProjectV2ItemById(input: {projectId: $project, contentId: $issue}) {
+            item {
+                id
+            }
+        }
+    }
+    """
+    
+    variables = {
+        "project": project_id,
+        "issue": issue_node_id
+    }
+    
+    try:
+        response = requests.post(
+            'https://api.github.com/graphql',
+            json={'query': mutation, 'variables': variables},
+            headers=headers
+        )
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        logger.error(f"Error adding issue to project: {str(e)}")
+        return None
 
 def update_project_board():
     """메인 함수 개선"""
@@ -19,36 +113,31 @@ def update_project_board():
         
         repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
         
-        # 프로젝트 URL로 직접 접근
-        project = find_project(repo, None, g)
+        # Projects v2 접근
+        org_name = "KGAMeta8thTeam1"
+        project_number = 2
         
+        project = get_project_v2(github_token, org_name, project_number)
         if not project:
-            logger.error("Could not find project")
+            logger.error("Could not find project v2")
             return
             
-        columns = {
-            "To Do": get_or_create_column(project, "To Do"),
-            "In Progress": get_or_create_column(project, "In Progress"),
-            "Done": get_or_create_column(project, "Done")
-        }
+        logger.info(f"Found project: {project['title']}")
         
         event_type = os.environ["GITHUB_EVENT_NAME"]
-        
         if event_type == "push":
             for commit in event.get("commits", []):
-                handle_commit_todos(commit, columns, repo)
+                handle_commit_todos(commit, project, repo, github_token)
                 
     except Exception as e:
         logger.error(f"Failed to update project board: {str(e)}")
         raise
 
-def handle_commit_todos(commit, columns, repo):
+def handle_commit_todos(commit, project, repo, github_token):
+    """TODO 처리 로직 개선"""
     logger.info(f"Processing TODOs from commit: {commit['id']}")
     message = commit["message"]
-    todo_section = ""
-    is_todo = False
     
-    # 커밋 메시지 파싱 로직 개선
     lines = message.split("\n")
     in_todo_section = False
     current_category = None
@@ -56,31 +145,25 @@ def handle_commit_todos(commit, columns, repo):
     for line in lines:
         line = line.strip()
         
-        # [TODO] 섹션 시작
         if line.lower() == "[todo]":
             in_todo_section = True
             continue
             
-        # 다른 섹션 시작되면 TODO 섹션 종료
         if line.lower() in ["[body]", "[footer]"]:
             in_todo_section = False
             continue
             
         if in_todo_section:
-            # 카테고리 처리
             if line.startswith("@"):
                 current_category = line[1:].strip()
                 continue
                 
-            # TODO 항목 처리
             if line.startswith(("-", "*")):
                 todo_text = line[1:].strip()
                 
-                # (issue) 태그 처리
                 if todo_text.startswith("(issue)"):
                     todo_text = todo_text[7:].strip()
                     try:
-                        # 이슈 생성
                         issue = repo.create_issue(
                             title=todo_text,
                             body=f"""Created from commit {commit['id'][:7]}
@@ -90,63 +173,13 @@ Original TODO item: {todo_text}""",
                             labels=["todo", f"category:{current_category}" if current_category else None]
                         )
                         
-                        # 프로젝트 카드 생성
-                        card = columns["To Do"].create_card(
-                            content_id=issue.id,
-                            content_type="Issue"
-                        )
-                        
-                        logger.info(f"Created issue #{issue.number} and added to project board")
+                        # Projects v2에 이슈 추가
+                        add_issue_to_project_v2(github_token, project['id'], issue.node_id)
+                        logger.info(f"Created issue #{issue.number} and added to project")
                         
                     except Exception as e:
                         logger.error(f"Failed to create issue for TODO: {todo_text}")
                         logger.error(f"Error: {str(e)}")
-
-def find_project(repo, project_name, github_obj):
-    """프로젝트 검색 로직 개선"""
-    logger.info(f"Looking for project: {project_name}")
-    
-    # 프로젝트 URL로 직접 접근
-    project_url = "https://github.com/orgs/KGAMeta8thTeam1/projects/2"
-    project_number = int(project_url.split('/')[-1])  # 2
-    org_name = project_url.split('/')[4]  # KGAMeta8thTeam1
-    
-    try:
-        logger.info(f"Trying to access project directly via URL: {project_url}")
-        org = github_obj.get_organization(org_name)
-        project = org.get_project(project_number)
-        if project:
-            logger.info(f"Found project: {project.name}")
-            return project
-    except Exception as e:
-        logger.warning(f"Error accessing project via URL: {str(e)}")
-        
-    # 기존 검색 로직은 폴백으로 유지
-    try:
-        logger.info("Falling back to organization project search...")
-        org = github_obj.get_organization(org_name)
-        org_projects = list(org.get_projects(state='open'))
-        logger.debug(f"Found {len(org_projects)} organization projects")
-        for project in org_projects:
-            logger.debug(f"Found project: {project.name}")
-            if project.number == project_number:
-                logger.info(f"Found matching project: {project.name}")
-                return project
-    except Exception as e:
-        logger.warning(f"Error in fallback search: {str(e)}")
-
-    logger.warning("Project not found")
-    return None
-
-def get_or_create_column(project, name):
-    """칼럼 가져오기 또는 생성"""
-    logger.debug(f"Looking for column: {name}")
-    for column in project.get_columns():
-        if column.name == name:
-            logger.debug(f"Found existing column: {name}")
-            return column
-    logger.info(f"Creating new column: {name}")
-    return project.create_column(name)
 
 def handle_card_movement(card_event, columns, repo):
     """카드 이동 처리"""
