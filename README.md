@@ -20,13 +20,6 @@
       <img src="https://img.shields.io/badge/Team_Size-9_Members-009688?style=for-the-badge&logo=github&logoColor=white"/>
     </a>
   </p>
-  
-  <p align="center">
-    <a href="#프로젝트-개요">프로젝트 개요</a> •
-    <a href="#개발-환경">개발 환경</a> •
-    <a href="#rules--guidelines">가이드라인</a> •
-    <a href="#커밋-컨벤션">커밋 규칙</a>
-  </p>
 </div>
 
 ## 📋 프로젝트 개요
