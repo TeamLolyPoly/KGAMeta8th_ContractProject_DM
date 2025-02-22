@@ -912,11 +912,21 @@ def main():
         logger.section("Final Result")
         print(f"Total TODOs: {len(processed_todos)} items")
         
-        branch_section = f'''<details>
-<summary><h3 style="display: inline;">✨ {branch.title()}</h3></summary>
+        branches_content = existing_content['branches']
+        
+        if branch_content.strip():
+            if branch in branches_content:
+                branches_content[branch] = branch_content + "\n\n" + branches_content[branch]
+            else:
+                branches_content[branch] = branch_content
 
-{branch_content}
-</details>'''
+        branch_sections = []
+        for branch_name, content in branches_content.items():
+            branch_sections.append(f'''<details>
+<summary><h3 style="display: inline;">✨ {branch_name.title()}</h3></summary>
+
+{content}
+</details>''')
 
         updated_body = f'''# {issue_title}
 
@@ -926,7 +936,7 @@ def main():
 
 </div>
 
-{branch_section}
+{"\n\n".join(branch_sections)}
 
 <div align="center">
 
@@ -937,19 +947,19 @@ def main():
         today_issue.edit(body=updated_body)
         print(f"Updated issue #{today_issue.number}")
     else:
-        all_todos = []
-        
-        current_commit = repo.get_commit(os.environ['GITHUB_SHA'])
-        commit_data = parse_commit_message(current_commit.commit.message)
-        if commit_data and commit_data['todo']:
-            todo_lines = convert_to_checkbox_list(commit_data['todo']).split('\n')
-            for line in todo_lines:
-                if line.startswith('-'):
-                    all_todos.append((False, line[2:].strip()))
-        
-        if previous_todos:
-            all_todos = merge_todos(all_todos, previous_todos)
-        
+        # 새 이슈 생성 시에도 동일한 로직 적용
+        branches_content = {}
+        if branch_content.strip():
+            branches_content[branch] = branch_content
+
+        branch_sections = []
+        for branch_name, content in branches_content.items():
+            branch_sections.append(f'''<details>
+<summary><h3 style="display: inline;">✨ {branch_name.title()}</h3></summary>
+
+{content}
+</details>''')
+
         body = f'''# {issue_title}
 
 <div align="center">
@@ -958,11 +968,7 @@ def main():
 
 </div>
 
-<details>
-<summary><h3 style="display: inline;">✨ {branch.title()}</h3></summary>
-
-{branch_content}
-</details>
+{"\n\n".join(branch_sections)}
 
 <div align="center">
 
