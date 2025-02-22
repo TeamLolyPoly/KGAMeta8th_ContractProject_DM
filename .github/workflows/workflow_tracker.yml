@@ -36,6 +36,9 @@ env:
 jobs:
   process-workflow:
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'issues' && !contains(github.event.issue.title, 'Daily Development Log'))
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

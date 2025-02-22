@@ -196,7 +196,7 @@ def get_dsr_issue(repo):
         return None
 
 def handle_commit_todos(commit, project, repo, github_token):
-    """TODO 처리 로직 개선 - 이슈 생성 없이 프로젝트 보드 연동만 수행"""
+    """TODO 처리 로직 개선"""
     logger.info(f"Processing TODOs from commit: {commit['id']}")
     
     # 현재 DSR 이슈 찾기
@@ -207,6 +207,11 @@ def handle_commit_todos(commit, project, repo, github_token):
         
     logger.info(f"Found DSR issue #{dsr_issue.number}")
     
+    # DSR 이슈가 이미 처리되었는지 확인
+    if any(label.name == "in-project" for label in dsr_issue.labels):
+        logger.info("DSR issue already processed")
+        return
+        
     headers = {
         "Authorization": f"Bearer {github_token}",
         "Accept": "application/vnd.github.v3+json"
@@ -248,6 +253,13 @@ def handle_commit_todos(commit, project, repo, github_token):
         except Exception as e:
             logger.error(f"Failed to process issue #{issue_number}")
             logger.error(f"Error: {str(e)}")
+
+    # 모든 이슈 처리가 완료되면 DSR 이슈에 라벨 추가
+    try:
+        dsr_issue.add_to_labels("in-project")
+        logger.info("Added in-project label to DSR issue")
+    except Exception as e:
+        logger.error(f"Failed to add label to DSR issue: {str(e)}")
 
 def handle_card_movement(card_event, columns, repo):
     """카드 이동 처리"""
