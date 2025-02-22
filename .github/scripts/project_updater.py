@@ -8,61 +8,38 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def update_project_board():
-    logger.info("Starting project board update")
-    github_token = os.environ["GITHUB_TOKEN"]
-    g = Github(github_token)
-    
-    logger.debug("Reading GitHub event data")
-    with open(os.environ["GITHUB_EVENT_PATH"]) as f:
-        event = json.load(f)
-    logger.debug(f"Event data: {json.dumps(event, indent=2)}")
-    
-    repo_name = os.environ["GITHUB_REPOSITORY"]
-    repo = g.get_repo(repo_name)
-    
-    # Project 이름에서 특수문자 제거하고 정규화
-    project_name = repo.name.replace('.', ' ').strip()
-    
-    logger.info(f"Repository: {repo_name}")
-    logger.info(f"Project name to search: {project_name}")
-    
-    project = find_project(repo, project_name)
-    if not project:
-        # Organization 프로젝트를 한 번 더 확인
-        try:
-            org = repo.organization
-            if org:
-                project = find_project(org, project_name)
-        except Exception as e:
-            logger.warning(f"Error checking organization: {str(e)}")
-    
-    if not project:
-        logger.warning(f"Project '{project_name}' not found")
-        return
-    
-    logger.info("Setting up project columns")
-    columns = {
-        "To Do": get_or_create_column(project, "To Do"),
-        "In Progress": get_or_create_column(project, "In Progress"),
-        "Done": get_or_create_column(project, "Done")
-    }
-    
-    event_type = os.environ["GITHUB_EVENT_NAME"]
-    logger.info(f"Processing event type: {event_type}")
-    
-    if event_type == "push":
-        if "commits" in event:
-            latest_commit = event["commits"][-1]
-            logger.info(f"Processing latest commit: {latest_commit['id']}")
-            handle_commit_todos(latest_commit, columns, repo)
-    elif "project_card" in event:
-        logger.info("Processing project card movement")
-        handle_card_movement(event["project_card"], columns, repo)
-    elif "issue" in event:
-        logger.info("Processing issue status change")
-        handle_issue_status(event["issue"], columns)
-    else:
-        logger.warning(f"Unhandled event type: {event_type}")
+    """메인 함수 개선"""
+    try:
+        logger.info("Starting project board update")
+        github_token = os.environ.get("PAT") or os.environ["GITHUB_TOKEN"]
+        g = Github(github_token)
+        
+        with open(os.environ["GITHUB_EVENT_PATH"]) as f:
+            event = json.load(f)
+        
+        repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
+        project_name = repo.name.replace('.', ' ').strip()
+        
+        project = find_project(repo, project_name)
+        if not project:
+            logger.error(f"Could not find project: {project_name}")
+            return
+            
+        columns = {
+            "To Do": get_or_create_column(project, "To Do"),
+            "In Progress": get_or_create_column(project, "In Progress"),
+            "Done": get_or_create_column(project, "Done")
+        }
+        
+        event_type = os.environ["GITHUB_EVENT_NAME"]
+        
+        if event_type == "push":
+            for commit in event.get("commits", []):
+                handle_commit_todos(commit, columns, repo)
+                
+    except Exception as e:
+        logger.error(f"Failed to update project board: {str(e)}")
+        raise
 
 def handle_commit_todos(commit, columns, repo):
     logger.info(f"Processing TODOs from commit: {commit['id']}")
@@ -70,59 +47,85 @@ def handle_commit_todos(commit, columns, repo):
     todo_section = ""
     is_todo = False
     
-    for line in message.split("\n"):
-        if line.strip().lower() == "[todo]":
-            is_todo = True
-            logger.debug("Found [TODO] marker")
-            continue
-        if is_todo:
-            todo_section += line + "\n"
+    # 커밋 메시지 파싱 로직 개선
+    lines = message.split("\n")
+    in_todo_section = False
+    current_category = None
     
-    if not todo_section:
-        logger.debug("No TODOs found in commit message")
-        return
-    
-    logger.info("Processing TODO items")
-    for line in todo_section.split("\n"):
+    for line in lines:
         line = line.strip()
-        if line.startswith("-"):
-            todo_text = line[1:].strip()
-            logger.debug(f"Processing TODO item: {todo_text}")
-            if todo_text.startswith("(issue)"):
-                todo_text = todo_text[7:].strip()
-                logger.info(f"Creating issue for TODO: {todo_text}")
-                issue = repo.create_issue(
-                    title=todo_text,
-                    body=f"Created from commit {commit['id'][:7]}\n\nOriginal TODO item: {todo_text}",
-                    labels=["todo"]
-                )
-                logger.info(f"Created issue #{issue.number}")
-                columns["To Do"].create_card(content_id=issue.id, content_type="Issue")
-                logger.info(f"Added card for issue #{issue.number} to To Do column")
+        
+        # [TODO] 섹션 시작
+        if line.lower() == "[todo]":
+            in_todo_section = True
+            continue
+            
+        # 다른 섹션 시작되면 TODO 섹션 종료
+        if line.lower() in ["[body]", "[footer]"]:
+            in_todo_section = False
+            continue
+            
+        if in_todo_section:
+            # 카테고리 처리
+            if line.startswith("@"):
+                current_category = line[1:].strip()
+                continue
+                
+            # TODO 항목 처리
+            if line.startswith(("-", "*")):
+                todo_text = line[1:].strip()
+                
+                # (issue) 태그 처리
+                if todo_text.startswith("(issue)"):
+                    todo_text = todo_text[7:].strip()
+                    try:
+                        # 이슈 생성
+                        issue = repo.create_issue(
+                            title=todo_text,
+                            body=f"""Created from commit {commit['id'][:7]}
+                            
+Category: {current_category or 'General'}
+Original TODO item: {todo_text}""",
+                            labels=["todo", f"category:{current_category}" if current_category else None]
+                        )
+                        
+                        # 프로젝트 카드 생성
+                        card = columns["To Do"].create_card(
+                            content_id=issue.id,
+                            content_type="Issue"
+                        )
+                        
+                        logger.info(f"Created issue #{issue.number} and added to project board")
+                        
+                    except Exception as e:
+                        logger.error(f"Failed to create issue for TODO: {todo_text}")
+                        logger.error(f"Error: {str(e)}")
 
 def find_project(repo, project_name):
+    """프로젝트 검색 로직 개선"""
     logger.info(f"Looking for project: {project_name}")
     
-    # 1. 먼저 레포지토리 레벨에서 찾기
+    # 정확한 이름 매칭
+    def match_project_name(project):
+        return (project.name.lower().replace(' ', '') == 
+                project_name.lower().replace(' ', ''))
+    
+    # 1. 저장소 프로젝트 검색
     try:
-        logger.info(f"Searching in repository projects")
-        projects = repo.get_projects()
-        for project in projects:
-            logger.debug(f"Found project: {project.name}")
-            if project.name.lower() == project_name.lower():
+        for project in repo.get_projects(state='open'):
+            if match_project_name(project):
+                logger.info(f"Found repository project: {project.name}")
                 return project
     except Exception as e:
         logger.warning(f"Error searching repository projects: {str(e)}")
 
-    # 2. Organization 레벨에서 찾기
+    # 2. 조직 프로젝트 검색
     try:
         org = repo.organization
         if org:
-            logger.info(f"Searching in organization projects")
-            org_projects = org.get_projects()
-            for project in org_projects:
-                logger.debug(f"Found org project: {project.name}")
-                if project.name.lower() == project_name.lower():
+            for project in org.get_projects(state='open'):
+                if match_project_name(project):
+                    logger.info(f"Found organization project: {project.name}")
                     return project
     except Exception as e:
         logger.warning(f"Error searching organization projects: {str(e)}")
