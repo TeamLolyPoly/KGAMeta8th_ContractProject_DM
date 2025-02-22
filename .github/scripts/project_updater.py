@@ -133,53 +133,66 @@ def update_project_board():
         logger.error(f"Failed to update project board: {str(e)}")
         raise
 
+def get_dsr_issue(repo):
+    """현재 날짜의 DSR 이슈 찾기"""
+    from datetime import datetime
+    import pytz
+    
+    current_date = datetime.now(pytz.timezone('Asia/Seoul')).strftime('%Y-%m-%d')
+    dsr_title = f"📅 Daily Development Log ({current_date})"
+    
+    for issue in repo.get_issues(state='open'):
+        if issue.title == dsr_title:
+            return issue
+    return None
+
 def handle_commit_todos(commit, project, repo, github_token):
     """TODO 처리 로직 개선"""
     logger.info(f"Processing TODOs from commit: {commit['id']}")
-    message = commit["message"]
     
-    lines = message.split("\n")
-    in_todo_section = False
-    current_category = None
-    
-    for line in lines:
-        line = line.strip()
+    # 현재 DSR 이슈 찾기
+    dsr_issue = get_dsr_issue(repo)
+    if not dsr_issue:
+        logger.error("Could not find today's DSR issue")
+        return
         
-        if line.lower() == "[todo]":
-            in_todo_section = True
-            continue
+    headers = {
+        "Authorization": f"Bearer {github_token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    
+    # DSR 이슈 본문에서 이슈 참조 찾기
+    import re
+    issue_refs = re.findall(r'#(\d+)', dsr_issue.body)
+    
+    for issue_number in issue_refs:
+        try:
+            issue = repo.get_issue(int(issue_number))
             
-        if line.lower() in ["[body]", "[footer]"]:
-            in_todo_section = False
-            continue
-            
-        if in_todo_section:
-            if line.startswith("@"):
-                current_category = line[1:].strip()
+            # 이미 처리된 이슈인지 확인
+            if any(label.name == "in-project" for label in issue.labels):
+                logger.debug(f"Issue #{issue_number} already in project")
                 continue
                 
-            if line.startswith(("-", "*")):
-                todo_text = line[1:].strip()
-                
-                if todo_text.startswith("(issue)"):
-                    todo_text = todo_text[7:].strip()
-                    try:
-                        issue = repo.create_issue(
-                            title=todo_text,
-                            body=f"""Created from commit {commit['id'][:7]}
-                            
-Category: {current_category or 'General'}
-Original TODO item: {todo_text}""",
-                            labels=["todo", f"category:{current_category}" if current_category else None]
-                        )
-                        
-                        # Projects v2에 이슈 추가
-                        add_issue_to_project_v2(github_token, project['id'], issue.node_id)
-                        logger.info(f"Created issue #{issue.number} and added to project")
-                        
-                    except Exception as e:
-                        logger.error(f"Failed to create issue for TODO: {todo_text}")
-                        logger.error(f"Error: {str(e)}")
+            # REST API를 통해 이슈의 node_id 가져오기
+            issue_response = requests.get(
+                f"https://api.github.com/repos/{repo.full_name}/issues/{issue_number}",
+                headers=headers
+            )
+            issue_response.raise_for_status()
+            issue_data = issue_response.json()
+            node_id = issue_data['node_id']
+            
+            # Projects v2에 이슈 추가
+            add_issue_to_project_v2(github_token, project['id'], node_id)
+            
+            # 이슈에 라벨 추가
+            issue.add_to_labels("in-project")
+            logger.info(f"Added issue #{issue_number} to project")
+            
+        except Exception as e:
+            logger.error(f"Failed to process issue #{issue_number}")
+            logger.error(f"Error: {str(e)}")
 
 def handle_card_movement(card_event, columns, repo):
     """카드 이동 처리"""
