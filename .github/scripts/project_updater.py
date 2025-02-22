@@ -139,12 +139,35 @@ def get_dsr_issue(repo):
     import pytz
     
     current_date = datetime.now(pytz.timezone('Asia/Seoul')).strftime('%Y-%m-%d')
-    dsr_title = f"📅 Daily Development Log ({current_date})"
+    logger.info(f"Looking for DSR issue for date: {current_date}")
     
-    for issue in repo.get_issues(state='open'):
-        if issue.title == dsr_title:
-            return issue
-    return None
+    # DSR 제목 패턴 여러 개 시도
+    dsr_patterns = [
+        f"📅 Daily Development Log ({current_date})",
+        f"📅 Development Status Report ({current_date})",
+        f"Daily Development Log ({current_date})"
+    ]
+    
+    try:
+        # 최근 이슈들만 확인
+        recent_issues = repo.get_issues(state='open', sort='created', direction='desc')
+        for issue in recent_issues:
+            logger.debug(f"Checking issue: {issue.title}")
+            # DSR 패턴 확인
+            for pattern in dsr_patterns:
+                if issue.title == pattern:
+                    logger.info(f"Found DSR issue: #{issue.number}")
+                    return issue
+            # 당일 생성된 이슈가 아니면 검색 중단
+            issue_date = issue.created_at.astimezone(pytz.timezone('Asia/Seoul')).strftime('%Y-%m-%d')
+            if issue_date != current_date:
+                break
+                
+        logger.warning(f"No DSR issue found for {current_date}")
+        return None
+    except Exception as e:
+        logger.error(f"Error finding DSR issue: {str(e)}")
+        return None
 
 def handle_commit_todos(commit, project, repo, github_token):
     """TODO 처리 로직 개선"""
@@ -156,6 +179,8 @@ def handle_commit_todos(commit, project, repo, github_token):
         logger.error("Could not find today's DSR issue")
         return
         
+    logger.info(f"Found DSR issue #{dsr_issue.number}")
+    
     headers = {
         "Authorization": f"Bearer {github_token}",
         "Accept": "application/vnd.github.v3+json"
@@ -164,10 +189,12 @@ def handle_commit_todos(commit, project, repo, github_token):
     # DSR 이슈 본문에서 이슈 참조 찾기
     import re
     issue_refs = re.findall(r'#(\d+)', dsr_issue.body)
+    logger.info(f"Found {len(issue_refs)} issue references in DSR")
     
     for issue_number in issue_refs:
         try:
             issue = repo.get_issue(int(issue_number))
+            logger.debug(f"Processing issue #{issue_number}")
             
             # 이미 처리된 이슈인지 확인
             if any(label.name == "in-project" for label in issue.labels):
@@ -184,11 +211,13 @@ def handle_commit_todos(commit, project, repo, github_token):
             node_id = issue_data['node_id']
             
             # Projects v2에 이슈 추가
-            add_issue_to_project_v2(github_token, project['id'], node_id)
-            
-            # 이슈에 라벨 추가
-            issue.add_to_labels("in-project")
-            logger.info(f"Added issue #{issue_number} to project")
+            result = add_issue_to_project_v2(github_token, project['id'], node_id)
+            if result and 'errors' not in result:
+                # 이슈에 라벨 추가
+                issue.add_to_labels("in-project")
+                logger.info(f"Successfully added issue #{issue_number} to project")
+            else:
+                logger.error(f"Failed to add issue #{issue_number} to project")
             
         except Exception as e:
             logger.error(f"Failed to process issue #{issue_number}")
