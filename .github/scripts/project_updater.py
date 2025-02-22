@@ -3,9 +3,10 @@ import json
 import logging
 from github import Github
 import requests
+import re
 
 # 로깅 설정
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def get_project_v2(github_token, org_name, project_number):
@@ -15,7 +16,6 @@ def get_project_v2(github_token, org_name, project_number):
         "Accept": "application/vnd.github.v3+json"
     }
     
-    # GraphQL 쿼리
     query = """
     query($org: String!, $number: Int!) {
         organization(login: $org) {
@@ -23,22 +23,6 @@ def get_project_v2(github_token, org_name, project_number):
                 id
                 title
                 url
-                fields(first: 20) {
-                    nodes {
-                        ... on ProjectV2Field {
-                            id
-                            name
-                        }
-                        ... on ProjectV2SingleSelectField {
-                            id
-                            name
-                            options {
-                                id
-                                name
-                            }
-                        }
-                    }
-                }
             }
         }
     }
@@ -101,165 +85,79 @@ def add_issue_to_project_v2(github_token, project_id, issue_node_id):
         logger.error(f"Error adding issue to project: {str(e)}")
         return None
 
+def extract_issue_numbers(text):
+    """이슈 본문에서 `- #숫자` 형식의 이슈 참조만 추출"""
+    pattern = r'-\s*#(\d+)'
+    matches = re.finditer(pattern, text)
+    return [match.group(1) for match in matches]
+
 def update_project_board():
-    """메인 함수 개선"""
     try:
-        logger.info("Starting project board update")
         github_token = os.environ.get("PAT") or os.environ["GITHUB_TOKEN"]
         g = Github(github_token)
         
         with open(os.environ["GITHUB_EVENT_PATH"]) as f:
             event = json.load(f)
         
+        # DSR 이슈 확인
+        issue = event.get("issue", {})
+        if not issue or "Development Status Report" not in issue.get("title", ""):
+            logger.info("Not a DSR issue update, skipping")
+            return
+            
+        # 이미 처리된 이슈인지 확인
+        if any(label["name"] == "in-project" for label in issue.get("labels", [])):
+            logger.info("DSR issue already processed")
+            return
+            
         repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
         
         # Projects v2 접근
-        org_name = "KGAMeta8thTeam1"
-        project_number = 2
+        org_name = "KGAMeta8thTeam1"  # 조직 이름
+        project_number = 2  # 프로젝트 번호
         
         project = get_project_v2(github_token, org_name, project_number)
         if not project:
             logger.error("Could not find project v2")
             return
             
-        logger.info(f"Found project: {project['title']}")
+        # DSR 이슈 본문에서 이슈 참조 추출
+        issue_numbers = extract_issue_numbers(issue.get("body", ""))
+        logger.info(f"Found {len(issue_numbers)} issue references in DSR")
         
-        event_type = os.environ["GITHUB_EVENT_NAME"]
-        
-        if event_type == "issues":
-            # 이슈 이벤트 처리
-            issue = event.get("issue", {})
-            if "Daily Development Log" in issue.get("title", ""):
-                logger.info("Processing DSR issue update")
-                handle_commit_todos({"id": "current"}, project, repo, github_token)
-        elif event_type == "push":
-            # 푸시 이벤트는 DSR 이슈가 있을 때만 처리
-            dsr_issue = get_dsr_issue(repo)
-            if dsr_issue:
-                for commit in event.get("commits", []):
-                    handle_commit_todos(commit, project, repo, github_token)
+        for issue_number in issue_numbers:
+            try:
+                target_issue = repo.get_issue(int(issue_number))
                 
+                # 이미 프로젝트에 추가된 이슈는 건너뛰기
+                if any(label.name == "in-project" for label in target_issue.labels):
+                    logger.info(f"Issue #{issue_number} already in project")
+                    continue
+                
+                # 이슈의 node_id 가져오기
+                issue_response = requests.get(
+                    f"https://api.github.com/repos/{repo.full_name}/issues/{issue_number}",
+                    headers={"Authorization": f"Bearer {github_token}"}
+                )
+                issue_response.raise_for_status()
+                node_id = issue_response.json()['node_id']
+                
+                # 프로젝트에 이슈 추가
+                result = add_issue_to_project_v2(github_token, project['id'], node_id)
+                if result and 'errors' not in result:
+                    target_issue.add_to_labels("in-project")
+                    logger.info(f"Added issue #{issue_number} to project")
+                
+            except Exception as e:
+                logger.error(f"Failed to process issue #{issue_number}: {str(e)}")
+        
+        # DSR 이슈에 처리 완료 표시
+        dsr_issue = repo.get_issue(issue["number"])
+        dsr_issue.add_to_labels("in-project")
+        
     except Exception as e:
         logger.error(f"Failed to update project board: {str(e)}")
         raise
-
-def get_dsr_issue(repo):
-    """현재 날짜의 DSR 이슈 찾기"""
-    from datetime import datetime
-    import pytz
-    
-    # 현재 날짜 가져오기
-    tz = pytz.timezone('Asia/Seoul')
-    current_date = datetime.now(tz).strftime('%Y-%m-%d')
-    
-    # 날짜가 미래인 경우 체크
-    if current_date.startswith('2025'):
-        current_date = datetime.now().strftime('%Y-%m-%d')  # 시스템 시간 사용
-        
-    logger.info(f"Looking for DSR issue for date: {current_date}")
-    
-    # DSR 제목 패턴 여러 개 시도
-    dsr_patterns = [
-        f"📅 Daily Development Log ({current_date})",
-        f"📅 Development Status Report ({current_date})",
-        f"Daily Development Log ({current_date})",
-        f"📅 DSR ({current_date})"
-    ]
-    
-    try:
-        # 최근 이슈들만 확인
-        recent_issues = repo.get_issues(state='open', sort='created', direction='desc')
-        for issue in recent_issues:
-            logger.debug(f"Checking issue: {issue.title}")
-            
-            # DSR 패턴 확인
-            for pattern in dsr_patterns:
-                if pattern in issue.title:  # 정확한 매칭 대신 포함 여부 확인
-                    logger.info(f"Found DSR issue: #{issue.number}")
-                    return issue
-                    
-            # 당일 DSR 이슈 찾기
-            if "Daily Development Log" in issue.title and current_date in issue.title:
-                logger.info(f"Found DSR issue by date: #{issue.number}")
-                return issue
-            
-            # 당일 생성된 이슈가 아니면 검색 중단
-            issue_date = issue.created_at.astimezone(tz).strftime('%Y-%m-%d')
-            if issue_date != current_date:
-                break
-                
-        logger.warning(f"No DSR issue found for {current_date}")
-        return None
-    except Exception as e:
-        logger.error(f"Error finding DSR issue: {str(e)}")
-        logger.error(f"Current date: {current_date}")
-        return None
-
-def handle_commit_todos(commit, project, repo, github_token):
-    """TODO 처리 로직 개선"""
-    logger.info(f"Processing TODOs from commit: {commit['id']}")
-    
-    # 현재 DSR 이슈 찾기
-    dsr_issue = get_dsr_issue(repo)
-    if not dsr_issue:
-        logger.error("Could not find today's DSR issue")
-        return
-        
-    logger.info(f"Found DSR issue #{dsr_issue.number}")
-    
-    # DSR 이슈가 이미 처리되었는지 확인
-    if any(label.name == "in-project" for label in dsr_issue.labels):
-        logger.info("DSR issue already processed")
-        return
-        
-    headers = {
-        "Authorization": f"Bearer {github_token}",
-        "Accept": "application/vnd.github.v3+json"
-    }
-    
-    # DSR 이슈 본문에서 이슈 참조 찾기
-    import re
-    issue_refs = re.findall(r'#(\d+)', dsr_issue.body)
-    logger.info(f"Found {len(issue_refs)} issue references in DSR")
-    
-    for issue_number in issue_refs:
-        try:
-            issue = repo.get_issue(int(issue_number))
-            logger.debug(f"Processing issue #{issue_number}")
-            
-            # 이미 처리된 이슈인지 확인
-            if any(label.name == "in-project" for label in issue.labels):
-                logger.debug(f"Issue #{issue_number} already in project")
-                continue
-                
-            # REST API를 통해 이슈의 node_id 가져오기
-            issue_response = requests.get(
-                f"https://api.github.com/repos/{repo.full_name}/issues/{issue_number}",
-                headers=headers
-            )
-            issue_response.raise_for_status()
-            issue_data = issue_response.json()
-            node_id = issue_data['node_id']
-            
-            # Projects v2에 이슈 추가
-            result = add_issue_to_project_v2(github_token, project['id'], node_id)
-            if result and 'errors' not in result:
-                # 이슈에 라벨 추가
-                issue.add_to_labels("in-project")
-                logger.info(f"Successfully added issue #{issue_number} to project")
-            else:
-                logger.error(f"Failed to add issue #{issue_number} to project")
-            
-        except Exception as e:
-            logger.error(f"Failed to process issue #{issue_number}")
-            logger.error(f"Error: {str(e)}")
-
-    # 모든 이슈 처리가 완료되면 DSR 이슈에 라벨 추가
-    try:
-        dsr_issue.add_to_labels("in-project")
-        logger.info("Added in-project label to DSR issue")
-    except Exception as e:
-        logger.error(f"Failed to add label to DSR issue: {str(e)}")
 
 def handle_card_movement(card_event, columns, repo):
     """카드 이동 처리"""

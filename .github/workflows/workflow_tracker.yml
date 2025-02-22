@@ -7,6 +7,8 @@ on:
     paths-ignore:
       - ".gitignore"
       - "LICENSE"
+      - ".github/workflows/**"
+      - "**/*.md"
   issues:
     types: [opened, edited, labeled, unlabeled, closed, reopened]
   project_card:
@@ -37,8 +39,8 @@ jobs:
   process-workflow:
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'push' ||
-      (github.event_name == 'issues' && !contains(github.event.issue.title, 'Daily Development Log'))
+      (github.event_name == 'push' && !contains(github.event.head_commit.message, '[automated]')) ||
+      (github.event_name == 'issues' && !contains(github.event.issue.title, 'Development Status Report'))
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
