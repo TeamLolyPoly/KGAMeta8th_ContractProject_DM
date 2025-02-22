@@ -8,7 +8,7 @@ jobs:
   update-project:
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.issue.title, 'Daily Development Log') &&
+      contains(github.event.issue.title, 'Development Status Report') &&
       !contains(github.event.sender.login, 'github-actions[bot]')
     steps:
       - uses: actions/checkout@v2
