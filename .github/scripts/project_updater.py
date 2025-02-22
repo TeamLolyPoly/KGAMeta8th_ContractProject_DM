@@ -19,21 +19,11 @@ def update_project_board():
         
         repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
         
-        # 프로젝트 이름 처리 개선
-        project_name = repo.name.replace('.', ' ').strip()
-        logger.info(f"Looking for project with name: {project_name}")
+        # 프로젝트 URL로 직접 접근
+        project = find_project(repo, None, g)
         
-        # GitHub 프로젝트 검색 - Github 객체 전달
-        project = find_project(repo, project_name, g)
-        
-        # 프로젝트를 찾지 못한 경우 저장소 이름으로 한 번 더 시도
         if not project:
-            alt_project_name = os.environ["GITHUB_REPOSITORY"].split('/')[-1]
-            logger.info(f"Trying alternative project name: {alt_project_name}")
-            project = find_project(repo, alt_project_name, g)
-            
-        if not project:
-            logger.error(f"Could not find project: {project_name}")
+            logger.error("Could not find project")
             return
             
         columns = {
@@ -116,50 +106,36 @@ def find_project(repo, project_name, github_obj):
     """프로젝트 검색 로직 개선"""
     logger.info(f"Looking for project: {project_name}")
     
-    # 정확한 이름 매칭
-    def match_project_name(project):
-        return (project.name.lower().replace(' ', '') == 
-                project_name.lower().replace(' ', ''))
+    # 프로젝트 URL로 직접 접근
+    project_url = "https://github.com/orgs/KGAMeta8thTeam1/projects/2"
+    project_number = int(project_url.split('/')[-1])  # 2
+    org_name = project_url.split('/')[4]  # KGAMeta8thTeam1
     
-    # 1. 저장소 프로젝트 검색
     try:
-        for project in repo.get_projects(state='open'):
-            if match_project_name(project):
-                logger.info(f"Found repository project: {project.name}")
+        logger.info(f"Trying to access project directly via URL: {project_url}")
+        org = github_obj.get_organization(org_name)
+        project = org.get_project(project_number)
+        if project:
+            logger.info(f"Found project: {project.name}")
+            return project
+    except Exception as e:
+        logger.warning(f"Error accessing project via URL: {str(e)}")
+        
+    # 기존 검색 로직은 폴백으로 유지
+    try:
+        logger.info("Falling back to organization project search...")
+        org = github_obj.get_organization(org_name)
+        org_projects = list(org.get_projects(state='open'))
+        logger.debug(f"Found {len(org_projects)} organization projects")
+        for project in org_projects:
+            logger.debug(f"Found project: {project.name}")
+            if project.number == project_number:
+                logger.info(f"Found matching project: {project.name}")
                 return project
     except Exception as e:
-        logger.warning(f"Error searching repository projects: {str(e)}")
+        logger.warning(f"Error in fallback search: {str(e)}")
 
-    # 2. 조직 프로젝트 검색
-    try:
-        org_name = repo.organization.login if repo.organization else None
-        if org_name:
-            org = github_obj.get_organization(org_name)
-            for project in org.get_projects(state='open'):
-                if match_project_name(project):
-                    logger.info(f"Found organization project: {project.name}")
-                    return project
-    except Exception as e:
-        logger.warning(f"Error searching organization projects: {str(e)}")
-
-    # 3. 프로젝트 이름 정규화 시도
-    normalized_name = project_name.lower().replace('_', ' ').replace('-', ' ')
-    try:
-        for project in repo.get_projects(state='open'):
-            if project.name.lower().replace('_', ' ').replace('-', ' ') == normalized_name:
-                logger.info(f"Found project with normalized name: {project.name}")
-                return project
-                
-        if org_name:
-            org = github_obj.get_organization(org_name)
-            for project in org.get_projects(state='open'):
-                if project.name.lower().replace('_', ' ').replace('-', ' ') == normalized_name:
-                    logger.info(f"Found organization project with normalized name: {project.name}")
-                    return project
-    except Exception as e:
-        logger.warning(f"Error searching with normalized name: {str(e)}")
-
-    logger.warning(f"Project not found: {project_name}")
+    logger.warning("Project not found")
     return None
 
 def get_or_create_column(project, name):
