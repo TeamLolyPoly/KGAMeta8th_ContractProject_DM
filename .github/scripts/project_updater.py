@@ -125,9 +125,19 @@ def update_project_board():
         logger.info(f"Found project: {project['title']}")
         
         event_type = os.environ["GITHUB_EVENT_NAME"]
-        if event_type == "push":
-            for commit in event.get("commits", []):
-                handle_commit_todos(commit, project, repo, github_token)
+        
+        if event_type == "issues":
+            # 이슈 이벤트 처리
+            issue = event.get("issue", {})
+            if "Daily Development Log" in issue.get("title", ""):
+                logger.info("Processing DSR issue update")
+                handle_commit_todos({"id": "current"}, project, repo, github_token)
+        elif event_type == "push":
+            # 푸시 이벤트는 DSR 이슈가 있을 때만 처리
+            dsr_issue = get_dsr_issue(repo)
+            if dsr_issue:
+                for commit in event.get("commits", []):
+                    handle_commit_todos(commit, project, repo, github_token)
                 
     except Exception as e:
         logger.error(f"Failed to update project board: {str(e)}")
@@ -138,14 +148,22 @@ def get_dsr_issue(repo):
     from datetime import datetime
     import pytz
     
-    current_date = datetime.now(pytz.timezone('Asia/Seoul')).strftime('%Y-%m-%d')
+    # 현재 날짜 가져오기
+    tz = pytz.timezone('Asia/Seoul')
+    current_date = datetime.now(tz).strftime('%Y-%m-%d')
+    
+    # 날짜가 미래인 경우 체크
+    if current_date.startswith('2025'):
+        current_date = datetime.now().strftime('%Y-%m-%d')  # 시스템 시간 사용
+        
     logger.info(f"Looking for DSR issue for date: {current_date}")
     
     # DSR 제목 패턴 여러 개 시도
     dsr_patterns = [
         f"📅 Daily Development Log ({current_date})",
         f"📅 Development Status Report ({current_date})",
-        f"Daily Development Log ({current_date})"
+        f"Daily Development Log ({current_date})",
+        f"📅 DSR ({current_date})"
     ]
     
     try:
@@ -153,13 +171,20 @@ def get_dsr_issue(repo):
         recent_issues = repo.get_issues(state='open', sort='created', direction='desc')
         for issue in recent_issues:
             logger.debug(f"Checking issue: {issue.title}")
+            
             # DSR 패턴 확인
             for pattern in dsr_patterns:
-                if issue.title == pattern:
+                if pattern in issue.title:  # 정확한 매칭 대신 포함 여부 확인
                     logger.info(f"Found DSR issue: #{issue.number}")
                     return issue
+                    
+            # 당일 DSR 이슈 찾기
+            if "Daily Development Log" in issue.title and current_date in issue.title:
+                logger.info(f"Found DSR issue by date: #{issue.number}")
+                return issue
+            
             # 당일 생성된 이슈가 아니면 검색 중단
-            issue_date = issue.created_at.astimezone(pytz.timezone('Asia/Seoul')).strftime('%Y-%m-%d')
+            issue_date = issue.created_at.astimezone(tz).strftime('%Y-%m-%d')
             if issue_date != current_date:
                 break
                 
@@ -167,10 +192,11 @@ def get_dsr_issue(repo):
         return None
     except Exception as e:
         logger.error(f"Error finding DSR issue: {str(e)}")
+        logger.error(f"Current date: {current_date}")
         return None
 
 def handle_commit_todos(commit, project, repo, github_token):
-    """TODO 처리 로직 개선"""
+    """TODO 처리 로직 개선 - 이슈 생성 없이 프로젝트 보드 연동만 수행"""
     logger.info(f"Processing TODOs from commit: {commit['id']}")
     
     # 현재 DSR 이슈 찾기
