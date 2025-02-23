@@ -2,11 +2,12 @@ import os
 import re
 from datetime import datetime
 import pytz
-from github import Github
+from github import Github, GithubException
 import logging
 from typing import Dict, List, Tuple, Optional
 from github.Repository import Repository
 from github.Issue import Issue
+import time
 
 class WorkflowLogger:
     def __init__(self):
@@ -184,7 +185,24 @@ def parse_categorized_todos(text):
     
     return categories
 
+def retry_api_call(func, max_retries=3, delay=5):
+    """GitHub API 호출을 재시도하는 데코레이터 함수"""
+    
+    for attempt in range(max_retries):
+        try:
+            return func()
+        except GithubException as e:
+            if e.status == 503 and attempt < max_retries - 1:
+                print(f"\n[재시도] GitHub API 호출 실패 (시도 {attempt + 1}/{max_retries})")
+                print(f"오류 메시지: {str(e)}")
+                print(f"{delay}초 후 재시도합니다...")
+                time.sleep(delay)
+                continue
+            raise
+    return None
+
 def create_commit_section(commit_data, branch, commit_sha, author, time_string, repo):
+    """커밋 섹션을 생성합니다."""
     logger.section("Creating Commit Section")
     logger.debug(f"Commit SHA: {commit_sha[:7]}")
     logger.debug(f"Author: {author}")
@@ -206,13 +224,18 @@ def create_commit_section(commit_data, branch, commit_sha, author, time_string, 
     quoted_body = '\n'.join(body_lines)
     
     current_date = datetime.now(pytz.timezone(os.environ.get('TIMEZONE', 'Asia/Seoul'))).strftime('%Y-%m-%d')
-    dsr_issues = repo.get_issues(state='open', labels=[os.environ.get('ISSUE_LABEL', 'dsr')])
+    
+    def get_dsr_issues():
+        return list(repo.get_issues(state='open', labels=[os.environ.get('ISSUE_LABEL', 'dsr')]))
+    
+    dsr_issues = retry_api_call(get_dsr_issues)
     current_dsr = None
     
-    for issue in dsr_issues:
-        if f"Daily Development Log ({current_date})" in issue.title:
-            current_dsr = issue
-            break
+    if dsr_issues:
+        for issue in dsr_issues:
+            if f"Daily Development Log ({current_date})" in issue.title:
+                current_dsr = issue
+                break
     
     full_message = f"{commit_data['title']}\n{body}\n{footer}"
     issue_numbers = set(re.findall(r'#(\d+)', full_message))
@@ -226,15 +249,20 @@ def create_commit_section(commit_data, branch, commit_sha, author, time_string, 
         logger.debug(f"\nProcessing referenced issues: {issue_numbers}")
         for issue_num in issue_numbers:
             try:
-                issue = repo.get_issue(int(issue_num))
-                if str(issue.number) == str(current_dsr.number):
-                    issue.create_comment(f"커밋이 추가되었습니다: {commit_sha[:7]}\n\n```\n{commit_data['title']}\n```")
-                else:
-                    issue.create_comment(f"Referenced in commit {commit_sha[:7]}\n\nCommit message:\n```\n{commit_data['title']}\n```")
-                related_issues.append(f"Related to #{issue_num}")
-                logger.debug(f"Added reference to issue #{issue_num}")
+                def get_issue():
+                    return repo.get_issue(int(issue_num))
+                
+                issue = retry_api_call(get_issue)
+                if issue:
+                    if str(issue.number) == str(current_dsr.number):
+                        issue.create_comment(f"커밋이 추가되었습니다: {commit_sha[:7]}\n\n```\n{commit_data['title']}\n```")
+                    else:
+                        issue.create_comment(f"Referenced in commit {commit_sha[:7]}\n\nCommit message:\n```\n{commit_data['title']}\n```")
+                    related_issues.append(f"Related to #{issue_num}")
+                    logger.debug(f"Added reference to issue #{issue_num}")
             except Exception as e:
                 logger.debug(f"Failed to add comment to issue #{issue_num}: {str(e)}")
+                continue
     
     if related_issues:
         quoted_body += "\n> \n> Related Issues:\n> " + "\n> ".join(related_issues)
@@ -264,99 +292,40 @@ def create_section(title, content):
 </details>'''
 
 def parse_existing_issue(body):
-    logger.section("Parsing Issue Body")
-    result = {
-        'branches': {},
-        'todos': []
+    """이슈 본문을 파싱하여 기존 TODO 항목들을 추출합니다."""
+    print(f"\n=== 이슈 본문 파싱 ===")
+    todos = []
+    in_todo_section = False
+    current_category = None
+    
+    for line in body.split('\n'):
+        if '## 📝 Todo' in line:
+            print("TODO 섹션 시작")
+            in_todo_section = True
+            continue
+        elif in_todo_section and line.strip() and line.startswith('##'):
+            print("TODO 섹션 종료")
+            break
+        elif in_todo_section and line.strip():
+            # 카테고리 헤더 확인
+            if '<summary><h3' in line:
+                category_match = re.search(r'📑\s*(.*?)\s*\(', line)
+                if category_match:
+                    current_category = category_match.group(1).strip()
+                    todos.append((False, f"@{current_category}"))
+                    print(f"카테고리 발견: {current_category}")
+            # TODO 항목 확인
+            elif line.startswith('- [ ]') or line.startswith('- [x]'):
+                is_checked = line.startswith('- [x]')
+                todo_text = line[6:].strip()
+                todos.append((is_checked, todo_text))
+                print(f"TODO 항목 추가: [{is_checked}] {todo_text}")
+    
+    print(f"총 {len(todos)}개의 TODO 항목을 찾았습니다.")
+    return {
+        'todos': todos,
+        'branches': {}
     }
-    
-    logger.section("Parsing Branch Summary")
-    branch_pattern = r'<details>\s*<summary><h3 style="display: inline;">✨\s*(\w+)</h3></summary>(.*?)</details>'
-    branch_blocks = re.finditer(branch_pattern, body, re.DOTALL)
-    
-    for block in branch_blocks:
-        branch_name = block.group(1)
-        branch_content = block.group(2).strip()
-        logger.debug(f"\nFound branch: {branch_name}")
-        
-        commits = []
-        lines = branch_content.split('\n')
-        current_commit = []
-        in_commit_block = False
-        
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-                
-            if '> <details>' in line:
-                if in_commit_block:
-                    commits.append('\n'.join(current_commit))
-                in_commit_block = True
-                current_commit = [line]
-                logger.debug(f"Starting new commit block: {line}")
-            elif in_commit_block:
-                current_commit.append(line)
-                if '> </details>' in line:
-                    commits.append('\n'.join(current_commit))
-                    logger.debug(f"Completed commit block: {current_commit[0]}")
-                    in_commit_block = False
-                    current_commit = []
-        
-        if in_commit_block and current_commit:
-            commits.append('\n'.join(current_commit))
-        
-        if commits:
-            result['branches'][branch_name] = '\n\n'.join(commits)
-            logger.debug(f"Parsed {len(commits)} commits from {branch_name}")
-            logger.debug("Commits found:")
-            for commit in commits:
-                logger.debug(f"- {commit.split('\n')[0]}")
-        else:
-            logger.debug(f"No commits found in branch {branch_name}")
-    
-    logger.debug(f"\nParsed branches: {list(result['branches'].keys())}")
-    
-    todo_pattern = r'## 📝 Todo\s*\n\n(.*?)(?=\n\n<div align="center">|$)'
-    todo_match = re.search(todo_pattern, body, re.DOTALL)
-    if todo_match:
-        todo_section = todo_match.group(1).strip()
-        logger.debug(f"\nFound TODO section:\n{todo_section}")
-        if todo_section:
-            current_category = 'General'
-            for line in todo_section.split('\n'):
-                line = line.strip()
-                if not line:
-                    continue
-                    
-                if '<details>' in line:
-                    logger.debug(f"Skipping details tag: {line}")
-                    continue
-                if '</details>' in line:
-                    continue
-                if '⚫' in line:
-                    continue
-                    
-                if '<summary>' in line:
-                    category_match = re.match(r'<summary>(?:<h3[^>]*>)?📑\s*([^()]+?)(?:\s*\(\d+/\d+\))?(?:</h3>)?</summary>', line)
-                    if category_match:
-                        current_category = category_match.group(1).strip()
-                        logger.debug(f"\nFound category: {current_category}")
-                        result['todos'].append((False, f"@{current_category}"))
-                    continue
-                
-                checkbox_match = re.match(r'-\s*\[([ xX])\]\s*(.*)', line)
-                if checkbox_match:
-                    is_checked = checkbox_match.group(1).lower() == 'x'
-                    todo_text = checkbox_match.group(2).strip()
-                    logger.debug(f"Found TODO item: [{is_checked}] {todo_text}")
-                    result['todos'].append((is_checked, todo_text))
-    
-    logger.debug("\nParsed TODOs:")
-    for checked, text in result['todos']:
-        logger.debug(f"- [{'x' if checked else ' '}] {text}")
-    
-    return result
 
 class TodoItem:
     def __init__(self, text: str, checked: bool = False, category: str = 'General'):
@@ -776,6 +745,10 @@ def main():
             for todo in existing_content['todos']:
                 status = "✅ Completed" if todo[0] else "⬜ Pending"
                 logger.todo(status, todo[1])
+
+        all_todos = existing_content['todos']
+    else:
+        all_todos = []
 
     previous_issues = repo.get_issues(state='open', labels=['DSR'])
     for issue in previous_issues:

@@ -8,8 +8,7 @@ jobs:
   update-project:
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.issue.title, 'Development Status Report') &&
-      !contains(github.event.sender.login, 'github-actions[bot]')
+      contains(github.event.issue.title, 'Development Status Report')
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
