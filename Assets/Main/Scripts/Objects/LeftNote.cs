@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class LeftNote : Note
 {
-
     private void OnCollisionEnter(Collision other)
     {
         Vector3 hitPoint = other.contacts[0].normal;
@@ -19,5 +18,4 @@ public class LeftNote : Note
             print("타격 실패");
         }
     }
-
 }

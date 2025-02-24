@@ -5,31 +5,53 @@ using UnityEngine;
 
 public class GridManager : Singleton<GridManager>
 {
-    [Header("그리드 설정")]
-    [SerializeField] private int totalHorizontalCells = 5;  // 전체 가로 셀 (5)
-    [SerializeField] private int verticalCells = 3;         // 세로 셀 (3)
-    [SerializeField] private int handGridSize = 3;          // 각 손의 그리드 크기 (3x3)
-    [SerializeField] private float cellSize = 1f;
-    [SerializeField] private float cellSpacing = 0.1f;
-    [SerializeField] private float gridDistance = 15f;
+    [SerializeField]
+    private int totalHorizontalCells = 5;
 
-    [Header("시각화")]
-    [SerializeField] private Material leftHandMaterial;     // 왼손 영역 머티리얼
-    [SerializeField] private Material rightHandMaterial;    // 오른손 영역 머티리얼
-    [SerializeField] private Material overlapMaterial;      // 겹치는 영역 머티리얼
+    [SerializeField]
+    private int verticalCells = 3;
+
+    [SerializeField]
+    private int handGridSize = 3;
+
+    [SerializeField]
+    private float cellSize = 1f;
+
+    [SerializeField]
+    private float cellSpacing = 0.1f;
+
+    [SerializeField]
+    private float gridDistance = 15f;
+
+    [SerializeField]
+    private Material leftHandMaterial;
+
+    [SerializeField]
+    private Material rightHandMaterial;
+
+    [SerializeField]
+    private Material overlapMaterial;
 
     private Transform sourceGrid;
     private Transform targetGrid;
 
+    public Transform SourceGrid => sourceGrid;
+    public Transform TargetGrid => targetGrid;
+    public Vector2Int GridSize => new Vector2Int(totalHorizontalCells, verticalCells);
+    public int TotalHorizontalCells => totalHorizontalCells;
+    public int VerticalCells => verticalCells;
+    public int HandGridSize => handGridSize;
+    public float CellSize => cellSize;
+    public float GridDistance => gridDistance;
+
     protected override void Awake()
     {
-        base.Awake(); // Singleton 초기화
+        base.Awake();
         CreateGrids();
     }
 
     void CreateGrids()
     {
-        // 소스 그리드 생성 (플레이어 앞)
         GameObject sourceObj = new GameObject("SourceGrid");
         sourceGrid = sourceObj.transform;
         sourceGrid.parent = transform;
@@ -37,7 +59,6 @@ public class GridManager : Singleton<GridManager>
         sourceGrid.localRotation = Quaternion.Euler(0, 180, 0);
         CreateGrid(sourceGrid, false);
 
-        // 타겟 그리드 생성
         GameObject targetObj = new GameObject("TargetGrid");
         targetGrid = targetObj.transform;
         targetGrid.parent = transform;
@@ -48,7 +69,8 @@ public class GridManager : Singleton<GridManager>
 
     void CreateGrid(Transform gridParent, bool isTarget)
     {
-        float totalWidth = (totalHorizontalCells * cellSize) + ((totalHorizontalCells - 1) * cellSpacing);
+        float totalWidth =
+            (totalHorizontalCells * cellSize) + ((totalHorizontalCells - 1) * cellSpacing);
         float totalHeight = (verticalCells * cellSize) + ((verticalCells - 1) * cellSpacing);
         float startX = -totalWidth / 2f;
         float startY = -totalHeight / 2f;
@@ -77,22 +99,20 @@ public class GridManager : Singleton<GridManager>
         visual.transform.localPosition = Vector3.zero;
         visual.transform.localScale = new Vector3(cellSize, cellSize, 0.1f);
 
-        // 영역에 따른 머티리얼 설정
         MeshRenderer renderer = visual.GetComponent<MeshRenderer>();
-        if (x < handGridSize) // 왼손 영역
+        if (x < handGridSize)
         {
             renderer.material = leftHandMaterial;
         }
-        if (x >= totalHorizontalCells - handGridSize) // 오른손 영역
+        if (x >= totalHorizontalCells - handGridSize)
         {
             renderer.material = rightHandMaterial;
         }
-        if (x >= handGridSize - 1 && x < totalHorizontalCells - handGridSize + 1) // 겹치는 영역
+        if (x >= handGridSize - 1 && x < totalHorizontalCells - handGridSize + 1)
         {
             renderer.material = overlapMaterial;
         }
 
-        // 셀 정보 저장
         CellInfo cellInfo = cell.AddComponent<CellInfo>();
         cellInfo.Initialize(x, y, IsLeftHand(x), IsRightHand(x));
     }
@@ -109,7 +129,8 @@ public class GridManager : Singleton<GridManager>
 
     public Vector3 GetCellPosition(Transform gridTransform, int x, int y)
     {
-        float totalWidth = (totalHorizontalCells * cellSize) + ((totalHorizontalCells - 1) * cellSpacing);
+        float totalWidth =
+            (totalHorizontalCells * cellSize) + ((totalHorizontalCells - 1) * cellSpacing);
         float totalHeight = (verticalCells * cellSize) + ((verticalCells - 1) * cellSpacing);
         float startX = -totalWidth / 2f;
         float startY = -totalHeight / 2f;
@@ -119,14 +140,4 @@ public class GridManager : Singleton<GridManager>
 
         return gridTransform.TransformPoint(new Vector3(xPos, yPos, 0));
     }
-    
-    //초기화
-    public Transform SourceGrid => sourceGrid;
-    public Transform TargetGrid => targetGrid;
-    public Vector2Int GridSize => new Vector2Int(totalHorizontalCells, verticalCells);
-    public int TotalHorizontalCells => totalHorizontalCells;
-    public int VerticalCells => verticalCells;
-    public int HandGridSize => handGridSize;
-    public float CellSize => cellSize;
-    public float GridDistance => gridDistance;
 }

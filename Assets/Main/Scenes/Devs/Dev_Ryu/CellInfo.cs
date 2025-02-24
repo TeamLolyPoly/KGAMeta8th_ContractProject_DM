@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Security.Cryptography;
 using UnityEngine;
 
 public class CellInfo : MonoBehaviour
@@ -17,5 +14,4 @@ public class CellInfo : MonoBehaviour
         IsLeftHand = isLeft;
         IsRightHand = isRight;
     }
-
 }
