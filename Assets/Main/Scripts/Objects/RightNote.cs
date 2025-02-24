@@ -8,14 +8,12 @@ public class RightNote : Note
     [SerializeField, Header("노트 정확도 점수배율")]
     private float[] accuracyScore = new float[2] { 0.8f, 0.5f };
 
-    private Transform noteTrans;
     private Renderer noteRenderer;
     private float noteDistance;
 
     public override void Initialize(NoteData data)
     {
         base.Initialize(data);
-        noteTrans = transform;
         noteRenderer = GetComponent<Renderer>();
         if (noteRenderer != null)
         {
@@ -50,13 +48,23 @@ public class RightNote : Note
     private void OnCollisionEnter(Collision other)
     {
         float hitdis = HitPoint(other);
+        Vector3 hitPoint = other.contacts[0].normal;
+        float range = Vector3.Angle(hitPoint, hitDirection);
         print(hitdis);
         if (other.gameObject.TryGetComponent<Mace>(out Mace Mace))
         {
-            if (Mace.maceType == noteData.noteType)
+            if (range <= directionalRange)
             {
-                print(HitScore(hitdis));
+                if (Mace.maceType == noteData.noteType)
+                {
+                    print(HitScore(hitdis));
+                }
             }
+            else
+            {
+                print("타격 실패");
+            }
+
         }
     }
 
