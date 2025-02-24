@@ -1,19 +1,20 @@
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class RightNote : Note
 {
-    [SerializeField] private HitType noteType;
-
     [SerializeField, Header("타격 정확도 허용범위")]
     private float[] accuracyPoint = new float[2] { 0.34f, 0.67f };
     [SerializeField, Header("노트 정확도 점수배율")]
     private float[] accuracyScore = new float[2] { 0.8f, 0.5f };
+    private NoteData noteData;
     private Transform noteTrans;
     private Renderer noteRenderer;
     private float noteDistance;
 
-    void Awake()
+    public void Initialize(NoteData data)
     {
+        noteData = data;
         noteRenderer = GetComponent<Renderer>();
         noteTrans = GetComponent<Transform>();
         SetNoteDisTance();
@@ -38,7 +39,7 @@ public class RightNote : Note
         {
             noteRenderer = GetComponent<Renderer>();
         }
-        switch (noteType)
+        switch (noteData.noteType)
         {
             case HitType.Red:
                 noteRenderer.sharedMaterial.color = Color.red;
@@ -55,7 +56,7 @@ public class RightNote : Note
         print(hitdis);
         if (other.gameObject.TryGetComponent<Mace>(out Mace Mace))
         {
-            if (Mace.maceType == noteType)
+            if (Mace.maceType == noteData.noteType)
             {
                 print(HitScore(hitdis));
             }
