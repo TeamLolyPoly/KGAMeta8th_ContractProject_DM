@@ -8,11 +8,10 @@ public enum HitType
     Bule,
 }
 
-public class TestMaceNote : MonoBehaviour
+public class TestMaceNote : Note
 {
     [SerializeField] private HitType noteType;
-    [SerializeField, Header("노트 점수")]
-    private float maceNoteScore = 100;
+
     [SerializeField, Header("타격 정확도 허용범위")]
     private float[] accuracyPoint = new float[2] { 0.34f, 0.67f };
     [SerializeField, Header("노트 정확도 점수배율")]
@@ -86,17 +85,17 @@ public class TestMaceNote : MonoBehaviour
         if (noteDistance * accuracyPoint[0] >= hitdis)
         {
             print($"Perfect noteDis :{noteDistance * accuracyPoint[0]} , Hitdis: {hitdis}");
-            return maceNoteScore;
+            return NoteScore;
         }
         else if (noteDistance * accuracyPoint[1] > hitdis)
         {
             print($"Great noteDis :{noteDistance * accuracyPoint[1]} , Hitdis: {hitdis}");
-            return maceNoteScore * accuracyScore[0];
+            return NoteScore * accuracyScore[0];
         }
         else if (noteDistance >= hitdis)
         {
             print($"Good noteDis :{noteDistance} , Hitdis: {hitdis}");
-            return maceNoteScore * accuracyScore[1];
+            return NoteScore * accuracyScore[1];
         }
         else
         {
