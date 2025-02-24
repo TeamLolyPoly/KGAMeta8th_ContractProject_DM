@@ -24,7 +24,7 @@ public enum NoteAxis
 
 }
 
-public class TestHitNote : MonoBehaviour
+public class TestHitNote : Note
 {
 
     [SerializeField] private NoteDirection direction;
@@ -57,7 +57,7 @@ public class TestHitNote : MonoBehaviour
 
         if (range <= directionalRange)
         {
-            print("타격 성공");
+            print($"타격 성공{NoteScore}");
         }
         else
         {
