@@ -1,14 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public enum HitType
-{
-    Red,
-    Bule,
-}
-
-public class TestMaceNote : Note
+public class RightNote : Note
 {
     [SerializeField] private HitType noteType;
 
@@ -61,7 +53,7 @@ public class TestMaceNote : Note
     {
         float hitdis = HitPoint(other);
         print(hitdis);
-        if (other.gameObject.TryGetComponent<TestMace>(out TestMace Mace))
+        if (other.gameObject.TryGetComponent<Mace>(out Mace Mace))
         {
             if (Mace.maceType == noteType)
             {
