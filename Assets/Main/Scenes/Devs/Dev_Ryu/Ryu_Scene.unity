@@ -123,6 +123,54 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &10674240
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 10674242}
+  - component: {fileID: 10674241}
+  m_Layer: 0
+  m_Name: 'NoteSpawner '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &10674241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 10674240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9355e4c7e68e07746818f731c453ca23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  leftNotePrefab: {fileID: 4507852665770532171, guid: b61a9e5f35afe8c4b8d5fddc0247ef5b, type: 3}
+  rightNotePrefab: {fileID: 6033980397832304064, guid: 4508d47aa2a95524884b6f28a3f34e3e, type: 3}
+  spawnInterval: 2
+  noteSpeed: 10
+  gridManager: {fileID: 1324155663}
+--- !u!4 &10674242
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 10674240}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &66037679
 GameObject:
   m_ObjectHideFlags: 0
@@ -226,8 +274,9 @@ GameObject:
   m_Component:
   - component: {fileID: 369909640}
   - component: {fileID: 369909639}
+  - component: {fileID: 369909641}
   m_Layer: 0
-  m_Name: LaneManager
+  m_Name: GridManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -252,6 +301,8 @@ MonoBehaviour:
   laneSpacing: 0.1
   gridDistance: 10
   laneMaterial: {fileID: 2100000, guid: 488b0457d3be5164a8baa0a2d44030d4, type: 2}
+  sourceGrid: {fileID: 0}
+  targetGrid: {fileID: 0}
 --- !u!4 &369909640
 Transform:
   m_ObjectHideFlags: 0
@@ -265,6 +316,79 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &369909641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 369909638}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fdfbd461509450489c52c07b07b0a48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  totalHorizontalCells: 5
+  verticalCells: 3
+  handGridSize: 3
+  cellSize: 1
+  cellSpacing: 0.1
+  gridDistance: 15
+  leftHandMaterial: {fileID: 2100000, guid: b6e199ed620a2d248b051077b9f391c0, type: 2}
+  rightHandMaterial: {fileID: 2100000, guid: e06f025f68c6a6d4d82d2f6a70cbd610, type: 2}
+  overlapMaterial: {fileID: 2100000, guid: f3ce4347e45885f46ba75b968cc86e3c, type: 2}
+--- !u!1 &1324155662
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1324155664}
+  - component: {fileID: 1324155663}
+  m_Layer: 0
+  m_Name: GridManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1324155663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1324155662}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fdfbd461509450489c52c07b07b0a48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  totalHorizontalCells: 5
+  verticalCells: 3
+  handGridSize: 3
+  cellSize: 1
+  cellSpacing: 0.1
+  gridDistance: 15
+  leftHandMaterial: {fileID: 2100000, guid: b6e199ed620a2d248b051077b9f391c0, type: 2}
+  rightHandMaterial: {fileID: 2100000, guid: e06f025f68c6a6d4d82d2f6a70cbd610, type: 2}
+  overlapMaterial: {fileID: 2100000, guid: f3ce4347e45885f46ba75b968cc86e3c, type: 2}
+--- !u!4 &1324155664
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1324155662}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.02235353, y: -0.2010355, z: -0.3274665}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1722114694
 GameObject:

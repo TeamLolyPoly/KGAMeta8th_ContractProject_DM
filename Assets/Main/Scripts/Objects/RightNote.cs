@@ -95,4 +95,13 @@ public class RightNote : Note
             return 0;
         }
     }
+    //추가
+    public void SetNoteType(HitType type)
+    {
+        noteType = type;
+        if (noteRenderer != null)
+        {
+            noteRenderer.material.color = (type == HitType.Red) ? Color.red : Color.blue;
+        }
+    }
 }
