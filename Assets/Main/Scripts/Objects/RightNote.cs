@@ -6,16 +6,20 @@ public class RightNote : Note
     private float[] accuracyPoint = new float[2] { 0.34f, 0.67f };
     [SerializeField, Header("노트 정확도 점수배율")]
     private float[] accuracyScore = new float[2] { 0.8f, 0.5f };
-    private NoteData noteData;
+
     private Transform noteTrans;
     private Renderer noteRenderer;
     private float noteDistance;
-    public void Initialize(NoteData data)
+
+    public override void Initialize(Vector3 target, float moveSpeed)
     {
-        noteData = data;
+        base.Initialize(target, moveSpeed);
+        noteTrans = transform;
         noteRenderer = GetComponent<Renderer>();
-        noteTrans = GetComponent<Transform>();
-        SetNoteDisTance();
+        if (noteRenderer != null)
+        {
+            SetNoteDisTance();
+        }
     }
 
     //노트가 허용하는 Hit거리를 구함
@@ -31,20 +35,20 @@ public class RightNote : Note
     }
 
     //시각적으로 타입이 다른걸 보이게할려고 만듬 삭제해도 상관없음
-    private void OnValidate()
+    public override void SetNoteData(NoteData data)
     {
-        if (noteRenderer == null)
+        base.SetNoteData(data);
+        if (noteRenderer != null)
         {
-            noteRenderer = GetComponent<Renderer>();
-        }
-        switch (noteData.noteType)
-        {
-            case HitType.Red:
-                noteRenderer.sharedMaterial.color = Color.red;
-                break;
-            case HitType.Bule:
-                noteRenderer.sharedMaterial.color = Color.blue;
-                break;
+            switch (data.noteType)
+            {
+                case HitType.Red:
+                    noteRenderer.material.color = Color.red;
+                    break;
+                case HitType.Blue:
+                    noteRenderer.material.color = Color.blue;
+                    break;
+            }
         }
     }
 

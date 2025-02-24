@@ -1,6 +1,7 @@
 #region Note Related
 public enum NoteDirection
 {
+    None,
     East,
     West,
     South,
@@ -14,6 +15,7 @@ public enum NoteDirection
 
 public enum NoteAxis
 {
+    None,
     PZ,
     MZ,
     PX,
@@ -23,7 +25,8 @@ public enum NoteAxis
 
 public enum HitType
 {
+    None,
     Red,
-    Bule,
+    Blue,
 }
 #endregion
