@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class RightNote : Note
@@ -11,7 +10,6 @@ public class RightNote : Note
     private Transform noteTrans;
     private Renderer noteRenderer;
     private float noteDistance;
-
     public void Initialize(NoteData data)
     {
         noteData = data;
