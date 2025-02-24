@@ -1,24 +1,32 @@
-using Photon.Pun.Demo.PunBasics;
 using System.Collections;
 using System.Collections.Generic;
+using Photon.Pun.Demo.PunBasics;
 using UnityEngine;
 
 public class NoteSpawner : MonoBehaviour
 {
-    [Header("≥Î∆Æ «¡∏Æ∆’")]
-    [SerializeField] private GameObject leftNotePrefab;    // πÊ«‚º∫ ≥Î∆Æ(LeftNote)
-    [SerializeField] private GameObject rightNotePrefab;   // ¡§»Æµµ ≥Î∆Æ(RightNote)
+    [Header("ÎÖ∏Ìä∏ ÌîÑÎ¶¨Ìé©")]
+    [SerializeField]
+    private GameObject leftNotePrefab;
 
-    [Header("Ω∫∆˘ º≥¡§")]
-    [SerializeField] private float spawnInterval = 2f;
-    [SerializeField] private float noteSpeed = 10f;
+    [SerializeField]
+    private GameObject rightNotePrefab;
+
+    [Header("ÎÖ∏Ìä∏ ÏÉùÏÑ± Í∞ÑÍ≤©")]
+    [SerializeField]
+    private float spawnInterval = 2f;
+
+    [SerializeField]
+    private float noteSpeed = 10f;
 
     private float timer;
     private GridManager gridManager;
+
     void Start()
     {
         gridManager = GridManager.Instance;
     }
+
     void Update()
     {
         timer += Time.deltaTime;
@@ -48,8 +56,7 @@ public class NoteSpawner : MonoBehaviour
             LeftNote leftNote = note.GetComponent<LeftNote>();
             if (leftNote != null)
             {
-                leftNote.Initialize(targetPos, noteSpeed);
-                leftNote.SetNoteData(noteData);
+                leftNote.Initialize(noteData);
             }
         }
         else
@@ -57,26 +64,23 @@ public class NoteSpawner : MonoBehaviour
             RightNote rightNote = note.GetComponent<RightNote>();
             if (rightNote != null)
             {
-                rightNote.Initialize(targetPos, noteSpeed);
-                rightNote.SetNoteData(noteData);
+                rightNote.Initialize(noteData);
             }
         }
     }
+
     private NoteData CreateRandomNoteData()
     {
         NoteData data = new NoteData();
 
-        // ∑£¥˝«œ∞‘ øﬁº’/ø¿∏•º’ ≥Î∆Æ ∞·¡§
         if (Random.value > 0.5f)
         {
-            // LeftNote µ•¿Ã≈Õ
-            data.noteType = HitType.None;  // None¿∫ LeftNote∏¶ ¿«πÃ
+            data.noteType = HitType.None;
             data.direction = (NoteDirection)Random.Range(0, 8);
             data.noteAxis = (NoteAxis)Random.Range(0, 4);
         }
         else
         {
-            // RightNote µ•¿Ã≈Õ
             data.noteType = Random.value > 0.5f ? HitType.Red : HitType.Blue;
             data.direction = NoteDirection.None;
             data.noteAxis = NoteAxis.None;

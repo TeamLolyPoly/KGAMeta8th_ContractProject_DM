@@ -4,26 +4,17 @@ public class LeftNote : Note
 {
     private Transform noteTrans;
     private Vector3 hitDirection;
+
     [SerializeField, Header("블럭 타격 오차범위")]
     private float directionalRange = 10f;
-    public override void Initialize(Vector3 target, float moveSpeed)
+
+    public override void Initialize(NoteData data)
     {
-        noteData.noteAxis = NoteAxis.PZ;
-        noteData = data;
+        base.Initialize(data);
         noteTrans = GetComponent<Transform>();
         NoteDirectionChange();
         NoteHitDirectionChange();
     }
-    // Initialize로 관리함
-    // void OnValidate()
-    // {
-    //     if (noteTrans == null)
-    //     {
-    //         noteTrans = GetComponent<Transform>();
-    //     }
-    //     NoteDirectionChange();
-    //     NoteHitDirectionChange();
-    // }
 
     private void OnCollisionEnter(Collision other)
     {
@@ -41,6 +32,7 @@ public class LeftNote : Note
             print("타격 실패");
         }
     }
+
     //노트에 direction값과 axis값을 보고 hit허용방향 회전각을 조정함
     private void NoteDirectionChange()
     {
@@ -80,9 +72,14 @@ public class LeftNote : Note
                 hitDirection = SetHitDirection(new Vector3(-1, -1, 0).normalized);
                 break;
         }
-        noteTrans.rotation = Quaternion.Euler(noteTrans.rotation.eulerAngles.x, noteTrans.rotation.eulerAngles.y, rotationZ);
+        noteTrans.rotation = Quaternion.Euler(
+            noteTrans.rotation.eulerAngles.x,
+            noteTrans.rotation.eulerAngles.y,
+            rotationZ
+        );
     }
-    //노트에 axis값을 보고 보는 방향을 회전시킴 
+
+    //노트에 axis값을 보고 보는 방향을 회전시킴
     private void NoteHitDirectionChange()
     {
         float rotationY = 0f;
@@ -101,8 +98,13 @@ public class LeftNote : Note
                 rotationY = -90f;
                 break;
         }
-        noteTrans.rotation = Quaternion.Euler(noteTrans.rotation.eulerAngles.x, rotationY, noteTrans.rotation.eulerAngles.z);
+        noteTrans.rotation = Quaternion.Euler(
+            noteTrans.rotation.eulerAngles.x,
+            rotationY,
+            noteTrans.rotation.eulerAngles.z
+        );
     }
+
     //노트의 axis값에 달라지는 hitDirection값을 보정함
     private Vector3 SetHitDirection(Vector3 dir)
     {
@@ -120,5 +122,4 @@ public class LeftNote : Note
                 return dir;
         }
     }
-
 }
