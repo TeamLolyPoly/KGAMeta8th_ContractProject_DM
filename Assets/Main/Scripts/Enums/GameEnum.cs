@@ -11,6 +11,7 @@ public enum NoteDirection
     Southwest,
 
 }
+
 public enum NoteAxis
 {
     PZ,
