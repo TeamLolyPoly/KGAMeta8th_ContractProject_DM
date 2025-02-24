@@ -1,49 +1,17 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public enum NoteDirection
+public class LeftNote : Note
 {
-    East,
-    West,
-    South,
-    North,
-    Northeast,
-    Northwest,
-    Southeast,
-    Southwest,
-
-}
-public enum NoteAxis
-{
-    PZ,
-    MZ,
-    PX,
-    MX,
-
-}
-
-public class TestHitNote : MonoBehaviour
-{
-
-    [SerializeField] private NoteDirection direction;
-    [SerializeField] private NoteAxis axis = NoteAxis.PZ;
     private Transform noteTrans;
     private Vector3 hitDirection;
+
     [SerializeField, Header("블럭 타격 오차범위")]
     private float directionalRange = 10f;
-    void Awake()
-    {
-        noteTrans = GetComponent<Transform>();
-    }
 
-    void OnValidate()
+    public override void Initialize(NoteData data)
     {
-        if (noteTrans == null)
-        {
-            noteTrans = GetComponent<Transform>();
-        }
+        base.Initialize(data);
+        noteTrans = GetComponent<Transform>();
         NoteDirectionChange();
         NoteHitDirectionChange();
     }
@@ -57,18 +25,19 @@ public class TestHitNote : MonoBehaviour
 
         if (range <= directionalRange)
         {
-            print("타격 성공");
+            print($"타격 성공{NoteScore}");
         }
         else
         {
             print("타격 실패");
         }
     }
+
     //노트에 direction값과 axis값을 보고 hit허용방향 회전각을 조정함
     private void NoteDirectionChange()
     {
         float rotationZ = 0f;
-        switch (direction)
+        switch (noteData.direction)
         {
             case NoteDirection.East:
                 rotationZ = 90f;
@@ -103,13 +72,18 @@ public class TestHitNote : MonoBehaviour
                 hitDirection = SetHitDirection(new Vector3(-1, -1, 0).normalized);
                 break;
         }
-        noteTrans.rotation = Quaternion.Euler(noteTrans.rotation.eulerAngles.x, noteTrans.rotation.eulerAngles.y, rotationZ);
+        noteTrans.rotation = Quaternion.Euler(
+            noteTrans.rotation.eulerAngles.x,
+            noteTrans.rotation.eulerAngles.y,
+            rotationZ
+        );
     }
-    //노트에 axis값을 보고 보는 방향을 회전시킴 
+
+    //노트에 axis값을 보고 보는 방향을 회전시킴
     private void NoteHitDirectionChange()
     {
         float rotationY = 0f;
-        switch (axis)
+        switch (noteData.noteAxis)
         {
             case NoteAxis.PZ:
                 rotationY = 0f;
@@ -124,12 +98,17 @@ public class TestHitNote : MonoBehaviour
                 rotationY = -90f;
                 break;
         }
-        noteTrans.rotation = Quaternion.Euler(noteTrans.rotation.eulerAngles.x, rotationY, noteTrans.rotation.eulerAngles.z);
+        noteTrans.rotation = Quaternion.Euler(
+            noteTrans.rotation.eulerAngles.x,
+            rotationY,
+            noteTrans.rotation.eulerAngles.z
+        );
     }
+
     //노트의 axis값에 달라지는 hitDirection값을 보정함
     private Vector3 SetHitDirection(Vector3 dir)
     {
-        switch (axis)
+        switch (noteData.noteAxis)
         {
             case NoteAxis.PZ:
                 return dir;
@@ -143,5 +122,4 @@ public class TestHitNote : MonoBehaviour
                 return dir;
         }
     }
-
 }

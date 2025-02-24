@@ -1,31 +1,38 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public enum HitType
+public class RightNote : Note
 {
-    Red,
-    Bule,
-}
-
-public class TestMaceNote : MonoBehaviour
-{
-    [SerializeField] private HitType noteType;
-    [SerializeField, Header("노트 점수")]
-    private float maceNoteScore = 100;
     [SerializeField, Header("타격 정확도 허용범위")]
     private float[] accuracyPoint = new float[2] { 0.34f, 0.67f };
+
     [SerializeField, Header("노트 정확도 점수배율")]
     private float[] accuracyScore = new float[2] { 0.8f, 0.5f };
+
     private Transform noteTrans;
     private Renderer noteRenderer;
     private float noteDistance;
 
-    void Awake()
+    public override void Initialize(NoteData data)
     {
+        base.Initialize(data);
+        noteTrans = transform;
         noteRenderer = GetComponent<Renderer>();
-        noteTrans = GetComponent<Transform>();
-        SetNoteDisTance();
+        if (noteRenderer != null)
+        {
+            switch (noteData.noteType)
+            {
+                case HitType.Red:
+                    noteRenderer.material.color = Color.red;
+                    break;
+                case HitType.Blue:
+                    noteRenderer.material.color = Color.blue;
+                    break;
+            }
+        }
+        if (noteRenderer != null)
+        {
+            SetNoteDisTance();
+        }
     }
 
     //노트가 허용하는 Hit거리를 구함
@@ -40,31 +47,13 @@ public class TestMaceNote : MonoBehaviour
         print($"노트 길이: {noteDistance}");
     }
 
-    //시각적으로 타입이 다른걸 보이게할려고 만듬 삭제해도 상관없음
-    private void OnValidate()
-    {
-        if (noteRenderer == null)
-        {
-            noteRenderer = GetComponent<Renderer>();
-        }
-        switch (noteType)
-        {
-            case HitType.Red:
-                noteRenderer.sharedMaterial.color = Color.red;
-                break;
-            case HitType.Bule:
-                noteRenderer.sharedMaterial.color = Color.blue;
-                break;
-        }
-    }
-
     private void OnCollisionEnter(Collision other)
     {
         float hitdis = HitPoint(other);
         print(hitdis);
-        if (other.gameObject.TryGetComponent<TestMace>(out TestMace Mace))
+        if (other.gameObject.TryGetComponent<Mace>(out Mace Mace))
         {
-            if (Mace.maceType == noteType)
+            if (Mace.maceType == noteData.noteType)
             {
                 print(HitScore(hitdis));
             }
@@ -86,17 +75,17 @@ public class TestMaceNote : MonoBehaviour
         if (noteDistance * accuracyPoint[0] >= hitdis)
         {
             print($"Perfect noteDis :{noteDistance * accuracyPoint[0]} , Hitdis: {hitdis}");
-            return maceNoteScore;
+            return NoteScore;
         }
         else if (noteDistance * accuracyPoint[1] > hitdis)
         {
             print($"Great noteDis :{noteDistance * accuracyPoint[1]} , Hitdis: {hitdis}");
-            return maceNoteScore * accuracyScore[0];
+            return NoteScore * accuracyScore[0];
         }
         else if (noteDistance >= hitdis)
         {
             print($"Good noteDis :{noteDistance} , Hitdis: {hitdis}");
-            return maceNoteScore * accuracyScore[1];
+            return NoteScore * accuracyScore[1];
         }
         else
         {
