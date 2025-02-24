@@ -73,7 +73,7 @@ public class RightNote : Note
     {
         Vector3 hitPoint = other.GetContact(0).point;
         Vector3 notePos = noteTrans.transform.position;
-        notePos.z -= noteRenderer.bounds.size.z / 2;
+        notePos.y -= noteRenderer.bounds.size.y / 2;
         return Vector3.Distance(hitPoint, notePos);
     }
 
