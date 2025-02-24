@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-public class RightNote : Note, IInitializable
+public class RightNote : Note
 {
     [SerializeField, Header("타격 정확도 허용범위")]
     private float[] accuracyPoint = new float[2] { 0.34f, 0.67f };
@@ -11,21 +11,13 @@ public class RightNote : Note, IInitializable
     private Transform noteTrans;
     private Renderer noteRenderer;
     private float noteDistance;
-    private bool isinitialized = false;
-    public bool IsInitialized => isinitialized;
 
-    public void Initialize()
-    {
-
-    }
     public void Initialize(NoteData data)
     {
         noteData = data;
         noteRenderer = GetComponent<Renderer>();
         noteTrans = GetComponent<Transform>();
         SetNoteDisTance();
-
-        isinitialized = true;
     }
 
     //노트가 허용하는 Hit거리를 구함

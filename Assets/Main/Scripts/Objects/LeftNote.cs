@@ -1,24 +1,17 @@
 using UnityEngine;
 
-public class LeftNote : Note, IInitializable
+public class LeftNote : Note
 {
     private NoteData noteData;
     private Transform noteTrans;
     private Vector3 hitDirection;
     [SerializeField, Header("블럭 타격 오차범위")]
     private float directionalRange = 10f;
-    private bool isinitialized = false;
-    public bool IsInitialized => isinitialized;
-    public void Initialize()
-    {
-
-    }
     public void Initialize(NoteData data)
     {
         noteData.noteAxis = NoteAxis.PZ;
         noteData = data;
         noteTrans = GetComponent<Transform>();
-        isinitialized = true;
     }
     void OnValidate()
     {
