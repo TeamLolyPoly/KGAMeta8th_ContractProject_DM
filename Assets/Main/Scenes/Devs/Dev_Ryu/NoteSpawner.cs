@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using Photon.Pun.Demo.PunBasics;
 using UnityEngine;
 
 public class NoteSpawner : MonoBehaviour
@@ -39,7 +36,23 @@ public class NoteSpawner : MonoBehaviour
 
     void SpawnRandomNote()
     {
-        NoteData noteData = CreateRandomNoteData();
+        NoteData noteData = new NoteData();
+
+        if (Random.value > 0.5f)
+        {
+            noteData.noteType = HitType.None;
+            noteData.direction = (NoteDirection)Random.Range(0, 8);
+            noteData.noteAxis = (NoteAxis)Random.Range(0, 4);
+            noteData.moveSpeed = 10f;
+        }
+        else
+        {
+            noteData.noteType = Random.value > 0.5f ? HitType.Red : HitType.Blue;
+            noteData.direction = NoteDirection.None;
+            noteData.noteAxis = NoteAxis.None;
+            noteData.moveSpeed = 10f;
+        }
+
         bool isLeftHand = noteData.noteType == HitType.None;
 
         int x = isLeftHand ? Random.Range(0, 3) : Random.Range(2, 5);
@@ -47,6 +60,8 @@ public class NoteSpawner : MonoBehaviour
 
         Vector3 startPos = gridManager.GetCellPosition(gridManager.SourceGrid, x, y);
         Vector3 targetPos = gridManager.GetCellPosition(gridManager.TargetGrid, x, y);
+
+        noteData.target = targetPos;
 
         GameObject prefab = isLeftHand ? leftNotePrefab : rightNotePrefab;
         GameObject note = Instantiate(prefab, startPos, Quaternion.identity);
@@ -67,25 +82,5 @@ public class NoteSpawner : MonoBehaviour
                 rightNote.Initialize(noteData);
             }
         }
-    }
-
-    private NoteData CreateRandomNoteData()
-    {
-        NoteData data = new NoteData();
-
-        if (Random.value > 0.5f)
-        {
-            data.noteType = HitType.None;
-            data.direction = (NoteDirection)Random.Range(0, 8);
-            data.noteAxis = (NoteAxis)Random.Range(0, 4);
-        }
-        else
-        {
-            data.noteType = Random.value > 0.5f ? HitType.Red : HitType.Blue;
-            data.direction = NoteDirection.None;
-            data.noteAxis = NoteAxis.None;
-        }
-
-        return data;
     }
 }

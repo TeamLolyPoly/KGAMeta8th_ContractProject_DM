@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Note : MonoBehaviour
@@ -9,8 +7,6 @@ public class Note : MonoBehaviour
 
     [SerializeField, Header("노트 점수")]
     protected float NoteScore = 100;
-    protected Vector3 targetPosition;
-    protected float speed;
     protected bool isMoving = true;
     protected NoteData noteData;
     protected Transform noteTrans;
@@ -24,6 +20,7 @@ public class Note : MonoBehaviour
             direction = data.direction,
             target = data.target,
             moveSpeed = data.moveSpeed,
+            noteType = data.noteType,
         };
         noteTrans = GetComponent<Transform>();
         NoteDirectionChange();
@@ -36,17 +33,17 @@ public class Note : MonoBehaviour
         {
             transform.position = Vector3.MoveTowards(
                 transform.position,
-                targetPosition,
-                speed * Time.deltaTime
+                noteData.target,
+                noteData.moveSpeed * Time.deltaTime
             );
 
-            if (Vector3.Distance(transform.position, targetPosition) < 0.1f)
+            if (Vector3.Distance(transform.position, noteData.target) < 0.1f)
             {
                 Destroy(gameObject);
             }
         }
     }
-    //노트에 direction값과 axis값을 보고 hit허용방향 회전각을 조정함
+
     private void NoteDirectionChange()
     {
         float rotationZ = 0f;
@@ -92,7 +89,6 @@ public class Note : MonoBehaviour
         );
     }
 
-    //노트에 axis값을 보고 보는 방향을 회전시킴
     private void NoteHitDirectionChange()
     {
         float rotationY = 0f;
@@ -118,7 +114,6 @@ public class Note : MonoBehaviour
         );
     }
 
-    //노트의 axis값에 달라지는 hitDirection값을 보정함
     private Vector3 SetHitDirection(Vector3 dir)
     {
         switch (noteData.noteAxis)
