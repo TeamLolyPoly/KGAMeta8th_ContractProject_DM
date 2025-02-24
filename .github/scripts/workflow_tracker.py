@@ -627,41 +627,48 @@ def process_todo_items(repo, todos, parent_issue_number):
     
     return processed_todos, created_issues
 
-def get_todays_commits(repo, branch, timezone):
+def get_todays_commits(repo, timezone):
+    """오늘 날짜의 모든 브랜치 커밋을 가져옵니다."""
     tz = pytz.timezone(timezone)
     today = datetime.now(tz).date()
     
-    print(f"\n=== Getting Today's Commits for {branch} ===")
+    logger.section("Getting Today's Commits from All Branches")
+    branches_commits = {}
     
     try:
-        branch_obj = repo.get_branch(branch)
-        if not branch_obj:
-            logger.error(f"Branch not found: {branch}")
-            return []
+        for branch in repo.get_branches():
+            branch_name = branch.name
+            logger.debug(f"\n브랜치 확인 중: {branch_name}")
             
-        commits = repo.get_commits(sha=branch_obj.commit.sha)
-        todays_commits = []
+            try:
+                commits = repo.get_commits(sha=branch.commit.sha)
+                branch_commits = []
+                
+                for commit in commits:
+                    commit_date = commit.commit.author.date.replace(tzinfo=pytz.UTC).astimezone(tz).date()
+                    commit_time = commit.commit.author.date.replace(tzinfo=pytz.UTC).astimezone(tz)
+                    
+                    if commit_date == today:
+                        if not is_merge_commit_message(commit.commit.message):
+                            branch_commits.append((commit_time, commit))
+                            logger.debug(f"커밋 발견: [{commit.sha[:7]}] {commit.commit.message.split('\n')[0]}")
+                    elif commit_date < today:
+                        break
+                
+                if branch_commits:
+                    branch_commits.sort(key=lambda x: x[0], reverse=True)
+                    branches_commits[branch_name] = [commit for _, commit in branch_commits]
+                    logger.debug(f"{branch_name}: {len(branch_commits)}개의 커밋 발견")
+                
+            except Exception as e:
+                logger.error(f"{branch_name} 브랜치 처리 중 오류 발생: {str(e)}")
+                continue
         
-        for commit in commits:
-            commit_date = commit.commit.author.date.replace(tzinfo=pytz.UTC).astimezone(tz).date()
-            commit_time = commit.commit.author.date.replace(tzinfo=pytz.UTC).astimezone(tz)
-            
-            if commit_date == today:
-                if not is_merge_commit_message(commit.commit.message):
-                    todays_commits.append((commit_time, commit))
-                    logger.debug(f"Found commit: [{commit.sha[:7]}] {commit.commit.message.split('\n')[0]}")
-            elif commit_date < today:
-                break
-        
-        todays_commits.sort(key=lambda x: x[0], reverse=True)
-        sorted_commits = [commit for _, commit in todays_commits]
-        
-        logger.debug(f"\nFound {len(sorted_commits)} commits for today")
-        return sorted_commits
+        return branches_commits
         
     except Exception as e:
-        logger.error(f"Error getting commits for {branch}: {str(e)}")
-        return []
+        logger.error(f"브랜치 목록 가져오기 실패: {str(e)}")
+        return {}
 
 def find_active_dsr_issue(repo: Repository, date_string: str, issue_title: str) -> Optional[Issue]:
     logger.section("Searching for Active DSR Issue")
@@ -676,6 +683,49 @@ def find_active_dsr_issue(repo: Repository, date_string: str, issue_title: str) 
     
     logger.debug("No active DSR issue found for today")
     return None
+
+def get_all_branches_commits(repo, timezone):
+    """모든 브랜치의 오늘자 커밋을 가져옵니다."""
+    tz = pytz.timezone(timezone)
+    today = datetime.now(tz).date()
+    
+    logger.section("Getting Today's Commits from All Branches")
+    branches_commits = {}
+    
+    try:
+        for branch in repo.get_branches():
+            branch_name = branch.name
+            logger.debug(f"\n브랜치 확인 중: {branch_name}")
+            
+            try:
+                commits = repo.get_commits(sha=branch.commit.sha)
+                branch_commits = []
+                
+                for commit in commits:
+                    commit_date = commit.commit.author.date.replace(tzinfo=pytz.UTC).astimezone(tz).date()
+                    commit_time = commit.commit.author.date.replace(tzinfo=pytz.UTC).astimezone(tz)
+                    
+                    if commit_date == today:
+                        if not is_merge_commit_message(commit.commit.message):
+                            branch_commits.append((commit_time, commit))
+                            logger.debug(f"커밋 발견: [{commit.sha[:7]}] {commit.commit.message.split('\n')[0]}")
+                    elif commit_date < today:
+                        break
+                
+                if branch_commits:
+                    branch_commits.sort(key=lambda x: x[0], reverse=True)
+                    branches_commits[branch_name] = [commit for _, commit in branch_commits]
+                    logger.debug(f"{branch_name}: {len(branch_commits)}개의 커밋 발견")
+                
+            except Exception as e:
+                logger.error(f"{branch_name} 브랜치 처리 중 오류 발생: {str(e)}")
+                continue
+        
+        return branches_commits
+        
+    except Exception as e:
+        logger.error(f"브랜치 목록 가져오기 실패: {str(e)}")
+        return {}
 
 def main():
     github_token = os.environ.get('PAT') or os.environ['GITHUB_TOKEN']
@@ -714,10 +764,11 @@ def main():
     logger.section("Issue Title Format")
     logger.debug(f"Using title format: {issue_title}")
 
-    commits_to_process = get_todays_commits(repo, branch, timezone)
+    # 모든 브랜치의 커밋을 가져옵니다
+    branches_commits = get_todays_commits(repo, timezone)
     
-    if not commits_to_process:
-        logger.debug("No commits found for today")
+    if not branches_commits:
+        logger.debug("오늘 커밋된 내용이 없습니다")
         return
 
     today_issue = find_active_dsr_issue(repo, date_string, issue_title)
@@ -772,124 +823,154 @@ def main():
     filtered_commits = []
     seen_messages = set()
     
-    for commit_to_process in commits_to_process:
-        msg = commit_to_process.commit.message.strip()
+    for branch_name, branch_commits in branches_commits.items():
+        logger.debug(f"\n{branch_name} 브랜치 커밋 처리 중...")
         
-        if is_merge_commit_message(msg):
-            log_commit_status(commit_to_process, "Skipping merge commit")
-            if len(commit_to_process.parents) == 2:
-                print("Processing child commits from merge...")
-                child_commits = get_merge_commits(repo, commit_to_process)
-                commits_to_process.extend(child_commits)
-            continue
+        for commit_to_process in branch_commits:
+            msg = commit_to_process.commit.message.strip()
             
-        if msg not in seen_messages and not is_commit_already_logged(msg, existing_content):
-            seen_messages.add(msg)
-            filtered_commits.append(commit_to_process)
-            log_commit_status(commit_to_process, "Adding commit")
-        else:
-            log_commit_status(commit_to_process, "Skipping duplicate commit")
-    
-    commits_to_process = filtered_commits
-    
-    if not commits_to_process:
-        print("No new commits to process after filtering")
-        return
-
-    tz = pytz.timezone(timezone)
-    now = datetime.now(tz)
-    date_string = now.strftime('%Y-%m-%d')
-    time_string = now.strftime('%H:%M:%S')
-
-    repo_name = repository.split('/')[-1]
-    if repo_name.startswith('.'):
-        repo_name = repo_name[1:]
-
-    issue_title = f"{issue_prefix} Development Status Report ({date_string}) - {repo_name}"
-
-    commit_sections = []
-    for commit_to_process in commits_to_process:
-        commit_data = parse_commit_message(commit_to_process.commit.message)
-        if not commit_data:
-            continue
-
-        commit_time = commit_to_process.commit.author.date.replace(tzinfo=pytz.UTC).astimezone(tz)
-        commit_time_string = commit_time.strftime('%H:%M:%S')
-        
-        commit_details = create_commit_section(
-            commit_data,
-            branch,
-            commit_to_process.sha,
-            commit_to_process.commit.author.name,
-            commit_time_string,
-            repo
-        )
-        commit_sections.append(commit_details)
-
-    branch_content = '\n\n'.join(commit_sections)
-
-    if today_issue:
-        logger.section("Current Issue's TODO Statistics")
-        logger.debug(f"Current TODOs in issue: {len(existing_content['todos'])} items")
-        
-        all_todos = existing_content['todos']
-        
-        current_commit = repo.get_commit(os.environ['GITHUB_SHA'])
-        commit_data = parse_commit_message(current_commit.commit.message)
-        if commit_data and commit_data['todo']:
-            logger.section("Processing TODOs from Current Commit")
-            print(f"Todo section from commit:\n{commit_data['todo']}")
+            if is_merge_commit_message(msg):
+                log_commit_status(commit_to_process, "Skipping merge commit")
+                if len(commit_to_process.parents) == 2:
+                    print("Processing child commits from merge...")
+                    child_commits = get_merge_commits(repo, commit_to_process)
+                    branch_commits.extend(child_commits)
+                continue
             
-            new_todos = []
-            todo_lines = convert_to_checkbox_list(commit_data['todo']).split('\n')
-            print(f"Converted todo lines: {todo_lines}")
-            
-            for line in todo_lines:
-                if line.startswith('@'):
-                    new_todos.append((False, line))
-                elif line.startswith('-'):
-                    new_todos.append((False, line[2:].strip()))
-            
-            logger.debug("Parsed new todos from current commit:")
-            for checked, text in new_todos:
-                print(f"- [{checked}] {text}")
-
-            all_todos = merge_todos(all_todos, new_todos)
-        
-        if previous_todos:
-            logger.section("TODOs Migrated from Previous Day")
-            for _, todo_text in previous_todos:
-                print(f"⬜ {todo_text}")
-            all_todos = merge_todos(all_todos, previous_todos)
-        
-        processed_todos, created_issues = process_todo_items(repo, all_todos, today_issue.number)
-        
-        logger.section("Created new issues from todos")
-        for issue in created_issues:
-            print(f"#{issue.number}: {issue.title}")
-        
-        logger.section("Final Result")
-        print(f"Total TODOs: {len(processed_todos)} items")
-        
-        branches_content = existing_content.get('branches', {})
-        
-        if branch_content.strip():
-            if branch in branches_content:
-                branches_content[branch] = branch_content + "\n\n" + branches_content[branch]
+            if msg not in seen_messages and not is_commit_already_logged(msg, existing_content):
+                seen_messages.add(msg)
+                filtered_commits.append(commit_to_process)
+                log_commit_status(commit_to_process, "Adding commit")
             else:
-                branches_content[branch] = branch_content
-                logger.debug(f"새로운 브랜치 '{branch}' 추가됨")
+                log_commit_status(commit_to_process, "Skipping duplicate commit")
+        
+        branch_commits[:] = filtered_commits
+        
+        if not branch_commits:
+            print(f"No new commits to process after filtering in {branch_name}")
+            continue
 
-        branch_sections = []
-        for branch_name, content in branches_content.items():
-            if content.strip():
-                branch_sections.append(f'''<details>
+        tz = pytz.timezone(timezone)
+        now = datetime.now(tz)
+        date_string = now.strftime('%Y-%m-%d')
+        time_string = now.strftime('%H:%M:%S')
+
+        repo_name = repository.split('/')[-1]
+        if repo_name.startswith('.'):
+            repo_name = repo_name[1:]
+
+        issue_title = f"{issue_prefix} Development Status Report ({date_string}) - {repo_name}"
+
+        commit_sections = []
+        for commit_to_process in branch_commits:
+            commit_data = parse_commit_message(commit_to_process.commit.message)
+            if not commit_data:
+                continue
+
+            commit_time = commit_to_process.commit.author.date.replace(tzinfo=pytz.UTC).astimezone(tz)
+            commit_time_string = commit_time.strftime('%H:%M:%S')
+            
+            commit_details = create_commit_section(
+                commit_data,
+                branch_name,
+                commit_to_process.sha,
+                commit_to_process.commit.author.name,
+                commit_time_string,
+                repo
+            )
+            commit_sections.append(commit_details)
+
+        branch_content = '\n\n'.join(commit_sections)
+
+        if today_issue:
+            logger.section("Current Issue's TODO Statistics")
+            logger.debug(f"Current TODOs in issue: {len(existing_content['todos'])} items")
+            
+            all_todos = existing_content['todos']
+            
+            current_commit = repo.get_commit(os.environ['GITHUB_SHA'])
+            commit_data = parse_commit_message(current_commit.commit.message)
+            if commit_data and commit_data['todo']:
+                logger.section("Processing TODOs from Current Commit")
+                print(f"Todo section from commit:\n{commit_data['todo']}")
+                
+                new_todos = []
+                todo_lines = convert_to_checkbox_list(commit_data['todo']).split('\n')
+                print(f"Converted todo lines: {todo_lines}")
+                
+                for line in todo_lines:
+                    if line.startswith('@'):
+                        new_todos.append((False, line))
+                    elif line.startswith('-'):
+                        new_todos.append((False, line[2:].strip()))
+                
+                logger.debug("Parsed new todos from current commit:")
+                for checked, text in new_todos:
+                    print(f"- [{checked}] {text}")
+
+                all_todos = merge_todos(all_todos, new_todos)
+            
+            if previous_todos:
+                logger.section("TODOs Migrated from Previous Day")
+                for _, todo_text in previous_todos:
+                    print(f"⬜ {todo_text}")
+                all_todos = merge_todos(all_todos, previous_todos)
+            
+            processed_todos, created_issues = process_todo_items(repo, all_todos, today_issue.number)
+            
+            logger.section("Created new issues from todos")
+            for issue in created_issues:
+                print(f"#{issue.number}: {issue.title}")
+            
+            logger.section("Final Result")
+            print(f"Total TODOs: {len(processed_todos)} items")
+            
+            branches_content = existing_content.get('branches', {})
+            
+            # 각 브랜치의 커밋을 처리합니다
+            for branch_name, branch_commits in get_all_branches_commits(repo, timezone).items():
+                logger.debug(f"\n{branch_name} 브랜치 커밋 처리 중...")
+                
+                branch_sections = []
+                for commit in branch_commits:
+                    commit_data = parse_commit_message(commit.commit.message)
+                    if not commit_data:
+                        continue
+                    
+                    commit_time = commit.commit.author.date.replace(tzinfo=pytz.UTC).astimezone(tz)
+                    commit_time_string = commit_time.strftime('%H:%M:%S')
+                    
+                    commit_section = create_commit_section(
+                        commit_data,
+                        branch_name,
+                        commit.sha,
+                        commit.commit.author.name,
+                        commit_time_string,
+                        repo
+                    )
+                    branch_sections.append(commit_section)
+                
+                if branch_sections:
+                    new_content = '\n\n'.join(branch_sections)
+                    if branch_name in branches_content:
+                        # 기존 내용 앞에 새 내용을 추가
+                        branches_content[branch_name] = new_content + "\n\n" + branches_content[branch_name]
+                    else:
+                        # 새 브랜치 추가
+                        branches_content[branch_name] = new_content
+                        logger.debug(f"새로운 브랜치 '{branch_name}' 추가됨")
+            
+            # 브랜치 섹션 생성
+            branch_sections = []
+            for branch_name, content in branches_content.items():
+                if content.strip():
+                    branch_sections.append(f'''<details>
 <summary><h3 style="display: inline;">✨ {branch_name.title()}</h3></summary>
 
 {content}
 </details>''')
-
-        updated_body = f'''# {issue_title}
+            
+            updated_body = f'''# {issue_title}
 
 <div align="center">
 
@@ -905,23 +986,23 @@ def main():
 
 {create_todo_section(processed_todos)}'''
 
-        today_issue.edit(body=updated_body)
-        logger.debug(f"이슈 #{today_issue.number} 업데이트됨 - 브랜치 '{branch}' 내용 추가")
-    else:
-        branches_content = {}
-        if branch_content.strip():
-            branches_content[branch] = branch_content
-            logger.debug(f"새 이슈에 브랜치 '{branch}' 추가됨")
+            today_issue.edit(body=updated_body)
+            logger.debug(f"이슈 #{today_issue.number} 업데이트됨 - 브랜치 '{branch_name}' 내용 추가")
+        else:
+            branches_content = {}
+            if branch_content.strip():
+                branches_content[branch_name] = branch_content
+                logger.debug(f"새 이슈에 브랜치 '{branch_name}' 추가됨")
 
-        branch_sections = []
-        for branch_name, content in branches_content.items():
-            branch_sections.append(f'''<details>
+            branch_sections = []
+            for branch_name, content in branches_content.items():
+                branch_sections.append(f'''<details>
 <summary><h3 style="display: inline;">✨ {branch_name.title()}</h3></summary>
 
 {content}
 </details>''')
 
-        body = f'''# {issue_title}
+            body = f'''# {issue_title}
 
 <div align="center">
 
@@ -937,12 +1018,12 @@ def main():
 
 {create_todo_section(all_todos)}'''
 
-        new_issue = repo.create_issue(
-            title=issue_title,
-            body=body,
-            labels=[os.environ.get('ISSUE_LABEL', 'dsr'), f"branch:{branch}"]
-        )
-        print(f"Created new issue #{new_issue.number}")
+            new_issue = repo.create_issue(
+                title=issue_title,
+                body=body,
+                labels=[os.environ.get('ISSUE_LABEL', 'dsr'), f"branch:{branch_name}"]
+            )
+            print(f"Created new issue #{new_issue.number}")
 
 if __name__ == '__main__':
     main()

@@ -5,12 +5,10 @@ from github import Github
 import requests
 import re
 
-# 로깅 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def get_project_v2(github_token, org_name, project_number):
-    """GitHub Projects v2 접근을 위한 GraphQL 쿼리"""
     headers = {
         "Authorization": f"Bearer {github_token}",
         "Accept": "application/vnd.github.v3+json"
