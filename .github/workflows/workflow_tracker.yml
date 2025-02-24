@@ -17,6 +17,7 @@ permissions:
   actions: read
   checks: write
   statuses: write
+  id-token: write
 
 env:
   TIMEZONE: "Asia/Seoul"
@@ -25,6 +26,7 @@ env:
   EXCLUDED_COMMITS: "^(chore|docs|style):"
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   PAT: ${{ secrets.PAT }}
+  PROJECT_NUMBER: "2"
 
 jobs:
   process-workflow:
@@ -44,6 +46,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -53,19 +56,26 @@ jobs:
       - name: Create Daily Status Report
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          python .github/scripts/workflow_tracker.py
+          cd .github/scripts
+          python workflow_tracker.py
 
       - name: Update Task Report
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          python .github/scripts/task_report.py
+          cd .github/scripts
+          python task_report.py
 
       - name: Send Notifications
+        if: env.SLACK_BOT_TOKEN != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
         run: |
-          python .github/scripts/slack_notifier.py
+          cd .github/scripts
+          python slack_notifier.py
