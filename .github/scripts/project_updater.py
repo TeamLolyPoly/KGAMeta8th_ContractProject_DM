@@ -5,12 +5,10 @@ from github import Github
 import requests
 import re
 
-# 로깅 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def get_project_v2(github_token, org_name, project_number):
-    """GitHub Projects v2 접근을 위한 GraphQL 쿼리"""
     headers = {
         "Authorization": f"Bearer {github_token}",
         "Accept": "application/vnd.github.v3+json"
@@ -206,10 +204,8 @@ def process_todo_items(repo, todos, github_token, project_id, existing_items):
             current_category = text[1:].strip()
             continue
             
-        # 이미 이슈 번호인 경우 (#123 형태)
         if text.startswith('#'):
             issue_number = int(text[1:])
-            # 이미 프로젝트에 있는 이슈는 건너뛰기
             if issue_number in existing_items:
                 logger.info(f"Issue #{issue_number} already in project, skipping")
                 continue
@@ -272,7 +268,6 @@ def update_project_board():
         with open(os.environ["GITHUB_EVENT_PATH"]) as f:
             event = json.load(f)
         
-        # DSR 이슈 확인
         issue = event.get("issue", {})
         if not issue or "Development Status Report" not in issue.get("title", ""):
             logger.info("Not a DSR issue update, skipping")
@@ -281,7 +276,6 @@ def update_project_board():
         repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
         repo_owner, repo_name = os.environ["GITHUB_REPOSITORY"].split('/')
         
-        # Projects v2 접근
         org_name = "KGAMeta8thTeam1"
         project_number = 2
         
@@ -290,11 +284,9 @@ def update_project_board():
             logger.error("Could not find project v2")
             return
             
-        # 프로젝트의 현재 항목들 가져오기
         existing_items = get_project_items(github_token, project['id'])
         logger.info(f"Found {len(existing_items)} existing items in project")
             
-        # Status 필드와 Todo 옵션 찾기
         status_field = None
         todo_option = None
         for field in project['fields']['nodes']:
@@ -310,30 +302,25 @@ def update_project_board():
             logger.error("Could not find Status field or Todo option")
             return
             
-        # DSR 이슈 본문에서 이슈 참조 추출 (#123 형태만)
         issue_numbers = re.findall(r'#(\d+)', issue.get("body", ""))
         logger.info(f"Found {len(issue_numbers)} issue references in DSR")
         
         for issue_number in issue_numbers:
             try:
                 issue_number = int(issue_number)
-                # 이미 프로젝트에 있는 이슈는 건너뛰기
                 if issue_number in existing_items:
                     logger.info(f"Issue #{issue_number} already in project, skipping")
                     continue
                     
                 node_id = get_issue_node_id(github_token, repo_owner, repo_name, issue_number)
                 if node_id:
-                    # 이슈를 프로젝트에 추가
                     item_id = add_issue_to_project_v2(github_token, project['id'], node_id)
                     if item_id:
-                        # 상태를 Todo로 설정
                         set_issue_status(github_token, project['id'], item_id, status_field['id'], todo_option['id'])
                         logger.info(f"Added issue #{issue_number} to project with Todo status")
             except Exception as e:
                 logger.error(f"Failed to process issue #{issue_number}: {str(e)}")
                 
-        # 이슈 본문에서 TODO 항목 파싱
         todos = parse_existing_issue(issue.get("body", ""))['todos']
         process_todo_items(repo, todos, github_token, project['id'], existing_items)
         
@@ -342,7 +329,6 @@ def update_project_board():
         raise
 
 def handle_card_movement(card_event, columns, repo):
-    """카드 이동 처리"""
     logger.info(f"Processing card movement event: {card_event['id']}")
     if card_event["column_id"]:
         logger.debug(f"Card moved to column ID: {card_event['column_id']}")
@@ -354,7 +340,6 @@ def handle_card_movement(card_event, columns, repo):
             logger.debug("No associated issue found for card")
 
 def handle_issue_status(issue, columns):
-    """이슈 상태 변경 처리"""
     logger.info(f"Processing issue status: #{issue['number']}")
     if any(label["name"] == "done" for label in issue["labels"]):
         logger.info("Moving issue to Done column")
@@ -367,7 +352,6 @@ def handle_issue_status(issue, columns):
         move_to_column(issue, columns["To Do"])
 
 def get_issue_from_card(card, repo):
-    """카드에서 이슈 정보 추출"""
     logger.debug(f"Extracting issue from card: {card['id']}")
     if "content_url" in card:
         issue_url = card["content_url"]
@@ -378,7 +362,6 @@ def get_issue_from_card(card, repo):
     return None
 
 def move_to_column(issue, column):
-    """이슈를 지정된 칼럼으로 이동"""
     logger.info(f"Moving issue #{issue.number} to column: {column.name}")
     for card in column.get_cards():
         if card.content_url == issue.url:
@@ -388,7 +371,6 @@ def move_to_column(issue, column):
     logger.info(f"Created new card for issue #{issue.number} in column {column.name}")
 
 def update_issue_status(issue, column_id, columns):
-    """이슈 상태 업데이트"""
     logger.info(f"Updating status for issue #{issue.number}")
     status_labels = {
         columns["To Do"].id: "todo",
