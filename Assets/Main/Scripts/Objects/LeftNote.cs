@@ -1,30 +1,6 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public enum NoteDirection
-{
-    East,
-    West,
-    South,
-    North,
-    Northeast,
-    Northwest,
-    Southeast,
-    Southwest,
-
-}
-public enum NoteAxis
-{
-    PZ,
-    MZ,
-    PX,
-    MX,
-
-}
-
-public class TestHitNote : Note
+public class LeftNote : Note
 {
 
     [SerializeField] private NoteDirection direction;
