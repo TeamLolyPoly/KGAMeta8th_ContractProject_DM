@@ -31,24 +31,57 @@ public class NoteSpawner : MonoBehaviour
 
     void SpawnRandomNote()
     {
-        // 왼손/오른손 랜덤 선택
-        bool isLeftHand = Random.value > 0.5f;
+        NoteData noteData = CreateRandomNoteData();
+        bool isLeftHand = noteData.noteType == HitType.None;
 
-        // 위치 선택
         int x = isLeftHand ? Random.Range(0, 3) : Random.Range(2, 5);
         int y = Random.Range(0, gridManager.VerticalCells);
 
-        // 노트 생성 및 초기화
-        GameObject prefab = isLeftHand ? leftNotePrefab : rightNotePrefab;
         Vector3 startPos = gridManager.GetCellPosition(gridManager.SourceGrid, x, y);
         Vector3 targetPos = gridManager.GetCellPosition(gridManager.TargetGrid, x, y);
 
+        GameObject prefab = isLeftHand ? leftNotePrefab : rightNotePrefab;
         GameObject note = Instantiate(prefab, startPos, Quaternion.identity);
-        Note noteComponent = note.GetComponent<Note>();
 
-        if (noteComponent != null)
+        if (isLeftHand)
         {
-            noteComponent.Initialize(targetPos, noteSpeed);
+            LeftNote leftNote = note.GetComponent<LeftNote>();
+            if (leftNote != null)
+            {
+                leftNote.Initialize(targetPos, noteSpeed);
+                leftNote.SetNoteData(noteData);
+            }
         }
+        else
+        {
+            RightNote rightNote = note.GetComponent<RightNote>();
+            if (rightNote != null)
+            {
+                rightNote.Initialize(targetPos, noteSpeed);
+                rightNote.SetNoteData(noteData);
+            }
+        }
+    }
+    private NoteData CreateRandomNoteData()
+    {
+        NoteData data = new NoteData();
+
+        // 랜덤하게 왼손/오른손 노트 결정
+        if (Random.value > 0.5f)
+        {
+            // LeftNote 데이터
+            data.noteType = HitType.None;  // None은 LeftNote를 의미
+            data.direction = (NoteDirection)Random.Range(0, 8);
+            data.noteAxis = (NoteAxis)Random.Range(0, 4);
+        }
+        else
+        {
+            // RightNote 데이터
+            data.noteType = Random.value > 0.5f ? HitType.Red : HitType.Blue;
+            data.direction = NoteDirection.None;
+            data.noteAxis = NoteAxis.None;
+        }
+
+        return data;
     }
 }
