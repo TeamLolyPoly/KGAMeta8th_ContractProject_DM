@@ -102,12 +102,10 @@ def update_task_status(repo, task_number, todo_text):
     if not report_issue:
         return
         
-    # extract spent time
     spent_time = parse_time_spent(todo_text)
     if not spent_time:
         return
         
-    # update report content
     body = report_issue.body
     task_pattern = rf"\|\s*\[TSK-{task_number}\].*?\|\s*([^\|]*?)\s*\|\s*([^\|]*?)\s*\|\s*([^\|]*?)\s*\|\s*-\s*\|\s*🟡\s*진행중\s*\|\s*-\s*\|"
     
@@ -583,26 +581,21 @@ def process_approval(issue, repo):
         category_key = get_category_from_labels(issue.labels)
         print(f"태스크 카테고리: {category_key}")
         
-        # find existing report issue
         report_issue = find_report_issue(repo, project_name)
         
         if report_issue:
             print(f"\n보고서 이슈 발견: #{report_issue.number}")
-            # update existing report
             task_entry = create_task_entry(issue)
             print(f"생성된 태스크 항목:\n{task_entry}")
             
-            # update task entry
             updated_body = update_report_content(report_issue.body, task_entry, category_key)
             
-            # update progress section
             updated_body = update_progress_section(updated_body)
             
             report_issue.edit(body=updated_body)
             report_issue.create_comment(f"✅ 태스크 #{issue.number}이 {category_key} 카테고리에 추가되었습니다.")
             print("보고서 업데이트 완료")
             
-            # find Daily Log issue and add TODO
             print("\n=== Daily Log 처리 시작 ===")
             daily_issue = find_daily_log_issue(repo, project_name)
             if daily_issue:
