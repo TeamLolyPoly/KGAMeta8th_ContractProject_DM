@@ -4,6 +4,7 @@ public class RightNote : Note
 {
     [SerializeField, Header("타격 정확도 허용범위")]
     private float[] accuracyPoint = new float[2] { 0.34f, 0.67f };
+
     [SerializeField, Header("노트 정확도 점수배율")]
     private float[] accuracyScore = new float[2] { 0.8f, 0.5f };
 
@@ -11,11 +12,23 @@ public class RightNote : Note
     private Renderer noteRenderer;
     private float noteDistance;
 
-    public override void Initialize(Vector3 target, float moveSpeed)
+    public override void Initialize(NoteData data)
     {
-        base.Initialize(target, moveSpeed);
+        base.Initialize(data);
         noteTrans = transform;
         noteRenderer = GetComponent<Renderer>();
+        if (noteRenderer != null)
+        {
+            switch (noteData.noteType)
+            {
+                case HitType.Red:
+                    noteRenderer.material.color = Color.red;
+                    break;
+                case HitType.Blue:
+                    noteRenderer.material.color = Color.blue;
+                    break;
+            }
+        }
         if (noteRenderer != null)
         {
             SetNoteDisTance();
@@ -32,24 +45,6 @@ public class RightNote : Note
         dis.x += sizeX / 2;
         noteDistance = Vector3.Distance(noteTrans.position, dis);
         print($"노트 길이: {noteDistance}");
-    }
-
-    //시각적으로 타입이 다른걸 보이게할려고 만듬 삭제해도 상관없음
-    public override void SetNoteData(NoteData data)
-    {
-        base.SetNoteData(data);
-        if (noteRenderer != null)
-        {
-            switch (data.noteType)
-            {
-                case HitType.Red:
-                    noteRenderer.material.color = Color.red;
-                    break;
-                case HitType.Blue:
-                    noteRenderer.material.color = Color.blue;
-                    break;
-            }
-        }
     }
 
     private void OnCollisionEnter(Collision other)

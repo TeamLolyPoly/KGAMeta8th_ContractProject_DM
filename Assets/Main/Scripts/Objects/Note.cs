@@ -11,15 +11,15 @@ public class Note : MonoBehaviour
     protected bool isMoving = true;
     protected NoteData noteData;
 
-    public virtual void Initialize(Vector3 target, float moveSpeed)
+    public virtual void Initialize(NoteData data)
     {
-        targetPosition = target;
-        speed = moveSpeed;
-    }
-
-    public virtual void SetNoteData(NoteData data)
-    {
-        noteData = data;
+        noteData = new NoteData()
+        {
+            noteAxis = data.noteAxis,
+            direction = data.direction,
+            target = data.target,
+            moveSpeed = data.moveSpeed,
+        };
     }
 
     protected virtual void Update()
