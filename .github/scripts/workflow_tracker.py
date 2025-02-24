@@ -403,18 +403,24 @@ class TodoProcessor:
         """커밋 메시지의 TODO 섹션을 처리합니다."""
         if not todo_text:
             return []
-            
-        todo_lines = self.convert_to_checkbox_list(todo_text).split('\n')
-        new_todos = []
         
-        for line in todo_lines:
-            if line.startswith('@'):
-                self.current_category = line[1:].strip()
-                new_todos.append((False, line))
-            elif line.startswith('-'):
-                new_todos.append((False, line[2:].strip()))
-                
-        return new_todos
+        todo_lines = []
+        for line in todo_text.strip().split('\n'):
+            line = line.strip()
+            if line:
+                if line.startswith('@'):
+                    self.current_category = line[1:].strip()
+                    todo_lines.append((False, line))
+                elif line.startswith(('-', '*')):
+                    if '(issue)' in line:
+                        text = line[1:].strip()  # '-' 제거
+                        todo_lines.append((False, text))
+                    else:
+                        todo_lines.append((False, line[1:].strip()))
+                else:
+                    todo_lines.append((False, line))
+        
+        return todo_lines
     
     def process_existing_todos(self, existing_todos):
         """기존 TODO 항목들을 처리합니다."""
