@@ -118,14 +118,4 @@ public class LeftNote : Note
                 return dir;
         }
     }
-
-    //추가
-    public void SetNoteDirection(NoteDirection newDirection, NoteAxis newAxis)
-    {
-        direction = newDirection;
-        axis = newAxis;
-        NoteDirectionChange();
-        NoteHitDirectionChange();
-    }
-
 }
