@@ -12,16 +12,19 @@ public class LeftNote : Note
         noteData.noteAxis = NoteAxis.PZ;
         noteData = data;
         noteTrans = GetComponent<Transform>();
-    }
-    void OnValidate()
-    {
-        if (noteTrans == null)
-        {
-            noteTrans = GetComponent<Transform>();
-        }
         NoteDirectionChange();
         NoteHitDirectionChange();
     }
+    // Initialize로 관리함
+    // void OnValidate()
+    // {
+    //     if (noteTrans == null)
+    //     {
+    //         noteTrans = GetComponent<Transform>();
+    //     }
+    //     NoteDirectionChange();
+    //     NoteHitDirectionChange();
+    // }
 
     private void OnCollisionEnter(Collision other)
     {
@@ -118,4 +121,5 @@ public class LeftNote : Note
                 return dir;
         }
     }
+
 }
