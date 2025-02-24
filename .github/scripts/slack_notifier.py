@@ -305,8 +305,7 @@ def format_commit_todo_message(commit_data, repo_name):
 def send_slack_notification(message):
     """Slack으로 메시지 전송"""
     client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
-    channel_id = os.environ['SLACK_CHANNEL_ID']
-    
+    channel_id = os.environ['SLACK_CHANNEL_ID']    
     try:
         response = client.chat_postMessage(
             channel=channel_id,

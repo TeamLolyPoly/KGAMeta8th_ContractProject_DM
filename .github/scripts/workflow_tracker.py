@@ -66,7 +66,6 @@ class CommitMessage:
     def parse(cls, message: str) -> Optional['CommitMessage']:
         sections = {'title': '', 'body': '', 'todo': '', 'footer': ''}
         current_section = 'title'
-        lines = []
 
         message_lines = message.split('\n')
         if not message_lines:
@@ -186,8 +185,6 @@ def parse_categorized_todos(text):
     return categories
 
 def retry_api_call(func, max_retries=3, delay=5):
-    """GitHub API 호출을 재시도하는 데코레이터 함수"""
-    
     for attempt in range(max_retries):
         try:
             return func()
@@ -202,7 +199,6 @@ def retry_api_call(func, max_retries=3, delay=5):
     return None
 
 def create_commit_section(commit_data, branch, commit_sha, author, time_string, repo):
-    """커밋 섹션을 생성합니다."""
     logger.section("Creating Commit Section")
     logger.debug(f"Commit SHA: {commit_sha[:7]}")
     logger.debug(f"Author: {author}")
@@ -221,7 +217,9 @@ def create_commit_section(commit_data, branch, commit_sha, author, time_string, 
                     line = line[1:].strip()
                 body_lines.append(f"> • {line}")
                 logger.debug(f"Added body line: {line}")
-    quoted_body = '\n'.join(body_lines)
+    
+    # body가 없는 경우에도 최소한의 내용을 추가
+    quoted_body = '\n'.join(body_lines) if body_lines else '> No additional details provided.'
     
     current_date = datetime.now(pytz.timezone(os.environ.get('TIMEZONE', 'Asia/Seoul'))).strftime('%Y-%m-%d')
     
@@ -292,7 +290,6 @@ def create_section(title, content):
 </details>'''
 
 def parse_existing_issue(body):
-    """이슈 본문을 파싱하여 기존 TODO 항목들을 추출합니다."""
     print(f"\n=== 이슈 본문 파싱 ===")
     todos = []
     in_todo_section = False
@@ -307,14 +304,12 @@ def parse_existing_issue(body):
             print("TODO 섹션 종료")
             break
         elif in_todo_section and line.strip():
-            # 카테고리 헤더 확인
             if '<summary><h3' in line:
                 category_match = re.search(r'📑\s*(.*?)\s*\(', line)
                 if category_match:
                     current_category = category_match.group(1).strip()
                     todos.append((False, f"@{current_category}"))
                     print(f"카테고리 발견: {current_category}")
-            # TODO 항목 확인
             elif line.startswith('- [ ]') or line.startswith('- [x]'):
                 is_checked = line.startswith('- [x]')
                 todo_text = line[6:].strip()
@@ -498,11 +493,9 @@ def create_todo_section(todos: List[Tuple[bool, str]]) -> str:
 def get_previous_day_todos(repo, issue_label, current_date):
     previous_issues = repo.get_issues(state='open', labels=[issue_label])
     previous_todos = []
-    previous_issue = None
     
     for issue in previous_issues:
         if issue.title.startswith('📅 Daily Development Log') and issue.title != f'📅 Daily Development Log ({current_date})':
-            previous_issue = issue
             existing_content = parse_existing_issue(issue.body)
             previous_todos = [(False, todo[1]) for todo in existing_content['todos'] if not todo[0]]
             issue.edit(state='closed')
@@ -542,10 +535,8 @@ def get_merge_commits(repo, merge_commit):
     logger.debug(f"Source branch SHA: {source_parent.sha}")
     
     try:
-        # 메인 브랜치와 피처 브랜치의 분기점을 찾음
         comparison = repo.compare(target_parent.sha, source_parent.sha)
         
-        # 피처 브랜치에만 있는 커밋들을 가져옴
         unique_commits = []
         seen_messages = set()
         
@@ -643,13 +634,11 @@ def get_todays_commits(repo, branch, timezone):
     print(f"\n=== Getting Today's Commits for {branch} ===")
     
     try:
-        # 브랜치 객체를 먼저 가져옴
         branch_obj = repo.get_branch(branch)
         if not branch_obj:
             logger.error(f"Branch not found: {branch}")
             return []
             
-        # 해당 브랜치의 커밋들을 가져옴
         commits = repo.get_commits(sha=branch_obj.commit.sha)
         todays_commits = []
         
@@ -689,28 +678,25 @@ def find_active_dsr_issue(repo: Repository, date_string: str, issue_title: str) 
     return None
 
 def main():
-    # PAT를 우선적으로 사용
     github_token = os.environ.get('PAT') or os.environ['GITHUB_TOKEN']
     
     g = Github(github_token)
     repository = os.environ['GITHUB_REPOSITORY']
     repo = g.get_repo(repository)
     
-    # 디버그 정보 추가
     try:
-        test_commit = repo.get_commits()[0]  # 최신 커밋 하나 가져오기 시도
+        test_commit = repo.get_commits()[0]
         logger.debug(f"Repository access test - latest commit: {test_commit.sha[:7]}")
     except Exception as e:
         logger.error(f"Repository access error: {str(e)}")
     
     timezone = os.environ.get('TIMEZONE', 'Asia/Seoul')
     issue_prefix = os.environ.get('ISSUE_PREFIX', '📅')
-    excluded_pattern = os.environ.get('EXCLUDED_COMMITS', '^(chore|docs|style):')
 
     branch = os.environ['GITHUB_REF'].replace('refs/heads/', '')
     
-    logger.debug(f"Current branch: {branch}")  # 브랜치 이름 로깅
-    logger.debug(f"GITHUB_REF: {os.environ['GITHUB_REF']}")  # GitHub ref 로깅
+    logger.debug(f"Current branch: {branch}")
+    logger.debug(f"GITHUB_REF: {os.environ['GITHUB_REF']}")
     
     tz = pytz.timezone(timezone)
     now = datetime.now(tz)
@@ -885,17 +871,19 @@ def main():
         logger.section("Final Result")
         print(f"Total TODOs: {len(processed_todos)} items")
         
-        branches_content = existing_content['branches']
+        branches_content = existing_content.get('branches', {})
         
         if branch_content.strip():
             if branch in branches_content:
                 branches_content[branch] = branch_content + "\n\n" + branches_content[branch]
             else:
                 branches_content[branch] = branch_content
+                logger.debug(f"새로운 브랜치 '{branch}' 추가됨")
 
         branch_sections = []
         for branch_name, content in branches_content.items():
-            branch_sections.append(f'''<details>
+            if content.strip():
+                branch_sections.append(f'''<details>
 <summary><h3 style="display: inline;">✨ {branch_name.title()}</h3></summary>
 
 {content}
@@ -918,12 +906,12 @@ def main():
 {create_todo_section(processed_todos)}'''
 
         today_issue.edit(body=updated_body)
-        print(f"Updated issue #{today_issue.number}")
+        logger.debug(f"이슈 #{today_issue.number} 업데이트됨 - 브랜치 '{branch}' 내용 추가")
     else:
-        # 새 이슈 생성 시에도 동일한 로직 적용
         branches_content = {}
         if branch_content.strip():
             branches_content[branch] = branch_content
+            logger.debug(f"새 이슈에 브랜치 '{branch}' 추가됨")
 
         branch_sections = []
         for branch_name, content in branches_content.items():

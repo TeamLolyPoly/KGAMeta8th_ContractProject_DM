@@ -94,5 +94,4 @@ public class RightNote : Note
             return 0;
         }
     }
-
 }
