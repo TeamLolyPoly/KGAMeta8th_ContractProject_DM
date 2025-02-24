@@ -2,23 +2,19 @@ using UnityEngine;
 
 public class LeftNote : Note
 {
-    private NoteData noteData;
     private Transform noteTrans;
     private Vector3 hitDirection;
     [SerializeField, Header("블럭 타격 오차범위")]
     private float directionalRange = 10f;
-    public void Initialize(NoteData data)
+    public override void Initialize(Vector3 target, float moveSpeed)
     {
-        noteData.noteAxis = NoteAxis.PZ;
-        noteData = data;
-        noteTrans = GetComponent<Transform>();
+        base.Initialize(target, moveSpeed);
+        noteTrans = transform;
     }
-    void OnValidate()
+    public override void SetNoteData(NoteData data)
     {
-        if (noteTrans == null)
-        {
-            noteTrans = GetComponent<Transform>();
-        }
+        base.SetNoteData(data);
+        noteData.noteAxis = NoteAxis.PZ; // 기본 축 설정
         NoteDirectionChange();
         NoteHitDirectionChange();
     }
@@ -117,15 +113,6 @@ public class LeftNote : Note
             default:
                 return dir;
         }
-    }
-
-    //추가
-    public void SetNoteDirection(NoteDirection newDirection, NoteAxis newAxis)
-    {
-        direction = newDirection;
-        axis = newAxis;
-        NoteDirectionChange();
-        NoteHitDirectionChange();
     }
 
 }

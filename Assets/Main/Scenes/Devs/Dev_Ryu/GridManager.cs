@@ -34,17 +34,19 @@ public class GridManager : Singleton<GridManager>
         sourceGrid = sourceObj.transform;
         sourceGrid.parent = transform;
         sourceGrid.localPosition = new Vector3(0, 1.7f, 2f);
-        CreateGrid(sourceGrid);
+        sourceGrid.localRotation = Quaternion.Euler(0, 180, 0);
+        CreateGrid(sourceGrid, false);
 
         // 鸥百 弊府靛 积己
         GameObject targetObj = new GameObject("TargetGrid");
         targetGrid = targetObj.transform;
         targetGrid.parent = transform;
         targetGrid.localPosition = new Vector3(0, 1.7f, gridDistance);
-        CreateGrid(targetGrid);
+        targetGrid.localRotation = Quaternion.Euler(0, 180, 0);
+        CreateGrid(targetGrid, true);
     }
 
-    void CreateGrid(Transform gridParent)
+    void CreateGrid(Transform gridParent, bool isTarget)
     {
         float totalWidth = (totalHorizontalCells * cellSize) + ((totalHorizontalCells - 1) * cellSpacing);
         float totalHeight = (verticalCells * cellSize) + ((verticalCells - 1) * cellSpacing);
@@ -55,6 +57,7 @@ public class GridManager : Singleton<GridManager>
         {
             for (int y = 0; y < verticalCells; y++)
             {
+                int gridX = isTarget ? (totalHorizontalCells - 1 - x) : x;
                 CreateCell(gridParent, x, y, startX, startY);
             }
         }
