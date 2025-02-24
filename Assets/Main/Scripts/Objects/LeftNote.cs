@@ -1,19 +1,25 @@
 using UnityEngine;
 
-public class LeftNote : Note
+public class LeftNote : Note, IInitializable
 {
-
-    [SerializeField] private NoteDirection direction;
-    [SerializeField] private NoteAxis axis = NoteAxis.PZ;
+    private NoteData noteData;
     private Transform noteTrans;
     private Vector3 hitDirection;
     [SerializeField, Header("블럭 타격 오차범위")]
     private float directionalRange = 10f;
-    void Awake()
+    private bool isinitialized = false;
+    public bool IsInitialized => isinitialized;
+    public void Initialize()
     {
-        noteTrans = GetComponent<Transform>();
-    }
 
+    }
+    public void Initialize(NoteData data)
+    {
+        noteData.noteAxis = NoteAxis.PZ;
+        noteData = data;
+        noteTrans = GetComponent<Transform>();
+        isinitialized = true;
+    }
     void OnValidate()
     {
         if (noteTrans == null)
@@ -44,7 +50,7 @@ public class LeftNote : Note
     private void NoteDirectionChange()
     {
         float rotationZ = 0f;
-        switch (direction)
+        switch (noteData.direction)
         {
             case NoteDirection.East:
                 rotationZ = 90f;
@@ -85,7 +91,7 @@ public class LeftNote : Note
     private void NoteHitDirectionChange()
     {
         float rotationY = 0f;
-        switch (axis)
+        switch (noteData.noteAxis)
         {
             case NoteAxis.PZ:
                 rotationY = 0f;
@@ -105,7 +111,7 @@ public class LeftNote : Note
     //노트의 axis값에 달라지는 hitDirection값을 보정함
     private Vector3 SetHitDirection(Vector3 dir)
     {
-        switch (axis)
+        switch (noteData.noteAxis)
         {
             case NoteAxis.PZ:
                 return dir;
