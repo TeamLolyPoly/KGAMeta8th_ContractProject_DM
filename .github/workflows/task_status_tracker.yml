@@ -1,8 +1,12 @@
 name: Task Status Tracker
 
 on:
-  project_card:
-    types: [created, edited, moved]
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
 
 permissions:
   issues: write
@@ -19,10 +23,6 @@ env:
 jobs:
   update-task-report:
     runs-on: ubuntu-latest
-    if: |
-      github.event.action == 'created' ||
-      github.event.action == 'moved' ||
-      github.event.action == 'edited'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
