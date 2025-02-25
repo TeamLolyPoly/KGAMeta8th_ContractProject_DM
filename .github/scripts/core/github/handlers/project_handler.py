@@ -573,13 +573,22 @@ class GitHubProjectHandler:
         }
         
         # 각 아이템의 상태 업데이트
-        for item_number, item_data in self.get_project_items().items():
+        project_items = self.get_project_items()
+        for item_number, item_data in project_items.items():
             task_name = None
             task_match = re.match(r'\[(.*?)\]', item_data['title'])
             if task_match:
                 task_name = task_match.group(1)
             
             if not task_name:
+                continue
+            
+            # 현재 아이템의 상태 확인
+            current_status = item_data.get('fields', {}).get('Status', 'Todo')
+            
+            # 이슈가 닫혀있거나 현재 Done 상태면 건너뛰기
+            if item_data['state'] == 'CLOSED' or current_status == 'Done':
+                logger.debug(f"아이템 #{item_number} ({task_name})는 이미 완료됨")
                 continue
                 
             # 태스크 상태 확인
@@ -597,6 +606,11 @@ class GitHubProjectHandler:
                 status_name = "Blocked"
             else:
                 status_name = "Todo"
+            
+            # 현재 상태와 같으면 업데이트하지 않음
+            if status_name == current_status:
+                logger.debug(f"아이템 #{item_number} ({task_name})는 이미 {status_name} 상태")
+                continue
             
             if status_name not in status_options:
                 logger.error(f"'{status_name}' 상태 옵션을 찾을 수 없습니다.")
@@ -630,7 +644,7 @@ class GitHubProjectHandler:
             try:
                 result = self.client._execute_graphql(mutation, variables)
                 if result:
-                    logger.info(f"아이템 #{item_number} ({task_name}) 상태 업데이트: {status_name}")
+                    logger.info(f"아이템 #{item_number} ({task_name}) 상태 업데이트: {current_status} -> {status_name}")
                 else:
                     logger.error(f"아이템 #{item_number} 상태 업데이트 실패")
             except Exception as e:
