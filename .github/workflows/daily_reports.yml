@@ -1,0 +1,111 @@
+name: Daily Reports & Notifications
+
+on:
+  # 일일 리포트 생성
+  schedule:
+    - cron: "0 15 * * *" # DSR 생성 (KST 00:00)
+    - cron: "0 0 * * *" # Slack 알림 (KST 09:00)
+
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - ".gitignore"
+      - "LICENSE"
+
+  issues:
+    types: [opened, closed, labeled, assigned]
+
+  workflow_dispatch:
+    inputs:
+      notification_type:
+        description: "알림 유형"
+        required: true
+        default: "task"
+        type: choice
+        options: [task, daily, commit, all]
+
+permissions:
+  issues: write
+  contents: read
+
+env:
+  TIMEZONE: "Asia/Seoul"
+  ISSUE_PREFIX: "📅"
+  ISSUE_LABEL: "DSR"
+
+jobs:
+  daily-report:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' && github.event.schedule == '0 15 * * *'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/requirements.txt
+
+      - name: Create DSR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python .github/workflow_tracker.py
+
+  notifications:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' && github.event.schedule == '0 1 * * *' ||
+      github.event_name == 'push' ||
+      github.event_name == 'issues' ||
+      github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/requirements.txt
+
+      - name: Send Daily Report Notification
+        if: github.event_name == 'schedule' || github.event.inputs.notification_type == 'daily' || github.event.inputs.notification_type == 'all'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+        run: |
+          cd .github/scripts
+          PYTHONPATH=. python slack_daily_report.py
+
+      - name: Send Task Notification
+        if: github.event_name == 'issues' || github.event.inputs.notification_type == 'task' || github.event.inputs.notification_type == 'all'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+        run: |
+          cd .github/scripts
+          PYTHONPATH=. python slack_task_notifier.py
+
+      - name: Send Commit Notification
+        if: github.event_name == 'push' || github.event.inputs.notification_type == 'commit' || github.event.inputs.notification_type == 'all'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+        run: |
+          cd .github/scripts
+          PYTHONPATH=. python slack_notifier.py
