@@ -42,7 +42,7 @@ public class NoteSpawner : MonoBehaviour
         {
             noteData.noteType = HitType.None;
             noteData.direction = (NoteDirection)Random.Range(0, 8);
-            noteData.noteAxis = (NoteAxis)Random.Range(0, 4);
+            noteData.noteAxis = NoteAxis.PZ;
             noteData.moveSpeed = 10f;
         }
         else
