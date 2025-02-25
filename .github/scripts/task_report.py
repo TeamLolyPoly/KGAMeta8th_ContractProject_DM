@@ -378,6 +378,106 @@ class GitHubProjectManager:
             
         return result['organization']['projectsV2']['nodes']
 
+class TaskReportGenerator:
+    def __init__(self, project_items):
+        self.project_items = project_items
+        self.task_mapping = self._build_task_mapping()
+    
+    def _build_task_mapping(self):
+        """상위 태스크와 하위 투두 아이템 매핑을 구축합니다."""
+        mapping = {}
+        for item_data in self.project_items.values():
+            parent_task = self._get_parent_task(item_data)
+            if parent_task:
+                if parent_task not in mapping:
+                    mapping[parent_task] = {
+                        'todos': [],
+                        'assignees': set()
+                    }
+                mapping[parent_task]['todos'].append(item_data)
+                mapping[parent_task]['assignees'].update(item_data['assignees'])
+        return mapping
+    
+    def _get_parent_task(self, item_data):
+        """아이템의 상위 태스크를 찾습니다."""
+        for label in item_data['labels']:
+            if label.startswith('[') and label.endswith(']'):
+                return label[1:-1]  # 대괄호 제거
+        return None
+    
+    def _calculate_task_progress(self, todos):
+        """태스크의 진행도를 계산합니다."""
+        total_weight = 0
+        completed_weight = 0
+        
+        for todo in todos:
+            weight = self._get_item_weight(todo)
+            total_weight += weight
+            if todo['status'] == 'Done':
+                completed_weight += weight
+        
+        if total_weight == 0:
+            return 0
+        return (completed_weight / total_weight) * 100
+    
+    def _get_item_weight(self, item_data):
+        """아이템의 가중치를 반환합니다."""
+        for label in item_data['labels']:
+            if label.startswith('weight:'):
+                try:
+                    return int(label.replace('weight:', ''))
+                except ValueError:
+                    pass
+        return 1  # 기본 가중치
+    
+    def _get_task_status(self, progress):
+        """진행도에 따른 상태를 반환합니다."""
+        if progress == 100:
+            return "✅ 완료"
+        elif progress > 0:
+            return "🟡 진행중"
+        return "⬜ 대기중"
+    
+    def get_task_info(self, task_title):
+        """태스크의 정보를 반환합니다."""
+        if task_title not in self.task_mapping:
+            return "⬜ 대기중", "0%", [], set()
+        
+        task_data = self.task_mapping[task_title]
+        progress = self._calculate_task_progress(task_data['todos'])
+        status = self._get_task_status(progress)
+        
+        return status, f"{progress:.1f}%", task_data['todos'], task_data['assignees']
+    
+    def generate_category_sections(self):
+        """카테고리별 섹션을 생성합니다."""
+        sections = []
+        for category_key, category_info in TASK_CATEGORIES.items():
+            section = self._create_category_section(category_key)
+            sections.append(section)
+        return "\n\n".join(sections)
+    
+    def _create_category_section(self, category_key):
+        """카테고리 섹션을 생성합니다."""
+        section = self._get_category_header(category_key)
+        
+        for issue_number, item_data in self.project_items.items():
+            if self._is_item_in_category(item_data, category_key):
+                section += self._create_task_entry(issue_number, item_data)
+        
+        return section + "\n</details>"
+    
+    def _create_task_entry(self, issue_number, item_data):
+        """태스크 항목을 생성합니다."""
+        title = item_data['title']
+        status, progress, todos, assignees = self.get_task_info(title)
+        
+        entry = self._format_task_entry(issue_number, item_data, status, progress, assignees)
+        if todos:
+            entry += self._format_todo_list(todos)
+        
+        return entry
+
 TASK_CATEGORIES = {
     "기능 개발": {
         "emoji": "🔧",
@@ -658,85 +758,20 @@ def process_approval(issue, repo):
 
 def update_task_progress_in_report(body, project):
     """보고서의 태스크 진행률을 업데이트합니다."""
-    logger.info("\n=== 태스크 진행률 업데이트 시작 ===")
     project_items = project.get_project_items()
+    report_generator = TaskReportGenerator(project_items)
     
-    # 상위 태스크별 하위 투두 아이템 매핑
-    task_mapping = {}
-    for item_number, item_data in project_items.items():
-        parent_task = None
-        for label in item_data['labels']:
-            if label.startswith('[') and label.endswith(']'):
-                parent_task = label[1:-1]  # 대괄호 제거
-                break
-        
-        if parent_task:
-            if parent_task not in task_mapping:
-                task_mapping[parent_task] = {
-                    'todos': [],
-                    'assignees': set()
-                }
-            task_mapping[parent_task]['todos'].append(item_data)
-            task_mapping[parent_task]['assignees'].update(item_data['assignees'])
-    
-    # 각 상위 태스크의 진행도 계산 및 업데이트
-    for task_number, item_data in project_items.items():
-        title = item_data['title']
-        if title in task_mapping:
-            # 진행도 계산
-            todos = task_mapping[title]['todos']
-            total_weight = 0
-            completed_weight = 0
-            
-            for todo in todos:
-                weight = 1  # 기본 가중치
-                for label in todo['labels']:
-                    if label.startswith('weight:'):
-                        try:
-                            weight = int(label.replace('weight:', ''))
-                        except ValueError:
-                            pass
-                
-                total_weight += weight
-                if todo['status'] == 'Done':
-                    completed_weight += weight
-            
-            progress = (completed_weight / total_weight * 100) if total_weight > 0 else 0
-            status = "✅ 완료" if progress == 100 else "🟡 진행중" if progress > 0 else "⬜ 대기중"
-            
-            # 담당자 정보 업데이트
-            assignees = task_mapping[title]['assignees']
-            assignees_str = get_assignees_mention_string(assignees)
-            
-            # 보고서 내용 업데이트
-            pattern = f"\\| \\[TSK-{task_number}\\].*?\\|"
-            replacement = f"| [TSK-{task_number}]({item_data['html_url']}) | {title} | {assignees_str} | {item_data['fields'].get('Target Date', '-')} | - | {status} ({progress:.1f}%) | {item_data.get('priority', '보통')} |"
-            body = re.sub(pattern, replacement, body, flags=re.MULTILINE)
-            
-            logger.info(f"태스크 업데이트: {title} - 진행률: {progress:.1f}%, 담당자: {assignees_str}")
-    
-    # 카테고리별 통계 업데이트
-    category_stats = {}
-    for item_data in project_items.values():
-        category = item_data['category']
-        if category not in category_stats:
-            category_stats[category] = {'total': 0, 'completed': 0, 'in_progress': 0}
-        
-        category_stats[category]['total'] += 1
-        if item_data['status'] == 'Done':
-            category_stats[category]['completed'] += 1
-        elif item_data['status'] == 'In Progress':
-            category_stats[category]['in_progress'] += 1
+    # 태스크 상세 내역 업데이트
+    category_sections = report_generator.generate_category_sections()
+    body = update_category_sections(body, category_sections)
     
     # 진행 현황 섹션 업데이트
-    progress_section = create_progress_section_from_project(category_stats)
-    progress_pattern = "## 📊 진행 현황 요약.*?(?=## )"
-    body = re.sub(progress_pattern, f"## 📊 진행 현황 요약\n\n{progress_section}\n\n", body, flags=re.DOTALL)
+    progress_section = create_progress_section(project_items)
+    body = update_progress_section(body, progress_section)
     
     # 히스토리 섹션 업데이트
     history_section = create_task_history_section(project_items)
-    history_pattern = "## 📅 태스크 완료 히스토리.*?(?=## )"
-    body = re.sub(history_pattern, f"{history_section}\n\n", body, flags=re.DOTALL)
+    body = update_history_section(body, history_section)
     
     return body
 
@@ -863,10 +898,11 @@ def create_task_history_section(project_items):
     return history_section
 
 def get_task_status(task_title, project_items):
-    """태스크의 실제 진행 상태를 계산합니다."""
+    """태스크의 실제 진행 상태와 담당자를 계산합니다."""
     todos = []
     total_weight = 0
     completed_weight = 0
+    all_assignees = set()  # 모든 하위 투두의 담당자 수집
     
     # 해당 태스크에 속한 모든 투두 아이템 수집
     for item_data in project_items.values():
@@ -877,6 +913,9 @@ def get_task_status(task_title, project_items):
                 break
         
         if parent_task == task_title:
+            # 담당자 수집
+            all_assignees.update(item_data['assignees'])
+            
             weight = 1  # 기본 가중치
             for label in item_data['labels']:
                 if label.startswith('weight:'):
@@ -892,11 +931,12 @@ def get_task_status(task_title, project_items):
             todos.append({
                 'title': item_data['title'],
                 'status': item_data['status'],
-                'weight': weight
+                'weight': weight,
+                'assignees': item_data['assignees']
             })
     
     if total_weight == 0:
-        return "⬜ 대기중", "0%", []
+        return "⬜ 대기중", "0%", [], set()
     
     progress = (completed_weight / total_weight) * 100
     
@@ -908,7 +948,7 @@ def get_task_status(task_title, project_items):
     else:
         status = "⬜ 대기중"
     
-    return status, f"{progress:.1f}%", todos
+    return status, f"{progress:.1f}%", todos, all_assignees
 
 def create_category_sections(project_items):
     """모든 카테고리 섹션을 생성합니다."""
@@ -933,15 +973,15 @@ def create_category_sections(project_items):
                 title = item_data['title']
                 issue_url = f"https://github.com/{os.environ.get('GITHUB_REPOSITORY')}/issues/{issue_number}"
                 
-                # 담당자 정보 가져오기
-                assignees_str = get_assignees_mention_string(item_data['assignees'])
+                # 진행 상태 계산 (담당자 포함)
+                status, progress, todos, assignees = get_task_status(title, project_items)
+                status_text = f"{status} ({progress})"
+                
+                # 담당자 정보 업데이트 (하위 투두의 모든 담당자)
+                assignees_str = get_assignees_mention_string(assignees)
                 
                 # 예상 시간
                 expected_time = item_data['fields'].get('Target Date', '-')
-                
-                # 진행 상태 계산
-                status, progress, todos = get_task_status(title, project_items)
-                status_text = f"{status} ({progress})"
                 
                 # 우선순위 확인
                 priority = "보통"
@@ -955,9 +995,10 @@ def create_category_sections(project_items):
                 # 투두 아이템 상세 정보 추가
                 if todos:
                     section += "\n<details>\n<summary>📋 투두 목록</summary>\n\n"
-                    section += "| 투두 | 상태 | 가중치 |\n|------|--------|--------|\n"
+                    section += "| 투두 | 상태 | 가중치 | 담당자 |\n|------|--------|--------|--------|\n"
                     for todo in todos:
-                        section += f"| {todo['title']} | {todo['status']} | {todo['weight']} |\n"
+                        todo_assignees_str = get_assignees_mention_string(todo['assignees'])
+                        section += f"| {todo['title']} | {todo['status']} | {todo['weight']} | {todo_assignees_str} |\n"
                     section += "\n</details>\n\n"
         
         section += "\n</details>"
@@ -975,7 +1016,7 @@ def create_task_entry(task_issue, project_items):
     assignees_str = get_assignees_mention_string([assignee.login for assignee in task_issue.assignees])
     
     # 진행 상태 계산
-    status, progress, todos = get_task_status(title, project_items)
+    status, progress, todos, assignees = get_task_status(title, project_items)
     status_text = f"{status} ({progress})"
     
     # 우선순위 확인
@@ -1033,6 +1074,56 @@ def get_category_from_labels(issue_labels):
         if label.name.startswith("category:"):
             return label.name.replace("category:", "").strip()
     return "기타"  # 기본값
+
+def update_category_sections(body, new_sections):
+    """태스크 상세 내역 섹션을 업데이트합니다."""
+    start = body.find("## 📋 태스크 상세 내역")
+    end = body.find("## 📊 진행 현황 요약")
+    if start == -1 or end == -1:
+        return body
+    
+    return f"{body[:start]}## 📋 태스크 상세 내역\n\n{new_sections}\n\n{body[end:]}"
+
+def create_progress_section(project_items):
+    """진행 현황 섹션을 생성합니다."""
+    # 카테고리별 통계 초기화
+    category_stats = {}
+    
+    # 프로젝트 아이템 처리
+    for item_data in project_items.values():
+        category = item_data['category']
+        if category not in category_stats:
+            category_stats[category] = {'total': 0, 'completed': 0, 'in_progress': 0}
+        
+        category_stats[category]['total'] += 1
+        if item_data['status'] == 'Done':
+            category_stats[category]['completed'] += 1
+        elif item_data['status'] == 'In Progress':
+            category_stats[category]['in_progress'] += 1
+    
+    return create_progress_section_from_project(category_stats)
+
+def update_progress_section(body, new_section):
+    """진행 현황 섹션을 업데이트합니다."""
+    start = body.find("## 📊 진행 현황 요약")
+    end = body.find("## 📅 태스크 완료 히스토리")
+    if start == -1 or end == -1:
+        return body
+    
+    return f"{body[:start]}## 📊 진행 현황 요약\n\n{new_section}\n\n{body[end:]}"
+
+def create_history_section(project_items):
+    """히스토리 섹션을 생성합니다."""
+    return create_task_history_section(project_items)
+
+def update_history_section(body, new_section):
+    """히스토리 섹션을 업데이트합니다."""
+    start = body.find("## 📅 태스크 완료 히스토리")
+    end = body.find("## 📝 특이사항 및 리스크")
+    if start == -1 or end == -1:
+        return body
+    
+    return f"{body[:start]}{new_section}\n\n{body[end:]}"
 
 def main():
     try:
