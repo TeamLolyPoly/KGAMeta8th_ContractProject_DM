@@ -367,23 +367,47 @@ class GitHubProjectManager:
         logger.debug(f"\n총 {len(items)}개의 아이템 처리 완료")
         return items
 
+    def get_task_issues(self) -> Dict[str, Dict]:
+        """태스크 이슈들을 가져옵니다."""
+        repo = self.g.get_repo(os.environ.get('GITHUB_REPOSITORY'))
+        task_issues = {}
+        
+        for issue in repo.get_issues(state='all'):
+            if issue.title.startswith('[KGAMeta8th_ContractProject_DM]'):
+                task_name = issue.title.replace('[KGAMeta8th_ContractProject_DM] ', '')
+                task_issues[task_name] = {
+                    'number': issue.number,
+                    'url': issue.html_url,
+                    'state': issue.state,
+                    'expected_time': self._extract_expected_time(issue.body)
+                }
+        
+        return task_issues
+
+    def _extract_expected_time(self, body: str) -> str:
+        """이슈 본문에서 예상 시간을 추출합니다."""
+        if not body or '구현목표일:' not in body:
+            return '-'
+        try:
+            start_date = datetime.strptime('2025-02-21', '%Y-%m-%d')
+            end_date = datetime.strptime(body.split('구현목표일:')[1].split('\n')[0].strip(), '%Y-%m-%d')
+            days = (end_date - start_date).days
+            return f"{days}d"
+        except:
+            return '-'
+
 class TaskManager:
-    """태스크와 투두 아이템의 상태 및 관계 관리"""
-    def __init__(self, project_items: Dict, github_token: str):
+    def __init__(self, project_items: Dict, task_issues: Dict):
         self.project_items = project_items
-        self.g = Github(github_token)
+        self.task_issues = task_issues
         self.task_mapping = self._build_task_mapping()
         self.category_mapping = self._build_category_mapping()
 
     def _build_task_mapping(self) -> Dict[str, Dict]:
         """상위 태스크와 하위 투두 아이템 매핑을 구축"""
-        logger.info("\n태스크 매핑 구축 시작")
-        
         mapping = {}
         task_count = 0
         todo_count = 0
-        
-        repo = self.g.get_repo(os.environ.get('GITHUB_REPOSITORY'))
         
         # 프로젝트 아이템들에서 [태스크명]을 추출하여 매핑
         for item_data in self.project_items.values():
@@ -396,47 +420,19 @@ class TaskManager:
                 # 해당 태스크가 없으면 생성
                 if task_name not in mapping:
                     task_count += 1
-                    # 실제 태스크 이슈 찾기
-                    task_issue = None
-                    for issue in repo.get_issues(state='all'):
-                        if issue.title == f'[KGAMeta8th_ContractProject_DM] {task_name}':
-                            task_issue = issue
-                            break
+                    task_info = self.task_issues.get(task_name, {})
                     
-                    if task_issue:
-                        # 태스크 제안서에서 예상 시간 추출
-                        expected_time = None
-                        if '구현목표일:' in task_issue.body:
-                            try:
-                                start_date = datetime.strptime('2025-02-21', '%Y-%m-%d')
-                                end_date = datetime.strptime(task_issue.body.split('구현목표일:')[1].split('\n')[0].strip(), '%Y-%m-%d')
-                                days = (end_date - start_date).days
-                                expected_time = f"{days}d"
-                            except:
-                                expected_time = '-'
-                        
-                        mapping[task_name] = {
-                            'number': task_issue.number,
-                            'title': task_name,
-                            'todos': [],
-                            'assignees': set(),
-                            'state': task_issue.state,
-                            'completed_todos': 0,
-                            'total_todos': 0,
-                            'expected_time': expected_time or '-',
-                            'url': task_issue.html_url
-                        }
-                    else:
-                        mapping[task_name] = {
-                            'number': task_count,
-                            'title': task_name,
-                            'todos': [],
-                            'assignees': set(),
-                            'state': 'OPEN',
-                            'completed_todos': 0,
-                            'total_todos': 0,
-                            'expected_time': '-'
-                        }
+                    mapping[task_name] = {
+                        'number': task_info.get('number', task_count),
+                        'title': task_name,
+                        'todos': [],
+                        'assignees': set(),
+                        'state': task_info.get('state', 'OPEN'),
+                        'completed_todos': 0,
+                        'total_todos': 0,
+                        'expected_time': task_info.get('expected_time', '-'),
+                        'url': task_info.get('url', '#')
+                    }
                 
                 # 투두 정보 추가
                 todo_info = TodoInfo(
@@ -453,10 +449,6 @@ class TaskManager:
                 mapping[task_name]['total_todos'] += 1
                 if todo_info.status == 'Done':
                     mapping[task_name]['completed_todos'] += 1
-        
-        logger.info(f"\n태스크 매핑 통계:")
-        logger.info(f"  - 총 태스크 수: {task_count}")
-        logger.info(f"  - 총 투두 수: {todo_count}")
         
         return mapping
 
@@ -874,10 +866,10 @@ class TaskReport:
     """태스크 보고서의 전체적인 상태와 동작을 관리"""
     
     def __init__(self, github_token: str):
-        self.github_token = github_token
         self.github_manager = GitHubProjectManager(github_token)
         self.project_items = self.github_manager.get_project_items()
-        self.task_manager = TaskManager(self.project_items, github_token)
+        self.task_issues = self.github_manager.get_task_issues()
+        self.task_manager = TaskManager(self.project_items, self.task_issues)
         self.formatter = None
 
     def create_or_update_report(self, repo_name: str) -> None:
