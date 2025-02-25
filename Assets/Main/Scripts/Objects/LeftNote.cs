@@ -2,6 +2,12 @@ using UnityEngine;
 
 public class LeftNote : Note
 {
+    public override void Initialize(NoteData data)
+    {
+        base.Initialize(data);
+        NoteDirectionChange();
+        NoteHitDirectionChange();
+    }
     private void OnCollisionEnter(Collision other)
     {
         Vector3 hitPoint = other.contacts[0].normal;
@@ -15,7 +21,8 @@ public class LeftNote : Note
         }
         else
         {
-            print("타격 실패");
+            print("이상한 방향을 타격함");
         }
+        Destroy(this.gameObject);
     }
 }
