@@ -656,19 +656,67 @@ def process_approval(issue, repo):
     elif '⏸️ 보류' in labels:
         issue.create_comment("⏸️ 태스크가 보류되었습니다. 추가 논의가 필요합니다.")
 
-def update_task_progress_in_report(body, project=None):
+def update_task_progress_in_report(body, project):
     """보고서의 태스크 진행률을 업데이트합니다."""
     logger.info("\n=== 태스크 진행률 업데이트 시작 ===")
-    if project is None:
-        github_token = os.environ.get('PAT') or os.environ.get('GITHUB_TOKEN')
-        project = GitHubProjectManager(github_token)
     project_items = project.get_project_items()
     
-    # 카테고리별 통계 초기화
-    category_stats = {}
+    # 상위 태스크별 하위 투두 아이템 매핑
+    task_mapping = {}
+    for item_number, item_data in project_items.items():
+        parent_task = None
+        for label in item_data['labels']:
+            if label.startswith('[') and label.endswith(']'):
+                parent_task = label[1:-1]  # 대괄호 제거
+                break
+        
+        if parent_task:
+            if parent_task not in task_mapping:
+                task_mapping[parent_task] = {
+                    'todos': [],
+                    'assignees': set()
+                }
+            task_mapping[parent_task]['todos'].append(item_data)
+            task_mapping[parent_task]['assignees'].update(item_data['assignees'])
     
-    # 프로젝트 아이템 처리
-    logger.info("\n프로젝트 아이템 상태 분석:")
+    # 각 상위 태스크의 진행도 계산 및 업데이트
+    for task_number, item_data in project_items.items():
+        title = item_data['title']
+        if title in task_mapping:
+            # 진행도 계산
+            todos = task_mapping[title]['todos']
+            total_weight = 0
+            completed_weight = 0
+            
+            for todo in todos:
+                weight = 1  # 기본 가중치
+                for label in todo['labels']:
+                    if label.startswith('weight:'):
+                        try:
+                            weight = int(label.replace('weight:', ''))
+                        except ValueError:
+                            pass
+                
+                total_weight += weight
+                if todo['status'] == 'Done':
+                    completed_weight += weight
+            
+            progress = (completed_weight / total_weight * 100) if total_weight > 0 else 0
+            status = "✅ 완료" if progress == 100 else "🟡 진행중" if progress > 0 else "⬜ 대기중"
+            
+            # 담당자 정보 업데이트
+            assignees = task_mapping[title]['assignees']
+            assignees_str = get_assignees_mention_string(assignees)
+            
+            # 보고서 내용 업데이트
+            pattern = f"\\| \\[TSK-{task_number}\\].*?\\|"
+            replacement = f"| [TSK-{task_number}]({item_data['html_url']}) | {title} | {assignees_str} | {item_data['fields'].get('Target Date', '-')} | - | {status} ({progress:.1f}%) | {item_data.get('priority', '보통')} |"
+            body = re.sub(pattern, replacement, body, flags=re.MULTILINE)
+            
+            logger.info(f"태스크 업데이트: {title} - 진행률: {progress:.1f}%, 담당자: {assignees_str}")
+    
+    # 카테고리별 통계 업데이트
+    category_stats = {}
     for item_data in project_items.values():
         category = item_data['category']
         if category not in category_stats:
@@ -677,65 +725,20 @@ def update_task_progress_in_report(body, project=None):
         category_stats[category]['total'] += 1
         if item_data['status'] == 'Done':
             category_stats[category]['completed'] += 1
-            logger.info(f"완료된 태스크 발견: #{item_data['number']} - {item_data['title']} ({category})")
         elif item_data['status'] == 'In Progress':
             category_stats[category]['in_progress'] += 1
-            logger.info(f"진행중인 태스크 발견: #{item_data['number']} - {item_data['title']} ({category})")
-    
-    # 보고서 내용 업데이트
-    logger.info("\n보고서 섹션 업데이트 시작")
-    
-    # 히스토리 섹션 업데이트
-    logger.info("히스토리 섹션 업데이트 중...")
-    history_section = create_task_history_section(project_items)
-    
-    # 보고서 섹션 분리 및 업데이트
-    sections = {}
-    current_section = None
-    current_content = []
-    
-    for line in body.split('\n'):
-        if line.startswith('## '):
-            if current_section:
-                sections[current_section] = '\n'.join(current_content)
-            current_section = line[3:].strip()
-            current_content = [line]
-        elif line.startswith('---'):
-            break  # footer 시작 부분에서 중단
-        else:
-            if current_section:
-                current_content.append(line)
-    
-    if current_section:
-        sections[current_section] = '\n'.join(current_content)
-    
-    # 히스토리 섹션 교체
-    sections['📅 태스크 완료 히스토리'] = history_section
     
     # 진행 현황 섹션 업데이트
     progress_section = create_progress_section_from_project(category_stats)
-    if '📊 진행 현황 요약' in sections:
-        sections['📊 진행 현황 요약'] = f"## 📊 진행 현황 요약\n\n{progress_section}"
+    progress_pattern = "## 📊 진행 현황 요약.*?(?=## )"
+    body = re.sub(progress_pattern, f"## 📊 진행 현황 요약\n\n{progress_section}\n\n", body, flags=re.DOTALL)
     
-    # 섹션 순서 정의
-    section_order = [
-        '📌 기본 정보',
-        '📋 태스크 상세 내역',
-        '📊 진행 현황 요약',
-        '📅 태스크 완료 히스토리',
-        '📝 특이사항 및 리스크'
-    ]
+    # 히스토리 섹션 업데이트
+    history_section = create_task_history_section(project_items)
+    history_pattern = "## 📅 태스크 완료 히스토리.*?(?=## )"
+    body = re.sub(history_pattern, f"{history_section}\n\n", body, flags=re.DOTALL)
     
-    # 보고서 재구성
-    updated_body = []
-    for section in section_order:
-        if section in sections:
-            updated_body.append(sections[section])
-    
-    # 마지막 줄 한 번만 추가
-    updated_body.append("\n---\n> 이 보고서는 자동으로 생성되었으며, 담당자가 지속적으로 업데이트할 예정입니다.")
-    
-    return '\n\n'.join(updated_body)
+    return body
 
 def create_progress_section_from_project(category_stats):
     """프로젝트 보드 데이터를 기반으로 진행 현황 섹션을 생성합니다."""
