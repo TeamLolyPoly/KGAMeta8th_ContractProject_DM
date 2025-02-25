@@ -9,7 +9,6 @@ import logging
 import requests
 from typing import Dict, Optional, Any
 
-# 로깅 설정 수정
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
@@ -18,7 +17,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# stdout 핸들러 추가
 handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
@@ -34,7 +32,6 @@ class GitHubProjectManager:
         }
         self.g = Github(token)
         
-        # GitHub 조직과 프로젝트 번호 설정
         repo_name = os.environ.get('GITHUB_REPOSITORY', '')
         if '/' in repo_name:
             self.org = repo_name.split('/')[0]
@@ -43,7 +40,6 @@ class GitHubProjectManager:
         
         logger.info(f"조직 설정: {self.org}")
         
-        # 사용 가능한 프로젝트 목록 조회
         projects = self.list_projects()
         if projects:
             logger.info(f"사용 가능한 프로젝트 목록:")
@@ -254,38 +250,87 @@ class GitHubProjectManager:
         result = self._execute_graphql(query, variables)
         return result['addProjectV2ItemById']['item']['id'] if result else None
     
-    def set_item_status(self, item_id: str, status_field_id: str, status_option_id: str) -> bool:
-        """프로젝트 아이템의 상태를 설정합니다."""
+    def get_previous_status(self, item_id: str) -> Optional[str]:
+        """아이템의 이전 상태를 가져옵니다."""
         query = """
-        mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
-            updateProjectV2ItemFieldValue(
-                input: {
-                    projectId: $project
-                    itemId: $item
-                    fieldId: $field
-                    value: { singleSelectOptionId: $value }
-                }
-            ) {
-                projectV2Item {
-                    id
+        query($itemId: ID!) {
+            node(id: $itemId) {
+                ... on ProjectV2Item {
+                    fieldValues(first: 8) {
+                        nodes {
+                            ... on ProjectV2ItemFieldSingleSelectValue {
+                                name
+                                field {
+                                    ... on ProjectV2SingleSelectField {
+                                        name
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
         """
         
-        project_info = self.get_project_info()
-        if not project_info:
-            return False
-            
-        variables = {
-            "project": project_info['id'],
-            "item": item_id,
-            "field": status_field_id,
-            "value": status_option_id
-        }
+        try:
+            result = self._execute_graphql(query, {"itemId": item_id})
+            if result and 'node' in result:
+                field_values = result['node']['fieldValues']['nodes']
+                for value in field_values:
+                    if value and value['field']['name'] == 'Status':
+                        return value['name']
+        except Exception as e:
+            logger.error(f"이전 상태 조회 중 오류 발생: {str(e)}")
+        return None
+
+    def handle_status_change(self, item_id: str, new_status: str) -> None:
+        """상태 변경을 처리하고 보고서를 업데이트합니다."""
+        logger.info(f"아이템 상태 변경 감지: {item_id} -> {new_status}")
         
-        result = self._execute_graphql(query, variables)
-        return bool(result)
+        previous_status = self.get_previous_status(item_id)
+        if previous_status == new_status:
+            logger.info("상태 변경 없음")
+            return
+            
+        logger.info(f"상태 변경: {previous_status} -> {new_status}")
+        
+        # GitHub 인스턴스 생성
+        github_token = os.environ.get('PAT') or os.environ.get('GITHUB_TOKEN')
+        g = Github(github_token)
+        repo_name = os.environ.get('GITHUB_REPOSITORY')
+        
+        try:
+            repo = g.get_repo(repo_name)
+            project_name = repo.name
+            
+            # 보고서 찾기 및 업데이트
+            report_issue = find_report_issue(repo, project_name)
+            if report_issue:
+                logger.info(f"보고서 #{report_issue.number} 업데이트 중...")
+                updated_body = update_task_progress_in_report(report_issue.body, self)
+                report_issue.edit(body=updated_body)
+                
+                # 상태 변경 코멘트 추가
+                comment = f"🔄 태스크 상태가 변경되었습니다: {previous_status} ➡️ {new_status}"
+                report_issue.create_comment(comment)
+                logger.info("보고서 업데이트 완료")
+            else:
+                logger.warning("보고서를 찾을 수 없습니다")
+                
+        except Exception as e:
+            logger.error(f"상태 변경 처리 중 오류 발생: {str(e)}")
+
+    def set_item_status(self, item_id: str, status_field_id: str, status_option_id: str) -> bool:
+        """프로젝트 아이템의 상태를 설정하고 보고서를 업데이트합니다."""
+        # 기존 set_item_status 코드
+        success = super().set_item_status(item_id, status_field_id, status_option_id)
+        
+        if success:
+            # 상태 변경 처리
+            self.handle_status_change(item_id, status_option_id)
+        
+        return success
     
     def get_issue_node_id(self, repo_owner: str, repo_name: str, issue_number: int) -> Optional[str]:
         """이슈의 node_id를 가져옵니다."""
@@ -628,10 +673,25 @@ def process_approval(issue, repo):
     project_name = repo.name
     
     if '✅ 승인완료' in labels:
-        # GitHubProjectManager 인스턴스 생성 및 프로젝트 아이템 가져오기
+        # GitHubProjectManager 인스턴스 생성
         github_token = os.environ.get('PAT') or os.environ.get('GITHUB_TOKEN')
         project = GitHubProjectManager(github_token)
-        project_items = project.get_project_items()
+        
+        # 프로젝트에 이슈 추가 및 초기 상태 설정
+        node_id = project.get_issue_node_id(repo.owner.login, repo.name, issue.number)
+        if node_id:
+            item_id = project.add_issue_to_project(node_id)
+            if item_id:
+                # 초기 상태를 'Todo'로 설정
+                project_info = project.get_project_info()
+                if project_info:
+                    status_field = next((f for f in project_info['fields']['nodes'] 
+                                      if f['name'] == 'Status'), None)
+                    if status_field:
+                        todo_option = next((opt for opt in status_field['options'] 
+                                          if opt['name'] == 'Todo'), None)
+                        if todo_option:
+                            project.set_item_status(item_id, status_field['id'], todo_option['id'])
         
         # 태스크 카테고리 결정
         category_key = get_category_from_labels(issue.labels)
@@ -641,7 +701,7 @@ def process_approval(issue, repo):
         
         if report_issue:
             # 태스크 항목 생성 및 보고서 업데이트
-            task_entry = create_task_entry(issue, project_items)
+            task_entry = create_task_entry(issue, project.get_project_items())
             updated_body = update_report_content(report_issue.body, task_entry, category_key)
             updated_body = update_task_progress_in_report(updated_body)
             report_issue.edit(body=updated_body)
@@ -659,7 +719,7 @@ def process_approval(issue, repo):
                 body=report_body,
                 labels=['📊 진행중']
             )
-            task_entry = create_task_entry(issue, project_items)
+            task_entry = create_task_entry(issue, project.get_project_items())
             updated_body = update_report_content(report_body, task_entry, category_key)
             report_issue = new_issue
             report_issue.edit(body=updated_body)
@@ -788,8 +848,7 @@ pie title 전체 진행 현황
 
     # 상세 진행 현황 차트 추가
     progress_summary += f"""
-<details>
-<summary><h4 style="display: inline;">📊 카테고리별 진행 현황</h4></summary>
+### 📊 카테고리별 진행 현황
 
 | 태스크명 | 완료 | 진행중 | 대기중 | 진행률 |
 |----------|------|--------|--------|---------|"""
@@ -811,20 +870,16 @@ pie title 전체 진행 현황
     if not has_tasks:
         progress_summary += "\n| - | - | - | - | - |"
     
-    progress_summary += "\n\n</details>"
-    
     # 일자별 진행 현황 추가
     current_date = datetime.now().strftime('%Y-%m-%d')
     progress_summary += f"""
 
-<details>
-<summary><h4 style="display: inline;">📅 일자별 상세 현황</h4></summary>
+### 📅 일자별 상세 현황
 
 | 날짜 | 완료된 태스크 | 신규 태스크 | 진행중 태스크 |
 |------|--------------|-------------|--------------|
 | {current_date} | {total_completed} | {total_tasks} | {total_in_progress} |
-
-</details>"""
+"""
     
     return progress_summary
 
