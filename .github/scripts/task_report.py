@@ -516,13 +516,14 @@ def create_team_info_section():
 
 def create_report_body(project_name, project=None):
     """프로젝트 보고서 템플릿을 생성합니다."""
-    category_sections = create_category_sections()
-    
     # 프로젝트 상태 가져오기
     if project is None:
         github_token = os.environ.get('PAT') or os.environ.get('GITHUB_TOKEN')
         project = GitHubProjectManager(github_token)
     project_items = project.get_project_items()
+    
+    # 카테고리 섹션 생성 (project_items 전달)
+    category_sections = create_category_sections(project_items)
     
     # 카테고리별 통계 초기화
     category_stats = {}
@@ -857,6 +858,178 @@ def create_task_history_section(project_items):
     
     logger.info(f"\n총 {sum(len(items) for items in history_items.values())}개의 완료된 투두 기록됨")
     return history_section
+
+def get_task_status(task_title, project_items):
+    """태스크의 실제 진행 상태를 계산합니다."""
+    todos = []
+    total_weight = 0
+    completed_weight = 0
+    
+    # 해당 태스크에 속한 모든 투두 아이템 수집
+    for item_data in project_items.values():
+        parent_task = None
+        for label in item_data['labels']:
+            if label.startswith('[') and label.endswith(']'):
+                parent_task = label[1:-1]  # 대괄호 제거
+                break
+        
+        if parent_task == task_title:
+            weight = 1  # 기본 가중치
+            for label in item_data['labels']:
+                if label.startswith('weight:'):
+                    try:
+                        weight = int(label.replace('weight:', ''))
+                    except ValueError:
+                        pass
+            
+            total_weight += weight
+            if item_data['status'] == 'Done':
+                completed_weight += weight
+            
+            todos.append({
+                'title': item_data['title'],
+                'status': item_data['status'],
+                'weight': weight
+            })
+    
+    if total_weight == 0:
+        return "⬜ 대기중", "0%", []
+    
+    progress = (completed_weight / total_weight) * 100
+    
+    # 상태 결정
+    if progress == 100:
+        status = "✅ 완료"
+    elif progress > 0:
+        status = "🟡 진행중"
+    else:
+        status = "⬜ 대기중"
+    
+    return status, f"{progress:.1f}%", todos
+
+def create_category_sections(project_items):
+    """모든 카테고리 섹션을 생성합니다."""
+    sections = []
+    
+    for category_key, category_info in TASK_CATEGORIES.items():
+        section = f"""<details>
+<summary><h3>{TASK_CATEGORIES[category_key]['emoji']} {category_key}</h3></summary>
+
+| 태스크 ID | 태스크명 | 담당자 | 예상 시간 | 실제 시간 | 진행 상태 | 우선순위 |
+| --------- | -------- | ------ | --------- | --------- | --------- | -------- |
+"""
+        # 각 태스크의 정보를 추가
+        for issue_number, item_data in project_items.items():
+            category = None
+            for label in item_data['labels']:
+                if label.startswith('category:'):
+                    category = label.replace('category:', '').strip()
+                    break
+            
+            if category == category_key:
+                title = item_data['title']
+                issue_url = f"https://github.com/{os.environ.get('GITHUB_REPOSITORY')}/issues/{issue_number}"
+                
+                # 담당자 정보 가져오기
+                assignees_str = get_assignees_mention_string(item_data['assignees'])
+                
+                # 예상 시간
+                expected_time = item_data['fields'].get('Target Date', '-')
+                
+                # 진행 상태 계산
+                status, progress, todos = get_task_status(title, project_items)
+                status_text = f"{status} ({progress})"
+                
+                # 우선순위 확인
+                priority = "보통"
+                for label in item_data['labels']:
+                    if label.startswith('priority:'):
+                        priority = label.replace('priority:', '').strip()
+                        break
+                
+                section += f"| [TSK-{issue_number}]({issue_url}) | {title} | {assignees_str} | {expected_time} | - | {status_text} | {priority} |\n"
+                
+                # 투두 아이템 상세 정보 추가
+                if todos:
+                    section += "\n<details>\n<summary>📋 투두 목록</summary>\n\n"
+                    section += "| 투두 | 상태 | 가중치 |\n|------|--------|--------|\n"
+                    for todo in todos:
+                        section += f"| {todo['title']} | {todo['status']} | {todo['weight']} |\n"
+                    section += "\n</details>\n\n"
+        
+        section += "\n</details>"
+        sections.append(section)
+    
+    return "\n\n".join(sections)
+
+def create_task_entry(task_issue, project_items):
+    """태스크 항목을 생성합니다."""
+    title = task_issue.title
+    issue_url = task_issue.html_url
+    expected_time = task_issue.fields.get('Target Date', '-')
+    
+    # 담당자 정보 가져오기
+    assignees_str = get_assignees_mention_string([assignee.login for assignee in task_issue.assignees])
+    
+    # 진행 상태 계산
+    status, progress, todos = get_task_status(title, project_items)
+    status_text = f"{status} ({progress})"
+    
+    # 우선순위 확인
+    priority = "보통"
+    for label in task_issue.labels:
+        if label.name.startswith('priority:'):
+            priority = label.name.replace('priority:', '').strip()
+            break
+    
+    return f"| [TSK-{task_issue.number}]({issue_url}) | {title} | {assignees_str} | {expected_time} | - | {status_text} | {priority} |"
+
+def update_report_content(old_content, new_task_entry, category_key):
+    """보고서 내용을 업데이트합니다."""
+    # 카테고리 섹션 찾기
+    category_start = old_content.find(f"<h3>{TASK_CATEGORIES[category_key]['emoji']} {category_key}</h3>")
+    if category_start == -1:
+        return old_content
+    
+    # 테이블 찾기
+    table_header = "| 태스크 ID | 태스크명 | 담당자 | 예상 시간 | 실제 시간 | 진행 상태 | 우선순위 |"
+    header_pos = old_content.find(table_header, category_start)
+    if header_pos == -1:
+        return old_content
+    
+    # 테이블 끝 찾기
+    table_end = old_content.find("</details>", header_pos)
+    if table_end == -1:
+        return old_content
+    
+    # 현재 테이블 내용 가져오기
+    table_content = old_content[header_pos:table_end].strip()
+    lines = table_content.split('\n')
+    
+    # 새 태스크 항목 추가 또는 업데이트
+    task_number = re.search(r'TSK-(\d+)', new_task_entry).group(1)
+    task_exists = False
+    
+    for i, line in enumerate(lines):
+        if f"TSK-{task_number}" in line:
+            lines[i] = new_task_entry
+            task_exists = True
+            break
+    
+    if not task_exists:
+        lines.append(new_task_entry)
+    
+    # 새 테이블 생성
+    new_table = '\n'.join(lines)
+    
+    return f"{old_content[:header_pos]}{new_table}\n\n{old_content[table_end:]}"
+
+def get_category_from_labels(issue_labels):
+    """이슈의 라벨을 기반으로 카테고리를 결정합니다."""
+    for label in issue_labels:
+        if label.name.startswith("category:"):
+            return label.name.replace("category:", "").strip()
+    return "기타"  # 기본값
 
 def main():
     try:
