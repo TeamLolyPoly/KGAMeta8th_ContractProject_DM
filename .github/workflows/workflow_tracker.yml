@@ -61,14 +61,6 @@ jobs:
           cd .github/scripts
           python workflow_tracker.py
 
-      - name: Update Task Report
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          cd .github/scripts
-          python task_report.py
-
       - name: Send Notifications
         if: env.SLACK_BOT_TOKEN != ''
         env:

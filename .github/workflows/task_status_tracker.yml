@@ -1,0 +1,47 @@
+name: Task Status Tracker
+
+on:
+  project_card:
+    types: [created, edited, moved]
+
+permissions:
+  issues: write
+  contents: write
+  pull-requests: write
+  repository-projects: write
+
+env:
+  TIMEZONE: "Asia/Seoul"
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  PAT: ${{ secrets.PAT }}
+  PROJECT_NUMBER: "2"
+
+jobs:
+  update-task-report:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.action == 'created' ||
+      github.event.action == 'moved' ||
+      github.event.action == 'edited'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/scripts/requirements.txt
+
+      - name: Update Task Report
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          cd .github/scripts
+          python task_report.py
