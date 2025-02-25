@@ -1,0 +1,1054 @@
+Run cd .github/scripts
+  
+2025-02-25 06:13:47 [INFO] 프로그램 시작
+2025-02-25 06:13:47 [DEBUG] GitHub 토큰 확인 완료
+2025-02-25 06:13:47 [DEBUG] 저장소 정보: KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM
+2025-02-25 06:13:47 [INFO] 프로젝트 이름: KGAMeta8th_ContractProject_DM
+2025-02-25 06:13:47 [INFO] 보고서 생성/업데이트 시작
+2025-02-25 06:13:47 [INFO] 조직 설정: KGAMeta8thTeam1
+2025-02-25 06:13:48 [INFO] 사용 가능한 프로젝트 목록:
+2025-02-25 06:13:48 [INFO]   - #2: KGAMeta8th_ContractProject_DM
+2025-02-25 06:13:48 [INFO]   - #1: @Anxi77's untitled project
+2025-02-25 06:13:48 [INFO] 프로젝트 번호 자동 설정: #2
+2025-02-25 06:13:48 [INFO] GitHubProjectManager initialized with org: KGAMeta8thTeam1, project: 2
+2025-02-25 06:13:48 [INFO] 프로젝트 아이템 조회 시작
+2025-02-25 06:13:48 [DEBUG] GraphQL 응답 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 조직: KGAMeta8thTeam1
+2025-02-25 06:13:48 [DEBUG]   - 프로젝트 번호: 2
+2025-02-25 06:13:48 [DEBUG] 
+GraphQL 응답 처리 시작
+2025-02-25 06:13:48 [DEBUG] 응답 데이터: {'organization': {'projectV2': {'items': {'nodes': [{'id': 'PVTI_lADOC-zctc4AyvOnzgXnMQA', 'fieldValues': {'nodes': [{}, {}, {}, {}, {'name': 'In Progress', 'field': {'name': 'Status'}}]}, 'content': {'number': 328, 'title': '[프로젝트 자동화 시스템] 프로젝트 업데이트 사항 Slack DM to PM 연동', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/328', 'state': 'OPEN', 'createdAt': '2025-02-23T13:28:32Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'in-project'}, {'name': 'category:프로젝트 자동화 시스템'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}}, {'id': 'PVTI_lADOC-zctc4AyvOnzgXn2-E', 'fieldValues': {'nodes': [{}, {}, {}, {}, {'name': 'In Progress', 'field': {'name': 'Status'}}]}, 'content': {'number': 400, 'title': '[기본 노트 판정 시스템] 오른손 mace 구현 해야함', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/400', 'state': 'OPEN', 'createdAt': '2025-02-24T05:15:16Z', 'closedAt': None, 'labels': {'nodes': [{'name': 't
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #328
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 328, 'title': '[프로젝트 자동화 시스템] 프로젝트 업데이트 사항 Slack DM to PM 연동', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/328', 'state': 'OPEN', 'createdAt': '2025-02-23T13:28:32Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'in-project'}, {'name': 'category:프로젝트 자동화 시스템'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 328
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 프로젝트 업데이트 사항 Slack DM to PM 연동
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'in-project', 'category:프로젝트 자동화 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: In Progress
+2025-02-25 06:13:48 [DEBUG] 아이템 #328 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #400
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 400, 'title': '[기본 노트 판정 시스템] 오른손 mace 구현 해야함', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/400', 'state': 'OPEN', 'createdAt': '2025-02-24T05:15:16Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:기본 노트 판정 시스템'}]}, 'assignees': {'nodes': [{'login': 'Rjcode7387'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 400
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 오른손 mace 구현 해야함
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:기본 노트 판정 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Rjcode7387']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: In Progress
+2025-02-25 06:13:48 [DEBUG] 아이템 #400 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #329
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 329, 'title': '[프로젝트 자동화 시스템] todo issue assignee Slack DM 연동 및 태스크 보고서의 담당자로 연동', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/329', 'state': 'OPEN', 'createdAt': '2025-02-23T13:28:33Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'in-project'}, {'name': 'category:프로젝트 자동화 시스템'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 329
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] todo issue assignee Slack DM 연동 및 태스크 보고서의 담당자로 연동
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'in-project', 'category:프로젝트 자동화 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: In Progress
+2025-02-25 06:13:48 [DEBUG] 아이템 #329 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #33
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 33, 'title': '[NoteEditorSystem] 완성된 노트 파일 JSON 으로 익스포트 기능 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/33', 'state': 'OPEN', 'createdAt': '2025-02-21T08:33:35Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:NoteEditorSystem'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 33
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 완성된 노트 파일 JSON 으로 익스포트 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:NoteEditorSystem', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #33 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #32
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 32, 'title': '[NoteEditorSystem] MIDI 파일 임포트 및 익스포트 기능 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/32', 'state': 'OPEN', 'createdAt': '2025-02-21T08:33:34Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:NoteEditorSystem'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 32
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] MIDI 파일 임포트 및 익스포트 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:NoteEditorSystem', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #32 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #31
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 31, 'title': '[NoteEditorSystem] 박자단위 플레이백과 GUI 동기화 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/31', 'state': 'OPEN', 'createdAt': '2025-02-21T08:33:33Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:NoteEditorSystem'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 31
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 박자단위 플레이백과 GUI 동기화 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:NoteEditorSystem', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #31 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #30
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 30, 'title': '[NoteEditorSystem] 노트메이킹을 위한 그리드 생성 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/30', 'state': 'OPEN', 'createdAt': '2025-02-21T08:33:31Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:NoteEditorSystem'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 30
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 노트메이킹을 위한 그리드 생성 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:NoteEditorSystem', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #30 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #29
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 29, 'title': '[NoteEditorSystem] 음원 파일 BPM에 따른 플레이백 속도 동기화 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/29', 'state': 'OPEN', 'createdAt': '2025-02-21T08:33:30Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:NoteEditorSystem'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 29
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 음원 파일 BPM에 따른 플레이백 속도 동기화 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:NoteEditorSystem', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #29 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #28
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 28, 'title': '[NoteEditorSystem] 음원 파일 플레이백 기능 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/28', 'state': 'OPEN', 'createdAt': '2025-02-21T08:33:29Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:NoteEditorSystem'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 28
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 음원 파일 플레이백 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:NoteEditorSystem', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #28 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #61
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 61, 'title': '[콤보 시스템] 콤보 카운터 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/61', 'state': 'OPEN', 'createdAt': '2025-02-22T05:45:05Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:콤보 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 61
+2025-02-25 06:13:48 [DEBUG]   - 제목: [콤보 시스템] 콤보 카운터 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:콤보 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #61 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #60
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 60, 'title': '[점수 관리 시스템] 점수 이벤트 처리기 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/60', 'state': 'OPEN', 'createdAt': '2025-02-22T05:45:04Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:점수 관리 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 60
+2025-02-25 06:13:48 [DEBUG]   - 제목: [점수 관리 시스템] 점수 이벤트 처리기 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:점수 관리 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #60 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #59
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 59, 'title': '[점수 관리 시스템] 실시간 점수 업데이트 시스템', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/59', 'state': 'OPEN', 'createdAt': '2025-02-22T05:45:02Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:점수 관리 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 59
+2025-02-25 06:13:48 [DEBUG]   - 제목: [점수 관리 시스템] 실시간 점수 업데이트 시스템
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:점수 관리 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #59 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #57
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 57, 'title': '[점수 관리 시스템] 점수 계산 클래스 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/57', 'state': 'OPEN', 'createdAt': '2025-02-22T05:45:00Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:점수 관리 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 57
+2025-02-25 06:13:48 [DEBUG]   - 제목: [점수 관리 시스템] 점수 계산 클래스 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:점수 관리 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #57 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #58
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 58, 'title': '[점수 관리 시스템] 판정 등급별 점수 테이블 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/58', 'state': 'OPEN', 'createdAt': '2025-02-22T05:45:01Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:점수 관리 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 58
+2025-02-25 06:13:48 [DEBUG]   - 제목: [점수 관리 시스템] 판정 등급별 점수 테이블 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:점수 관리 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #58 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #56
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 56, 'title': '[롱노트 시스템] 롱노트 끊김 감지 및 처리 로직', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/56', 'state': 'OPEN', 'createdAt': '2025-02-22T05:44:59Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:롱노트 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 56
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 롱노트 끊김 감지 및 처리 로직
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:롱노트 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #56 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #55
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 55, 'title': '[롱노트 시스템] 체크포인트 통과 이벤트 시스템', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/55', 'state': 'OPEN', 'createdAt': '2025-02-22T05:44:58Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:롱노트 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 55
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 체크포인트 통과 이벤트 시스템
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:롱노트 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #55 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #54
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 54, 'title': '[롱노트 시스템] 연속 판정 상태 관리자 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/54', 'state': 'OPEN', 'createdAt': '2025-02-22T05:44:57Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:롱노트 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 54
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 연속 판정 상태 관리자 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:롱노트 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #54 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #53
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 53, 'title': '[롱노트 시스템] 틱 레이트 기반 판정 시스템 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/53', 'state': 'OPEN', 'createdAt': '2025-02-22T05:44:55Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:롱노트 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 53
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 틱 레이트 기반 판정 시스템 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:롱노트 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #53 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #52
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 52, 'title': '[롱노트 시스템] 체크포인트 콜라이더 동적 생성 로직', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/52', 'state': 'OPEN', 'createdAt': '2025-02-22T05:44:54Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:롱노트 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 52
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 체크포인트 콜라이더 동적 생성 로직
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:롱노트 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #52 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #62
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 62, 'title': '[콤보 시스템] 콤보 배율 계산기 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/62', 'state': 'OPEN', 'createdAt': '2025-02-22T05:45:06Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:콤보 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 62
+2025-02-25 06:13:48 [DEBUG]   - 제목: [콤보 시스템] 콤보 배율 계산기 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:콤보 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #62 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #64
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 64, 'title': '[콤보 시스템] 최대 콤보 기록 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/64', 'state': 'OPEN', 'createdAt': '2025-02-22T05:45:09Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:콤보 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 64
+2025-02-25 06:13:48 [DEBUG]   - 제목: [콤보 시스템] 최대 콤보 기록 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:콤보 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #64 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #63
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 63, 'title': '[콤보 시스템] 콤보 리셋 이벤트 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/63', 'state': 'OPEN', 'createdAt': '2025-02-22T05:45:07Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:콤보 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 63
+2025-02-25 06:13:48 [DEBUG]   - 제목: [콤보 시스템] 콤보 리셋 이벤트 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:콤보 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #63 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #51
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 51, 'title': '[롱노트 시스템] 연결선 메시 생성 및 렌더링 시스템', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/51', 'state': 'OPEN', 'createdAt': '2025-02-22T05:44:53Z', 'closedAt': None, 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:롱노트 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': []}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 51
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 연결선 메시 생성 및 렌더링 시스템
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:롱노트 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Todo
+2025-02-25 06:13:48 [DEBUG] 아이템 #51 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #66
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 66, 'title': '[기본 노트 판정 시스템] 가로, 세로 그리드를 통한 레인 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/66', 'state': 'CLOSED', 'createdAt': '2025-02-22T08:27:21Z', 'closedAt': '2025-02-22T12:40:07Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:기본 노트 판정 시스템'}]}, 'assignees': {'nodes': [{'login': 'Rjcode7387'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 66
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 가로, 세로 그리드를 통한 레인 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:기본 노트 판정 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Rjcode7387']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #66 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #50
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 50, 'title': '[기본 노트 판정 시스템] 양면 타격 판정 로직 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/50', 'state': 'CLOSED', 'createdAt': '2025-02-22T05:44:52Z', 'closedAt': '2025-02-24T05:17:59Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:기본 노트 판정 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Jine99'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 50
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 양면 타격 판정 로직 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:기본 노트 판정 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #50 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #326
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 326, 'title': '[프로젝트 자동화 시스템] 태스크 상태 변경 시 자동 업데이트 기능 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/326', 'state': 'CLOSED', 'createdAt': '2025-02-23T13:28:30Z', 'closedAt': '2025-02-25T00:15:40Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'in-project'}, {'name': 'category:프로젝트 자동화 시스템'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 326
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 태스크 상태 변경 시 자동 업데이트 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'in-project', 'category:프로젝트 자동화 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #326 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #415
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 415, 'title': '[프로젝트 자동화 시스템] 머지커밋의 중복검사 로직 개선', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/415', 'state': 'CLOSED', 'createdAt': '2025-02-24T12:24:45Z', 'closedAt': '2025-02-24T14:15:06Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:프로젝트 자동화 시스템'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 415
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 머지커밋의 중복검사 로직 개선
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:프로젝트 자동화 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #415 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #402
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 402, 'title': '[프로젝트 자동화 시스템] 프로젝트 진행보고서 DSR 이슈가 아닌 실질적인 github project 에서 트래킹 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/402', 'state': 'CLOSED', 'createdAt': '2025-02-24T05:30:22Z', 'closedAt': '2025-02-24T15:49:27Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:프로젝트 자동화 시스템'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 402
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 프로젝트 진행보고서 DSR 이슈가 아닌 실질적인 github project 에서 트래킹 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:프로젝트 자동화 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #402 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #332
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 332, 'title': '[프로젝트 자동화 시스템] 태스크 히스토리 추적 기능 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/332', 'state': 'CLOSED', 'createdAt': '2025-02-23T13:28:36Z', 'closedAt': '2025-02-24T15:49:26Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'in-project'}, {'name': 'category:프로젝트 자동화 시스템'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 332
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 태스크 히스토리 추적 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'in-project', 'category:프로젝트 자동화 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #332 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #46
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 46, 'title': '[기본 노트 판정 시스템] 색상 매칭 검사 로직 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/46', 'state': 'CLOSED', 'createdAt': '2025-02-22T05:44:47Z', 'closedAt': '2025-02-24T05:18:56Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:기본 노트 판정 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Jine99'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 46
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 색상 매칭 검사 로직 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:기본 노트 판정 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #46 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #65
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 65, 'title': '[기본 노트 판정 시스템] 노트 생성 및 그리드 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/65', 'state': 'CLOSED', 'createdAt': '2025-02-22T08:27:16Z', 'closedAt': '2025-02-22T13:44:46Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:기본 노트 판정 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Rjcode7387'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 65
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 노트 생성 및 그리드 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:기본 노트 판정 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Rjcode7387']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #65 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #399
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 399, 'title': '[기본 노트 판정 시스템] 타입별 노트 방향 받기', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/399', 'state': 'CLOSED', 'createdAt': '2025-02-24T05:15:15Z', 'closedAt': '2025-02-24T05:19:13Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:기본 노트 판정 시스템'}]}, 'assignees': {'nodes': [{'login': 'Jine99'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 399
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 타입별 노트 방향 받기
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:기본 노트 판정 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #399 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #404
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 404, 'title': '[프로젝트 자동화 시스템] DSR 이슈 TODO 목록 당일 완료된것 업데이트할떄 지워지는 오류 fix', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/404', 'state': 'CLOSED', 'createdAt': '2025-02-24T05:30:24Z', 'closedAt': '2025-02-24T11:55:04Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:프로젝트 자동화 시스템'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 404
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] DSR 이슈 TODO 목록 당일 완료된것 업데이트할떄 지워지는 오류 fix
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:프로젝트 자동화 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #404 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #403
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 403, 'title': '[프로젝트 자동화 시스템] DSR 이슈 브랜치별 트래킹 기능 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/403', 'state': 'CLOSED', 'createdAt': '2025-02-24T05:30:23Z', 'closedAt': '2025-02-24T11:55:09Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:프로젝트 자동화 시스템'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 403
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] DSR 이슈 브랜치별 트래킹 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:프로젝트 자동화 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #403 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #392
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 392, 'title': '[프로젝트 자동화 시스템] 태스크 진행률 계산 및 표시 로직 개선', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/392', 'state': 'CLOSED', 'createdAt': '2025-02-23T14:54:55Z', 'closedAt': '2025-02-23T14:55:46Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:프로젝트 자동화 시스템'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 392
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 태스크 진행률 계산 및 표시 로직 개선
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:프로젝트 자동화 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #392 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #393
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 393, 'title': '[프로젝트 자동화 시스템] 태스크 진행상황 업데이트 로직 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/393', 'state': 'CLOSED', 'createdAt': '2025-02-23T14:54:56Z', 'closedAt': '2025-02-23T14:55:42Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:프로젝트 자동화 시스템'}]}, 'assignees': {'nodes': [{'login': 'Anxi77'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 393
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 태스크 진행상황 업데이트 로직 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:프로젝트 자동화 시스템']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #393 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #48
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 48, 'title': '[기본 노트 판정 시스템] 타격 정확도 계산 시스템 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/48', 'state': 'CLOSED', 'createdAt': '2025-02-22T05:44:49Z', 'closedAt': '2025-02-24T01:09:32Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:기본 노트 판정 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Jine99'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 48
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 타격 정확도 계산 시스템 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:기본 노트 판정 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #48 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #67
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 67, 'title': '[기본 노트 판정 시스템] deltatime 기반 노트 이동 시스템 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/67', 'state': 'CLOSED', 'createdAt': '2025-02-22T08:27:25Z', 'closedAt': '2025-02-24T05:19:47Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:기본 노트 판정 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Rjcode7387'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 67
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] deltatime 기반 노트 이동 시스템 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:기본 노트 판정 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Rjcode7387']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #67 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #49
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 49, 'title': '[기본 노트 판정 시스템] 메이스 회전각 기반 타격 방향 계산 시스템', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/49', 'state': 'CLOSED', 'createdAt': '2025-02-22T05:44:51Z', 'closedAt': '2025-02-24T01:58:27Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:기본 노트 판정 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Jine99'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 49
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 메이스 회전각 기반 타격 방향 계산 시스템
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:기본 노트 판정 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #49 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #47
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 47, 'title': '[기본 노트 판정 시스템] 타격 방향 벡터 계산 및 판정 로직 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/47', 'state': 'CLOSED', 'createdAt': '2025-02-22T05:44:48Z', 'closedAt': '2025-02-24T01:09:30Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:기본 노트 판정 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Jine99'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 47
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 타격 방향 벡터 계산 및 판정 로직 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:기본 노트 판정 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #47 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+이슈 처리 시작: #45
+2025-02-25 06:13:48 [DEBUG] 원본 데이터: {'number': 45, 'title': '[기본 노트 판정 시스템] 노트와의 충돌 감지 시스템 구현', 'url': 'https://github.com/KGAMeta8thTeam1/KGAMeta8th_ContractProject_DM/issues/45', 'state': 'CLOSED', 'createdAt': '2025-02-22T05:44:46Z', 'closedAt': '2025-02-24T01:09:29Z', 'labels': {'nodes': [{'name': 'todo-generated'}, {'name': 'category:기본 노트 판정 시스템'}, {'name': 'in-project'}]}, 'assignees': {'nodes': [{'login': 'Jine99'}]}}
+2025-02-25 06:13:48 [DEBUG] 변환된 데이터:
+2025-02-25 06:13:48 [DEBUG]   - 번호: 45
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 노트와의 충돌 감지 시스템 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: ['todo-generated', 'category:기본 노트 판정 시스템', 'in-project']
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드 처리: Status
+2025-02-25 06:13:48 [DEBUG]     - 선택값: Done
+2025-02-25 06:13:48 [DEBUG] 아이템 #45 처리 완료
+2025-02-25 06:13:48 [DEBUG] 
+총 41개의 아이템 처리 완료
+2025-02-25 06:13:48 [INFO] 총 41개의 아이템을 가져왔습니다.
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #328:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 프로젝트 업데이트 사항 Slack DM to PM 연동
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, in-project, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: In Progress
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #400:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 오른손 mace 구현 해야함
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Rjcode7387']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: In Progress
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #329:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] todo issue assignee Slack DM 연동 및 태스크 보고서의 담당자로 연동
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, in-project, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: In Progress
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #33:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 완성된 노트 파일 JSON 으로 익스포트 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:NoteEditorSystem, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #32:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] MIDI 파일 임포트 및 익스포트 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:NoteEditorSystem, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #31:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 박자단위 플레이백과 GUI 동기화 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:NoteEditorSystem, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #30:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 노트메이킹을 위한 그리드 생성 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:NoteEditorSystem, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #29:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 음원 파일 BPM에 따른 플레이백 속도 동기화 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:NoteEditorSystem, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #28:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 음원 파일 플레이백 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:NoteEditorSystem, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #61:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [콤보 시스템] 콤보 카운터 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:콤보 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #60:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [점수 관리 시스템] 점수 이벤트 처리기 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:점수 관리 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #59:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [점수 관리 시스템] 실시간 점수 업데이트 시스템
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:점수 관리 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #57:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [점수 관리 시스템] 점수 계산 클래스 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:점수 관리 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #58:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [점수 관리 시스템] 판정 등급별 점수 테이블 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:점수 관리 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #56:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 롱노트 끊김 감지 및 처리 로직
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:롱노트 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #55:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 체크포인트 통과 이벤트 시스템
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:롱노트 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #54:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 연속 판정 상태 관리자 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:롱노트 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #53:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 틱 레이트 기반 판정 시스템 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:롱노트 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #52:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 체크포인트 콜라이더 동적 생성 로직
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:롱노트 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #62:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [콤보 시스템] 콤보 배율 계산기 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:콤보 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #64:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [콤보 시스템] 최대 콤보 기록 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:콤보 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #63:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [콤보 시스템] 콤보 리셋 이벤트 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:콤보 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #51:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 연결선 메시 생성 및 렌더링 시스템
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:롱노트 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Todo
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #66:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 가로, 세로 그리드를 통한 레인 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Rjcode7387']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #50:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 양면 타격 판정 로직 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #326:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 태스크 상태 변경 시 자동 업데이트 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, in-project, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #415:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 머지커밋의 중복검사 로직 개선
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #402:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 프로젝트 진행보고서 DSR 이슈가 아닌 실질적인 github project 에서 트래킹 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #332:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 태스크 히스토리 추적 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, in-project, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #46:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 색상 매칭 검사 로직 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #65:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 노트 생성 및 그리드 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Rjcode7387']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #399:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 타입별 노트 방향 받기
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #404:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] DSR 이슈 TODO 목록 당일 완료된것 업데이트할떄 지워지는 오류 fix
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #403:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] DSR 이슈 브랜치별 트래킹 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #392:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 태스크 진행률 계산 및 표시 로직 개선
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #393:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 태스크 진행상황 업데이트 로직 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #48:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 타격 정확도 계산 시스템 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #67:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] deltatime 기반 노트 이동 시스템 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Rjcode7387']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #49:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 메이스 회전각 기반 타격 방향 계산 시스템
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #47:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 타격 방향 벡터 계산 및 판정 로직 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [DEBUG] 
+아이템 #45:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 노트와의 충돌 감지 시스템 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG]   - 필드값:
+2025-02-25 06:13:48 [DEBUG]     - Status: Done
+2025-02-25 06:13:48 [INFO] 
+태스크 매핑 구축 시작
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #328:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 프로젝트 업데이트 사항 Slack DM to PM 연동
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, in-project, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #400:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 오른손 mace 구현 해야함
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Rjcode7387']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #329:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] todo issue assignee Slack DM 연동 및 태스크 보고서의 담당자로 연동
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, in-project, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #33:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 완성된 노트 파일 JSON 으로 익스포트 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:NoteEditorSystem, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #32:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] MIDI 파일 임포트 및 익스포트 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:NoteEditorSystem, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #31:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 박자단위 플레이백과 GUI 동기화 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:NoteEditorSystem, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #30:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 노트메이킹을 위한 그리드 생성 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:NoteEditorSystem, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #29:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 음원 파일 BPM에 따른 플레이백 속도 동기화 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:NoteEditorSystem, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #28:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [NoteEditorSystem] 음원 파일 플레이백 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:NoteEditorSystem, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #61:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [콤보 시스템] 콤보 카운터 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:콤보 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #60:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [점수 관리 시스템] 점수 이벤트 처리기 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:점수 관리 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #59:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [점수 관리 시스템] 실시간 점수 업데이트 시스템
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:점수 관리 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #57:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [점수 관리 시스템] 점수 계산 클래스 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:점수 관리 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #58:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [점수 관리 시스템] 판정 등급별 점수 테이블 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:점수 관리 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #56:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 롱노트 끊김 감지 및 처리 로직
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:롱노트 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #55:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 체크포인트 통과 이벤트 시스템
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:롱노트 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #54:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 연속 판정 상태 관리자 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:롱노트 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #53:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 틱 레이트 기반 판정 시스템 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:롱노트 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #52:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 체크포인트 콜라이더 동적 생성 로직
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:롱노트 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #62:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [콤보 시스템] 콤보 배율 계산기 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:콤보 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #64:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [콤보 시스템] 최대 콤보 기록 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:콤보 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #63:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [콤보 시스템] 콤보 리셋 이벤트 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:콤보 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #51:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [롱노트 시스템] 연결선 메시 생성 및 렌더링 시스템
+2025-02-25 06:13:48 [DEBUG]   - 상태: OPEN
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:롱노트 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: []
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #66:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 가로, 세로 그리드를 통한 레인 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Rjcode7387']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #50:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 양면 타격 판정 로직 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #326:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 태스크 상태 변경 시 자동 업데이트 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, in-project, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #415:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 머지커밋의 중복검사 로직 개선
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #402:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 프로젝트 진행보고서 DSR 이슈가 아닌 실질적인 github project 에서 트래킹 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #332:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [프로젝트 자동화 시스템] 태스크 히스토리 추적 기능 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, in-project, category:프로젝트 자동화 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Anxi77']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #46:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 색상 매칭 검사 로직 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #65:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 노트 생성 및 그리드 구현
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템, in-project
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Rjcode7387']
+2025-02-25 06:13:48 [DEBUG] 
+태스크 발견 #399:
+2025-02-25 06:13:48 [DEBUG]   - 제목: [기본 노트 판정 시스템] 타입별 노트 방향 받기
+2025-02-25 06:13:48 [DEBUG]   - 상태: CLOSED
+2025-02-25 06:13:48 [DEBUG]   - 라벨: todo-generated, category:기본 노트 판정 시스템
+2025-02-25 06:13:48 [DEBUG]   - 담당자: ['Jine99']
+2025-02-25 06:13:48 [DEBUG] 
+2025-02-25 06:13:49 [INFO] 보고서 섹션 업데이트 시작
+2025-02-25 06:13:49 [INFO] 태스크 상세 내역 포맷팅 시작
+2025-02-25 06:13:49 [DEBUG] 카테고리 '기능 개발' 처리 중
+2025-02-25 06:13:49 [DEBUG]   - 태스크 수: 0
+2025-02-25 06:13:49 [DEBUG] 카테고리 'UI/UX' 처리 중
+2025-02-25 06:13:49 [DEBUG]   - 태스크 수: 0
+2025-02-25 06:13:49 [DEBUG] 카테고리 'QA/테스트' 처리 중
+2025-02-25 06:13:49 [DEBUG]   - 태스크 수: 0
+2025-02-25 06:13:49 [DEBUG] 카테고리 '문서화' 처리 중
+2025-02-25 06:13:49 [DEBUG]   - 태스크 수: 0
+2025-02-25 06:13:49 [DEBUG] 카테고리 '유지보수' 처리 중
+2025-02-25 06:13:49 [DEBUG]   - 태스크 수: 0
+2025-02-25 06:13:49 [INFO] 태스크 상세 내역 포맷팅 완료
+2025-02-25 06:13:49 [INFO] 보고서 섹션 업데이트 완료
+2025-02-25 06:13:50 [INFO] 기존 보고서 #18 업데이트 완료
+2025-02-25 06:13:50 [INFO] 보고서 생성/업데이트 완료

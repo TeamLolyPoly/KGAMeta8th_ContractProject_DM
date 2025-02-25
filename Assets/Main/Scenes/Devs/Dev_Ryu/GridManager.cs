@@ -52,15 +52,15 @@ public class GridManager : Singleton<GridManager>
         GameObject sourceObj = new GameObject("SourceGrid");
         sourceGrid = sourceObj.transform;
         sourceGrid.parent = transform;
-        sourceGrid.localPosition = new Vector3(0, 1.7f, 2f);
-        sourceGrid.localRotation = Quaternion.Euler(0, 180, 0);
+        sourceGrid.localPosition = new Vector3(0, 1.7f, gridDistance);
+        sourceGrid.localRotation = Quaternion.Euler(0, 0, 0);
         CreateGrid(sourceGrid, false);
 
         GameObject targetObj = new GameObject("TargetGrid");
         targetGrid = targetObj.transform;
         targetGrid.parent = transform;
-        targetGrid.localPosition = new Vector3(0, 1.7f, gridDistance);
-        targetGrid.localRotation = Quaternion.Euler(0, 180, 0);
+        targetGrid.localPosition = new Vector3(0, 1.7f, 2f);
+        targetGrid.localRotation = Quaternion.Euler(0, 0, 0);
         CreateGrid(targetGrid, true);
     }
 
