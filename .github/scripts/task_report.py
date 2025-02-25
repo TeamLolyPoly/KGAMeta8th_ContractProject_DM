@@ -806,6 +806,58 @@ pie title 전체 진행 현황
     
     return progress_summary
 
+def create_task_history_section(project_items):
+    """태스크 히스토리 섹션을 생성합니다."""
+    logger.info("\n=== 태스크 히스토리 섹션 생성 시작 ===")
+    task_todos = get_task_todos(project_items)
+    history_items = {}  # 날짜별로 그룹화
+    
+    logger.info("\n완료된 투두 처리:")
+    for task_name, todos in task_todos.items():
+        for todo in todos:
+            if todo['status'] == 'Done' and todo['closed_at']:
+                closed_date = datetime.fromisoformat(todo['closed_at'].replace('Z', '+00:00')).strftime('%Y-%m-%d')
+                logger.info(f"완료된 투두 발견: #{todo['number']} - {todo['title']} (완료일: {closed_date}, 상위 태스크: {task_name})")
+                
+                if closed_date not in history_items:
+                    history_items[closed_date] = []
+                    
+                # 담당자 @멘션 추가
+                assignees_str = get_assignees_mention_string(todo['assignees'])
+                
+                history_items[closed_date].append({
+                    'number': todo['number'],
+                    'title': todo['title'],
+                    'category': task_name,
+                    'assignees': assignees_str
+                })
+    
+    if not history_items:
+        return """## 📅 태스크 완료 히스토리
+
+아직 완료된 태스크가 없습니다."""
+    
+    history_section = "## 📅 태스크 완료 히스토리\n\n"
+    
+    # 날짜별로 정렬 (최신순)
+    sorted_dates = sorted(history_items.keys(), reverse=True)
+    
+    for date in sorted_dates:
+        items = history_items[date]
+        history_section += f"""<details>
+<summary><h3 style="display: inline;">📆 {date} ({len(items)}개)</h3></summary>
+
+| 투두 ID | 투두명 | 상위 태스크 | 담당자 |
+| ------- | ------ | ----------- | ------- |
+"""
+        for item in items:
+            history_section += f"| #{item['number']} | {item['title']} | {item['category']} | {item['assignees']} |\n"
+        
+        history_section += "\n</details>\n\n"
+    
+    logger.info(f"\n총 {sum(len(items) for items in history_items.values())}개의 완료된 투두 기록됨")
+    return history_section
+
 def main():
     try:
         # PAT를 우선적으로 사용
