@@ -466,135 +466,53 @@ def get_task_todos(project_items):
     
     return task_todos
 
-def create_task_entry(task_issue, project_items):
-    """태스크 항목을 생성합니다."""
-    assignees = get_assignees_string(task_issue)
-    title = task_issue.title
-    issue_url = task_issue.html_url
-    expected_time = get_task_duration(task_issue)
-    
-    # 해당 태스크의 투두 진행상황 계산
-    task_todos = get_task_todos(project_items)
-    todos = task_todos.get(title, [])
-    total_todos = len(todos)
-    completed_todos = sum(1 for todo in todos if todo['status'] == 'Done')
-    progress = f"{(completed_todos/total_todos*100):.1f}%" if total_todos > 0 else "0%"
-    
-    status = "🟡 진행중" if completed_todos < total_todos else "✅ 완료" if total_todos > 0 else "⬜ 대기중"
-    
-    return f"| [TSK-{task_issue.number}]({issue_url}) | {title} | {assignees} | {expected_time} | - | {status} ({progress}) | - |"
+GITHUB_USER_MAPPING = {
+    "Anxi77": {
+        "name": "최현성",
+        "role": "개발팀 팀장"
+    },
+    "beooom": {
+        "name": "김범희",
+        "role": "백엔드/컨텐츠 개발"
+    },
+    "Jine99": {
+        "name": "김진",
+        "role": "컨텐츠 개발"
+    },
+    "hyeonji9178": {
+        "name": "김현지",
+        "role": "컨텐츠 개발"
+    },
+    "Rjcode7387": {
+        "name": "류지형",
+        "role": "컨텐츠 개발"
+    }
+}
 
-def get_category_from_labels(issue_labels):
-    """이슈의 라벨을 기반으로 카테고리를 결정합니다."""
-    for label in issue_labels:
-        if label.name.startswith("category:"):
-            return label.name.replace("category:", "").strip()
-    return "기타"  # 기본값
+def get_user_display_name(github_username):
+    """깃허브 사용자의 표시 이름을 반환합니다."""
+    if github_username in GITHUB_USER_MAPPING:
+        user_info = GITHUB_USER_MAPPING[github_username]
+        return f"{user_info['name']}(@{github_username})"
+    return f"@{github_username}"
 
-def create_category_sections():
-    """모든 카테고리 섹션을 생성합니다."""
-    sections = []
-    for category_key, category_info in TASK_CATEGORIES.items():
-        section = f"""<details>
-<summary><h3>{TASK_CATEGORIES[category_key]['emoji']} {category_key}</h3></summary>
+def get_assignees_mention_string(assignees):
+    """담당자 목록을 실명과 @멘션 형식의 문자열로 반환합니다."""
+    if not assignees:
+        return 'TBD'
+    return ', '.join([get_user_display_name(assignee) for assignee in assignees])
 
-| 태스크 ID | 태스크명 | 담당자 | 예상 시간 | 실제 시간 | 진행 상태 | 우선순위 |
-| --------- | -------- | ------ | --------- | --------- | --------- | -------- |
+def create_team_info_section():
+    """팀원 정보 섹션을 생성합니다."""
+    team_section = """## 👥 팀원 정보
 
-</details>"""
-        sections.append(section)
-    return "\n\n".join(sections)
-
-def update_report_content(old_content, new_task_entry, category_key):
-    """보고서 내용을 업데이트합니다."""
-    # 카테고리 섹션 찾기
-    category_start = old_content.find(f"<h3>{TASK_CATEGORIES[category_key]['emoji']} {category_key}</h3>")
-    if category_start == -1:
-        return old_content
-    
-    # 테이블 찾기
-    table_header = "| 태스크 ID | 태스크명 | 담당자 | 예상 시간 | 실제 시간 | 진행 상태 | 우선순위 |"
-    header_pos = old_content.find(table_header, category_start)
-    if header_pos == -1:
-        return old_content
-    
-    # 테이블 끝 찾기
-    table_end = old_content.find("</details>", header_pos)
-    if table_end == -1:
-        return old_content
-    
-    # 현재 테이블 내용 가져오기
-    table_content = old_content[header_pos:table_end].strip()
-    lines = table_content.split('\n')
-    
-    # 새 태스크 항목 추가 또는 업데이트
-    task_number = re.search(r'TSK-(\d+)', new_task_entry).group(1)
-    task_exists = False
-    
-    for i, line in enumerate(lines):
-        if f"TSK-{task_number}" in line:
-            lines[i] = new_task_entry
-            task_exists = True
-            break
-    
-    if not task_exists:
-        if len(lines) > 2:
-            lines.append(new_task_entry)
-        else:
-            lines = [table_header, "| --------- | -------- | ------ | --------- | --------- | --------- | -------- |", new_task_entry]
-    
-    # 새 테이블 생성
-    new_table = '\n'.join(lines)
-    
-    return f"{old_content[:header_pos]}{new_table}\n\n{old_content[table_end:]}"
-
-def create_task_history_section(project_items):
-    """태스크 히스토리 섹션을 생성합니다."""
-    logger.info("\n=== 태스크 히스토리 섹션 생성 시작 ===")
-    task_todos = get_task_todos(project_items)
-    history_items = {}  # 날짜별로 그룹화
-    
-    logger.info("\n완료된 투두 처리:")
-    for task_name, todos in task_todos.items():
-        for todo in todos:
-            if todo['status'] == 'Done' and todo['closed_at']:
-                closed_date = datetime.fromisoformat(todo['closed_at'].replace('Z', '+00:00')).strftime('%Y-%m-%d')
-                logger.info(f"완료된 투두 발견: #{todo['number']} - {todo['title']} (완료일: {closed_date}, 상위 태스크: {task_name})")
-                
-                if closed_date not in history_items:
-                    history_items[closed_date] = []
-                    
-                history_items[closed_date].append({
-                    'number': todo['number'],
-                    'title': todo['title'],
-                    'category': task_name
-                })
-    
-    if not history_items:
-        return """## 📅 태스크 완료 히스토리
-
-아직 완료된 태스크가 없습니다."""
-    
-    history_section = "## 📅 태스크 완료 히스토리\n\n"
-    
-    # 날짜별로 정렬 (최신순)
-    sorted_dates = sorted(history_items.keys(), reverse=True)
-    
-    for date in sorted_dates:
-        items = history_items[date]
-        history_section += f"""<details>
-<summary><h3 style="display: inline;">📆 {date} ({len(items)}개)</h3></summary>
-
-| 투두 ID | 투두명 | 상위 태스크 |
-| ------- | ------ | ----------- |
+| 깃허브 | 이름 | 역할 |
+|--------|------|------|
 """
-        for item in items:
-            history_section += f"| #{item['number']} | {item['title']} | {item['category']} |\n"
-        
-        history_section += "\n</details>\n\n"
+    for username, info in GITHUB_USER_MAPPING.items():
+        team_section += f"| @{username} | {info['name']} | {info['role']} |\n"
     
-    logger.info(f"\n총 {sum(len(items) for items in history_items.values())}개의 완료된 투두 기록됨")
-    return history_section
+    return team_section
 
 def create_report_body(project_name, project=None):
     """프로젝트 보고서 템플릿을 생성합니다."""
@@ -627,6 +545,9 @@ def create_report_body(project_name, project=None):
     # 히스토리 섹션 생성
     history_section = create_task_history_section(project_items)
     
+    # 팀원 정보 섹션 추가
+    team_info_section = create_team_info_section()
+    
     return f"""<div align="center">
 
 ![header](https://capsule-render.vercel.app/api?type=transparent&color=39FF14&height=150&section=header&text=Project%20Report&fontSize=50&animation=fadeIn&fontColor=39FF14&desc=프로젝트%20진행%20보고서&descSize=25&descAlignY=75)
@@ -640,6 +561,8 @@ def create_report_body(project_name, project=None):
 **프로젝트명**: {project_name}  
 **보고서 작성일**: {datetime.now().strftime('%Y-%m-%d')}  
 **보고 기간**: {datetime.now().strftime('%Y-%m-%d')} ~ 진행중
+
+{team_info_section}
 
 ## 📋 태스크 상세 내역
 
