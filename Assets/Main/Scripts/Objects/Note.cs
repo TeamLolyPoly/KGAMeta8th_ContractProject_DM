@@ -1,3 +1,4 @@
+using UnityEditor;
 using UnityEngine;
 
 public class Note : MonoBehaviour
@@ -23,8 +24,6 @@ public class Note : MonoBehaviour
             noteType = data.noteType,
         };
         noteTrans = GetComponent<Transform>();
-        NoteDirectionChange();
-        NoteHitDirectionChange();
     }
 
     protected virtual void Update()
@@ -43,8 +42,12 @@ public class Note : MonoBehaviour
             }
         }
     }
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.black;
+    }
 
-    private void NoteDirectionChange()
+    protected void NoteDirectionChange()
     {
         float rotationZ = 0f;
         switch (noteData.direction)
@@ -89,7 +92,7 @@ public class Note : MonoBehaviour
         );
     }
 
-    private void NoteHitDirectionChange()
+    protected void NoteHitDirectionChange()
     {
         float rotationY = 0f;
         switch (noteData.noteAxis)
@@ -114,14 +117,14 @@ public class Note : MonoBehaviour
         );
     }
 
-    private Vector3 SetHitDirection(Vector3 dir)
+    protected Vector3 SetHitDirection(Vector3 dir)
     {
         switch (noteData.noteAxis)
         {
             case NoteAxis.PZ:
                 return dir;
             case NoteAxis.MZ:
-                return dir = -dir;
+                return -dir;
             case NoteAxis.PX:
                 return new Vector3(dir.z, dir.y, -dir.x);
             case NoteAxis.MX:
