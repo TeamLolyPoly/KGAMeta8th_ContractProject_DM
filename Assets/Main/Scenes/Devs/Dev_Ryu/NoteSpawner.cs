@@ -41,16 +41,16 @@ public class NoteSpawner : MonoBehaviour
         if (Random.value > 0.5f)
         {
             noteData.noteType = HitType.None;
-            noteData.direction = (NoteDirection)Random.Range(0, 8);
+            noteData.direction = (NoteDirection)Random.Range(1, 8);
             noteData.noteAxis = NoteAxis.PZ;
-            noteData.moveSpeed = 10f;
+            noteData.moveSpeed = noteSpeed;
         }
         else
         {
             noteData.noteType = Random.value > 0.5f ? HitType.Red : HitType.Blue;
-            noteData.direction = NoteDirection.None;
-            noteData.noteAxis = NoteAxis.None;
-            noteData.moveSpeed = 10f;
+            noteData.direction = (NoteDirection)Random.Range(1, 8);
+            noteData.noteAxis = NoteAxis.PZ;
+            noteData.moveSpeed = noteSpeed;
         }
 
         bool isLeftHand = noteData.noteType == HitType.None;
