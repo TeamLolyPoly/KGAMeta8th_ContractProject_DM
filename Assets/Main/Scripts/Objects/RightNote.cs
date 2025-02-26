@@ -17,6 +17,10 @@ public class RightNote : Note
         noteRenderer = GetComponent<Renderer>();
         if (noteRenderer != null)
         {
+            SetNoteDisTance();
+        }
+        if (noteRenderer != null)
+        {
             switch (noteData.noteType)
             {
                 case HitType.Red:
@@ -27,21 +31,18 @@ public class RightNote : Note
                     break;
             }
         }
-        if (noteRenderer != null)
-        {
-            SetNoteDisTance();
-        }
+        NoteDirectionChange();
+        NoteHitDirectionChange();
     }
 
     //노트가 허용하는 Hit거리를 구함
     private void SetNoteDisTance()
     {
-        float sizeX = noteRenderer.bounds.size.x;
         float sizeY = noteRenderer.bounds.size.y;
-        print($"x: {sizeX} Y: {sizeY}");
-        Vector3 dis = noteTrans.position;
-        dis.x += sizeX / 2;
-        noteDistance = Vector3.Distance(noteTrans.position, dis);
+        print($"Y: {sizeY}");
+        Vector3 dis = transform.position;
+        dis.y += sizeY / 2;
+        noteDistance = Vector3.Distance(transform.position, dis);
         print($"노트 길이: {noteDistance}");
     }
 
@@ -50,21 +51,26 @@ public class RightNote : Note
         float hitdis = HitPoint(other);
         Vector3 hitPoint = other.contacts[0].normal;
         float range = Vector3.Angle(hitPoint, hitDirection);
-        print(hitdis);
+        print($"법선벡터 X: {hitPoint.x} Y : {hitPoint.y} Z : {hitPoint.z}");
+        print($"내 벡터 X: {hitDirection.x} Y : {hitDirection.y} Z : {hitDirection.z}");
         if (other.gameObject.TryGetComponent<Mace>(out Mace Mace))
         {
-            if (range <= directionalRange)
+            if (Mace.maceType == noteData.noteType)
             {
-                if (Mace.maceType == noteData.noteType)
+                if (range <= directionalRange)
                 {
                     print(HitScore(hitdis));
+                }
+                else
+                {
+                    print("이상한 방향을 타격함");
                 }
             }
             else
             {
-                print("타격 실패");
+                print("Mace 타입이 다름");
             }
-
+            Destroy(this.gameObject);
         }
     }
 
@@ -72,8 +78,8 @@ public class RightNote : Note
     private float HitPoint(Collision other)
     {
         Vector3 hitPoint = other.GetContact(0).point;
-        Vector3 notePos = noteTrans.transform.position;
-        notePos.y -= noteRenderer.bounds.size.y / 2;
+        Vector3 notePos = transform.position - (-transform.up * noteDistance);
+        print($"notepos {notePos} hitPoint{hitPoint}");
         return Vector3.Distance(hitPoint, notePos);
     }
 
