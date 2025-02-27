@@ -3,7 +3,7 @@ GitHub 프로젝트 관리 핸들러
 """
 import os
 import logging
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 from ..client import GitHubClient
 import re
 from datetime import datetime
@@ -322,8 +322,16 @@ class GitHubProjectHandler:
             return time_match.group(1).strip()
         return '-'
 
-    def _get_repository_id(self, repo_name: str) -> Optional[str]:
-        """저장소의 ID를 가져옵니다."""
+    def _get_repository_id(self, repo_name: str) -> Tuple[Optional[str], Dict[str, str]]:
+        """
+        저장소의 ID와 라벨 정보를 가져옵니다.
+        
+        Args:
+            repo_name: 저장소 이름
+            
+        Returns:
+            Tuple[Optional[str], Dict[str, str]]: 저장소 ID와 라벨 정보 딕셔너리
+        """
         query = """
         query($org: String!, $name: String!) {
             organization(login: $org) {
@@ -352,198 +360,8 @@ class GitHubProjectHandler:
                 label['name']: label['id']
                 for label in repo['labels']['nodes']
             }
-            
-            # report 라벨이 없으면 생성
-            if 'report' not in labels:
-                logger.info("'report' 라벨 생성 시도...")
-                create_label_mutation = """
-                mutation($repositoryId: ID!, $name: String!, $description: String!, $color: String!) {
-                    createLabel(input: {
-                        repositoryId: $repositoryId,
-                        name: $name,
-                        description: $description,
-                        color: "0E8A16"
-                    }) {
-                        label {
-                            id
-                        }
-                    }
-                }
-                """
-                
-                label_variables = {
-                    "repositoryId": repo['id'],
-                    "name": "report",
-                    "description": "프로젝트 보고서 관련 이슈",
-                    "color": "0E8A16"  # 초록색
-                }
-                
-                label_result = self.client._execute_graphql(create_label_mutation, label_variables)
-                if label_result and 'createLabel' in label_result:
-                    labels['report'] = label_result['createLabel']['label']['id']
-                    logger.info("'report' 라벨이 성공적으로 생성되었습니다.")
-                else:
-                    logger.error("'report' 라벨 생성 실패")
-            
             return repo['id'], labels
         return None, {}
-
-    def _create_report_label(self, repo_id: str) -> Optional[str]:
-        """report 라벨을 생성합니다."""
-        create_label_mutation = """
-        mutation($repositoryId: ID!, $name: String!, $description: String!, $color: String!) {
-            createLabel(input: {
-                repositoryId: $repositoryId,
-                name: $name,
-                description: $description,
-                color: $color
-            }) {
-                label {
-                    id
-                }
-            }
-        }
-        """
-        
-        variables = {
-            "repositoryId": repo_id,
-            "name": "report",
-            "description": "프로젝트 보고서 관련 이슈",
-            "color": "0E8A16"  # 초록색
-        }
-        
-        result = self.client._execute_graphql(create_label_mutation, variables)
-        if result and 'createLabel' in result:
-            label_id = result['createLabel']['label']['id']
-            logger.info("'report' 라벨이 성공적으로 생성되었습니다.")
-            return label_id
-        else:
-            logger.error("'report' 라벨 생성 실패")
-            return None
-
-    def create_or_update_report(self, project_name: str, report_formatter) -> None:
-        """프로젝트 보고서를 생성하거나 업데이트합니다."""
-        logger.info("프로젝트 보고서 생성/업데이트 시작")
-        
-        # 저장소 ID와 라벨 ID 가져오기
-        repo_id, labels = self._get_repository_id(project_name)
-        if not repo_id:
-            logger.error("저장소 ID를 가져오는데 실패했습니다.")
-            return
-        
-        # report 라벨이 없으면 생성
-        if 'report' not in labels:
-            logger.info("'report' 라벨이 없어 새로 생성합니다...")
-            label_id = self._create_report_label(repo_id)
-            if label_id:
-                labels['report'] = label_id
-        
-        # 보고서 제목 생성
-        current_date = datetime.now().strftime('%Y-%m-%d')
-        report_title = f"📊 프로젝트 진행 보고서 ({current_date}) - {project_name}"
-        
-        # 보고서 본문 생성
-        report_body = report_formatter.format_report()
-        
-        # 기존 보고서 찾기
-        query = """
-        query($org: String!, $name: String!) {
-            organization(login: $org) {
-                repository(name: $name) {
-                    issues(first: 10, states: OPEN, labels: ["report"], orderBy: {field: CREATED_AT, direction: DESC}) {
-                        nodes {
-                            id
-                            number
-                            title
-                            createdAt
-                        }
-                    }
-                }
-            }
-        }
-        """
-        
-        variables = {
-            "org": self.client.org,
-            "name": project_name
-        }
-        
-        result = self.client._execute_graphql(query, variables)
-        
-        existing_report = None
-        if result and 'organization' in result and 'repository' in result['organization']:
-            issues = result['organization']['repository']['issues']['nodes']
-            today = datetime.now().strftime('%Y-%m-%d')
-            expected_title = f"📊 프로젝트 진행 보고서 ({today})"
-            
-            for issue in issues:
-                issue_date = datetime.fromisoformat(issue['createdAt'].replace('Z', '+00:00')).strftime('%Y-%m-%d')
-                if issue_date == today and expected_title in issue['title']:
-                    existing_report = issue
-                    logger.info(f"오늘자 보고서 #{issue['number']} 발견: {issue['title']}")
-                    break
-                else:
-                    logger.debug(f"보고서 제외 #{issue['number']}: {issue['title']} (생성일: {issue_date})")
-        
-        if existing_report:
-            # 기존 보고서 업데이트
-            update_query = """
-            mutation($id: ID!, $title: String!, $body: String!) {
-                updateIssue(input: {id: $id, title: $title, body: $body}) {
-                    issue {
-                        number
-                    }
-                }
-            }
-            """
-            
-            variables = {
-                "id": existing_report['id'],
-                "title": report_title,
-                "body": report_body
-            }
-            
-            result = self.client._execute_graphql(update_query, variables)
-            if result:
-                logger.info(f"보고서 #{existing_report['number']} 업데이트 완료")
-            else:
-                logger.error("보고서 업데이트 실패")
-        else:
-            # 보고서 생성
-            create_query = """
-            mutation($repositoryId: ID!, $title: String!, $body: String!, $labelIds: [ID!]) {
-                createIssue(input: {
-                    repositoryId: $repositoryId,
-                    title: $title,
-                    body: $body,
-                    labelIds: $labelIds
-                }) {
-                    issue {
-                        number
-                    }
-                }
-            }
-            """
-            
-            label_ids = []
-            if 'report' in labels:
-                label_ids.append(labels['report'])
-            else:
-                logger.warning("'report' 라벨을 찾을 수 없습니다.")
-            
-            variables = {
-                "repositoryId": repo_id,
-                "title": report_title,
-                "body": report_body,
-                "labelIds": label_ids
-            }
-            
-            result = self.client._execute_graphql(create_query, variables)
-            if result and 'createIssue' in result:
-                issue_number = result['createIssue']['issue']['number']
-                logger.info(f"새 보고서 #{issue_number} 생성 완료")
-            else:
-                logger.error(f"보고서 생성 실패: {result}")
 
     def update_project_status(self, task_manager) -> None:
         """프로젝트의 상태를 업데이트합니다."""
