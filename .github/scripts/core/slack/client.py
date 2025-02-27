@@ -18,7 +18,7 @@ class SlackClient:
             self.client.chat_postMessage(
                 channel=self.channel_id,
                 blocks=message['blocks'],
-                text=message['blocks'][0]['text']['text']
+                text=message['blocks'][0]['text']['text'] if 'text' in message['blocks'][0] else message['text']
             )
         except SlackApiError as e:
             print(f"채널 메시지 전송 실패: {e.response['error']}")
@@ -63,7 +63,21 @@ class SlackClient:
                 )
                 print(f"DM 전송 성공 ({user_id})")
             else:
-                print(f"DM 채널 열기 실패 ({user_id}): {response.get('error', '알 수 없는 오류')}")
+                error_msg = f"DM 채널 열기 실패 ({user_id}): {response.get('error', '알 수 없는 오류')}"
+                print(error_msg)
+                raise Exception(error_msg)
                 
         except SlackApiError as e:
-            print(f"DM 전송 실패 ({user_id}): {e.response['error']}") 
+            error_msg = f"DM 전송 실패 ({user_id}): {e.response['error']}"
+            print(error_msg)
+            # 필요한 권한 정보 출력
+            if 'missing_scope' in e.response['error']:
+                print("필요한 Slack API 권한: chat:write, im:write, users:read, users:read.email")
+                print("Slack API 애플리케이션 설정에서 권한을 추가하고 토큰을 재발급 받으세요.")
+            # 예외를 상위 호출자에게 전파
+            raise Exception(error_msg) from e
+        except Exception as e:
+            error_msg = f"DM 전송 중 예상치 못한 오류 발생 ({user_id}): {str(e)}"
+            print(error_msg)
+            # 예외를 상위 호출자에게 전파
+            raise Exception(error_msg) from e 
