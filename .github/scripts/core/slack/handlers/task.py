@@ -23,13 +23,19 @@ class TaskHandler(BaseHandler):
             assignee = event_data['assignee']['login']
             user_info = GITHUB_USER_MAPPING.get(assignee)
             if user_info and user_info.get('slack_id'):
-                # 상위 태스크 정보 추출
                 parent_task = self._get_parent_task_info(task_data)
+                
+                labels = [label['name'] for label in task_data.get('labels', [])]
+                is_todo = any('todo-generated' in label.lower() for label in labels)
+                
+                header_text = "🎯 새로운 할일이 할당되었습니다"
+                if is_todo:
+                    header_text = "📝 새로운 Todo가 할당되었습니다"
                 
                 blocks = [
                     {
                         "type": "header",
-                        "text": {"type": "plain_text", "text": "🎯 새로운 할일이 할당되었습니다"}
+                        "text": {"type": "plain_text", "text": header_text}
                     },
                     {
                         "type": "section",
@@ -54,11 +60,60 @@ class TaskHandler(BaseHandler):
                     {"type": "divider"}
                 ])
                 
-                self.client.send_dm(
-                    user_info['slack_id'],
-                    blocks,
-                    f"새로운 할일이 할당되었습니다: {task_data['title']}"
-                )
+                message_text = f"새로운 할일이 할당되었습니다: {task_data['title']}"
+                if is_todo:
+                    message_text = f"새로운 Todo가 할당되었습니다: {task_data['title']}"
+                
+                try:
+                    # DM 전송 시도
+                    self.client.send_dm(
+                        user_info['slack_id'],
+                        blocks,
+                        message_text
+                    )
+                except Exception as e:
+                    print(f"DM 전송 실패, 채널에 멘션으로 대체합니다: {str(e)}")
+                    # DM 전송 실패 시 채널에 멘션으로 대체
+                    self._send_mention_to_channel(user_info, task_data, is_todo)
+    
+    def _send_mention_to_channel(self, user_info: Dict, task_data: Dict, is_todo: bool):
+        """채널에 멘션 전송"""
+        slack_id = user_info['slack_id']
+        user_name = user_info['name']
+        
+        # Slack ID에서 '@' 제거
+        if slack_id.startswith('@'):
+            slack_id = slack_id[1:]
+        
+        header_text = "🎯 새로운 할일이 할당되었습니다"
+        if is_todo:
+            header_text = "📝 새로운 Todo가 할당되었습니다"
+        
+        blocks = [
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": f"*{header_text}*\n<@{slack_id}> 님에게 새로운 할일이 할당되었습니다."}
+            },
+            {
+                "type": "section",
+                "fields": [
+                    {"type": "mrkdwn", "text": f"*할일:*\n{task_data['title']}"},
+                    {"type": "mrkdwn", "text": f"*상태:*\n{task_data['state']}"}
+                ]
+            },
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": f"👉 <{task_data['html_url']}|할일 보러가기>"}
+            },
+            {"type": "divider"}
+        ]
+        
+        message = {
+            "blocks": blocks,
+            "text": f"{user_name}님에게 새로운 할일이 할당되었습니다: {task_data['title']}"
+        }
+        
+        self.client.send_channel_notification(message)
     
     def _get_parent_task_info(self, task_data: Dict) -> Dict:
         """할일의 상위 태스크 정보를 추출"""

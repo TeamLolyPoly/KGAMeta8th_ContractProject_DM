@@ -1,48 +1,69 @@
 """
 사용자 매핑 정보를 관리하는 설정 파일
 """
-
 GITHUB_USER_MAPPING = {
     "Anxi77": {
         "name": "최현성",
         "role": "개발팀 팀장",
         "branch_suffix": "HSChoi",
-        "slack_id": "@최현성",
+        "slack_id": "U08EHHU46LR",
         "position": "head_developer"
     },
     "beooom": {
         "name": "김범희",
         "role": "백엔드/컨텐츠 개발",
         "branch_suffix": "KimBeom",
-        "slack_id": "@김범희",
+        "slack_id": "U08DX2PBE6T",
         "position": "developer"
     },
     "Jine99": {
         "name": "김진",
         "role": "컨텐츠 개발",
         "branch_suffix": "JKim",
-        "slack_id": "@김진",
+        "slack_id": "U08E92L3Z7F",
         "position": "developer"
     },
     "hyeonji9178": {
         "name": "김현지",
         "role": "컨텐츠 개발",
         "branch_suffix": "HJKim",
-        "slack_id": "@김현지",
+        "slack_id": "U08EC2QGW3C",
         "position": "developer"
     },
     "Rjcode7387": {
         "name": "류지형",
         "role": "컨텐츠 개발", 
         "branch_suffix": "JHRYU",
-        "slack_id": "@류지형",
+        "slack_id": "U08E92LAQ4D",
         "position": "developer"
     },
-    "project_manager": {
+    "ppoyammy": {
         "name": "이은영",
         "role": "PM",
-        "slack_id": "@이은영",
+        "branch_suffix": "EYLEE",
+        "slack_id": "U08EEEYNAF6",
         "position": "pm"
+    },
+    "APTX9946": {
+        "name": "김성연",
+        "role": "head_designer",
+        "branch_suffix": "SYKIM",
+        "slack_id": "U08EEEZ0ZTN",
+        "position": "head_designer"
+    },
+    "yoonsung9999": {
+        "name": "김윤성",
+        "role": "designer",
+        "branch_suffix": "YSKIM",
+        "slack_id": "U08EBL995D1",
+        "position": "designer"
+    },
+    "rkaQu": {
+        "name": "최민석",
+        "role": "designer",
+        "branch_suffix": "MSCHOI",
+        "slack_id": "U08E92L7KCM",
+        "position": "designer"
     }
 }
 
