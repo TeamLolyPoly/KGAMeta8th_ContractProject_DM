@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028331, g: 0.2257133, b: 0.3069217, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -213,7 +213,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 545397472}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.5, z: 0}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 10, y: 10, z: 10}
   m_Children: []
   m_Father: {fileID: 0}
@@ -592,9 +592,9 @@ MonoBehaviour:
   totalHorizontalCells: 5
   verticalCells: 3
   handGridSize: 3
-  cellSize: 1
-  cellSpacing: 0.1
-  gridDistance: 30
+  cellSize: 0.25
+  cellSpacing: 0.2
+  gridDistance: 15
   leftHandMaterial: {fileID: 2100000, guid: b6e199ed620a2d248b051077b9f391c0, type: 2}
   rightHandMaterial: {fileID: 2100000, guid: e06f025f68c6a6d4d82d2f6a70cbd610, type: 2}
   overlapMaterial: {fileID: 2100000, guid: f3ce4347e45885f46ba75b968cc86e3c, type: 2}
@@ -1115,7 +1115,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6525494854045599292}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.545, z: 3.59}
+  m_LocalPosition: {x: 0, y: 1, z: 3.59}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1483807780549476293}
