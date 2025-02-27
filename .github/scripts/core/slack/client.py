@@ -40,10 +40,30 @@ class SlackClient:
     def send_dm(self, user_id: str, blocks: List[Dict], text: str):
         """DM 전송"""
         try:
-            self.client.chat_postMessage(
-                channel=user_id.replace('@', ''),
-                blocks=blocks,
-                text=text
-            )
+            # '@' 기호 제거 및 사용자 ID 정리
+            clean_user_id = user_id.replace('@', '').strip()
+            
+            # 사용자 ID가 이메일 형식인지 확인
+            if '@' in clean_user_id and '.' in clean_user_id:
+                # 이메일 형식이면 사용자 조회
+                response = self.client.users_lookupByEmail(email=clean_user_id)
+                if response["ok"]:
+                    clean_user_id = response["user"]["id"]
+            
+            # 사용자 ID로 DM 채널 열기
+            response = self.client.conversations_open(users=[clean_user_id])
+            if response["ok"]:
+                channel_id = response["channel"]["id"]
+                
+                # DM 채널에 메시지 전송
+                self.client.chat_postMessage(
+                    channel=channel_id,
+                    blocks=blocks,
+                    text=text
+                )
+                print(f"DM 전송 성공 ({user_id})")
+            else:
+                print(f"DM 채널 열기 실패 ({user_id}): {response.get('error', '알 수 없는 오류')}")
+                
         except SlackApiError as e:
             print(f"DM 전송 실패 ({user_id}): {e.response['error']}") 
