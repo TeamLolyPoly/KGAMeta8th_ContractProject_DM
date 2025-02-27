@@ -1,4 +1,3 @@
-using UnityEditor;
 using UnityEngine;
 
 public class Note : MonoBehaviour
@@ -7,14 +6,23 @@ public class Note : MonoBehaviour
     protected float directionalRange = 10f;
 
     [SerializeField, Header("노트 점수")]
-    protected float NoteScore = 100;
+    protected int NoteScore = 100;
+
+    [SerializeField, Header("타격 정확도 허용범위")]
+    protected float[] accuracyPoint = { 0.34f, 0.67f };
+
+    [SerializeField, Header("노트 정확도 점수배율")]
+    protected float[] accuracyScore = { 0.8f, 0.5f };
     protected bool isMoving = true;
     protected NoteData noteData;
     protected Transform noteTrans;
     protected Vector3 hitDirection;
-
+    protected float noteDistance;
+    private Renderer noteRenderer;
     public virtual void Initialize(NoteData data)
     {
+        noteTrans = GetComponent<Transform>();
+        noteRenderer = GetComponent<Renderer>();
         noteData = new NoteData()
         {
             noteAxis = data.noteAxis,
@@ -23,7 +31,22 @@ public class Note : MonoBehaviour
             moveSpeed = data.moveSpeed,
             noteType = data.noteType,
         };
-        noteTrans = GetComponent<Transform>();
+        if (noteRenderer != null)
+        {
+            SetNoteDisTance();
+
+            switch (noteData.noteType)
+            {
+                case NoteHitType.Red:
+                    noteRenderer.material.color = Color.red;
+                    break;
+                case NoteHitType.Blue:
+                    noteRenderer.material.color = Color.blue;
+                    break;
+            }
+        }
+        NoteDirectionChange();
+        NoteHitDirectionChange();
     }
 
     protected virtual void Update()
@@ -133,4 +156,82 @@ public class Note : MonoBehaviour
                 return dir;
         }
     }
+
+    //hit위치에서 중앙까지의 거리를 비교후 점수 계산
+    protected void HitScore(float hitdis)
+    {
+        NoteRatings ratings;
+        int Score = NoteScore;
+        if (noteDistance * accuracyPoint[0] >= hitdis)
+        {
+            print($"Perfect noteDis :{noteDistance * accuracyPoint[0]} , Hitdis: {hitdis}");
+            ratings = NoteRatings.Perfect;
+        }
+        else if (noteDistance * accuracyPoint[1] > hitdis)
+        {
+            print($"Great noteDis :{noteDistance * accuracyPoint[1]} , Hitdis: {hitdis}");
+            ratings = NoteRatings.Great;
+        }
+        else if (noteDistance >= hitdis)
+        {
+            print($"Good noteDis :{noteDistance} , Hitdis: {hitdis}");
+            ratings = NoteRatings.Good;
+        }
+        else
+        {
+            print($"Miss noteDis :{noteDistance} , Hitdis: {hitdis}");
+            ratings = NoteRatings.Miss;
+            Score = 0;
+        }
+        NoteGameManager.Instance.SetScore(Score, ratings);
+    }
+
+    //노트가 허용하는 Hit거리를 구함
+    private void SetNoteDisTance()
+    {
+        float sizeY = noteRenderer.bounds.size.y;
+        print($"Y: {sizeY}");
+        Vector3 dis = transform.position;
+        dis.y += sizeY / 2;
+        noteDistance = Vector3.Distance(transform.position, dis);
+        print($"노트 길이: {noteDistance}");
+    }
+
+    private void OnCollisionEnter(Collision other)
+    {
+        float hitdis = HitPoint(other);
+        Vector3 hitPoint = other.contacts[0].normal;
+        float range = Vector3.Angle(hitPoint, hitDirection);
+        print($"법선벡터 X: {hitPoint.x} Y : {hitPoint.y} Z : {hitPoint.z}");
+        print($"내 벡터 X: {hitDirection.x} Y : {hitDirection.y} Z : {hitDirection.z}");
+        if (other.gameObject.TryGetComponent<HitObject>(out HitObject hitObject))
+        {
+            if (hitObject.hitObjectType == noteData.noteType)
+            {
+                if (range <= directionalRange)
+                {
+                    HitScore(hitdis);
+                }
+                else
+                {
+                    print("이상한 방향을 타격함");
+                }
+            }
+            else
+            {
+                print("HitObject 타입이 다름");
+            }
+            Destroy(this.gameObject);
+        }
+    }
+
+    //맞은 기준으로 노트의 중앙에서 부터의 거리를 구함
+    private float HitPoint(Collision other)
+    {
+        Vector3 hitPoint = other.GetContact(0).point;
+        Vector3 notePos = transform.position - (-transform.up * noteDistance);
+        print($"notepos {notePos} hitPoint{hitPoint}");
+        return Vector3.Distance(hitPoint, notePos);
+    }
+
 }
