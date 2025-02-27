@@ -23,13 +23,19 @@ class TaskHandler(BaseHandler):
             assignee = event_data['assignee']['login']
             user_info = GITHUB_USER_MAPPING.get(assignee)
             if user_info and user_info.get('slack_id'):
-                # 상위 태스크 정보 추출
                 parent_task = self._get_parent_task_info(task_data)
+                
+                labels = [label['name'] for label in task_data.get('labels', [])]
+                is_todo = any('todo-generated' in label.lower() for label in labels)
+                
+                header_text = "🎯 새로운 할일이 할당되었습니다"
+                if is_todo:
+                    header_text = "📝 새로운 Todo가 할당되었습니다"
                 
                 blocks = [
                     {
                         "type": "header",
-                        "text": {"type": "plain_text", "text": "🎯 새로운 할일이 할당되었습니다"}
+                        "text": {"type": "plain_text", "text": header_text}
                     },
                     {
                         "type": "section",
@@ -54,10 +60,14 @@ class TaskHandler(BaseHandler):
                     {"type": "divider"}
                 ])
                 
+                message_text = f"새로운 할일이 할당되었습니다: {task_data['title']}"
+                if is_todo:
+                    message_text = f"새로운 Todo가 할당되었습니다: {task_data['title']}"
+                
                 self.client.send_dm(
                     user_info['slack_id'],
                     blocks,
-                    f"새로운 할일이 할당되었습니다: {task_data['title']}"
+                    message_text
                 )
     
     def _get_parent_task_info(self, task_data: Dict) -> Dict:
