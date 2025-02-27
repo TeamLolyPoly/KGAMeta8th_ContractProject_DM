@@ -40,20 +40,20 @@ public class NoteSpawner : MonoBehaviour
 
         if (Random.value > 0.5f)
         {
-            noteData.noteType = HitType.None;
+            noteData.noteType = NoteHitType.Hand;
             noteData.direction = (NoteDirection)Random.Range(1, 8);
             noteData.noteAxis = NoteAxis.PZ;
             noteData.moveSpeed = noteSpeed;
         }
         else
         {
-            noteData.noteType = Random.value > 0.5f ? HitType.Red : HitType.Blue;
+            noteData.noteType = Random.value > 0.5f ? NoteHitType.Red : NoteHitType.Blue;
             noteData.direction = (NoteDirection)Random.Range(1, 8);
             noteData.noteAxis = NoteAxis.PZ;
             noteData.moveSpeed = noteSpeed;
         }
 
-        bool isLeftHand = noteData.noteType == HitType.None;
+        bool isLeftHand = noteData.noteType == NoteHitType.None;
 
         int x = isLeftHand ? Random.Range(0, 3) : Random.Range(2, 5);
         int y = Random.Range(0, gridManager.VerticalCells);
