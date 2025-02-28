@@ -124,6 +124,8 @@ class TodoProcessor:
         all_todos = []
         created_issues = []
         
+        original_category = self.current_category
+        
         if existing_todos:
             if is_new_day:
                 all_todos.extend([(checked, text) for checked, text in existing_todos 

@@ -12,10 +12,13 @@ public class NoteGameManager : Singleton<NoteGameManager>
 
     [SerializeField, Header("정확도 추가점수")]
     private int[] multiplierScore = { 20, 15, 10 };
+
     //현재 점수
     public float currentScore { get; private set; } = 0;
+
     //현재 콤보
     public int combo { get; private set; } = 0;
+
     //현재 배율
     public int Multiplier { get; private set; } = 1;
 
@@ -35,6 +38,7 @@ public class NoteGameManager : Singleton<NoteGameManager>
         currentScore += (score * Multiplier) + ratingScore;
         test.text = $"{currentScore}";
     }
+
     //콤보별 배율 세팅함수
     private int SetMultiplier()
     {
@@ -47,6 +51,7 @@ public class NoteGameManager : Singleton<NoteGameManager>
         }
         return 1;
     }
+
     //정확도 추가 점수
     private int GetRatingScore(NoteRatings ratings)
     {
