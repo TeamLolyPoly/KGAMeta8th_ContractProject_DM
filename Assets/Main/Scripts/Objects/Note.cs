@@ -19,6 +19,7 @@ public class Note : MonoBehaviour
     protected Vector3 hitDirection;
     protected float noteDistance;
     private Renderer noteRenderer;
+
     public virtual void Initialize(NoteData data)
     {
         noteTrans = GetComponent<Transform>();
@@ -61,13 +62,16 @@ public class Note : MonoBehaviour
 
             if (Vector3.Distance(transform.position, noteData.target) < 0.1f)
             {
+                Miss();
                 Destroy(gameObject);
             }
         }
     }
+
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.black;
+        Gizmos.DrawLine(transform.localPosition, transform.position - -transform.up - hitDirection);
     }
 
     protected void NoteDirectionChange()
@@ -157,6 +161,7 @@ public class Note : MonoBehaviour
         }
     }
 
+    //TODO: dis 널널하게
     //hit위치에서 중앙까지의 거리를 비교후 점수 계산
     protected void HitScore(float hitdis)
     {
@@ -172,18 +177,19 @@ public class Note : MonoBehaviour
             print($"Great noteDis :{noteDistance * accuracyPoint[1]} , Hitdis: {hitdis}");
             ratings = NoteRatings.Great;
         }
-        else if (noteDistance >= hitdis)
+        else
         {
             print($"Good noteDis :{noteDistance} , Hitdis: {hitdis}");
             ratings = NoteRatings.Good;
         }
-        else
-        {
-            print($"Miss noteDis :{noteDistance} , Hitdis: {hitdis}");
-            ratings = NoteRatings.Miss;
-            Score = 0;
-        }
         NoteGameManager.Instance.SetScore(Score, ratings);
+        Destroy(this.gameObject);
+    }
+
+    protected void Miss()
+    {
+        NoteGameManager.Instance.SetScore(0, NoteRatings.Miss);
+        Destroy(this.gameObject);
     }
 
     //노트가 허용하는 Hit거리를 구함
@@ -197,14 +203,18 @@ public class Note : MonoBehaviour
         print($"노트 길이: {noteDistance}");
     }
 
+    //TODO: 판정 방식 수정 HitScore수정 해야함
     private void OnCollisionEnter(Collision other)
     {
         float hitdis = HitPoint(other);
         Vector3 hitPoint = other.contacts[0].normal;
+        Debug.DrawRay(transform.position, hitPoint, Color.blue, 0.5f);
         float range = Vector3.Angle(hitPoint, hitDirection);
         print($"법선벡터 X: {hitPoint.x} Y : {hitPoint.y} Z : {hitPoint.z}");
-        print($"내 벡터 X: {hitDirection.x} Y : {hitDirection.y} Z : {hitDirection.z}");
-        if (other.gameObject.TryGetComponent<HitObject>(out HitObject hitObject))
+        print(
+            $"내 벡터 X: {hitDirection.x} Y : {hitDirection.y} Z : {hitDirection.z} range: {range}"
+        );
+        if (other.gameObject.TryGetComponent(out HitObject hitObject))
         {
             if (hitObject.hitObjectType == noteData.noteType)
             {
@@ -214,14 +224,16 @@ public class Note : MonoBehaviour
                 }
                 else
                 {
+                    Miss();
                     print("이상한 방향을 타격함");
                 }
             }
             else
             {
+                Miss();
                 print("HitObject 타입이 다름");
             }
-            Destroy(this.gameObject);
+            Miss();
         }
     }
 
@@ -233,5 +245,4 @@ public class Note : MonoBehaviour
         print($"notepos {notePos} hitPoint{hitPoint}");
         return Vector3.Distance(hitPoint, notePos);
     }
-
 }

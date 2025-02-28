@@ -52,7 +52,7 @@ public class NoteSpawner : MonoBehaviour
             noteData.noteAxis = NoteAxis.PZ;
             noteData.moveSpeed = noteSpeed;
         }
-
+        print(noteData.noteType);
         bool isLeftHand = noteData.noteType == NoteHitType.None;
 
         int x = isLeftHand ? Random.Range(0, 3) : Random.Range(2, 5);
