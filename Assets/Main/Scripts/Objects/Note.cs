@@ -11,14 +11,18 @@ public class Note : MonoBehaviour
     [SerializeField, Header("타격 정확도 허용범위")]
     protected float[] accuracyPoint = { 0.34f, 0.67f };
 
-    [SerializeField, Header("노트 정확도 점수배율")]
-    protected float[] accuracyScore = { 0.8f, 0.5f };
+    // [SerializeField, Header("노트 정확도 점수배율")]
+    // protected float[] accuracyScore = { 0.8f, 0.5f };
     protected bool isMoving = true;
     protected NoteData noteData;
     protected Transform noteTrans;
-    protected Vector3 hitDirection;
+    protected Vector3 noteDownDirection,
+        noteUpDirection;
     protected float noteDistance;
     private Renderer noteRenderer;
+    private float EnterAngle,
+        ExitAngle;
+    private float hitdis;
 
     public virtual void Initialize(NoteData data)
     {
@@ -48,6 +52,10 @@ public class Note : MonoBehaviour
         }
         NoteDirectionChange();
         NoteHitDirectionChange();
+        NoteAngleChange();
+        noteDownDirection = -transform.up;
+        noteUpDirection = transform.up;
+        print($"Down: {noteDownDirection} Up: {noteUpDirection}");
     }
 
     protected virtual void Update()
@@ -71,7 +79,9 @@ public class Note : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.black;
-        Gizmos.DrawLine(transform.localPosition, transform.position - -transform.up - hitDirection);
+        Gizmos.DrawLine(transform.localPosition, transform.position + noteDownDirection);
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(transform.localPosition, transform.position + noteUpDirection);
     }
 
     protected void NoteDirectionChange()
@@ -81,35 +91,27 @@ public class Note : MonoBehaviour
         {
             case NoteDirection.East:
                 rotationZ = 90f;
-                hitDirection = SetHitDirection(new Vector3(1, 0, 0));
                 break;
             case NoteDirection.West:
                 rotationZ = -90f;
-                hitDirection = SetHitDirection(new Vector3(-1, 0, 0));
                 break;
             case NoteDirection.South:
                 rotationZ = 0f;
-                hitDirection = SetHitDirection(new Vector3(0, -1, 0));
                 break;
             case NoteDirection.North:
                 rotationZ = 180f;
-                hitDirection = SetHitDirection(new Vector3(0, 1, 0));
                 break;
             case NoteDirection.Northeast:
                 rotationZ = 135f;
-                hitDirection = SetHitDirection(new Vector3(1, 1, 0).normalized);
                 break;
             case NoteDirection.Northwest:
                 rotationZ = -135f;
-                hitDirection = SetHitDirection(new Vector3(-1, 1, 0).normalized);
                 break;
             case NoteDirection.Southeast:
                 rotationZ = 45f;
-                hitDirection = SetHitDirection(new Vector3(1, -1, 0).normalized);
                 break;
             case NoteDirection.Southwest:
                 rotationZ = -45f;
-                hitDirection = SetHitDirection(new Vector3(-1, -1, 0).normalized);
                 break;
         }
         noteTrans.rotation = Quaternion.Euler(
@@ -144,24 +146,8 @@ public class Note : MonoBehaviour
         );
     }
 
-    protected Vector3 SetHitDirection(Vector3 dir)
-    {
-        switch (noteData.noteAxis)
-        {
-            case NoteAxis.PZ:
-                return dir;
-            case NoteAxis.MZ:
-                return -dir;
-            case NoteAxis.PX:
-                return new Vector3(dir.z, dir.y, -dir.x);
-            case NoteAxis.MX:
-                return new Vector3(dir.z, dir.y, dir.x);
-            default:
-                return dir;
-        }
-    }
+    protected void NoteAngleChange() { }
 
-    //TODO: dis 널널하게
     //hit위치에서 중앙까지의 거리를 비교후 점수 계산
     protected void HitScore(float hitdis)
     {
@@ -206,19 +192,32 @@ public class Note : MonoBehaviour
     //TODO: 판정 방식 수정 HitScore수정 해야함
     private void OnCollisionEnter(Collision other)
     {
-        float hitdis = HitPoint(other);
         Vector3 hitPoint = other.contacts[0].normal;
+        hitdis = HitPoint(other);
+        EnterAngle = Vector3.Angle(hitPoint, noteDownDirection);
         Debug.DrawRay(transform.position, hitPoint, Color.blue, 0.5f);
-        float range = Vector3.Angle(hitPoint, hitDirection);
+
         print($"법선벡터 X: {hitPoint.x} Y : {hitPoint.y} Z : {hitPoint.z}");
         print(
-            $"내 벡터 X: {hitDirection.x} Y : {hitDirection.y} Z : {hitDirection.z} range: {range}"
+            $"내 벡터 X: {noteDownDirection.x} Y : {noteDownDirection.y} Z : {noteDownDirection.z} range: {EnterAngle}"
         );
+    }
+
+    private void OnCollisionExit(Collision other)
+    {
+        Vector3 ExitPoint = (transform.position - other.transform.position).normalized;
+        ExitAngle = Vector3.Angle(ExitPoint, noteUpDirection);
+
+        print($"Exit 법선벡터 X: {ExitPoint.x} Y : {ExitPoint.y} Z : {ExitPoint.z}");
+        print(
+            $"Exit 내 벡터 X:{noteUpDirection.x} Y : {noteUpDirection.y} Z : {noteUpDirection.z} ExitAngle: {ExitAngle}"
+        );
+        Debug.DrawRay(transform.position, ExitPoint, Color.red, 0.5f);
         if (other.gameObject.TryGetComponent(out HitObject hitObject))
         {
             if (hitObject.hitObjectType == noteData.noteType)
             {
-                if (range <= directionalRange)
+                if (EnterAngle <= directionalRange && ExitAngle <= directionalRange)
                 {
                     HitScore(hitdis);
                 }

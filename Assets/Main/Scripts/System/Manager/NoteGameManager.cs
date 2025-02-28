@@ -28,12 +28,15 @@ public class NoteGameManager : Singleton<NoteGameManager>
         {
             Multiplier = 1;
             combo = 0;
+            test.text = $"combo: {combo} \ncurrentScore: {currentScore}";
             return;
         }
         combo += 1;
         int ratingScore = GetRatingScore(ratings);
         Multiplier = SetMultiplier();
+
         currentScore += (score * Multiplier) + ratingScore;
+
         print($"ratingScore: {ratingScore}");
         print($"currentScore: {currentScore}");
         print($"combo: {combo}");
