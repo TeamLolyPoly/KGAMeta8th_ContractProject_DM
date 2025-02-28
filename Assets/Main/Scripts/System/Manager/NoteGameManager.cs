@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class NoteGameManager : Singleton<NoteGameManager>
 {
@@ -12,10 +11,13 @@ public class NoteGameManager : Singleton<NoteGameManager>
 
     [SerializeField, Header("정확도 추가점수")]
     private int[] multiplierScore = { 20, 15, 10 };
+
     //현재 점수
     public float currentScore { get; private set; } = 0;
+
     //현재 콤보
     public int combo { get; private set; } = 0;
+
     //현재 배율
     public int Multiplier { get; private set; } = 1;
 
@@ -28,13 +30,16 @@ public class NoteGameManager : Singleton<NoteGameManager>
             combo = 0;
             return;
         }
-        combo++;
+        combo += 1;
         int ratingScore = GetRatingScore(ratings);
-        print(ratingScore);
         Multiplier = SetMultiplier();
         currentScore += (score * Multiplier) + ratingScore;
-        test.text = $"{currentScore}";
+        print($"ratingScore: {ratingScore}");
+        print($"currentScore: {currentScore}");
+        print($"combo: {combo}");
+        test.text = $"combo: {combo} \ncurrentScore: {currentScore}";
     }
+
     //콤보별 배율 세팅함수
     private int SetMultiplier()
     {
@@ -47,6 +52,7 @@ public class NoteGameManager : Singleton<NoteGameManager>
         }
         return 1;
     }
+
     //정확도 추가 점수
     private int GetRatingScore(NoteRatings ratings)
     {
