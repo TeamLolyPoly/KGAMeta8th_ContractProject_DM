@@ -12,9 +12,9 @@ public class PlaybackPanel : MonoBehaviour, IInitializable
     public Slider trackSlider;
     public BoxButtonManager CurrentTrackInfo;
     public ButtonManager playButton;
-    public Image currentTrackAlbumArt;
     public TextMeshProUGUI currentTrackPlaybackTime;
     public Dropdown trackDropdown;
+    public WaveformDisplay waveformDisplay;
     public bool IsInitialized { get; private set; }
 
     private bool isPlaying = false;
@@ -75,7 +75,19 @@ public class PlaybackPanel : MonoBehaviour, IInitializable
             AudioManager.Instance.SelectTrack(tracks[0]);
             CurrentTrackInfo.SetText(tracks[0].trackName);
             CurrentTrackInfo.SetBackground(tracks[0].albumArt);
+
+            if (waveformDisplay != null)
+            {
+                StartCoroutine(InitializeWaveform(tracks[0]));
+            }
         }
+    }
+
+    private IEnumerator InitializeWaveform(TrackData track)
+    {
+        yield return new WaitUntil(() => waveformDisplay.IsInitialized);
+
+        waveformDisplay.UpdateWaveform(track.trackAudio);
     }
 
     private void OnTrackDropdownValueChanged(int selectedIndex)
@@ -86,6 +98,11 @@ public class PlaybackPanel : MonoBehaviour, IInitializable
             CurrentTrackInfo.SetText(selectedTrack.trackName);
             CurrentTrackInfo.SetBackground(selectedTrack.albumArt);
             AudioManager.Instance.SelectTrack(selectedTrack);
+
+            if (waveformDisplay != null && waveformDisplay.IsInitialized)
+            {
+                waveformDisplay.UpdateWaveform(selectedTrack.trackAudio);
+            }
         }
     }
 
