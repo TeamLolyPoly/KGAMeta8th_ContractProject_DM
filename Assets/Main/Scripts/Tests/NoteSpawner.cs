@@ -37,11 +37,11 @@ public class NoteSpawner : MonoBehaviour
     void SpawnRandomNote()
     {
         NoteData noteData = new NoteData();
-        bool isLeftHand = Random.value > 0.5f;  // 50% 확률로 왼쪽/오른쪽 결정
+        bool isLeftHand = Random.value > 0.5f; // 50% 확률로 왼쪽/오른쪽 결정
 
         if (isLeftHand)
         {
-            noteData.noteType = NoteHitType.Hand;  // 또는 왼쪽 노트용 타입
+            noteData.noteType = NoteHitType.Hand; // 또는 왼쪽 노트용 타입
         }
         else
         {
