@@ -9,7 +9,6 @@ using Dropdown = Michsky.UI.Heat.Dropdown;
 
 public class PlaybackPanel : MonoBehaviour, IInitializable
 {
-    public Slider trackSlider;
     public BoxButtonManager CurrentTrackInfo;
     public ButtonManager playButton;
     public TextMeshProUGUI currentTrackPlaybackTime;
@@ -28,7 +27,6 @@ public class PlaybackPanel : MonoBehaviour, IInitializable
 
     public void Initialize()
     {
-        trackSlider.onValueChanged.AddListener(OnValueChanged);
         playButton.onClick.AddListener(OnPlayButtonClicked);
         InitializeTrackDropdown();
         IsInitialized = true;
@@ -113,9 +111,6 @@ public class PlaybackPanel : MonoBehaviour, IInitializable
             return;
         }
 
-        trackSlider.maxValue = AudioManager.Instance.currentPlaybackDuration;
-        trackSlider.value = AudioManager.Instance.currentPlaybackTime;
-
         float currentTime = AudioManager.Instance.currentPlaybackTime;
         float totalTime = AudioManager.Instance.currentPlaybackDuration;
 
@@ -143,11 +138,6 @@ public class PlaybackPanel : MonoBehaviour, IInitializable
         {
             isPlaying = audioIsPlaying;
         }
-    }
-
-    public void OnValueChanged(float value)
-    {
-        AudioManager.Instance.ChangePlaybackPosition(value);
     }
 
     public void OnPlayButtonClicked()

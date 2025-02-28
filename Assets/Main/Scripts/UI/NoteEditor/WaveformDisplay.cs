@@ -8,20 +8,17 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
 {
     [Header("웨이브폼 설정")]
     public RawImage waveformImage;
+    public Image progressImage;
     public RectTransform waveformRect;
     public RectTransform playheadMarker;
     public Color playheadColor = Color.red;
-    public float waveformHeight = 100f;
 
     [Header("재생 진행 표시")]
-    public Image progressOverlay; // 재생 진행 상태를 표시할 이미지
-    public Color progressColor = new Color(0.2f, 0.6f, 1f, 0.5f); // 진행 색상 (파란색 반투명)
+    public bool useProgressOverlay = false;
 
     [Header("웨이브폼 색상")]
-    public Color backgroundColor = new Color(0.25f, 0.25f, 0.25f); // 배경 색상
-    public Color unplayedColor = new Color(1f, 0.6f, 0.2f); // 재생 전 웨이브폼 색상 (주황색)
-    public Color playedColor = new Color(0.2f, 0.6f, 1f); // 재생 후 웨이브폼 색상 (파란색)
-    public bool useDualColorWaveform = true; // 이중 색상 웨이브폼 사용 여부
+    public Color waveformColor = new Color(1f, 0.6f, 0.2f);
+    public Color progressColor = new Color(0.2f, 0.6f, 1f);
 
     [Header("마커 설정")]
     public bool showBeatMarkers = false;
@@ -73,21 +70,43 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
         if (waveformImage == null)
             waveformImage = GetComponent<RawImage>();
 
-        if (progressOverlay != null)
+        if (progressImage != null)
         {
-            progressOverlay.color = progressColor;
-            progressOverlay.fillMethod = Image.FillMethod.Horizontal;
-            progressOverlay.fillOrigin = (int)Image.OriginHorizontal.Left;
-            progressOverlay.type = Image.Type.Filled;
-            progressOverlay.fillAmount = 0f;
+            progressImage.color = progressColor;
+            progressImage.type = Image.Type.Filled;
+            progressImage.fillMethod = Image.FillMethod.Horizontal;
+            progressImage.fillOrigin = (int)Image.OriginHorizontal.Left;
+            progressImage.fillAmount = 0;
+
+            progressImage.rectTransform.anchorMin = Vector2.zero;
+            progressImage.rectTransform.anchorMax = Vector2.one;
+            progressImage.rectTransform.offsetMin = Vector2.zero;
+            progressImage.rectTransform.offsetMax = Vector2.zero;
         }
 
-        waveformSize = new Vector2(waveformRect.rect.width, waveformHeight);
+        if (playheadMarker != null)
+        {
+            playheadMarker.anchorMin = new Vector2(0, 0);
+            playheadMarker.anchorMax = new Vector2(0, 1);
+            playheadMarker.pivot = new Vector2(0.5f, 0.5f);
+            playheadMarker.anchoredPosition = Vector2.zero;
+            playheadMarker.sizeDelta = new Vector2(2f, 0);
 
-        if (
-            AudioManager.Instance.currentTrack != null
-            && AudioManager.Instance.currentTrack.trackAudio != null
-        )
+            Image markerImage = playheadMarker.GetComponent<Image>();
+            if (markerImage != null)
+            {
+                markerImage.color = playheadColor;
+            }
+        }
+
+        waveformSize = new Vector2(waveformRect.rect.width, waveformRect.rect.height);
+
+        waveformImage.rectTransform.anchorMin = Vector2.zero;
+        waveformImage.rectTransform.anchorMax = Vector2.one;
+        waveformImage.rectTransform.offsetMin = Vector2.zero;
+        waveformImage.rectTransform.offsetMax = Vector2.zero;
+
+        if (AudioManager.Instance.currentTrack != null && AudioManager.Instance.currentTrack.trackAudio != null)
         {
             UpdateWaveform(AudioManager.Instance.currentTrack.trackAudio);
         }
@@ -110,13 +129,7 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
         }
 
         UpdatePlayheadPosition();
-
         UpdateProgressOverlay();
-
-        if (useDualColorWaveform && isDualColorTextureCreated)
-        {
-            UpdateDualColorWaveform();
-        }
     }
 
     public void UpdateWaveform(AudioClip clip)
@@ -126,35 +139,25 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
 
         currentClip = clip;
 
-        if (useDualColorWaveform)
-        {
-            waveformTexture = WaveformDisplayExtensions.CreateDualColorWaveformTexture(
-                clip,
-                waveformSize,
-                backgroundColor,
-                unplayedColor,
-                playedColor
-            );
-            isDualColorTextureCreated = true;
-            lastProgress = 0f;
-        }
-        else
-        {
-            waveformTexture = Waveform.GetWaveformTexture(clip, waveformSize);
-            isDualColorTextureCreated = false;
-        }
+        waveformTexture = WaveformDisplayExtensions.CreateDualColorWaveformTexture(
+            clip,
+            waveformSize,
+            waveformColor
+        );
 
         if (waveformTexture != null)
         {
             waveformImage.texture = waveformTexture;
-            waveformImage.SetNativeSize();
+            waveformImage.texture.filterMode = FilterMode.Point;
 
-            RectTransform imageRect = waveformImage.rectTransform;
-            imageRect.sizeDelta = new Vector2(waveformRect.rect.width, waveformHeight);
-
-            if (progressOverlay != null)
+            if (progressImage != null)
             {
-                progressOverlay.fillAmount = 0f;
+                progressImage.sprite = Sprite.Create(
+                    waveformTexture,
+                    new Rect(0, 0, waveformTexture.width, waveformTexture.height),
+                    new Vector2(0.5f, 0.5f)
+                );
+                progressImage.fillAmount = 0;
             }
 
             if (showBeatMarkers)
@@ -162,6 +165,9 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
                 GenerateBeatMarkers();
             }
         }
+
+        waveformImage.gameObject.SetActive(true);
+        progressImage.gameObject.SetActive(true);
     }
 
     private void UpdatePlayheadPosition()
@@ -169,54 +175,52 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
         if (currentClip == null || playheadMarker == null)
             return;
 
-        float currentTime = AudioManager.Instance.currentPlaybackTime;
-        float totalDuration = AudioManager.Instance.currentPlaybackDuration;
+        float currentTime = GetCurrentPlaybackTime();
+        float totalDuration = GetTotalDuration();
 
-        float normalizedPosition = currentTime / totalDuration;
-        float xPosition =
-            normalizedPosition * waveformRect.rect.width - waveformRect.rect.width / 2;
+        float normalizedPosition = Mathf.Clamp01(currentTime / totalDuration);
 
-        playheadMarker.anchoredPosition = new Vector2(xPosition, 0);
+        UpdatePlayheadToPosition(normalizedPosition);
     }
 
     private void UpdateProgressOverlay()
     {
-        if (currentClip == null || progressOverlay == null)
+        if (currentClip == null || progressImage == null || !useProgressOverlay)
             return;
 
-        float currentTime = AudioManager.Instance.currentPlaybackTime;
-        float totalDuration = AudioManager.Instance.currentPlaybackDuration;
+        float currentTime = GetCurrentPlaybackTime();
+        float totalDuration = GetTotalDuration();
 
-        float progress = currentTime / totalDuration;
+        float progress = Mathf.Clamp01(currentTime / totalDuration);
+        progressImage.fillAmount = progress;
 
-        progressOverlay.fillAmount = progress;
     }
 
-    private void UpdateDualColorWaveform()
+    private float GetCurrentPlaybackTime()
     {
-        if (currentClip == null || waveformTexture == null)
-            return;
+        if (AudioManager.Instance == null)
+            return 0f;
 
-        float currentTime = AudioManager.Instance.currentPlaybackTime;
-        float totalDuration = AudioManager.Instance.currentPlaybackDuration;
+        return AudioManager.Instance.currentPlaybackTime;
+    }
 
-        float progress = currentTime / totalDuration;
+    private float GetTotalDuration()
+    {
+        if (AudioManager.Instance == null || currentClip == null)
+            return 1f;
 
-        if (Mathf.Abs(progress - lastProgress) > 0.01f)
+        return currentClip != null ? currentClip.length : AudioManager.Instance.currentPlaybackDuration;
+    }
+
+    public void SetProgressOverlayVisible(bool visible)
+    {
+        useProgressOverlay = visible;
+        if (progressImage != null)
         {
-            WaveformDisplayExtensions.UpdateWaveformProgress(
-                waveformTexture,
-                progress,
-                waveformSize,
-                backgroundColor,
-                playedColor
-            );
-
-            lastProgress = progress;
+            progressImage.gameObject.SetActive(visible);
         }
     }
 
-    // 웨이브폼 클릭 처리
     public void OnPointerClick(PointerEventData eventData)
     {
         if (!IsInitialized || currentClip == null)
@@ -229,37 +233,36 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
             out Vector2 localPoint
         );
 
-        float normalizedPosition = Mathf.Clamp01(
-            (localPoint.x + waveformRect.rect.width / 2) / waveformRect.rect.width
-        );
+        float normalizedPosition = Mathf.Clamp01((localPoint.x + waveformRect.rect.width / 2) / waveformRect.rect.width);
 
-        float newTime = normalizedPosition * AudioManager.Instance.currentPlaybackDuration;
+        float newTime = normalizedPosition * GetTotalDuration();
         AudioManager.Instance.ChangePlaybackPosition(newTime);
 
-        if (progressOverlay != null)
+        if (progressImage != null && useProgressOverlay)
         {
-            progressOverlay.fillAmount = normalizedPosition;
+            progressImage.fillAmount = normalizedPosition;
         }
 
-        if (useDualColorWaveform && isDualColorTextureCreated)
+        if (playheadMarker != null)
         {
-            WaveformDisplayExtensions.UpdateWaveformProgress(
-                waveformTexture,
-                normalizedPosition,
-                waveformSize,
-                backgroundColor,
-                playedColor
-            );
-
-            lastProgress = normalizedPosition;
+            UpdatePlayheadToPosition(normalizedPosition);
         }
+    }
+
+    private void UpdatePlayheadToPosition(float normalizedPosition)
+    {
+        if (playheadMarker == null)
+            return;
+
+        float xPosition = normalizedPosition * waveformRect.rect.width;
+        playheadMarker.anchoredPosition = new Vector2(xPosition, 0);
     }
 
     public void SetBeatMarkers(float[] markers, int downBeatValue = 4)
     {
         beatMarkers = markers;
         downBeat = downBeatValue;
-        showBeatMarkers = (markers != null && markers.Length > 0);
+        showBeatMarkers = markers != null && markers.Length > 0;
 
         if (showBeatMarkers && IsInitialized && currentClip != null)
         {
@@ -286,7 +289,7 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
             float normalizedPosition = beatTime / clipDuration;
             beatMarkers[i] = normalizedPosition;
 
-            bool isDownBeat = (i % beatsPerBar == 0);
+            bool isDownBeat = i % beatsPerBar == 0;
             GameObject markerPrefab = isDownBeat ? downBeatMarkerPrefab : beatMarkerPrefab;
 
             if (markerPrefab != null)
@@ -296,11 +299,20 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
 
                 if (markerRect != null)
                 {
-                    float xPosition =
-                        normalizedPosition * waveformRect.rect.width - waveformRect.rect.width / 2;
+                    markerRect.anchorMin = new Vector2(0, 0);
+                    markerRect.anchorMax = new Vector2(0, 1);
+                    markerRect.pivot = new Vector2(0.5f, 0.5f);
+
+                    float xPosition = normalizedPosition * waveformRect.rect.width;
                     markerRect.anchoredPosition = new Vector2(xPosition, 0);
 
-                    markerRect.sizeDelta = new Vector2(markerRect.sizeDelta.x, waveformHeight);
+                    markerRect.sizeDelta = new Vector2(2f, 0);
+
+                    Image markerImage = marker.GetComponent<Image>();
+                    if (markerImage != null)
+                    {
+                        markerImage.color = isDownBeat ? downBeatMarkerColor : beatMarkerColor;
+                    }
 
                     beatMarkerObjects.Add(marker);
                 }

@@ -82,11 +82,6 @@ public static class Waveform
         }
     }
 
-    public static Texture2D GetWaveformTexture(AudioClip clip, Vector2 size)
-    {
-        return GetWaveformTexture(clip, size, defaultWaveformBG, defaultWaveformColor);
-    }
-
     public static Texture2D GetWaveformTexture(
         AudioClip clip,
         Vector2 size,
@@ -176,18 +171,5 @@ public static class Waveform
 
         Object.Destroy(normalBeatTexture);
         Object.Destroy(downBeatTexture);
-    }
-
-    public static void DrawPlayMarkerRuntime(
-        RectTransform waveformRect,
-        RectTransform markerRect,
-        float normalizedPosition
-    )
-    {
-        if (waveformRect == null || markerRect == null)
-            return;
-
-        float xPos = normalizedPosition * waveformRect.rect.width - waveformRect.rect.width / 2;
-        markerRect.anchoredPosition = new Vector2(xPos, 0);
     }
 }
