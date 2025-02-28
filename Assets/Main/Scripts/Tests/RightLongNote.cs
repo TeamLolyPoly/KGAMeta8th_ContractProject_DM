@@ -1,4 +1,3 @@
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,19 +5,24 @@ using UnityEngine;
 public class RightLongNote : MonoBehaviour
 {
     [Header("롱노트 설정")]
-    [SerializeField] private GameObject segmentPrefab;   // 세그먼트 프리팹
-    [SerializeField] private Material noteMaterial;      // 노트 머티리얼
+    [SerializeField] private GameObject segmentPrefab;
+    [SerializeField] private Material noteMaterial;
 
     [Header("박자 설정")]
-    [SerializeField] private int measureCount = 1;       // 마디 수
-    [SerializeField] private int beatsPerMeasure = 4;    // 한 마디당 박자 수
-    [SerializeField] private int segmentsPerBeat = 4;    // 한 박자당 세그먼트 수
+    [SerializeField] private int measureCount = 1;
+    [SerializeField] private int beatsPerMeasure = 4;
+    [SerializeField] private int segmentsPerBeat = 4;
+    [SerializeField] private float segmentSpawnInterval = 0.1f;
 
-    private Vector3 startPosition;                        // 시작 위치 (시작 셀)
-    private Vector3 endPosition;                          // 목표 위치 (도착 셀)
+    private Vector3 startPosition;
+    private Vector3 endPosition;
     private List<GameObject> segments = new List<GameObject>();
     private float moveSpeed = 5f;
     private bool isInitialized = false;
+    private int totalSegments;
+    private int spawnedSegments = 0;
+    private int destroyedSegments = 0;
+    private float nextSpawnTime = 0f;
 
     // 롱노트 초기화
     public void Initialize(Vector3 start, Vector3 end, float speed)
@@ -26,78 +30,89 @@ public class RightLongNote : MonoBehaviour
         startPosition = start;
         endPosition = end;
         moveSpeed = speed;
-        transform.position = startPosition;
-
-        CreateSegments();
-        isInitialized = true;
-    }
-
-    private void CreateSegments()
-    {
-        // 전체 세그먼트 수 계산
-        int totalSegments = measureCount * beatsPerMeasure * segmentsPerBeat;
-
-        // 시작점과 끝점 사이의 거리
-        Vector3 direction = (endPosition - startPosition);
-        float totalDistance = direction.magnitude;
-        Vector3 normalizedDirection = direction.normalized;
-
-        // 세그먼트 간격 계산
-        float segmentSpacing = totalDistance / totalSegments;
-
-        // 첫 번째 세그먼트는 현재 오브젝트
-        segments.Add(gameObject);
+        
+        totalSegments = measureCount * beatsPerMeasure * segmentsPerBeat;
+        
+        // 이 오브젝트는 관리자 역할만 하고 보이지 않게 설정
         if (TryGetComponent<MeshRenderer>(out var renderer))
         {
-            renderer.material = noteMaterial;
+            renderer.enabled = false;
         }
-
-        // 나머지 세그먼트 생성
-        for (int i = 1; i < totalSegments; i++)
-        {
-            Vector3 segmentPosition = startPosition + (normalizedDirection * (segmentSpacing * i));
-            GameObject segment = Instantiate(segmentPrefab, segmentPosition, Quaternion.identity);
-
-            // 세그먼트 크기와 회전 설정
-            segment.transform.forward = normalizedDirection;
-            segment.transform.localScale = new Vector3(0.2f, 0.2f, segmentSpacing);
-
-            if (segment.TryGetComponent<MeshRenderer>(out var segRenderer))
-            {
-                segRenderer.material = noteMaterial;
-            }
-
-            segments.Add(segment);
-        }
-
-        Debug.Log($"롱노트 생성 완료 - 총 세그먼트: {totalSegments}");
+        
+        isInitialized = true;
+        nextSpawnTime = Time.time;
+        
+        Debug.Log($"롱노트 초기화: 총 세그먼트 {totalSegments}");
     }
 
     private void Update()
     {
         if (!isInitialized) return;
 
-        // 첫 번째 세그먼트(헤드) 이동
-        float step = moveSpeed * Time.deltaTime;
-        transform.position = Vector3.MoveTowards(transform.position, endPosition, step);
-
-        // 목표 도달 시 노트 제거
-        if (Vector3.Distance(transform.position, endPosition) < 0.01f)
+        // 세그먼트 생성
+        if (Time.time >= nextSpawnTime && spawnedSegments < totalSegments)
         {
-            DestroyAllSegments();
+            SpawnSegment();
+            nextSpawnTime = Time.time + segmentSpawnInterval;
+        }
+
+        // 세그먼트 이동 및 파괴
+        MoveAndDestroySegments();
+        
+        // 모든 세그먼트가 생성되고 파괴되었는지 확인
+        if (spawnedSegments >= totalSegments && destroyedSegments >= totalSegments)
+        {
+            Debug.Log("모든 세그먼트 처리 완료, 롱노트 제거");
+            Destroy(gameObject);
         }
     }
 
-    private void DestroyAllSegments()
+    private void SpawnSegment()
     {
+        GameObject segment = Instantiate(segmentPrefab, startPosition, Quaternion.identity);
+        segment.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+        
+        if (segment.TryGetComponent<MeshRenderer>(out var renderer))
+        {
+            renderer.material = noteMaterial;
+        }
+        
+        segments.Add(segment);
+        spawnedSegments++;
+    }
+
+    private void MoveAndDestroySegments()
+    {
+        for (int i = 0; i < segments.Count; i++)
+        {
+            if (segments[i] == null) continue;
+            
+            // 세그먼트 이동
+            segments[i].transform.position = Vector3.MoveTowards(
+                segments[i].transform.position,
+                endPosition,
+                moveSpeed * Time.deltaTime
+            );
+            
+            // 목표 도달 시 세그먼트 파괴
+            if (Vector3.Distance(segments[i].transform.position, endPosition) < 0.01f)
+            {
+                Destroy(segments[i]);
+                segments[i] = null;
+                destroyedSegments++;
+            }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // 남은 세그먼트 정리
         foreach (var segment in segments)
         {
-            if (segment != null && segment != gameObject)
+            if (segment != null)
             {
                 Destroy(segment);
             }
         }
-        segments.Clear();
-        Destroy(gameObject);
     }
 }
