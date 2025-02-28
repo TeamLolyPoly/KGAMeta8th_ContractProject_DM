@@ -1,0 +1,17 @@
+Stadium Crowd Generator - README
+
+Please create a new URP project with a Unity version of 2021.2.xx+ with Shader Graph version 12.0.0+
+Shader Graph 12.0.0 is important becaus eof the Vertex ID node that was not introduced in the versions 10.6.0-
+
+Since the Unity 2021.2 and Shader Graph 12.0.0 versions are still in beta there are some bugs in the vertex animations textures (VAT) of characters 3,5 and 7.
+Hence characters 3,5,7 have been removed from the grandstand. If the shader graph vertex ID node is updated in the subsequent versions then you can add the VAT characters back by going into: 
+Inspector > Grandstand > Geometry > Spectators > click on the + icon and add Spectator varaitions from VAT Prefabs folder.
+
+Mobile Compatibility:
+URP vertex ID node should be compatible with mobiles. If it is not, please wait for subsequent versions of the shader graph and look out for the vertex ID node for compatibility.
+SV_VertexID semantic requires shader model 3.5 or higher. Just add #pragma target 3.5 along with the other pragmas in the shader of the generated code of URP or built in.
+
+Using VAT will give one a performance boost and it is included in the package just for that, developers can use the normal model prefabs (Skinned Mesh Prefabs) with any pipeline without materials breaking.
+The World Offset shader is included to reduce draw calls, does not require Vertex IDs and is faster than using the normal model prefabs. They will definitely work in almost all mobile versions.
+
+If you have any questions, please send us an email at info@aikodex.com
