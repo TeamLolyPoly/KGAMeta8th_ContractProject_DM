@@ -54,18 +54,21 @@ class TodoProcessor:
             return []
         
         todo_lines = []
+        current_category = None
+        
         for line in todo_text.strip().split('\n'):
             line = line.strip()
             if line:
                 if line.startswith('@'):
-                    self.current_category = line[1:].strip()
+                    current_category = line[1:].strip()
+                    self.current_category = current_category
                     todo_lines.append((False, line))
                 elif line.startswith(('-', '*')):
-                    if '(issue)' in line:
-                        text = line[1:].strip()  # '-' 제거
-                        todo_lines.append((False, text))
-                    else:
-                        todo_lines.append((False, line[1:].strip()))
+                    text = line[1:].strip()  # '-' 제거
+                    if '(issue)' in text and current_category:
+                        # 현재 카테고리가 설정되어 있으면 해당 카테고리 사용
+                        self.current_category = current_category
+                    todo_lines.append((False, text))
                 else:
                     todo_lines.append((False, line))
         
@@ -77,10 +80,18 @@ class TodoProcessor:
             return []
             
         processed = []
+        current_category = None
+        
         for checked, text in existing_todos:
             if text.startswith('@'):
-                self.current_category = text[1:].strip()
+                current_category = text[1:].strip()
+                self.current_category = current_category
+            elif self.is_issue_todo(text) and current_category:
+                # 이슈 생성 전에 현재 카테고리 설정
+                self.current_category = current_category
+                
             processed.append((checked, text))
+            
         return processed
     
     def create_issue_from_todo(self, todo_text: str) -> Optional[Issue]:
@@ -89,7 +100,14 @@ class TodoProcessor:
             return None
             
         title = todo_text.replace('(issue)', '', 1).strip()
+        
+        # 현재 카테고리가 설정되어 있지 않으면 기본값 사용
+        if not self.current_category or self.current_category == 'General':
+            logger.debug(f"카테고리가 설정되지 않아 기본값 'General'을 사용합니다.")
+            self.current_category = 'General'
+            
         issue_title = f"[{self.current_category}] {title}"
+        logger.debug(f"이슈 생성: {issue_title} (카테고리: {self.current_category})")
         
         try:
             new_issue = self.repo.create_issue(
@@ -124,7 +142,8 @@ class TodoProcessor:
         all_todos = []
         created_issues = []
         
-        original_category = self.current_category
+        # 기본 카테고리 설정
+        self.current_category = 'General'
         
         if existing_todos:
             if is_new_day:
