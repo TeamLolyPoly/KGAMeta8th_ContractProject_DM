@@ -23,10 +23,19 @@ public enum NoteAxis
 
 }
 
-public enum HitType
+public enum NoteHitType
 {
     None,
     Red,
     Blue,
+    Hand,
+}
+
+public enum NoteRatings
+{
+    Miss,
+    Perfect,
+    Great,
+    Good,
 }
 #endregion
