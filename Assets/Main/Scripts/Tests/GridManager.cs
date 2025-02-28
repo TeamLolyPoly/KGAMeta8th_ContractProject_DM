@@ -12,10 +12,10 @@ public class GridManager : Singleton<GridManager>
     private int handGridSize = 3;
 
     [SerializeField]
-    private float cellSize = 1f;
+    private float cellSize = 0.5f;
 
     [SerializeField]
-    private float cellSpacing = 0.1f;
+    private float cellSpacing = 0.05f;
 
     [SerializeField]
     private float gridDistance = 15f;
