@@ -3,113 +3,100 @@ using UnityEngine;
 public static class WaveformDisplayExtensions
 {
     /// <summary>
-    /// 이중 색상 웨이브폼 텍스처를 생성합니다.
-    /// 재생 전/후 색상이 다른 웨이브폼을 만들기 위해 사용됩니다.
+    /// 웨이브폼 텍스처를 생성합니다.
     /// </summary>
-    /// <param name="clip">오디오 클립</param>
-    /// <param name="size">텍스처 크기</param>
-    /// <param name="bgColor">배경 색상</param>
-    /// <param name="unplayedColor">재생 전 웨이브폼 색상</param>
-    /// <param name="playedColor">재생 후 웨이브폼 색상</param>
-    /// <returns>생성된 웨이브폼 텍스처</returns>
     public static Texture2D CreateDualColorWaveformTexture(
         AudioClip clip,
         Vector2 size,
-        Color bgColor,
-        Color unplayedColor,
-        Color playedColor
+        Color waveformColor
     )
     {
         if (clip == null)
             return null;
 
         float[] samples = new float[clip.samples * clip.channels];
-        if (clip.GetData(samples, 0) == false)
+        if (!clip.GetData(samples, 0))
             return null;
 
         int width = (int)size.x;
         int height = (int)size.y;
-        Texture2D texture = new Texture2D(width, height);
+        Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        texture.alphaIsTransparency = true;
+        texture.filterMode = FilterMode.Point;
 
-        int resolution = clip.samples / width;
+        float[] waveform = ProcessSamples(samples, width);
 
-        Color[] unplayedColors = new Color[height];
-        Color[] playedColors = new Color[height];
-        float midHeight = height / 2f;
-        float sampleComp = 0f;
-
-        for (int i = 0; i < width; i++)
-        {
-            float sampleChunk = 0;
-            for (int ii = 0; ii < resolution; ii++)
-                sampleChunk += Mathf.Abs(samples[(i * resolution) + ii]);
-            sampleChunk = sampleChunk / resolution * 1.5f;
-
-            for (int h = 0; h < height; h++)
-            {
-                if (h < midHeight)
-                    sampleComp = Mathf.InverseLerp(midHeight, 0, h);
-                else
-                    sampleComp = Mathf.InverseLerp(midHeight, height, h);
-
-                if (sampleComp > sampleChunk)
-                {
-                    unplayedColors[h] = bgColor;
-                    playedColors[h] = bgColor;
-                }
-                else
-                {
-                    unplayedColors[h] = unplayedColor;
-                    playedColors[h] = playedColor;
-                }
-            }
-
-            texture.SetPixels(i, 0, 1, height, unplayedColors);
-        }
-
+        Color32[] pixels = new Color32[width * height];
+        DrawWaveformToArray(pixels, width, height, waveform, waveformColor);
+        texture.SetPixels32(pixels);
         texture.Apply();
 
         return texture;
     }
 
-    /// <summary>
-    /// 웨이브폼 텍스처의 일부를 재생 후 색상으로 업데이트합니다.
-    /// </summary>
-    /// <param name="texture">웨이브폼 텍스처</param>
-    /// <param name="progress">진행률 (0-1)</param>
-    /// <param name="size">텍스처 크기</param>
-    /// <param name="bgColor">배경 색상</param>
-    /// <param name="playedColor">재생 후 웨이브폼 색상</param>
-    public static void UpdateWaveformProgress(
-        Texture2D texture,
-        float progress,
-        Vector2 size,
-        Color bgColor,
-        Color playedColor
-    )
+    private static float[] ProcessSamples(float[] samples, int targetWidth)
     {
-        if (texture == null)
-            return;
+        float[] waveform = new float[targetWidth];
+        int samplesPerPixel = samples.Length / targetWidth;
 
-        int width = (int)size.x;
-        int height = (int)size.y;
-        int progressWidth = Mathf.FloorToInt(width * progress);
-
-        for (int i = 0; i < progressWidth; i++)
+        if (samplesPerPixel == 0)
         {
-            Color[] pixels = texture.GetPixels(i, 0, 1, height);
-
-            for (int h = 0; h < height; h++)
+            for (int i = 0; i < targetWidth; i++)
             {
-                if (pixels[h] != bgColor)
-                {
-                    pixels[h] = playedColor;
-                }
+                float position = (float)i * samples.Length / targetWidth;
+                int index = Mathf.FloorToInt(position);
+                waveform[i] = index < samples.Length ? Mathf.Abs(samples[index]) : 0f;
             }
+        }
+        else
+        {
+            for (int i = 0; i < targetWidth; i++)
+            {
+                int startSample = i * samplesPerPixel;
+                int endSample = Mathf.Min(startSample + samplesPerPixel, samples.Length);
+                float maxValue = 0f;
 
-            texture.SetPixels(i, 0, 1, height, pixels);
+                for (int j = startSample; j < endSample; j++)
+                {
+                    maxValue = Mathf.Max(maxValue, Mathf.Abs(samples[j]));
+                }
+
+                waveform[i] = maxValue;
+            }
         }
 
-        texture.Apply();
+        float maxAmplitude = 0f;
+        for (int i = 0; i < waveform.Length; i++)
+        {
+            maxAmplitude = Mathf.Max(maxAmplitude, waveform[i]);
+        }
+
+        if (maxAmplitude > 0f)
+        {
+            for (int i = 0; i < waveform.Length; i++)
+            {
+                waveform[i] /= maxAmplitude;
+            }
+        }
+
+        return waveform;
+    }
+
+    private static void DrawWaveformToArray(Color32[] pixels, int width, int height, float[] waveform, Color color)
+    {
+        Color32 waveformColor = color;
+        Color32 clearColor = new Color32(0, 0, 0, 0);
+
+        for (int x = 0; x < width; x++)
+        {
+            int waveformHeight = Mathf.RoundToInt(waveform[x] * height);
+            int startY = (height - waveformHeight) / 2;
+            int endY = startY + waveformHeight;
+
+            for (int y = 0; y < height; y++)
+            {
+                pixels[y * width + x] = (y >= startY && y < endY) ? waveformColor : clearColor;
+            }
+        }
     }
 }
