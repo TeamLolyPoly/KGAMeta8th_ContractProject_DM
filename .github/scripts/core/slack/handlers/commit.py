@@ -14,4 +14,8 @@ class CommitHandler(BaseHandler):
         user_id = get_slack_users_by_position('head_developer')[0]
         if commits:
             message = CommitFormatter.format_commits(commits, repository, branch)
-            self.client.send_dm(user_id,message); 
+
+            blocks = message['blocks']
+            text = message['blocks'][0]['text']['text']
+            
+            self.client.send_dm(user_id,blocks,text); 
