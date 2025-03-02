@@ -4,38 +4,64 @@ using UnityEngine;
 
 public class RightGridManager : MonoBehaviour
 {
-    [Header("Grid Reference")]
-    [SerializeField] private RightGrid sourceGrid;
-    [SerializeField] private RightGrid targetGrid;
-
     [Header("Grid Settings")]
+    [SerializeField] private int horizontalCells = 3;
+    [SerializeField] private int verticalCells = 3;
+    [SerializeField] private float cellSize = 0.3f;
+    [SerializeField] private float cellSpacing = 0.05f;
     [SerializeField] private float gridDistance = 15f;
+    [SerializeField] private float gridHeight = 0.7f;
 
-    private void Start()
+    [Header("Materials")]
+    [SerializeField] private Material gridMaterial;
+
+    private RightGrid sourceGrid;
+    private RightGrid targetGrid;
+
+    public RightGrid SourceGrid => sourceGrid;
+    public RightGrid TargetGrid => targetGrid;
+    public Vector2Int GridSize => new Vector2Int(horizontalCells, verticalCells);
+
+    private void Awake()
     {
-        InitializeGrids();
+        CreateGrids();
     }
-    private void InitializeGrids()
+
+    private void CreateGrids()
     {
-        if (sourceGrid == null || targetGrid == null)
-        {
-            Debug.LogError("Grid Reference가 설정되지 않았습니다.");
-            return;
-        }
+        // 소스 그리드 생성 (뒤쪽)
+        GameObject sourceObj = new GameObject("SourceGrid");
+        sourceObj.transform.parent = transform;
+        sourceObj.transform.localPosition = new Vector3(0, gridHeight, gridDistance);
+        sourceObj.transform.localRotation = Quaternion.identity;
 
-        //소스 그리드는 뒤쪽에 위치
-        sourceGrid.transform.position = new Vector3(0, 0.7f, gridDistance);
-        sourceGrid.transform.rotation = Quaternion.identity;
+        sourceGrid = sourceObj.AddComponent<RightGrid>();
+        sourceGrid.Initialize(horizontalCells, verticalCells, cellSize, cellSpacing, gridMaterial);
 
-        //타겟 그리드는 앞쪽에 위치
-        targetGrid.transform.position = new Vector3(0, 0.7f, -gridDistance);
-        targetGrid.transform.rotation = Quaternion.identity;
-  
+        // 타겟 그리드 생성 (앞쪽)
+        GameObject targetObj = new GameObject("TargetGrid");
+        targetObj.transform.parent = transform;
+        targetObj.transform.localPosition = new Vector3(0, gridHeight, -gridDistance);
+        targetObj.transform.localRotation = Quaternion.identity;
+
+        targetGrid = targetObj.AddComponent<RightGrid>();
+        targetGrid.Initialize(horizontalCells, verticalCells, cellSize, cellSpacing, gridMaterial);
+
+        Debug.Log($"그리드 생성 완료: 소스({sourceObj.transform.position}), 타겟({targetObj.transform.position})");
     }
+
     // 그리드 위치 getter
     public Vector3 GetSourceGridPosition() => sourceGrid.transform.position;
     public Vector3 GetTargetGridPosition() => targetGrid.transform.position;
 
-    public RightGrid GetSourceGrid() => sourceGrid;
-    public RightGrid GetTargetGrid() => targetGrid;   
+    // 특정 셀의 월드 좌표 반환
+    public Vector3 GetCellPosition(RightGrid grid, int x, int y)
+    {
+        if (grid == null)
+        {
+            Debug.LogError("그리드가 null입니다.");
+            return Vector3.zero;
+        }
+        return grid.GetCellPosition(x, y);
+    }
 }
