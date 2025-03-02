@@ -40,10 +40,7 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
     private Vector2 waveformSize;
     private bool isInitialized = false;
     private float[] beatMarkers;
-    private int downBeat = 4;
     private List<GameObject> beatMarkerObjects = new List<GameObject>();
-    private float lastProgress = 0f;
-    private bool isDualColorTextureCreated = false;
 
     public bool IsInitialized
     {
@@ -258,10 +255,9 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
         playheadMarker.anchoredPosition = new Vector2(xPosition, 0);
     }
 
-    public void SetBeatMarkers(float[] markers, int downBeatValue = 4)
+    public void SetBeatMarkers(float[] markers)
     {
         beatMarkers = markers;
-        downBeat = downBeatValue;
         showBeatMarkers = markers != null && markers.Length > 0;
 
         if (showBeatMarkers && IsInitialized && currentClip != null)
@@ -336,5 +332,13 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
     private void OnDestroy()
     {
         ClearBeatMarkers();
+    }
+
+    public void ClearWaveform()
+    {
+        if (waveformImage != null)
+        {
+            waveformImage.texture = null;
+        }
     }
 }
