@@ -97,7 +97,7 @@ public static class ResourceIO
     /// </summary>
     /// <param name="filePath">로드할 이미지 파일 경로</param>
     /// <param name="useCache">캐시 사용 여부</param>
-    /// <returns>로드된 Sprite</returns>
+    /// <returns>로드된 AlbumArt Sprite</returns>
     public static async Task<Sprite> LoadAlbumArtAsync(string filePath, bool useCache = true)
     {
         string fileName = Path.GetFileNameWithoutExtension(filePath);
