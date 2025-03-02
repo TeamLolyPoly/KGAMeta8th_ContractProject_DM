@@ -4,39 +4,47 @@ using UnityEngine;
 
 public class RightGrid : MonoBehaviour
 {
-    [Header("Grid Settings")]
-    [SerializeField] private float cellSize = 0.3f;        // 각 셀의 크기
-    [SerializeField] private float cellSpacing = 0.05f;    // 셀 간의 간격
-    [SerializeField] private Material gridMaterial;        // 그리드 셀의 머티리얼
+    private int horizontalCells;
+    private int verticalCells;
+    private float cellSize;
+    private float cellSpacing;
+    private Material gridMaterial;
+    private List<GameObject> cells = new List<GameObject>();
 
-    private const int GRID_SIZE = 3;                       // 3x3 고정 크기
-
-    void Start()
+    public void Initialize(int hCells, int vCells, float size, float spacing, Material material)
     {
+        horizontalCells = hCells;
+        verticalCells = vCells;
+        cellSize = size;
+        cellSpacing = spacing;
+        gridMaterial = material;
+
         CreateGrid();
     }
 
-    // 3x3 그리드 생성
-    void CreateGrid()
+    // 그리드 생성
+    private void CreateGrid()
     {
         // 전체 그리드의 크기 계산
-        float totalWidth = (GRID_SIZE * cellSize) + ((GRID_SIZE - 1) * cellSpacing);
-        float totalHeight = (GRID_SIZE * cellSize) + ((GRID_SIZE - 1) * cellSpacing);
+        float totalWidth = (horizontalCells * cellSize) + ((horizontalCells - 1) * cellSpacing);
+        float totalHeight = (verticalCells * cellSize) + ((verticalCells - 1) * cellSpacing);
         float startX = -totalWidth / 2f;  // 중앙 정렬을 위한 시작 위치
         float startY = -totalHeight / 2f;
 
         // 그리드 셀 생성
-        for (int x = 0; x < GRID_SIZE; x++)
+        for (int x = 0; x < horizontalCells; x++)
         {
-            for (int y = 0; y < GRID_SIZE; y++)
+            for (int y = 0; y < verticalCells; y++)
             {
                 CreateCell(x, y, startX, startY);
             }
         }
+
+        Debug.Log($"그리드 생성 완료: {horizontalCells}x{verticalCells}, 위치: {transform.position}");
     }
 
     // 개별 셀 생성
-    void CreateCell(int x, int y, float startX, float startY)
+    private void CreateCell(int x, int y, float startX, float startY)
     {
         // 셀 게임오브젝트 생성
         GameObject cell = new GameObject($"Cell_{x}_{y}");
@@ -63,13 +71,21 @@ public class RightGrid : MonoBehaviour
         // 셀 정보 컴포넌트 추가
         CellInfo cellInfo = cell.AddComponent<CellInfo>();
         cellInfo.Initialize(x, y, false, true);
+
+        cells.Add(cell);
     }
 
     // 특정 셀의 월드 좌표 반환
     public Vector3 GetCellPosition(int x, int y)
     {
-        float totalWidth = (GRID_SIZE * cellSize) + ((GRID_SIZE - 1) * cellSpacing);
-        float totalHeight = (GRID_SIZE * cellSize) + ((GRID_SIZE - 1) * cellSpacing);
+        if (x < 0 || x >= horizontalCells || y < 0 || y >= verticalCells)
+        {
+            Debug.LogError($"잘못된 셀 인덱스: ({x}, {y})");
+            return transform.position;
+        }
+
+        float totalWidth = (horizontalCells * cellSize) + ((horizontalCells - 1) * cellSpacing);
+        float totalHeight = (verticalCells * cellSize) + ((verticalCells - 1) * cellSpacing);
         float startX = -totalWidth / 2f;
         float startY = -totalHeight / 2f;
 
@@ -80,5 +96,8 @@ public class RightGrid : MonoBehaviour
     }
 
     // 그리드 크기 반환
-    public Vector2Int GridSize => new Vector2Int(GRID_SIZE, GRID_SIZE);
+    public Vector2Int GridSize => new Vector2Int(horizontalCells, verticalCells);
+
+    // 셀 크기 반환
+    public float CellSize => cellSize;
 }
