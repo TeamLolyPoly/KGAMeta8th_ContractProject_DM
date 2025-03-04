@@ -308,11 +308,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ddd6f715b15a374eaf077a833e51b6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sourceGrid: {fileID: 2860067500719493511, guid: 09e6394ef154b6e4e94fe969a64b1a48,
-    type: 3}
-  targetGrid: {fileID: 8314914735871201708, guid: e7f9d749cd1091848b87a865e126e5d0,
-    type: 3}
+  horizontalCells: 3
+  verticalCells: 3
+  cellSize: 0.3
+  cellSpacing: 0.05
   gridDistance: 10
+  gridHeight: 0.7
+  gridMaterial: {fileID: 0}
 --- !u!1 &1722114694
 GameObject:
   m_ObjectHideFlags: 0
