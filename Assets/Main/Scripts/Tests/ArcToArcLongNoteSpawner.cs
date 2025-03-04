@@ -23,6 +23,7 @@ public class ArcToArcLongNoteSpawner : MonoBehaviour
     [Header("롱노트 설정")]
     [SerializeField] private int arcSegmentCount = 10; // 호에서 생성할 세그먼트 수
     [SerializeField] private float segmentSpawnInterval = 0.1f; // 세그먼트 생성 간격
+      [SerializeField] private bool createSymmetric = true; // 대칭으로 생성할지 여부
     
     private List<Vector3> sourcePoints = new List<Vector3>();
     private List<Vector3> targetPoints = new List<Vector3>();
@@ -34,7 +35,6 @@ public class ArcToArcLongNoteSpawner : MonoBehaviour
     
     private void Update()
     {
-              // 새로운 Input System 사용
         if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             SpawnRandomArcLongNote();
@@ -83,7 +83,7 @@ public class ArcToArcLongNoteSpawner : MonoBehaviour
     {
         // 랜덤 시작 인덱스와 호의 길이 선택
         int startIdx = Random.Range(0, segmentCount);
-        int arcLength = Random.Range(5, 15); // 호의 길이 (세그먼트 수)
+        int arcLength = Random.Range(60, 60); // 호의 길이 (세그먼트 수)
         
         SpawnArcLongNote(startIdx, arcLength);
     }
@@ -99,12 +99,24 @@ public class ArcToArcLongNoteSpawner : MonoBehaviour
         // 호의 끝 인덱스 계산 (원형 배열이므로 모듈로 연산)
         int endIndex = (startIndex + arcLength) % segmentCount;
         
-        StartCoroutine(SpawnArcSegments(startIndex, endIndex));
+        StartCoroutine(SpawnArcSegments(startIndex, endIndex,false));
+        
+        // 대칭 호 생성 (옵션이 활성화된 경우)
+        if (createSymmetric)
+        {
+            // 대칭 시작점과 끝점 계산 (원의 반대편)
+            int symmetricStart = (startIndex + segmentCount / 2) % segmentCount;
+            int symmetricEnd = (endIndex + segmentCount / 2) % segmentCount;
+            
+            StartCoroutine(SpawnArcSegments(symmetricStart, symmetricEnd, true));
+            
+            Debug.Log($"대칭 호 롱노트 생성: 시작 {symmetricStart}, 끝 {symmetricEnd}");
+        }
         
         Debug.Log($"호 롱노트 생성: 시작 {startIndex}, 끝 {endIndex}, 길이 {arcLength}");
     }
     
-    private IEnumerator SpawnArcSegments(int startIndex, int endIndex)
+    private IEnumerator SpawnArcSegments(int startIndex, int endIndex, bool isSymmetric)
     {
         // 시계 방향으로 이동할지 결정
         bool clockwise = true;
@@ -120,9 +132,19 @@ public class ArcToArcLongNoteSpawner : MonoBehaviour
             
             // 세그먼트 생성 및 초기화
             GameObject segment = Instantiate(segmentPrefab, sourcePos, Quaternion.identity);
-            
-            // 머티리얼 설정
-            if (noteMaterial != null && segment.TryGetComponent<Renderer>(out var renderer))
+             // 대칭 세그먼트는 다른 색상으로 표시 (선택 사항)
+            if (isSymmetric && segment.TryGetComponent<Renderer>(out var renderer))
+            {
+                // 대칭 세그먼트용 머티리얼 복제
+                Material symmetricMaterial = new Material(noteMaterial);
+                symmetricMaterial.color = new Color(
+                    noteMaterial.color.r * 0.8f,
+                    noteMaterial.color.g * 0.8f,
+                    noteMaterial.color.b * 1.2f
+                );
+                renderer.sharedMaterial = symmetricMaterial;
+            }
+            else if (noteMaterial != null && segment.TryGetComponent<Renderer>(out renderer))
             {
                 renderer.sharedMaterial = noteMaterial;
             }
@@ -153,7 +175,8 @@ public class ArcToArcLongNoteSpawner : MonoBehaviour
             yield return new WaitForSeconds(segmentSpawnInterval);
         }
         
-        Debug.Log($"호 롱노트 생성 완료: {segmentsSpawned}개 세그먼트");
+        string symmetricText = isSymmetric ? "대칭 " : "";
+        Debug.Log($"{symmetricText}호 롱노트 생성 완료: {segmentsSpawned}개 세그먼트");
     }
     
     // 디버그용 시각화
