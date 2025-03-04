@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using System.IO;
 
 public static class ResourceIO
 {
@@ -16,7 +16,10 @@ public static class ResourceIO
     /// <param name="filePath">로드할 오디오 파일 경로</param>
     /// <param name="useCache">캐시 사용 여부</param>
     /// <returns>로드된 AudioClip과 파일명을 포함한 튜플</returns>
-    public static async Task<(AudioClip clip, string fileName)> LoadAudioFileAsync(string filePath, bool useCache = true)
+    public static async Task<(AudioClip clip, string fileName)> LoadAudioFileAsync(
+        string filePath,
+        bool useCache = true
+    )
     {
         string fileName = Path.GetFileNameWithoutExtension(filePath);
 
@@ -33,7 +36,9 @@ public static class ResourceIO
             FileInfo fileInfo = new FileInfo(filePath);
             if (fileInfo.Length > 10 * 1024 * 1024)
             {
-                Debug.LogWarning($"대용량 오디오 파일: {fileInfo.Length / (1024 * 1024)}MB. 로딩 시간이 길어질 수 있습니다.");
+                Debug.LogWarning(
+                    $"대용량 오디오 파일: {fileInfo.Length / (1024 * 1024)}MB. 로딩 시간이 길어질 수 있습니다."
+                );
             }
         }
         catch (Exception ex)
@@ -45,7 +50,12 @@ public static class ResourceIO
 
         try
         {
-            using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip("file://" + filePath, GetAudioTypeFromExtension(filePath)))
+            using (
+                UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(
+                    "file://" + filePath,
+                    GetAudioTypeFromExtension(filePath)
+                )
+            )
             {
                 www.useHttpContinue = false;
                 www.certificateHandler = null;
@@ -67,7 +77,9 @@ public static class ResourceIO
                     clip = DownloadHandlerAudioClip.GetContent(www);
                     clip.name = fileName;
 
-                    Debug.Log($"오디오 클립 생성 시간: {(Time.realtimeSinceStartup - startTime) * 1000}ms");
+                    Debug.Log(
+                        $"오디오 클립 생성 시간: {(Time.realtimeSinceStartup - startTime) * 1000}ms"
+                    );
 
                     if (useCache)
                     {
@@ -133,14 +145,25 @@ public static class ResourceIO
                     Debug.Log($"앨범 아트 다운로드 완료: {fileName}");
 
                     Texture2D texture = DownloadHandlerTexture.GetContent(www);
-                    albumArt = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+                    albumArt = Sprite.Create(
+                        texture,
+                        new Rect(0, 0, texture.width, texture.height),
+                        new Vector2(0.5f, 0.5f)
+                    );
 
                     if (useCache)
                     {
                         imageCache[fileName] = albumArt;
                     }
 
-                    _ = Task.Run(() => SaveAlbumArtToCustomFolder(texture, fileName));
+                    _ = Task.Run(
+                        () =>
+                            SaveAlbumArtToCustomFolder(
+                                texture,
+                                fileName,
+                                Application.persistentDataPath
+                            )
+                    );
                 }
                 else
                 {
@@ -194,11 +217,15 @@ public static class ResourceIO
     /// <summary>
     /// 앨범 아트를 커스텀 폴더에 저장합니다.
     /// </summary>
-    private static void SaveAlbumArtToCustomFolder(Texture2D texture, string trackName)
+    private static async Task SaveAlbumArtToCustomFolder(
+        Texture2D texture,
+        string trackName,
+        string persistentPath
+    )
     {
         try
         {
-            string albumArtPath = Path.Combine(Application.persistentDataPath, "Tracks", "AlbumArts");
+            string albumArtPath = Path.Combine(persistentPath, "Tracks", "AlbumArts");
 
             if (!Directory.Exists(albumArtPath))
             {
@@ -214,7 +241,9 @@ public static class ResourceIO
             }
 
             byte[] bytes = texture.EncodeToPNG();
-            File.WriteAllBytes(filePath, bytes);
+
+            // 파일 쓰기는 백그라운드 스레드에서 수행
+            await Task.Run(() => File.WriteAllBytes(filePath, bytes));
 
             Debug.Log($"앨범 아트가 저장되었습니다: {filePath}");
         }
