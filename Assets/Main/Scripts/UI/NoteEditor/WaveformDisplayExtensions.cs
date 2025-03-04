@@ -21,7 +21,9 @@ public static class WaveformDisplayExtensions
         int width = (int)size.x;
         int height = (int)size.y;
         Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+#if UNITY_EDITOR
         texture.alphaIsTransparency = true;
+#endif
         texture.filterMode = FilterMode.Point;
 
         float[] waveform = ProcessSamples(samples, width);
@@ -82,7 +84,13 @@ public static class WaveformDisplayExtensions
         return waveform;
     }
 
-    private static void DrawWaveformToArray(Color32[] pixels, int width, int height, float[] waveform, Color color)
+    private static void DrawWaveformToArray(
+        Color32[] pixels,
+        int width,
+        int height,
+        float[] waveform,
+        Color color
+    )
     {
         Color32 waveformColor = color;
         Color32 clearColor = new Color32(0, 0, 0, 0);
