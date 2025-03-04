@@ -86,7 +86,34 @@ public static class ResourceIO
                         audioCache[fileName] = clip;
                     }
 
-                    _ = Task.Run(() => SaveAudioToCustomFolder(filePath, fileName));
+                    string persistentPath = Application.persistentDataPath;
+                    _ = Task.Run(() =>
+                    {
+                        try
+                        {
+                            string customPath = Path.Combine(persistentPath, "Tracks");
+
+                            if (!Directory.Exists(customPath))
+                            {
+                                Directory.CreateDirectory(customPath);
+                            }
+
+                            string extension = Path.GetExtension(filePath);
+                            string destinationFilePath = Path.Combine(
+                                customPath,
+                                fileName + extension
+                            );
+
+                            if (!File.Exists(destinationFilePath))
+                            {
+                                File.Copy(filePath, destinationFilePath, true);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"오디오 파일 저장 중 예외 발생: {ex.Message}");
+                        }
+                    });
                 }
                 else
                 {
@@ -156,14 +183,36 @@ public static class ResourceIO
                         imageCache[fileName] = albumArt;
                     }
 
-                    _ = Task.Run(
-                        () =>
-                            SaveAlbumArtToCustomFolder(
-                                texture,
-                                fileName,
-                                Application.persistentDataPath
-                            )
-                    );
+                    string persistentPath = Application.persistentDataPath;
+                    Texture2D textureCopy = texture;
+                    _ = Task.Run(() =>
+                    {
+                        try
+                        {
+                            string albumArtPath = Path.Combine(
+                                persistentPath,
+                                "Tracks",
+                                "AlbumArts"
+                            );
+
+                            if (!Directory.Exists(albumArtPath))
+                            {
+                                Directory.CreateDirectory(albumArtPath);
+                            }
+
+                            string filePath = Path.Combine(albumArtPath, fileName + ".png");
+
+                            if (!File.Exists(filePath))
+                            {
+                                byte[] bytes = textureCopy.EncodeToPNG();
+                                File.WriteAllBytes(filePath, bytes);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"앨범 아트 저장 중 예외 발생: {ex.Message}");
+                        }
+                    });
                 }
                 else
                 {
@@ -179,78 +228,6 @@ public static class ResourceIO
         }
 
         return albumArt;
-    }
-
-    /// <summary>
-    /// 오디오 파일을 커스텀 폴더에 저장합니다.
-    /// </summary>
-    private static void SaveAudioToCustomFolder(string sourceFilePath, string clipName)
-    {
-        try
-        {
-            string customPath = Path.Combine(Application.persistentDataPath, "Tracks");
-
-            if (!Directory.Exists(customPath))
-            {
-                Directory.CreateDirectory(customPath);
-            }
-
-            string extension = Path.GetExtension(sourceFilePath);
-            string destinationFilePath = Path.Combine(customPath, clipName + extension);
-
-            if (File.Exists(destinationFilePath))
-            {
-                Debug.Log($"파일이 이미 존재합니다: {destinationFilePath}");
-                return;
-            }
-
-            File.Copy(sourceFilePath, destinationFilePath, true);
-
-            Debug.Log($"오디오 파일이 저장되었습니다: {destinationFilePath}");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"오디오 파일 복사 중 오류 발생: {e.Message}");
-        }
-    }
-
-    /// <summary>
-    /// 앨범 아트를 커스텀 폴더에 저장합니다.
-    /// </summary>
-    private static async Task SaveAlbumArtToCustomFolder(
-        Texture2D texture,
-        string trackName,
-        string persistentPath
-    )
-    {
-        try
-        {
-            string albumArtPath = Path.Combine(persistentPath, "Tracks", "AlbumArts");
-
-            if (!Directory.Exists(albumArtPath))
-            {
-                Directory.CreateDirectory(albumArtPath);
-            }
-
-            string filePath = Path.Combine(albumArtPath, trackName + ".png");
-
-            if (File.Exists(filePath))
-            {
-                Debug.Log($"앨범 아트가 이미 존재합니다: {filePath}");
-                return;
-            }
-
-            byte[] bytes = texture.EncodeToPNG();
-
-            // 파일 쓰기는 백그라운드 스레드에서 수행
-            await Task.Run(() => File.WriteAllBytes(filePath, bytes));
-
-            Debug.Log($"앨범 아트가 저장되었습니다: {filePath}");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"앨범 아트 저장 중 오류 발생: {e.Message}");
-        }
     }
 
     /// <summary>
