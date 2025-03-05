@@ -2,9 +2,6 @@ using UnityEngine;
 
 public static class WaveformDisplayExtensions
 {
-    /// <summary>
-    /// 웨이브폼 텍스처를 생성합니다.
-    /// </summary>
     public static Texture2D CreateDualColorWaveformTexture(
         AudioClip clip,
         Vector2 size,

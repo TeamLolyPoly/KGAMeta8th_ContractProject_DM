@@ -85,9 +85,9 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
         {
             playheadMarker.anchorMin = new Vector2(0, 0);
             playheadMarker.anchorMax = new Vector2(0, 1);
-            playheadMarker.pivot = new Vector2(0.5f, 0.5f);
+            playheadMarker.pivot = new Vector2(0f, 0.5f);
             playheadMarker.anchoredPosition = Vector2.zero;
-            playheadMarker.sizeDelta = new Vector2(2f, 0);
+            playheadMarker.sizeDelta = new Vector2(1f, 0);
 
             Image markerImage = playheadMarker.GetComponent<Image>();
             if (markerImage != null)
@@ -103,7 +103,10 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
         waveformImage.rectTransform.offsetMin = Vector2.zero;
         waveformImage.rectTransform.offsetMax = Vector2.zero;
 
-        if (AudioManager.Instance.currentTrack != null && AudioManager.Instance.currentTrack.trackAudio != null)
+        if (
+            AudioManager.Instance.currentTrack != null
+            && AudioManager.Instance.currentTrack.trackAudio != null
+        )
         {
             UpdateWaveform(AudioManager.Instance.currentTrack.trackAudio);
         }
@@ -190,7 +193,6 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
 
         float progress = Mathf.Clamp01(currentTime / totalDuration);
         progressImage.fillAmount = progress;
-
     }
 
     private float GetCurrentPlaybackTime()
@@ -206,7 +208,9 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
         if (AudioManager.Instance == null || currentClip == null)
             return 1f;
 
-        return currentClip != null ? currentClip.length : AudioManager.Instance.currentPlaybackDuration;
+        return currentClip != null
+            ? currentClip.length
+            : AudioManager.Instance.currentPlaybackDuration;
     }
 
     public void SetProgressOverlayVisible(bool visible)
@@ -230,7 +234,9 @@ public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializab
             out Vector2 localPoint
         );
 
-        float normalizedPosition = Mathf.Clamp01((localPoint.x + waveformRect.rect.width / 2) / waveformRect.rect.width);
+        float normalizedPosition = Mathf.Clamp01(
+            (localPoint.x + waveformRect.rect.width / 2) / waveformRect.rect.width
+        );
 
         float newTime = normalizedPosition * GetTotalDuration();
         AudioManager.Instance.ChangePlaybackPosition(newTime);
