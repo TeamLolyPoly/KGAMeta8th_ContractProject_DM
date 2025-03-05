@@ -460,19 +460,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f601a28c6832805428c3134eaafa65f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sourceRadius: 1
+  sourceRadius: 2.5
   sourceCenter: {x: 0, y: 0, z: 15}
-  targetRadius: 1
+  targetRadius: 2.5
   targetCenter: {x: 0, y: 0, z: -15}
   segmentCount: 72
-  segmentPrefab: {fileID: 4964255517154642900, guid: 9028cf5d1a89bfb4bab9acb579eb441b,
-    type: 3}
   moveSpeed: 10
-  noteMaterial: {fileID: 239378781582670930, guid: 71b15e92d74ccfd4b8562b3bc85accb8,
+  primarySegmentPrefab: {fileID: 7230671453194941499, guid: 3730469d3e71f624b98d886b950ce609,
+    type: 3}
+  symmetricSegmentPrefab: {fileID: 4964255517154642900, guid: 9028cf5d1a89bfb4bab9acb579eb441b,
     type: 3}
   arcSegmentCount: 30
   segmentSpawnInterval: 0.1
-  createSymmetric: 1
+  createSymmetric: 0
 --- !u!4 &1867923176
 Transform:
   m_ObjectHideFlags: 0

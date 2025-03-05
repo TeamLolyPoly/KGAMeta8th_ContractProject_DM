@@ -16,14 +16,16 @@ public class ArcToArcLongNoteSpawner : MonoBehaviour
     
     [Header("공통 설정")]
     [SerializeField] private int segmentCount = 36;
-    [SerializeField] private GameObject segmentPrefab;
     [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private Material noteMaterial;
-    
+
+    [Header("프리팹 설정")]
+    [SerializeField] private GameObject primarySegmentPrefab;  // 기본 세그먼트 프리팹
+    [SerializeField] private GameObject symmetricSegmentPrefab; // 대칭 세그먼트 프리팹
+
     [Header("롱노트 설정")]
     [SerializeField] private int arcSegmentCount = 10; // 호에서 생성할 세그먼트 수
     [SerializeField] private float segmentSpawnInterval = 0.1f; // 세그먼트 생성 간격
-      [SerializeField] private bool createSymmetric = true; // 대칭으로 생성할지 여부
+    [SerializeField] private bool createSymmetric = true; // 대칭으로 생성할지 여부
     
     private List<Vector3> sourcePoints = new List<Vector3>();
     private List<Vector3> targetPoints = new List<Vector3>();
@@ -31,6 +33,23 @@ public class ArcToArcLongNoteSpawner : MonoBehaviour
     private void Start()
     {
         GenerateCirclePoints();
+
+        // 프리팹 확인
+        if (primarySegmentPrefab == null)
+        {
+            Debug.LogWarning("기본 세그먼트 프리팹이 설정되지 않았습니다. 기본 큐브를 사용합니다.");
+            primarySegmentPrefab = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            primarySegmentPrefab.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
+            DestroyImmediate(primarySegmentPrefab.GetComponent<Collider>());
+        }
+        
+        if (symmetricSegmentPrefab == null)
+        {
+            Debug.LogWarning("대칭 세그먼트 프리팹이 설정되지 않았습니다. 기본 구체를 사용합니다.");
+            symmetricSegmentPrefab = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            symmetricSegmentPrefab.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
+            DestroyImmediate(symmetricSegmentPrefab.GetComponent<Collider>());
+        }
     }
     
     private void Update()
@@ -122,7 +141,9 @@ public class ArcToArcLongNoteSpawner : MonoBehaviour
         bool clockwise = true;
         int currentIndex = startIndex;
         int segmentsSpawned = 0;
-        
+
+        // 사용할 프리팹과 머티리얼 선택
+        GameObject prefabToUse = isSymmetric ? symmetricSegmentPrefab : primarySegmentPrefab;
         // 호의 모든 세그먼트를 순차적으로 생성
         while (true)
         {
@@ -130,24 +151,8 @@ public class ArcToArcLongNoteSpawner : MonoBehaviour
             Vector3 sourcePos = sourcePoints[currentIndex];
             Vector3 targetPos = targetPoints[currentIndex];
             
-            // 세그먼트 생성 및 초기화
-            GameObject segment = Instantiate(segmentPrefab, sourcePos, Quaternion.identity);
-             // 대칭 세그먼트는 다른 색상으로 표시 (선택 사항)
-            if (isSymmetric && segment.TryGetComponent<Renderer>(out var renderer))
-            {
-                // 대칭 세그먼트용 머티리얼 복제
-                Material symmetricMaterial = new Material(noteMaterial);
-                symmetricMaterial.color = new Color(
-                    noteMaterial.color.r * 0.8f,
-                    noteMaterial.color.g * 0.8f,
-                    noteMaterial.color.b * 1.2f
-                );
-                renderer.sharedMaterial = symmetricMaterial;
-            }
-            else if (noteMaterial != null && segment.TryGetComponent<Renderer>(out renderer))
-            {
-                renderer.sharedMaterial = noteMaterial;
-            }
+            // 선택된 프리팹으로 세그먼트 생성
+            GameObject segment = Instantiate(prefabToUse, sourcePos, Quaternion.identity);
             
             // 세그먼트 이동 컴포넌트 추가
             ArcSegmentMover mover = segment.AddComponent<ArcSegmentMover>();
@@ -179,7 +184,7 @@ public class ArcToArcLongNoteSpawner : MonoBehaviour
         Debug.Log($"{symmetricText}호 롱노트 생성 완료: {segmentsSpawned}개 세그먼트");
     }
     
-    // 디버그용 시각화
+     // 디버그용 시각화
     private void OnDrawGizmos()
     {
         // 소스 원형 그리기
@@ -206,7 +211,7 @@ public class ArcToArcLongNoteSpawner : MonoBehaviour
             }
         }
     }
-    
+
     private void DrawCircle(Vector3 center, float radius, int segments, bool vertical)
     {
         float angleStep = 360f / segments;
