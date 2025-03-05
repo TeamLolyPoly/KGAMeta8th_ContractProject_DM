@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2990943474489810747}
   - component: {fileID: -4578805305271208971}
   - component: {fileID: -4644823304832491315}
-  - component: {fileID: -7728491852581032358}
+  - component: {fileID: 2907468672637876045}
   m_Layer: 0
   m_Name: RightNote
   m_TagString: Untagged
@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 6033980397832304064}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
+  m_LocalScale: {x: 0.25, y: 0.15, z: 0.25}
   m_Children:
   - {fileID: 7854714316482241637}
   m_Father: {fileID: 0}
@@ -47,14 +47,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2605888d613508245b78e5588344f5a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  directionalRange: 80
+  directionalRange: 60
   NoteScore: 100
   accuracyPoint:
   - 0.34
   - 0.67
-  accuracyScore:
-  - 0.8
-  - 0.5
 --- !u!33 &-4578805305271208971
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -104,8 +101,8 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &-7728491852581032358
-BoxCollider:
+--- !u!136 &2907468672637876045
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -114,9 +111,10 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Radius: 0.5293231
+  m_Height: 1.5275601
+  m_Direction: 0
+  m_Center: {x: -0.040817678, y: 0, z: 0}
 --- !u!1 &8578866798838212380
 GameObject:
   m_ObjectHideFlags: 0

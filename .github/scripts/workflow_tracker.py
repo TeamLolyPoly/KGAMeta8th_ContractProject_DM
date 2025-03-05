@@ -126,7 +126,6 @@ def main():
     logger.section("Issue Title Format")
     logger.debug(f"Using title format: {issue_title}")
 
-    # 커밋 처리
     commit_processor = CommitProcessor(repo, timezone)
     branches_commits = commit_processor.get_todays_commits()
     
@@ -136,24 +135,18 @@ def main():
 
     today_issue = find_active_dsr_issue(repo, date_string, issue_title)
     
-    # TODO 처리
     todo_processor = TodoProcessor(repo, today_issue.number if today_issue else None)
     
-    # 이전 일자의 미완료 TODO 가져오기
     previous_todos = get_previous_dsr_todos(repo, date_string)
     
-    # 기존 내용과 이전 TODO 병합
     existing_content = {'todos': previous_todos}
     if today_issue:
         today_content = parse_existing_issue(today_issue.body)
-        # TodoProcessor의 merge_todos 메서드 사용
         existing_content['todos'] = todo_processor.merge_todos(previous_todos, today_content.get('todos', []))
     
-    # 브랜치 섹션 생성
     section_builder = CommitSectionBuilder(repo, timezone)
     branches_content = section_builder.create_branch_sections(branches_commits, existing_content)
     
-    # 현재 커밋의 TODO 처리
     current_commit = repo.get_commit(os.environ['GITHUB_SHA'])
     commit_data = parse_commit_message(current_commit.commit.message)
     
@@ -171,7 +164,6 @@ def main():
     logger.section("Final Result")
     print(f"Total TODOs: {len(processed_todos)} items")
     
-    # 이슈 본문 생성
     body = f'''# {issue_title}
 
 <div align="center">
@@ -188,7 +180,6 @@ def main():
 
 {create_todo_section(processed_todos)}'''
 
-    # 이슈 업데이트 또는 생성
     if today_issue:
         today_issue.edit(body=body)
         logger.debug(f"이슈 #{today_issue.number} 업데이트됨")
