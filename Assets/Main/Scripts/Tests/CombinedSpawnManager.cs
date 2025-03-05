@@ -22,7 +22,7 @@ public class CombinedSpawnManager : MonoBehaviour
     [SerializeField] private bool createSymmetric = true;
     
     [Header("원형 위치 설정")]
-    [SerializeField] private float circleZOffset = 2f; // 그리드로부터 Z축 오프셋
+    [SerializeField] private float circleZOffset = 0f; // 그리드로부터 Z축 오프셋
     [SerializeField] private float circleYOffset = 0f; // 그리드로부터 Y축 오프셋
     
     private GridManager gridManager;
