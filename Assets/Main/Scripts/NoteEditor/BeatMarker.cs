@@ -1,27 +1,30 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class BeatMarker : MonoBehaviour
+namespace NoteEditor
 {
-    public Color markerColor = Color.white;
-    public float width = 2f;
-
-    private Image markerImage;
-
-    private void Awake()
+    public class BeatMarker : MonoBehaviour
     {
-        markerImage = GetComponent<Image>();
-        if (markerImage == null)
-        {
-            markerImage = gameObject.AddComponent<Image>();
-        }
+        public Color markerColor = Color.white;
+        public float width = 2f;
 
-        markerImage.color = markerColor;
+        private Image markerImage;
 
-        RectTransform rect = GetComponent<RectTransform>();
-        if (rect != null)
+        private void Awake()
         {
-            rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
+            markerImage = GetComponent<Image>();
+            if (markerImage == null)
+            {
+                markerImage = gameObject.AddComponent<Image>();
+            }
+
+            markerImage.color = markerColor;
+
+            RectTransform rect = GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
+            }
         }
     }
 }

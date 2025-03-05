@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using UnityEngine;
 
-public static class WavHelper
+public static class AudioConverter
 {
     const int HEADER_SIZE = 44;
 
@@ -13,6 +13,7 @@ public static class WavHelper
             filepath = filepath + ".wav";
         }
 
+        filepath = Path.GetFullPath(filepath);
         Debug.Log(filepath);
 
         var samples = new float[clip.samples * clip.channels];
