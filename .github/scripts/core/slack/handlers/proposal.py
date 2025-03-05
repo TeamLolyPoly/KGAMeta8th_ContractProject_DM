@@ -9,4 +9,4 @@ class ProposalHandler(BaseHandler):
         proposal_data = event_data['issue']
         event_type = event_data['action']
         message = ProposalFormatter.format_proposal(proposal_data, event_type)
-        self.client.send_channel_notification(message) 
+        self.client.send_channel_notification(id,message) 

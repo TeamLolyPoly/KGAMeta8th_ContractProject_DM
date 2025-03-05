@@ -43,8 +43,8 @@ class ReportFormatter:
         return f"""## 📌 기본 정보
 
 **프로젝트명**: {self.project_name}  
-**보고서 작성일**: {self.current_date}  
-**보고 기간**: {self.current_date} ~ 진행중"""
+**보고서 최종 업데이트**: {self.current_date}  
+**프로젝트 기간**: 진행중"""
 
     def _format_team_info(self) -> str:
         """팀원 정보 섹션을 생성합니다."""
