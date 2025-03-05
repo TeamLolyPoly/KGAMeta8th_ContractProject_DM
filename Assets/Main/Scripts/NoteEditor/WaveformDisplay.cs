@@ -4,347 +4,367 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializable
+namespace NoteEditor
 {
-    [Header("웨이브폼 설정")]
-    public RawImage waveformImage;
-    public Image progressImage;
-    public RectTransform waveformRect;
-    public RectTransform playheadMarker;
-    public Color playheadColor = Color.red;
-
-    [Header("재생 진행 표시")]
-    public bool useProgressOverlay = false;
-
-    [Header("웨이브폼 색상")]
-    public Color waveformColor = new Color(1f, 0.6f, 0.2f);
-    public Color progressColor = new Color(0.2f, 0.6f, 1f);
-
-    [Header("마커 설정")]
-    public bool showBeatMarkers = false;
-    public Color beatMarkerColor = Color.white;
-    public Color downBeatMarkerColor = Color.yellow;
-
-    [Tooltip("BPM 값 (분당 비트 수)")]
-    public float bpm = 120f;
-
-    [Tooltip("박자 (예: 4/4 박자의 경우 4)")]
-    public int beatsPerBar = 4;
-
-    [Header("마커 프리팹")]
-    public GameObject beatMarkerPrefab;
-    public GameObject downBeatMarkerPrefab;
-
-    private Texture2D waveformTexture;
-    private AudioClip currentClip;
-    private Vector2 waveformSize;
-    private bool isInitialized = false;
-    private float[] beatMarkers;
-    private List<GameObject> beatMarkerObjects = new List<GameObject>();
-
-    public bool IsInitialized
+    public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializable
     {
-        get => isInitialized;
-        private set => isInitialized = value;
-    }
+        [Header("웨이브폼 설정")]
+        public RawImage waveformImage;
+        public Image progressImage;
+        public RectTransform waveformRect;
+        public RectTransform playheadMarker;
+        public Color playheadColor = Color.red;
 
-    private void Start()
-    {
-        StartCoroutine(InitializeRoutine());
-    }
+        [Header("렌더링 품질")]
+        [Tooltip("캔버스의 레퍼런스 픽셀 퍼 유닛")]
+        public float referencePixelsPerUnit = 200f;
+        [Tooltip("웨이브폼의 픽셀 밀도")]
+        public float pixelsPerUnit = 200f;
 
-    private IEnumerator InitializeRoutine()
-    {
-        yield return new WaitUntil(() => AudioManager.Instance.IsInitialized);
-        Initialize();
-    }
+        [Header("재생 진행 표시")]
+        public bool useProgressOverlay = false;
 
-    public void Initialize()
-    {
-        if (waveformRect == null)
-            waveformRect = GetComponent<RectTransform>();
+        [Header("웨이브폼 색상")]
+        public Color waveformColor = new Color(1f, 0.6f, 0.2f);
+        public Color progressColor = new Color(0.2f, 0.6f, 1f);
 
-        if (waveformImage == null)
-            waveformImage = GetComponent<RawImage>();
+        [Header("마커 설정")]
+        public bool showBeatMarkers = false;
+        public Color beatMarkerColor = Color.white;
+        public Color downBeatMarkerColor = Color.yellow;
 
-        if (progressImage != null)
+        [Tooltip("BPM 값 (분당 비트 수)")]
+        public float bpm = 120f;
+
+        [Tooltip("박자 (예: 4/4 박자의 경우 4)")]
+        public int beatsPerBar = 4;
+
+        [Header("마커 프리팹")]
+        public GameObject beatMarkerPrefab;
+        public GameObject downBeatMarkerPrefab;
+
+        private Texture2D waveformTexture;
+        private AudioClip currentClip;
+        private Vector2 waveformSize;
+        private bool isInitialized = false;
+        private float[] beatMarkers;
+        private List<GameObject> beatMarkerObjects = new List<GameObject>();
+
+        public bool IsInitialized
         {
-            progressImage.color = progressColor;
-            progressImage.type = Image.Type.Filled;
-            progressImage.fillMethod = Image.FillMethod.Horizontal;
-            progressImage.fillOrigin = (int)Image.OriginHorizontal.Left;
-            progressImage.fillAmount = 0;
-
-            progressImage.rectTransform.anchorMin = Vector2.zero;
-            progressImage.rectTransform.anchorMax = Vector2.one;
-            progressImage.rectTransform.offsetMin = Vector2.zero;
-            progressImage.rectTransform.offsetMax = Vector2.zero;
+            get => isInitialized;
+            private set => isInitialized = value;
         }
 
-        if (playheadMarker != null)
+        private void Start()
         {
-            playheadMarker.anchorMin = new Vector2(0, 0);
-            playheadMarker.anchorMax = new Vector2(0, 1);
-            playheadMarker.pivot = new Vector2(0f, 0.5f);
-            playheadMarker.anchoredPosition = Vector2.zero;
-            playheadMarker.sizeDelta = new Vector2(1f, 0);
+            StartCoroutine(InitializeRoutine());
+        }
 
-            Image markerImage = playheadMarker.GetComponent<Image>();
-            if (markerImage != null)
+        private IEnumerator InitializeRoutine()
+        {
+            yield return new WaitUntil(() => AudioManager.Instance.IsInitialized);
+            Initialize();
+        }
+
+        public void Initialize()
+        {
+            if (waveformRect == null)
+                waveformRect = GetComponent<RectTransform>();
+
+            if (waveformImage == null)
+                waveformImage = GetComponent<RawImage>();
+
+            // 캔버스 스케일러 설정
+            CanvasScaler scaler = GetComponentInParent<CanvasScaler>();
+            if (scaler != null)
             {
-                markerImage.color = playheadColor;
+                scaler.referencePixelsPerUnit = referencePixelsPerUnit;
+                scaler.scaleFactor = 1f;
             }
-        }
-
-        waveformSize = new Vector2(waveformRect.rect.width, waveformRect.rect.height);
-
-        waveformImage.rectTransform.anchorMin = Vector2.zero;
-        waveformImage.rectTransform.anchorMax = Vector2.one;
-        waveformImage.rectTransform.offsetMin = Vector2.zero;
-        waveformImage.rectTransform.offsetMax = Vector2.zero;
-
-        if (
-            AudioManager.Instance.currentTrack != null
-            && AudioManager.Instance.currentTrack.trackAudio != null
-        )
-        {
-            UpdateWaveform(AudioManager.Instance.currentTrack.trackAudio);
-        }
-
-        IsInitialized = true;
-    }
-
-    private void Update()
-    {
-        if (!IsInitialized)
-            return;
-
-        if (
-            AudioManager.Instance.currentTrack != null
-            && AudioManager.Instance.currentTrack.trackAudio != null
-            && currentClip != AudioManager.Instance.currentTrack.trackAudio
-        )
-        {
-            UpdateWaveform(AudioManager.Instance.currentTrack.trackAudio);
-        }
-
-        UpdatePlayheadPosition();
-        UpdateProgressOverlay();
-    }
-
-    public void UpdateWaveform(AudioClip clip)
-    {
-        if (clip == null)
-            return;
-
-        currentClip = clip;
-
-        waveformTexture = WaveformDisplayExtensions.CreateDualColorWaveformTexture(
-            clip,
-            waveformSize,
-            waveformColor
-        );
-
-        if (waveformTexture != null)
-        {
-            waveformImage.texture = waveformTexture;
-            waveformImage.texture.filterMode = FilterMode.Point;
 
             if (progressImage != null)
             {
-                progressImage.sprite = Sprite.Create(
-                    waveformTexture,
-                    new Rect(0, 0, waveformTexture.width, waveformTexture.height),
-                    new Vector2(0.5f, 0.5f)
-                );
+                progressImage.color = progressColor;
+                progressImage.type = Image.Type.Filled;
+                progressImage.fillMethod = Image.FillMethod.Horizontal;
+                progressImage.fillOrigin = (int)Image.OriginHorizontal.Left;
                 progressImage.fillAmount = 0;
+
+                progressImage.rectTransform.anchorMin = Vector2.zero;
+                progressImage.rectTransform.anchorMax = Vector2.one;
+                progressImage.rectTransform.offsetMin = Vector2.zero;
+                progressImage.rectTransform.offsetMax = Vector2.zero;
             }
 
-            if (showBeatMarkers)
+            if (playheadMarker != null)
+            {
+                playheadMarker.anchorMin = new Vector2(0, 0);
+                playheadMarker.anchorMax = new Vector2(0, 1);
+                playheadMarker.pivot = new Vector2(0f, 0.5f);
+                playheadMarker.anchoredPosition = Vector2.zero;
+                playheadMarker.sizeDelta = new Vector2(1f, 0);
+
+                Image markerImage = playheadMarker.GetComponent<Image>();
+                if (markerImage != null)
+                {
+                    markerImage.color = playheadColor;
+                }
+            }
+
+            waveformSize = new Vector2(waveformRect.rect.width, waveformRect.rect.height);
+
+            waveformImage.rectTransform.anchorMin = Vector2.zero;
+            waveformImage.rectTransform.anchorMax = Vector2.one;
+            waveformImage.rectTransform.offsetMin = Vector2.zero;
+            waveformImage.rectTransform.offsetMax = Vector2.zero;
+
+            if (
+                AudioManager.Instance.currentTrack != null
+                && AudioManager.Instance.currentTrack.trackAudio != null
+            )
+            {
+                UpdateWaveform(AudioManager.Instance.currentTrack.trackAudio);
+            }
+
+            IsInitialized = true;
+        }
+
+        private void Update()
+        {
+            if (!IsInitialized)
+                return;
+
+            if (
+                AudioManager.Instance.currentTrack != null
+                && AudioManager.Instance.currentTrack.trackAudio != null
+                && currentClip != AudioManager.Instance.currentTrack.trackAudio
+            )
+            {
+                UpdateWaveform(AudioManager.Instance.currentTrack.trackAudio);
+            }
+
+            UpdatePlayheadPosition();
+            UpdateProgressOverlay();
+        }
+
+        public void UpdateWaveform(AudioClip clip)
+        {
+            if (clip == null)
+                return;
+
+            currentClip = clip;
+
+            waveformTexture = WaveformDisplayExtensions.CreateDualColorWaveformTexture(
+                clip,
+                waveformSize,
+                waveformColor,
+                pixelsPerUnit
+            );
+
+            if (waveformTexture != null)
+            {
+                waveformImage.texture = waveformTexture;
+                waveformImage.texture.filterMode = FilterMode.Bilinear;
+                waveformImage.texture.anisoLevel = 16;
+
+                if (progressImage != null)
+                {
+                    progressImage.sprite = Sprite.Create(
+                        waveformTexture,
+                        new Rect(0, 0, waveformTexture.width, waveformTexture.height),
+                        new Vector2(0.5f, 0.5f),
+                        pixelsPerUnit
+                    );
+                    progressImage.fillAmount = 0;
+                }
+
+                if (showBeatMarkers)
+                {
+                    GenerateBeatMarkers();
+                }
+            }
+
+            waveformImage.gameObject.SetActive(true);
+            progressImage.gameObject.SetActive(true);
+        }
+
+        private void UpdatePlayheadPosition()
+        {
+            if (currentClip == null || playheadMarker == null)
+                return;
+
+            float currentTime = GetCurrentPlaybackTime();
+            float totalDuration = GetTotalDuration();
+
+            float normalizedPosition = Mathf.Clamp01(currentTime / totalDuration);
+
+            UpdatePlayheadToPosition(normalizedPosition);
+        }
+
+        private void UpdateProgressOverlay()
+        {
+            if (currentClip == null || progressImage == null || !useProgressOverlay)
+                return;
+
+            float currentTime = GetCurrentPlaybackTime();
+            float totalDuration = GetTotalDuration();
+
+            float progress = Mathf.Clamp01(currentTime / totalDuration);
+            progressImage.fillAmount = progress;
+        }
+
+        private float GetCurrentPlaybackTime()
+        {
+            if (AudioManager.Instance == null)
+                return 0f;
+
+            return AudioManager.Instance.currentPlaybackTime;
+        }
+
+        private float GetTotalDuration()
+        {
+            if (AudioManager.Instance == null || currentClip == null)
+                return 1f;
+
+            return currentClip != null
+                ? currentClip.length
+                : AudioManager.Instance.currentPlaybackDuration;
+        }
+
+        public void SetProgressOverlayVisible(bool visible)
+        {
+            useProgressOverlay = visible;
+            if (progressImage != null)
+            {
+                progressImage.gameObject.SetActive(visible);
+            }
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (!IsInitialized || currentClip == null)
+                return;
+
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                waveformRect,
+                eventData.position,
+                eventData.pressEventCamera,
+                out Vector2 localPoint
+            );
+
+            float normalizedPosition = Mathf.Clamp01(
+                (localPoint.x + waveformRect.rect.width / 2) / waveformRect.rect.width
+            );
+
+            float newTime = normalizedPosition * GetTotalDuration();
+            AudioManager.Instance.ChangePlaybackPosition(newTime);
+
+            if (progressImage != null && useProgressOverlay)
+            {
+                progressImage.fillAmount = normalizedPosition;
+            }
+
+            if (playheadMarker != null)
+            {
+                UpdatePlayheadToPosition(normalizedPosition);
+            }
+        }
+
+        private void UpdatePlayheadToPosition(float normalizedPosition)
+        {
+            if (playheadMarker == null)
+                return;
+
+            float xPosition = normalizedPosition * waveformRect.rect.width;
+            playheadMarker.anchoredPosition = new Vector2(xPosition, 0);
+        }
+
+        public void SetBeatMarkers(float[] markers)
+        {
+            beatMarkers = markers;
+            showBeatMarkers = markers != null && markers.Length > 0;
+
+            if (showBeatMarkers && IsInitialized && currentClip != null)
             {
                 GenerateBeatMarkers();
             }
         }
 
-        waveformImage.gameObject.SetActive(true);
-        progressImage.gameObject.SetActive(true);
-    }
-
-    private void UpdatePlayheadPosition()
-    {
-        if (currentClip == null || playheadMarker == null)
-            return;
-
-        float currentTime = GetCurrentPlaybackTime();
-        float totalDuration = GetTotalDuration();
-
-        float normalizedPosition = Mathf.Clamp01(currentTime / totalDuration);
-
-        UpdatePlayheadToPosition(normalizedPosition);
-    }
-
-    private void UpdateProgressOverlay()
-    {
-        if (currentClip == null || progressImage == null || !useProgressOverlay)
-            return;
-
-        float currentTime = GetCurrentPlaybackTime();
-        float totalDuration = GetTotalDuration();
-
-        float progress = Mathf.Clamp01(currentTime / totalDuration);
-        progressImage.fillAmount = progress;
-    }
-
-    private float GetCurrentPlaybackTime()
-    {
-        if (AudioManager.Instance == null)
-            return 0f;
-
-        return AudioManager.Instance.currentPlaybackTime;
-    }
-
-    private float GetTotalDuration()
-    {
-        if (AudioManager.Instance == null || currentClip == null)
-            return 1f;
-
-        return currentClip != null
-            ? currentClip.length
-            : AudioManager.Instance.currentPlaybackDuration;
-    }
-
-    public void SetProgressOverlayVisible(bool visible)
-    {
-        useProgressOverlay = visible;
-        if (progressImage != null)
+        public void GenerateBeatMarkers()
         {
-            progressImage.gameObject.SetActive(visible);
-        }
-    }
+            ClearBeatMarkers();
 
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        if (!IsInitialized || currentClip == null)
-            return;
+            if (currentClip == null || bpm <= 0)
+                return;
 
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            waveformRect,
-            eventData.position,
-            eventData.pressEventCamera,
-            out Vector2 localPoint
-        );
+            float clipDuration = currentClip.length;
+            float secondsPerBeat = 60f / bpm;
+            int totalBeats = Mathf.FloorToInt(clipDuration / secondsPerBeat);
 
-        float normalizedPosition = Mathf.Clamp01(
-            (localPoint.x + waveformRect.rect.width / 2) / waveformRect.rect.width
-        );
+            beatMarkers = new float[totalBeats];
 
-        float newTime = normalizedPosition * GetTotalDuration();
-        AudioManager.Instance.ChangePlaybackPosition(newTime);
-
-        if (progressImage != null && useProgressOverlay)
-        {
-            progressImage.fillAmount = normalizedPosition;
-        }
-
-        if (playheadMarker != null)
-        {
-            UpdatePlayheadToPosition(normalizedPosition);
-        }
-    }
-
-    private void UpdatePlayheadToPosition(float normalizedPosition)
-    {
-        if (playheadMarker == null)
-            return;
-
-        float xPosition = normalizedPosition * waveformRect.rect.width;
-        playheadMarker.anchoredPosition = new Vector2(xPosition, 0);
-    }
-
-    public void SetBeatMarkers(float[] markers)
-    {
-        beatMarkers = markers;
-        showBeatMarkers = markers != null && markers.Length > 0;
-
-        if (showBeatMarkers && IsInitialized && currentClip != null)
-        {
-            GenerateBeatMarkers();
-        }
-    }
-
-    public void GenerateBeatMarkers()
-    {
-        ClearBeatMarkers();
-
-        if (currentClip == null || bpm <= 0)
-            return;
-
-        float clipDuration = currentClip.length;
-        float secondsPerBeat = 60f / bpm;
-        int totalBeats = Mathf.FloorToInt(clipDuration / secondsPerBeat);
-
-        beatMarkers = new float[totalBeats];
-
-        for (int i = 0; i < totalBeats; i++)
-        {
-            float beatTime = i * secondsPerBeat;
-            float normalizedPosition = beatTime / clipDuration;
-            beatMarkers[i] = normalizedPosition;
-
-            bool isDownBeat = i % beatsPerBar == 0;
-            GameObject markerPrefab = isDownBeat ? downBeatMarkerPrefab : beatMarkerPrefab;
-
-            if (markerPrefab != null)
+            for (int i = 0; i < totalBeats; i++)
             {
-                GameObject marker = Instantiate(markerPrefab, waveformRect);
-                RectTransform markerRect = marker.GetComponent<RectTransform>();
+                float beatTime = i * secondsPerBeat;
+                float normalizedPosition = beatTime / clipDuration;
+                beatMarkers[i] = normalizedPosition;
 
-                if (markerRect != null)
+                bool isDownBeat = i % beatsPerBar == 0;
+                GameObject markerPrefab = isDownBeat ? downBeatMarkerPrefab : beatMarkerPrefab;
+
+                if (markerPrefab != null)
                 {
-                    markerRect.anchorMin = new Vector2(0, 0);
-                    markerRect.anchorMax = new Vector2(0, 1);
-                    markerRect.pivot = new Vector2(0.5f, 0.5f);
+                    GameObject marker = Instantiate(markerPrefab, waveformRect);
+                    RectTransform markerRect = marker.GetComponent<RectTransform>();
 
-                    float xPosition = normalizedPosition * waveformRect.rect.width;
-                    markerRect.anchoredPosition = new Vector2(xPosition, 0);
-
-                    markerRect.sizeDelta = new Vector2(2f, 0);
-
-                    Image markerImage = marker.GetComponent<Image>();
-                    if (markerImage != null)
+                    if (markerRect != null)
                     {
-                        markerImage.color = isDownBeat ? downBeatMarkerColor : beatMarkerColor;
-                    }
+                        markerRect.anchorMin = new Vector2(0, 0);
+                        markerRect.anchorMax = new Vector2(0, 1);
+                        markerRect.pivot = new Vector2(0.5f, 0.5f);
 
-                    beatMarkerObjects.Add(marker);
+                        float xPosition = normalizedPosition * waveformRect.rect.width;
+                        markerRect.anchoredPosition = new Vector2(xPosition, 0);
+
+                        markerRect.sizeDelta = new Vector2(0.1f, 0);
+
+                        Image markerImage = marker.GetComponent<Image>();
+                        if (markerImage != null)
+                        {
+                            markerImage.color = isDownBeat ? downBeatMarkerColor : beatMarkerColor;
+                        }
+
+                        beatMarkerObjects.Add(marker);
+                    }
                 }
             }
         }
-    }
 
-    private void ClearBeatMarkers()
-    {
-        foreach (GameObject marker in beatMarkerObjects)
+        private void ClearBeatMarkers()
         {
-            if (marker != null)
+            foreach (GameObject marker in beatMarkerObjects)
             {
-                Destroy(marker);
+                if (marker != null)
+                {
+                    Destroy(marker);
+                }
             }
+
+            beatMarkerObjects.Clear();
         }
 
-        beatMarkerObjects.Clear();
-    }
-
-    private void OnDestroy()
-    {
-        ClearBeatMarkers();
-    }
-
-    public void ClearWaveform()
-    {
-        if (waveformImage != null)
+        private void OnDestroy()
         {
-            waveformImage.texture = null;
+            ClearBeatMarkers();
+        }
+
+        public void ClearWaveform()
+        {
+            if (waveformImage != null)
+            {
+                waveformImage.texture = null;
+            }
         }
     }
 }

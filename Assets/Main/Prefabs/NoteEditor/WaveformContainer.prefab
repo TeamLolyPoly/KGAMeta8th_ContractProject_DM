@@ -86,7 +86,7 @@ GameObject:
   - component: {fileID: 3294189609427486933}
   - component: {fileID: 3294189609427486934}
   m_Layer: 5
-  m_Name: UI_Container_Waveform
+  m_Name: WaveformContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -131,6 +131,8 @@ MonoBehaviour:
   waveformRect: {fileID: 3294189609427486933}
   playheadMarker: {fileID: 3294189609353066335}
   playheadColor: {r: 1, g: 0, b: 0, a: 1}
+  referencePixelsPerUnit: 500
+  pixelsPerUnit: 500
   useProgressOverlay: 1
   waveformColor: {r: 1, g: 0.7812411, b: 0, a: 1}
   progressColor: {r: 0.3056116, g: 1, b: 0, a: 1}
