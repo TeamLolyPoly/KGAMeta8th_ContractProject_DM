@@ -1,10 +1,10 @@
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using System;
-using System.Threading.Tasks;
 
 public class AudioManager : Singleton<AudioManager>, IInitializable
 {
@@ -19,10 +19,31 @@ public class AudioManager : Singleton<AudioManager>, IInitializable
 
     private string tracksPath;
 
+    // BPM 관련 이벤트 및 속성
+    public event Action<float> OnBPMChanged;
+    private float currentBPM = 120f;
+
+    public float CurrentBPM
+    {
+        get => currentBPM;
+        set
+        {
+            if (currentBPM != value)
+            {
+                currentBPM = value;
+                OnBPMChanged?.Invoke(currentBPM);
+            }
+        }
+    }
+
     public float currentPlaybackTime
     {
         get => currentAudioSource != null ? currentAudioSource.time : 0f;
-        set { if (currentAudioSource != null) currentAudioSource.time = value; }
+        set
+        {
+            if (currentAudioSource != null)
+                currentAudioSource.time = value;
+        }
     }
 
     public float currentPlaybackDuration
@@ -144,34 +165,25 @@ public class AudioManager : Singleton<AudioManager>, IInitializable
 
     public void SelectTrack(TrackData track)
     {
-        if (track.trackAudio == null)
+        if (track == null || track.trackAudio == null)
         {
-            string audioFilePath = Path.Combine(tracksPath, track.trackName + ".wav");
-            if (File.Exists(audioFilePath))
-            {
-                StartCoroutine(LoadAudioForTrack(track, audioFilePath));
-                return;
-            }
-            else
-            {
-                Debug.LogError($"오디오 파일을 찾을 수 없습니다: {audioFilePath}");
-                return;
-            }
+            Debug.LogWarning("선택한 트랙이 없거나 오디오가 로드되지 않았습니다.");
+            return;
         }
 
         currentTrack = track;
         currentAudioSource.clip = track.trackAudio;
+        currentPlaybackTime = 0;
 
-        int index = tracks.IndexOf(track);
-        if (index != -1)
-        {
-            currentTrackIndex = index;
-        }
+        CurrentBPM = track.bpm;
+
+        OnTrackChanged?.Invoke(track);
     }
 
     public void LoadAllTracks()
     {
-        if (!Directory.Exists(tracksPath)) return;
+        if (!Directory.Exists(tracksPath))
+            return;
 
         string[] files = Directory.GetFiles(tracksPath, "*.wav");
         foreach (string file in files)
@@ -264,7 +276,8 @@ public class AudioManager : Singleton<AudioManager>, IInitializable
 
     public void SaveTrack(AudioClip clip, string trackName)
     {
-        if (clip == null) return;
+        if (clip == null)
+            return;
 
         string filePath = Path.Combine(tracksPath, trackName + ".wav");
 
@@ -291,7 +304,7 @@ public class AudioManager : Singleton<AudioManager>, IInitializable
             {
                 trackName = result.fileName,
                 trackAudio = result.clip,
-                albumArt = albumArt
+                albumArt = albumArt,
             };
 
             TrackData existingTrack = tracks.FirstOrDefault(t => t.trackName == track.trackName);
@@ -530,7 +543,8 @@ public class AudioManager : Singleton<AudioManager>, IInitializable
 
     public void SaveAlbumArt(Sprite albumArt, string trackName)
     {
-        if (albumArt == null) return;
+        if (albumArt == null)
+            return;
 
         try
         {
@@ -565,7 +579,11 @@ public class AudioManager : Singleton<AudioManager>, IInitializable
                 Texture2D texture = new Texture2D(2, 2);
                 texture.LoadImage(bytes);
 
-                Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+                Sprite sprite = Sprite.Create(
+                    texture,
+                    new Rect(0, 0, texture.width, texture.height),
+                    new Vector2(0.5f, 0.5f)
+                );
                 return sprite;
             }
             catch (Exception e)
@@ -583,26 +601,28 @@ public class AudioManager : Singleton<AudioManager>, IInitializable
         {
             List<TrackMetadata> metadataList = new List<TrackMetadata>();
 
-            foreach (TrackData track in tracks)
+            foreach (var track in tracks)
             {
-                if (track.albumArt != null)
-                {
-                    SaveAlbumArt(track.albumArt, track.trackName);
-                }
-
                 TrackMetadata metadata = new TrackMetadata
                 {
                     trackName = track.trackName,
-                    albumArtPath = track.albumArt != null ? Path.Combine("AlbumArts", track.trackName + ".png") : null,
-                    duration = track.trackAudio != null ? track.trackAudio.length : 0,
-                    filePath = track.trackName + ".wav"
+                    filePath = track.filePath,
+                    albumArtPath = track.albumArtPath,
+                    bpm = track.bpm,
                 };
+
+                // 현재 트랙이면 현재 BPM 값 사용
+                if (track == currentTrack)
+                {
+                    metadata.bpm = CurrentBPM;
+                }
 
                 metadataList.Add(metadata);
             }
 
+            // 메타데이터 저장
             string json = JsonUtility.ToJson(new TrackMetadataList { tracks = metadataList }, true);
-            string metadataPath = Path.Combine(tracksPath, "track_metadata.json");
+            string metadataPath = Path.Combine(tracksPath, "metadata.json");
             File.WriteAllText(metadataPath, json);
 
             Debug.Log("트랙 메타데이터가 저장되었습니다.");
@@ -615,7 +635,7 @@ public class AudioManager : Singleton<AudioManager>, IInitializable
 
     private void LoadTrackMetadata()
     {
-        string metadataPath = Path.Combine(tracksPath, "track_metadata.json");
+        string metadataPath = Path.Combine(tracksPath, "metadata.json");
         if (File.Exists(metadataPath))
         {
             try
@@ -625,25 +645,31 @@ public class AudioManager : Singleton<AudioManager>, IInitializable
 
                 if (metadataList != null && metadataList.tracks != null)
                 {
-                    Debug.Log($"메타데이터에서 {metadataList.tracks.Count}개의 트랙 정보를 로드했습니다.");
+                    Debug.Log(
+                        $"메타데이터에서 {metadataList.tracks.Count}개의 트랙 정보를 로드했습니다."
+                    );
 
-                    foreach (TrackMetadata metadata in metadataList.tracks)
+                    foreach (var metadata in metadataList.tracks)
                     {
-                        TrackData trackData = new TrackData
+                        TrackData track = new TrackData
                         {
                             trackName = metadata.trackName,
-                            trackAudio = null
+                            filePath = metadata.filePath,
+                            albumArtPath = metadata.albumArtPath,
+                            bpm = metadata.bpm,
                         };
 
+                        // 앨범 아트 로드
                         if (!string.IsNullOrEmpty(metadata.albumArtPath))
                         {
-                            trackData.albumArt = LoadAlbumArt(metadata.trackName);
+                            track.albumArt = LoadAlbumArt(metadata.trackName);
                         }
 
-                        if (!tracks.Any(t => t.trackName == trackData.trackName))
+                        // 중복 트랙 방지
+                        if (!tracks.Any(t => t.trackName == track.trackName))
                         {
-                            tracks.Add(trackData);
-                            Debug.Log($"메타데이터에서 트랙 추가: {trackData.trackName}");
+                            tracks.Add(track);
+                            Debug.Log($"메타데이터에서 트랙 추가: {track.trackName}");
                         }
                     }
                 }
@@ -657,5 +683,41 @@ public class AudioManager : Singleton<AudioManager>, IInitializable
         {
             Debug.Log("메타데이터 파일이 없습니다. 새로 생성됩니다.");
         }
+    }
+
+    // 트랙 변경 이벤트
+    public event Action<TrackData> OnTrackChanged;
+
+    /// <summary>
+    /// 현재 트랙의 BPM을 설정합니다.
+    /// </summary>
+    /// <param name="bpm">설정할 BPM 값</param>
+    public void SetBPM(float bpm)
+    {
+        if (bpm <= 0)
+        {
+            Debug.LogWarning("BPM은 0보다 커야 합니다.");
+            return;
+        }
+
+        CurrentBPM = bpm;
+
+        // 현재 트랙이 있으면 BPM 저장
+        if (currentTrack != null)
+        {
+            currentTrack.bpm = bpm;
+
+            // 메타데이터 저장
+            SaveTrackMetadata();
+        }
+    }
+
+    /// <summary>
+    /// 현재 트랙의 BPM을 가져옵니다.
+    /// </summary>
+    /// <returns>현재 BPM 값</returns>
+    public float GetBPM()
+    {
+        return CurrentBPM;
     }
 }
