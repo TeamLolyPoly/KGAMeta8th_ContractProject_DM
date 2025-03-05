@@ -123,55 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &10674240
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 10674242}
-  - component: {fileID: 10674241}
-  m_Layer: 0
-  m_Name: 'NoteSpawner '
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &10674241
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 10674240}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9355e4c7e68e07746818f731c453ca23, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  leftNotePrefab: {fileID: 4507852665770532171, guid: b61a9e5f35afe8c4b8d5fddc0247ef5b,
-    type: 3}
-  rightNotePrefab: {fileID: 6033980397832304064, guid: 4508d47aa2a95524884b6f28a3f34e3e,
-    type: 3}
-  spawnInterval: 2
-  noteSpeed: 10
---- !u!4 &10674242
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 10674240}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &66037679
 GameObject:
   m_ObjectHideFlags: 0
@@ -265,7 +216,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
---- !u!1 &865359421
+--- !u!1 &1360545975
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -273,48 +224,59 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 865359422}
-  - component: {fileID: 865359423}
+  - component: {fileID: 1360545977}
+  - component: {fileID: 1360545976}
   m_Layer: 0
-  m_Name: RightGridManager
+  m_Name: Spawner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!4 &865359422
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 865359421}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 5
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &865359423
+  m_IsActive: 1
+--- !u!114 &1360545976
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 865359421}
+  m_GameObject: {fileID: 1360545975}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ddd6f715b15a374eaf077a833e51b6d, type: 3}
+  m_Script: {fileID: 11500000, guid: ad47708043b49fc4999cf7ee780b23dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  horizontalCells: 3
-  verticalCells: 3
-  cellSize: 0.3
-  cellSpacing: 0.05
-  gridDistance: 10
-  gridHeight: 0.7
-  gridMaterial: {fileID: 0}
+  leftNotePrefab: {fileID: 4507852665770532171, guid: b61a9e5f35afe8c4b8d5fddc0247ef5b,
+    type: 3}
+  rightNotePrefab: {fileID: 6033980397832304064, guid: 4508d47aa2a95524884b6f28a3f34e3e,
+    type: 3}
+  gridNoteSpeed: 10
+  gridSpawnInterval: 2
+  sourceRadius: 0.65
+  targetRadius: 0.65
+  primarySegmentPrefab: {fileID: 7230671453194941499, guid: 3730469d3e71f624b98d886b950ce609,
+    type: 3}
+  symmetricSegmentPrefab: {fileID: 4964255517154642900, guid: 9028cf5d1a89bfb4bab9acb579eb441b,
+    type: 3}
+  arcMoveSpeed: 5
+  segmentCount: 36
+  segmentSpawnInterval: 0.1
+  createSymmetric: 1
+  circleZOffset: 0
+  circleYOffset: 0
+--- !u!4 &1360545977
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360545975}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1722114694
 GameObject:
   m_ObjectHideFlags: 0
@@ -431,109 +393,6 @@ MonoBehaviour:
   m_RequiresDepthTexture: 0
   m_RequiresColorTexture: 0
   m_Version: 2
---- !u!1 &1867923174
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1867923176}
-  - component: {fileID: 1867923175}
-  m_Layer: 0
-  m_Name: 'ArcToArcLongNoteSpawner '
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1867923175
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1867923174}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f601a28c6832805428c3134eaafa65f0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  sourceRadius: 2.5
-  sourceCenter: {x: 0, y: 0, z: 15}
-  targetRadius: 2.5
-  targetCenter: {x: 0, y: 0, z: -15}
-  segmentCount: 72
-  moveSpeed: 10
-  primarySegmentPrefab: {fileID: 7230671453194941499, guid: 3730469d3e71f624b98d886b950ce609,
-    type: 3}
-  symmetricSegmentPrefab: {fileID: 4964255517154642900, guid: 9028cf5d1a89bfb4bab9acb579eb441b,
-    type: 3}
-  arcSegmentCount: 30
-  segmentSpawnInterval: 0.1
-  createSymmetric: 0
---- !u!4 &1867923176
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1867923174}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 6
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1930355675
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1930355677}
-  - component: {fileID: 1930355676}
-  m_Layer: 0
-  m_Name: spawner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &1930355676
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1930355675}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 58ae03016d99d20419f51e5fd2aedf5d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gridManager: {fileID: 865359423}
-  longNotePrefab: {fileID: 8553157979806606080, guid: 24c13672dbb20eb44a0ba9c0a5a97650,
-    type: 3}
-  moveSpeed: 1
---- !u!4 &1930355677
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1930355675}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.283848, y: -0.1852561, z: -7.9368443}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 4
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2046801419
 GameObject:
   m_ObjectHideFlags: 0
@@ -550,7 +409,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &2046801420
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -564,7 +423,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   totalHorizontalCells: 5
-  verticalCells: 2
+  verticalCells: 3
   handGridSize: 3
   cellSize: 0.5
   cellSpacing: 0.05
@@ -584,5 +443,5 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
