@@ -5,18 +5,27 @@ using UnityEngine;
 public class BPMTest : MonoBehaviour
 {
     [Header("입력값")]
-    [SerializeField] private float bpm = 120f;
-    [SerializeField] private float distance = 15f;
-    [SerializeField] private float speedMultiplier = 1f;
+    [SerializeField]
+    private float bpm = 120f;
+
+    [SerializeField]
+    private float distance = 15f;
+
+    [SerializeField]
+    private float speedMultiplier = 1f;
 
     [Header("계산 결과")]
-    [SerializeField] private float noteSpeed;
-    [SerializeField] private float timeToTarget;
+    [SerializeField]
+    private float noteSpeed;
+
+    [SerializeField]
+    private float timeToTarget;
 
     private void OnValidate()
     {
         CalculateSpeed();
     }
+
     private void CalculateSpeed()
     {
         //BPM을 초당 비트로 계산
