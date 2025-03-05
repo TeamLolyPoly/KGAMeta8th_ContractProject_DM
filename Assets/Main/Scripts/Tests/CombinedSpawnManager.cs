@@ -25,6 +25,9 @@ public class CombinedSpawnManager : MonoBehaviour
     [SerializeField] private float circleZOffset = 0f; // 그리드로부터 Z축 오프셋
     [SerializeField] private float circleYOffset = 0f; // 그리드로부터 Y축 오프셋
     
+    [Header("이펙트 설정")]
+    [SerializeField] private GameObject hitEffectPrefab; // 충돌 시 생성할 이펙트
+
     private GridManager gridManager;
     private Vector3 sourceCenter;
     private Vector3 targetCenter;
@@ -257,6 +260,12 @@ public class CombinedSpawnManager : MonoBehaviour
             // 세그먼트 이동 컴포넌트 추가
             ArcSegmentMover mover = segment.AddComponent<ArcSegmentMover>();
             mover.Initialize(sourcePos, targetPos, arcMoveSpeed);
+
+            //충돌 이펙트 설정
+            if(hitEffectPrefab != null)
+            {
+                mover.SetHitEffect(hitEffectPrefab);
+            }
             
             segmentsSpawned++;
             
