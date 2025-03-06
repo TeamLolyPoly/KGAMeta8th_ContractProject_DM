@@ -5,6 +5,8 @@ using UnityEngine;
 [Serializable]
 public class NoteData
 {
+    //기본 노트 타입은 숏으로 설정
+    public NoteBaseType baseType = NoteBaseType.Short; 
     public NoteHitType noteType;
     public NoteDirection direction;
     public NoteAxis noteAxis;
