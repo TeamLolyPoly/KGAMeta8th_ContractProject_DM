@@ -145,14 +145,8 @@ public class CombinedSpawnManager : MonoBehaviour
         NoteData noteData = new NoteData();
         bool isLeftHand = Random.value > 0.5f; // 50% 확률로 왼쪽/오른쪽 결정
 
-        if (isLeftHand)
-        {
-            noteData.noteType = NoteHitType.Hand; // 또는 왼쪽 노트용 타입
-        }
-        else
-        {
-            noteData.noteType = Random.value > 0.5f ? NoteHitType.Red : NoteHitType.Blue;
-        }
+        // 노트 타입 설정을 NoteGameManager에 위임
+        NoteGameManager.Instance.SetupNoteTypeData(noteData, isLeftHand);
 
         noteData.direction = (NoteDirection)Random.Range(1, 8);
         noteData.noteAxis = NoteAxis.PZ;
@@ -282,11 +276,30 @@ public class CombinedSpawnManager : MonoBehaviour
             Vector3 sourcePos = sourcePoints[currentIndex];
             Vector3 targetPos = targetPoints[currentIndex];
 
+            //롱노트 데이터 초기화
+            NoteData noteData = new NoteData()
+            {
+                baseType = NoteBaseType.Long,     // 원형 노트는 항상 롱노트
+                moveSpeed = arcMoveSpeed,
+                target = targetPos,
+                direction = NoteDirection.North,  // 또는 상황에 맞는 방향
+                noteAxis = NoteAxis.PZ            // 또는 상황에 맞는 축    
+            };
+
+            NoteGameManager.Instance.SetupNoteTypeData(noteData, false);// false = 오른쪽
+
             // 선택된 프리팹으로 세그먼트 생성
             GameObject segment = Instantiate(prefabToUse, sourcePos, Quaternion.identity);
 
             // 세그먼트 이동 컴포넌트 추가
             ArcSegmentMover mover = segment.AddComponent<ArcSegmentMover>();
+            
+            //세그먼트 초기화
+            if (segment.TryGetComponent<Note>(out Note note))
+            {
+                note.Initialize(noteData);
+            }
+            
             mover.Initialize(sourcePos, targetPos, arcMoveSpeed);
 
             //충돌 이펙트 설정
