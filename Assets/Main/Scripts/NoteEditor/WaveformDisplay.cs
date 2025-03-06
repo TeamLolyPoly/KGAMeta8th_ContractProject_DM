@@ -8,38 +8,29 @@ namespace NoteEditor
 {
     public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializable
     {
-        [Header("웨이브폼 설정")]
         public RawImage waveformImage;
         public Image progressImage;
         public RectTransform waveformRect;
         public RectTransform playheadMarker;
         public Color playheadColor = Color.red;
 
-        [Header("렌더링 품질")]
-        [Tooltip("캔버스의 레퍼런스 픽셀 퍼 유닛")]
         public float referencePixelsPerUnit = 200f;
-        [Tooltip("웨이브폼의 픽셀 밀도")]
+
         public float pixelsPerUnit = 200f;
 
-        [Header("재생 진행 표시")]
         public bool useProgressOverlay = false;
 
-        [Header("웨이브폼 색상")]
         public Color waveformColor = new Color(1f, 0.6f, 0.2f);
         public Color progressColor = new Color(0.2f, 0.6f, 1f);
 
-        [Header("마커 설정")]
         public bool showBeatMarkers = false;
         public Color beatMarkerColor = Color.white;
         public Color downBeatMarkerColor = Color.yellow;
 
-        [Tooltip("BPM 값 (분당 비트 수)")]
         public float bpm = 120f;
 
-        [Tooltip("박자 (예: 4/4 박자의 경우 4)")]
         public int beatsPerBar = 4;
 
-        [Header("마커 프리팹")]
         public GameObject beatMarkerPrefab;
         public GameObject downBeatMarkerPrefab;
 
