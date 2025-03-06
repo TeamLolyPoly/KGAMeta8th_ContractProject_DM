@@ -43,7 +43,6 @@ namespace NoteEditor
         public void Initialize()
         {
             defaultAlbumArt = Resources.Load<Sprite>("Textures/AlbumArt");
-            print(defaultAlbumArt);
             dropdownItemIcon = Resources.Load<Sprite>("Textures/DefaultAudioIcon");
             playButton.onClick.AddListener(OnPlayButtonClicked);
             LoadTrackButton.onClick.AddListener(OnLoadTrackButtonClicked);
