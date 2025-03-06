@@ -1,4 +1,11 @@
 #region Note Related
+public enum NoteBaseType
+{
+    None,
+    Short,
+    Long,
+}
+
 public enum NoteDirection
 {
     None,
@@ -35,6 +42,6 @@ public enum NoteRatings
     Perfect,
     Great,
     Good,
-    Succes,
+    Success,
 }
 #endregion

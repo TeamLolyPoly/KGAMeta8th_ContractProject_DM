@@ -21,6 +21,21 @@ public class NoteGameManager : Singleton<NoteGameManager>
     //현재 배율
     public int Multiplier { get; private set; } = 1;
 
+    // 노트 타입 설정 함수
+    public void SetupNoteTypeData(NoteData noteData, bool isLeftGrid)
+    {
+        if (isLeftGrid)
+        {
+            noteData.baseType = NoteBaseType.Short;
+            noteData.noteType = NoteHitType.Hand;
+        }
+        else
+        {
+            // 오른쪽 그리드는 Short/Long 모두 가능하고 Red/Blue만 가능
+            noteData.noteType = Random.value > 0.5f ? NoteHitType.Red : NoteHitType.Blue;
+        }
+    }
+
     //노트 점수계산함수
     public void SetScore(float score, NoteRatings ratings)
     {
