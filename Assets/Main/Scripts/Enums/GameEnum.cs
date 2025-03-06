@@ -10,7 +10,6 @@ public enum NoteDirection
     Northwest,
     Southeast,
     Southwest,
-
 }
 
 public enum NoteAxis
@@ -20,7 +19,6 @@ public enum NoteAxis
     MZ,
     PX,
     MX,
-
 }
 
 public enum NoteHitType
@@ -37,5 +35,6 @@ public enum NoteRatings
     Perfect,
     Great,
     Good,
+    Succes,
 }
 #endregion

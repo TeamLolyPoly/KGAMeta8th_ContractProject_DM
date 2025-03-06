@@ -1,7 +1,8 @@
-using UnityEngine;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
+[Serializable]
 public class NoteData
 {
     public NoteHitType noteType;
@@ -17,6 +18,7 @@ public class TrackData
     public Sprite albumArt;
     public AudioClip trackAudio;
 }
+
 // 트랙 메타데이터를 저장하기 위한 클래스
 [Serializable]
 public class TrackMetadata
