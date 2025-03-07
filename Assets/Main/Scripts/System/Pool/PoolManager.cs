@@ -1,5 +1,6 @@
-using UnityEngine;
 using System.Collections;
+using Photon.Pun;
+using UnityEngine;
 
 public class PoolManager : Singleton<PoolManager>, IInitializable
 {
@@ -44,35 +45,63 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
         }
     }
 
-    public T Spawn<T>(GameObject prefab, Vector3 position, Quaternion rotation) where T : Component
+    // isNetworked가 true일 경우 PhotonNetwork를 사용하여 네트워크 오브젝트 생성
+    public T Spawn<T>(GameObject prefab, Vector3 position, Quaternion rotation, bool isNetworked = false)
+        where T : Component
     {
         string originalName = prefab.name;
+        T spawnedObj;
 
-        T spawnedObj = objectPool.Spawn<T>(prefab, position, rotation);
-        if (spawnedObj != null)
+        if (isNetworked && PhotonNetwork.IsConnected)
         {
-            spawnedObj.gameObject.name = originalName;
+            // 네트워크 오브젝트 생성
+            GameObject networkedObj = PhotonNetwork.Instantiate(
+                $"Items/{originalName}",
+                position,
+                rotation
+            );
+            spawnedObj = networkedObj.GetComponent<T>();
         }
+        else
+            spawnedObj = objectPool.Spawn<T>(prefab, position, rotation);
+
+        if (spawnedObj != null)
+            spawnedObj.gameObject.name = originalName;  
 
         return spawnedObj;
     }
 
-    public void Despawn<T>(T obj) where T : Component
+    public void Despawn<T>(T obj, bool isNetworked = false) where T : Component
     {
-        objectPool.Despawn(obj);
+        if (!IsInitialized || obj == null)
+        {
+            Debug.LogError("PoolManager is not initialized or object is null! Cannot despawn.");
+            return;
+        }
+
+        if (isNetworked && PhotonNetwork.IsConnected)
+            PhotonNetwork.Destroy(obj.gameObject);
+        else
+            objectPool.Despawn(obj);
     }
 
-    public void Despawn<T>(T obj, float delay) where T : Component
+    public void Despawn<T>(T obj, float delay, bool isNetworked = false) where T : Component
     {
-        StartCoroutine(DespawnCoroutine(obj, delay));
+        if (!IsInitialized || obj == null)
+        {
+            Debug.LogError("PoolManager is not initialized or object is null! Cannot despawn.");
+            return;
+        }
+
+        StartCoroutine(DespawnCoroutine(obj, delay, isNetworked));
     }
 
-    private IEnumerator DespawnCoroutine<T>(T obj, float delay) where T : Component
+    private IEnumerator DespawnCoroutine<T>(T obj, float delay, bool isNetworked) where T : Component
     {
         yield return new WaitForSeconds(delay);
         if (obj != null)
         {
-            objectPool.Despawn(obj);
+            Despawn(obj, isNetworked);
         }
     }
 
