@@ -21,20 +21,20 @@ namespace NoteEditor
 
         private readonly string[] audioLoadingTips =
         {
-        "오디오 파일을 분석하는 중입니다...",
-        "웨이브폼을 생성하는 중입니다...",
-        "트랙 정보를 처리하는 중입니다...",
-        "대용량 오디오 파일은 처리 시간이 더 오래 걸릴 수 있습니다.",
-        "고품질 오디오 파일을 사용하면 더 정확한 웨이브폼을 볼 수 있습니다.",
-    };
+            "오디오 파일을 분석하는 중입니다...",
+            "웨이브폼을 생성하는 중입니다...",
+            "트랙 정보를 처리하는 중입니다...",
+            "대용량 오디오 파일은 처리 시간이 더 오래 걸릴 수 있습니다.",
+            "고품질 오디오 파일을 사용하면 더 정확한 웨이브폼을 볼 수 있습니다.",
+        };
 
         private readonly string[] albumArtLoadingTips =
         {
-        "이미지 파일을 처리하는 중입니다...",
-        "앨범 아트를 최적화하는 중입니다...",
-        "트랙 정보에 앨범 아트를 연결하는 중입니다...",
-        "앨범 아트는 트랙 정보와 함께 저장됩니다.",
-    };
+            "이미지 파일을 처리하는 중입니다...",
+            "앨범 아트를 최적화하는 중입니다...",
+            "트랙 정보에 앨범 아트를 연결하는 중입니다...",
+            "앨범 아트는 트랙 정보와 함께 저장됩니다.",
+        };
 
         protected override void Awake()
         {
@@ -113,32 +113,32 @@ namespace NoteEditor
             updateProgress(0.3f);
             loadingUI?.SetLoadingText("오디오 파일 분석 중...");
 
-            var loadTask = ResourceIO.LoadAudioFileAsync(pendingAudioFilePath);
-
-            float startProgress = 0.3f;
-            float endProgress = 0.6f;
-            float loadStartTime = Time.time;
-            float loadTimeout = 10f;
-
-            while (!loadTask.IsCompleted)
+            // 진행 상황 보고를 위한 Progress 객체 생성
+            var progress = new Progress<float>(p =>
             {
-                float elapsedTime = Time.time - loadStartTime;
-                float normalizedTime = Mathf.Clamp01(elapsedTime / loadTimeout);
-                float currentProgress = Mathf.Lerp(startProgress, endProgress, normalizedTime);
-
+                float currentProgress = 0.3f + p * 0.6f;
                 updateProgress(currentProgress);
+            });
 
+            // AudioDataManager를 통해 트랙 추가
+            var addTrackTask = AudioDataManager.Instance.AddTrackAsync(
+                pendingAudioFilePath,
+                progress
+            );
+
+            // 작업이 완료될 때까지 대기
+            while (!addTrackTask.IsCompleted)
+            {
                 if (loadingUI != null && UnityEngine.Random.value < 0.05f)
                 {
                     SetRandomTip(loadingUI, audioLoadingTips);
                 }
-
                 yield return null;
             }
 
-            var result = loadTask.Result;
+            TrackData loadedTrack = addTrackTask.Result;
 
-            if (result.clip == null)
+            if (loadedTrack == null)
             {
                 Debug.LogError("오디오 파일 로드 실패");
                 pendingAudioFilePath = null;
@@ -146,36 +146,18 @@ namespace NoteEditor
                 yield break;
             }
 
-            updateProgress(0.6f);
-            loadingUI?.SetLoadingText("트랙 정보 생성 중...");
-
-            if (loadingUI != null)
-            {
-                SetRandomTip(loadingUI, audioLoadingTips);
-            }
-
-            yield return new WaitForSeconds(0.2f);
-
-            TrackData newTrack = new TrackData
-            {
-                trackName = result.fileName,
-                trackAudio = result.clip,
-                albumArt = null,
-            };
-
-            updateProgress(0.8f);
+            updateProgress(0.9f);
             loadingUI?.SetLoadingText("오디오 매니저에 트랙 추가 중...");
             yield return new WaitForSeconds(0.2f);
 
-            AudioManager.Instance.AddTrack(newTrack);
+            // 트랙 선택
+            AudioManager.Instance.SelectTrack(loadedTrack);
 
             updateProgress(1.0f);
             loadingUI?.SetLoadingText("완료! 노트 에디터로 돌아가는 중...");
             yield return new WaitForSeconds(0.5f);
 
             pendingAudioFilePath = null;
-
-            TrackData loadedTrack = newTrack;
 
             LoadingManager.Instance.LoadScene(
                 currentSceneName,
@@ -214,32 +196,46 @@ namespace NoteEditor
             updateProgress(0.4f);
             loadingUI?.SetLoadingText("이미지 파일 처리 중...");
 
-            var loadTask = ResourceIO.LoadAlbumArtAsync(pendingAlbumArtFilePath);
-
-            float startProgress = 0.4f;
-            float endProgress = 0.7f;
-            float loadStartTime = Time.time;
-            float loadTimeout = 5f;
-
-            while (!loadTask.IsCompleted)
+            // 현재 선택된 트랙 가져오기
+            var tracks = AudioManager.Instance.GetAllTrackInfo();
+            if (selectedTrackIndex >= tracks.Count)
             {
-                float elapsedTime = Time.time - loadStartTime;
-                float normalizedTime = Mathf.Clamp01(elapsedTime / loadTimeout);
-                float currentProgress = Mathf.Lerp(startProgress, endProgress, normalizedTime);
+                Debug.LogError("선택된 트랙 인덱스가 유효하지 않습니다.");
+                pendingAlbumArtFilePath = null;
+                selectedTrackIndex = -1;
+                LoadingManager.Instance.LoadScene(currentSceneName);
+                yield break;
+            }
 
+            TrackData selectedTrack = tracks[selectedTrackIndex];
+
+            // 진행 상황 보고를 위한 Progress 객체 생성
+            var progress = new Progress<float>(p =>
+            {
+                float currentProgress = 0.4f + p * 0.5f;
                 updateProgress(currentProgress);
+            });
 
+            // AudioDataManager를 통해 앨범 아트 설정
+            var setAlbumArtTask = AudioDataManager.Instance.SetAlbumArtAsync(
+                selectedTrack.trackName,
+                pendingAlbumArtFilePath,
+                progress
+            );
+
+            // 작업이 완료될 때까지 대기
+            while (!setAlbumArtTask.IsCompleted)
+            {
                 if (loadingUI != null && UnityEngine.Random.value < 0.05f)
                 {
                     SetRandomTip(loadingUI, albumArtLoadingTips);
                 }
-
                 yield return null;
             }
 
-            Sprite albumArt = loadTask.Result;
+            TrackData updatedTrack = setAlbumArtTask.Result;
 
-            if (albumArt == null)
+            if (updatedTrack == null || updatedTrack.albumArt == null)
             {
                 Debug.LogError("앨범 아트 로드 실패");
                 pendingAlbumArtFilePath = null;
@@ -248,34 +244,18 @@ namespace NoteEditor
                 yield break;
             }
 
-            updateProgress(0.7f);
-            loadingUI?.SetLoadingText("트랙 정보 업데이트 중...");
-
-            if (loadingUI != null)
-            {
-                SetRandomTip(loadingUI, albumArtLoadingTips);
-            }
-
+            updateProgress(0.9f);
+            loadingUI?.SetLoadingText("앨범 아트 적용 중...");
             yield return new WaitForSeconds(0.2f);
-
-            List<TrackData> tracks = AudioManager.Instance.GetAllTrackInfo();
-            string trackName = "";
-
-            if (selectedTrackIndex >= 0 && selectedTrackIndex < tracks.Count)
-            {
-                TrackData selectedTrack = tracks[selectedTrackIndex];
-                trackName = selectedTrack.trackName;
-                selectedTrack.albumArt = albumArt;
-
-                AudioManager.Instance.AddTrack(selectedTrack);
-            }
 
             updateProgress(1.0f);
             loadingUI?.SetLoadingText("완료! 노트 에디터로 돌아가는 중...");
             yield return new WaitForSeconds(0.5f);
 
+            string trackName = updatedTrack.trackName;
+            Sprite albumArt = updatedTrack.albumArt;
+
             pendingAlbumArtFilePath = null;
-            int trackIndex = selectedTrackIndex;
             selectedTrackIndex = -1;
 
             LoadingManager.Instance.LoadScene(
@@ -288,15 +268,15 @@ namespace NoteEditor
         }
 
         /// <summary>
-        /// 랜덤 팁 설정
+        /// 랜덤 팁을 설정합니다.
         /// </summary>
         private void SetRandomTip(LoadingUI loadingUI, string[] tips)
         {
-            if (tips == null || tips.Length == 0)
-                return;
-
-            int randomIndex = UnityEngine.Random.Range(0, tips.Length);
-            loadingUI.SetLoadingText(tips[randomIndex]);
+            if (tips.Length > 0)
+            {
+                int randomIndex = UnityEngine.Random.Range(0, tips.Length);
+                loadingUI.SetLoadingText(tips[randomIndex]);
+            }
         }
     }
 }

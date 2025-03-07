@@ -147,7 +147,11 @@ namespace NoteEditor
 
             GameObject canvasObj = new GameObject("WaveformCanvas");
             canvasObj.transform.parent = railContainer.transform;
-            canvasObj.transform.localPosition = new Vector3(rightEdgeX - totalWidth, waveformOffset, 0);
+            canvasObj.transform.localPosition = new Vector3(
+                rightEdgeX - totalWidth,
+                waveformOffset,
+                0
+            );
             canvasObj.transform.localRotation = Quaternion.Euler(90, 90, 0);
 
             waveformCanvas = canvasObj.AddComponent<Canvas>();
@@ -276,7 +280,9 @@ namespace NoteEditor
 
         private IEnumerator WaitForWaveformInitialization(AudioClip clip)
         {
-            yield return new WaitUntil(() => waveformDisplay != null && waveformDisplay.IsInitialized);
+            yield return new WaitUntil(
+                () => waveformDisplay != null && waveformDisplay.IsInitialized
+            );
 
             waveformDisplay.UpdateWaveform(clip);
         }

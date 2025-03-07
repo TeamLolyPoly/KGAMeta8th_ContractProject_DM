@@ -16,8 +16,6 @@ public class TrackData
     public string trackName;
     public Sprite albumArt;
     public AudioClip trackAudio;
-    public string filePath;
-    public string albumArtPath;
     public float bpm = 120f;
 }
 
@@ -25,13 +23,11 @@ public class TrackData
 public class TrackMetadata
 {
     public string trackName;
-    public string albumArtPath;
     public string artistName;
     public string albumName;
     public int year;
     public string genre;
     public float duration;
-    public string filePath;
     public float bpm = 120f;
 }
 
