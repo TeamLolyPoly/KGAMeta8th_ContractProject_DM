@@ -11,6 +11,9 @@ public class Note : MonoBehaviour
     [SerializeField, Header("타격 정확도 허용범위")]
     protected float[] accuracyPoint = { 0.34f, 0.67f };
 
+    [SerializeField, Header("노트 플레이어 방향 기울기")]
+    protected float noteLookAtAngle = 40f;
+
     // [SerializeField, Header("노트 정확도 점수배율")]
     // protected float[] accuracyScore = { 0.8f, 0.5f };
     protected bool isMoving = true;
@@ -30,6 +33,7 @@ public class Note : MonoBehaviour
         noteRenderer = GetComponent<Renderer>();
         noteData = new NoteData()
         {
+            baseType = data.baseType,
             noteAxis = data.noteAxis,
             direction = data.direction,
             target = data.target,
@@ -39,20 +43,10 @@ public class Note : MonoBehaviour
         if (noteRenderer != null)
         {
             SetNoteDisTance();
-
-            switch (noteData.noteType)
-            {
-                case NoteHitType.Red:
-                    noteRenderer.material.color = Color.red;
-                    break;
-                case NoteHitType.Blue:
-                    noteRenderer.material.color = Color.blue;
-                    break;
-            }
+            SetNoteColor();   // 노트 색상 설정 메서드를 따로 만듬
         }
         NoteDirectionChange();
         NoteHitDirectionChange();
-        NoteAngleChange();
         noteDownDirection = -transform.up;
         noteUpDirection = transform.up;
         print($"Down: {noteDownDirection} Up: {noteUpDirection}");
@@ -67,12 +61,29 @@ public class Note : MonoBehaviour
                 noteData.target,
                 noteData.moveSpeed * Time.deltaTime
             );
-
             if (Vector3.Distance(transform.position, noteData.target) < 0.1f)
             {
-                Miss();
-                Destroy(gameObject);
+                try
+                {
+                    Miss();
+                }
+                catch (System.NullReferenceException)
+                {
+                    Debug.LogWarning("NullReferenceException 발생. 노트를 직접 파괴합니다.");
+                    Destroy(gameObject);
+                }
             }
+            // TODO: NoteGameManager 관련 문제 해결하기
+            // 1. NoteGameManager.Instance가 null인 이유 확인
+            // 2. NoteGameManager의 test 변수 초기화 확인
+            // 3. 씬에 NoteGameManager 오브젝트 추가 확인
+            // 4. 예외 처리 대신 근본적인 해결책 적용
+
+            //if (Vector3.Distance(transform.position, noteData.target) < 0.1f)
+            //{
+            //    Miss();
+            //    Destroy(gameObject);
+            //}
         }
     }
 
@@ -84,40 +95,51 @@ public class Note : MonoBehaviour
         Gizmos.DrawLine(transform.localPosition, transform.position + noteUpDirection);
     }
 
+    //TODO: 노트 기울기 만들어야함함
     protected void NoteDirectionChange()
     {
         float rotationZ = 0f;
+        float rotationY = 0f;
+        float rotationX = 0f;
         switch (noteData.direction)
         {
             case NoteDirection.East:
                 rotationZ = 90f;
+                rotationY = -noteLookAtAngle;
                 break;
             case NoteDirection.West:
                 rotationZ = -90f;
+                rotationY = noteLookAtAngle;
                 break;
             case NoteDirection.South:
                 rotationZ = 0f;
+                rotationX = -noteLookAtAngle;
                 break;
             case NoteDirection.North:
                 rotationZ = 180f;
+                rotationX = noteLookAtAngle;
                 break;
             case NoteDirection.Northeast:
                 rotationZ = 135f;
+                rotationX = noteLookAtAngle;
                 break;
             case NoteDirection.Northwest:
                 rotationZ = -135f;
+                rotationX = noteLookAtAngle;
                 break;
             case NoteDirection.Southeast:
                 rotationZ = 45f;
+                rotationX = -noteLookAtAngle;
                 break;
             case NoteDirection.Southwest:
                 rotationZ = -45f;
+                rotationX = -noteLookAtAngle;
                 break;
         }
         noteTrans.rotation = Quaternion.Euler(
-            noteTrans.rotation.eulerAngles.x,
-            noteTrans.rotation.eulerAngles.y,
-            rotationZ
+            noteTrans.rotation.eulerAngles.x + rotationX,
+            noteTrans.rotation.eulerAngles.y + rotationY,
+            noteTrans.rotation.eulerAngles.z + rotationZ
         );
     }
 
@@ -141,12 +163,10 @@ public class Note : MonoBehaviour
         }
         noteTrans.rotation = Quaternion.Euler(
             noteTrans.rotation.eulerAngles.x,
-            rotationY,
+            noteTrans.rotation.eulerAngles.y + rotationY,
             noteTrans.rotation.eulerAngles.z
         );
     }
-
-    protected void NoteAngleChange() { }
 
     //hit위치에서 중앙까지의 거리를 비교후 점수 계산
     protected void HitScore(float hitdis)
@@ -189,7 +209,6 @@ public class Note : MonoBehaviour
         print($"노트 길이: {noteDistance}");
     }
 
-    //TODO: 판정 방식 수정 HitScore수정 해야함
     private void OnCollisionEnter(Collision other)
     {
         Vector3 hitPoint = other.contacts[0].normal;
@@ -232,7 +251,7 @@ public class Note : MonoBehaviour
                 Miss();
                 print("HitObject 타입이 다름");
             }
-            Miss();
+            //Miss(); 현재 중복호출중
         }
     }
 
@@ -243,5 +262,22 @@ public class Note : MonoBehaviour
         Vector3 notePos = transform.position - (-transform.up * noteDistance);
         print($"notepos {notePos} hitPoint{hitPoint}");
         return Vector3.Distance(hitPoint, notePos);
+    }
+    protected virtual void SetNoteColor()
+    {
+        if (noteRenderer == null) return;
+
+        switch (noteData.noteType)
+        {
+        case NoteHitType.Hand:
+            noteRenderer.material.color = Color.yellow;
+            break;
+        case NoteHitType.Red:
+            noteRenderer.material.color = Color.red;
+            break;
+        case NoteHitType.Blue:
+                noteRenderer.material.color = Color.blue;
+            break;
+        }
     }
 }
