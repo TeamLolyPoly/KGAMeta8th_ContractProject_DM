@@ -14,6 +14,30 @@ public class NoteData
     public float moveSpeed;
 }
 
+[Serializable]
+public class ArcNoteData
+{
+    //기본 패턴
+    public int startIndex;
+    public int arcLength;
+    public bool isSymmetric;
+    public bool isClockwise;
+
+    //원형 그리드 설정
+    public float sourceRadius;
+    public float targetRadius;
+    public float moveSpeed;
+    public float spawnInterval;
+
+    //노트 타입
+    public NoteHitType noteType;
+}
+[Serializable]
+public class ArcNoteList
+{
+    public List<ArcNoteData> patterns = new List<ArcNoteData>();
+}
+
 public class TrackData
 {
     public string trackName;
