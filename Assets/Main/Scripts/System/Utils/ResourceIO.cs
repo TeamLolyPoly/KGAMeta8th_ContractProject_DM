@@ -188,11 +188,7 @@ public static class ResourceIO
 
                     try
                     {
-                        string albumArtPath = Path.Combine(
-                            persistentPath,
-                            "Tracks",
-                            "AlbumArts"
-                        );
+                        string albumArtPath = Path.Combine(persistentPath, "Tracks", "AlbumArts");
 
                         if (!Directory.Exists(albumArtPath))
                         {

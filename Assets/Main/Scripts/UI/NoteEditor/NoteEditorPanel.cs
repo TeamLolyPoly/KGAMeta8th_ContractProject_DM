@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Michsky.UI.Heat;
 using SFB;
 using TMPro;
@@ -9,7 +10,7 @@ using Dropdown = Michsky.UI.Heat.Dropdown;
 
 namespace NoteEditor
 {
-    public class PlaybackPanel : MonoBehaviour, IInitializable
+    public class NoteEditorPanel : MonoBehaviour, IInitializable
     {
         public BoxButtonManager CurrentTrackInfo;
         public ButtonManager playButton;
@@ -52,7 +53,9 @@ namespace NoteEditor
             }
             if (DeleteTrackButton != null)
             {
-                DeleteTrackButton.onClick.AddListener(OnDeleteTrackButtonClicked);
+                DeleteTrackButton.onClick.AddListener(
+                    async () => await OnDeleteTrackButtonClicked()
+                );
             }
 
             if (audioLoadManager != null)
@@ -130,7 +133,6 @@ namespace NoteEditor
                 {
                     CurrentTrackInfo.SetBackground(defaultAlbumArt);
                 }
-
             }
             else
             {
@@ -154,7 +156,6 @@ namespace NoteEditor
                     CurrentTrackInfo.SetBackground(defaultAlbumArt);
                 }
                 AudioManager.Instance.SelectTrack(selectedTrack);
-
             }
         }
 
@@ -228,7 +229,10 @@ namespace NoteEditor
             if (isLoadingTrack || audioLoadManager == null)
                 return;
 
-            ExtensionFilter[] extensions = { new ExtensionFilter("오디오 파일", "mp3", "wav", "ogg") };
+            ExtensionFilter[] extensions =
+            {
+                new ExtensionFilter("오디오 파일", "mp3", "wav", "ogg"),
+            };
 
             StandaloneFileBrowser.OpenFilePanelAsync(
                 "오디오 파일 선택",
@@ -281,7 +285,10 @@ namespace NoteEditor
                 return;
             }
 
-            ExtensionFilter[] extensions = { new ExtensionFilter("이미지 파일", "png", "jpg", "jpeg") };
+            ExtensionFilter[] extensions =
+            {
+                new ExtensionFilter("이미지 파일", "png", "jpg", "jpeg"),
+            };
 
             StandaloneFileBrowser.OpenFilePanelAsync(
                 "앨범 아트 선택",
@@ -323,7 +330,7 @@ namespace NoteEditor
             }
         }
 
-        public void OnDeleteTrackButtonClicked()
+        public async Task OnDeleteTrackButtonClicked()
         {
             if (trackDataList.Count == 0 || trackDropdown.selectedItemIndex < 0)
             {
@@ -337,7 +344,7 @@ namespace NoteEditor
                 TrackData selectedTrack = trackDataList[selectedIndex];
                 string trackName = selectedTrack.trackName;
 
-                AudioManager.Instance.DeleteTrack(trackName);
+                await AudioDataManager.Instance.DeleteTrackAsync(trackName);
 
                 trackDropdown.RemoveItem(trackName, true);
 

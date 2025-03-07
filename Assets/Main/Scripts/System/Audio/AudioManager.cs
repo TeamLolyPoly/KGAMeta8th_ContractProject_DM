@@ -1,29 +1,32 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace NoteEditor
 {
+    /// <summary>
+    /// 오디오 재생 및 제어를 담당하는 매니저 클래스
+    /// </summary>
     public class AudioManager : Singleton<AudioManager>, IInitializable
     {
         public TrackData currentTrack;
         public AudioSource currentAudioSource;
-        public List<TrackData> tracks = new List<TrackData>();
         public bool IsInitialized { get; private set; }
+
         private InputActionAsset audioControlActions;
         private int currentTrackIndex = 0;
         private InputAction playPauseAction;
         private bool isPlaying = false;
-
-        private string tracksPath;
+        private List<TrackData> cachedTracks = new List<TrackData>();
 
         public event Action<float> OnBPMChanged;
         private float currentBPM = 120f;
 
+        /// <summary>
+        /// 현재 BPM 값
+        /// </summary>
         public float CurrentBPM
         {
             get => currentBPM;
@@ -33,10 +36,31 @@ namespace NoteEditor
                 {
                     currentBPM = value;
                     OnBPMChanged?.Invoke(currentBPM);
+
+                    if (currentTrack != null && AudioDataManager.Instance != null)
+                    {
+                        currentTrack.bpm = value;
+                        _ = UpdateTrackBPMAsync(currentTrack.trackName, value);
+                    }
                 }
             }
         }
 
+        private async Task UpdateTrackBPMAsync(string trackName, float bpm)
+        {
+            try
+            {
+                await AudioDataManager.Instance.SetBPMAsync(trackName, bpm);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"BPM 업데이트 중 오류 발생: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 현재 재생 시간
+        /// </summary>
         public float currentPlaybackTime
         {
             get => currentAudioSource != null ? currentAudioSource.time : 0f;
@@ -47,9 +71,28 @@ namespace NoteEditor
             }
         }
 
+        /// <summary>
+        /// 현재 트랙의 총 재생 시간
+        /// </summary>
         public float currentPlaybackDuration
         {
             get => currentAudioSource.clip != null ? currentAudioSource.clip.length : 0f;
+        }
+
+        /// <summary>
+        /// 현재 재생 중인지 여부
+        /// </summary>
+        public bool IsPlaying => isPlaying;
+
+        /// <summary>
+        /// 트랙 변경 이벤트
+        /// </summary>
+        public event Action<TrackData> OnTrackChanged;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            currentAudioSource = gameObject.AddComponent<AudioSource>();
         }
 
         public void Start()
@@ -57,22 +100,123 @@ namespace NoteEditor
             Initialize();
         }
 
+        /// <summary>
+        /// 매니저를 초기화합니다.
+        /// </summary>
         public void Initialize()
         {
-            currentAudioSource = gameObject.AddComponent<AudioSource>();
+            SetupInputActions();
 
-            tracksPath = Path.Combine(Application.persistentDataPath, "Tracks");
-            if (!Directory.Exists(tracksPath))
+            // AudioDataManager 이벤트 구독
+            if (AudioDataManager.Instance != null)
             {
-                Directory.CreateDirectory(tracksPath);
+                RefreshTrackList();
+
+                AudioDataManager.Instance.OnTrackAdded += OnTrackAddedHandler;
+                AudioDataManager.Instance.OnTrackRemoved += OnTrackRemovedHandler;
+                AudioDataManager.Instance.OnTrackUpdated += OnTrackUpdatedHandler;
             }
 
-            LoadTrackMetadata();
-            LoadAllTracks();
-            SetupInputActions();
             IsInitialized = true;
         }
 
+        private void OnDestroy()
+        {
+            // AudioDataManager 이벤트 구독 해제
+            if (AudioDataManager.Instance != null)
+            {
+                AudioDataManager.Instance.OnTrackAdded -= OnTrackAddedHandler;
+                AudioDataManager.Instance.OnTrackRemoved -= OnTrackRemovedHandler;
+                AudioDataManager.Instance.OnTrackUpdated -= OnTrackUpdatedHandler;
+            }
+        }
+
+        /// <summary>
+        /// 트랙 목록을 새로고침합니다.
+        /// </summary>
+        public void RefreshTrackList()
+        {
+            if (AudioDataManager.Instance != null)
+            {
+                cachedTracks = AudioDataManager.Instance.GetAllTracks();
+            }
+        }
+
+        /// <summary>
+        /// 트랙 추가 이벤트 핸들러
+        /// </summary>
+        private void OnTrackAddedHandler(TrackData track)
+        {
+            RefreshTrackList();
+
+            // 첫 번째 트랙이면 자동 선택
+            if (currentTrack == null && cachedTracks.Count > 0)
+            {
+                SelectTrack(track);
+            }
+        }
+
+        /// <summary>
+        /// 트랙 제거 이벤트 핸들러
+        /// </summary>
+        private void OnTrackRemovedHandler(TrackData track)
+        {
+            RefreshTrackList();
+
+            // 현재 트랙이 제거된 경우 다른 트랙으로 전환
+            if (currentTrack == track)
+            {
+                if (cachedTracks.Count > 0)
+                {
+                    SelectTrack(cachedTracks[0]);
+                }
+                else
+                {
+                    currentTrack = null;
+                    currentAudioSource.clip = null;
+                    Stop();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 트랙 업데이트 이벤트 핸들러
+        /// </summary>
+        private void OnTrackUpdatedHandler(TrackData track)
+        {
+            RefreshTrackList();
+
+            // 현재 트랙이 업데이트된 경우 반영
+            if (currentTrack != null && currentTrack.trackName == track.trackName)
+            {
+                currentTrack = track;
+
+                // 오디오 클립이 변경된 경우 반영
+                if (track.trackAudio != null && currentAudioSource.clip != track.trackAudio)
+                {
+                    bool wasPlaying = isPlaying;
+                    float currentTime = currentPlaybackTime;
+
+                    currentAudioSource.clip = track.trackAudio;
+                    currentPlaybackTime = currentTime;
+
+                    if (wasPlaying)
+                    {
+                        PlayCurrentTrack();
+                    }
+                }
+
+                // BPM 업데이트
+                if (currentBPM != track.bpm)
+                {
+                    CurrentBPM = track.bpm;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 입력 액션을 설정합니다.
+        /// </summary>
         private void SetupInputActions()
         {
             audioControlActions = Resources.Load<InputActionAsset>("Input/AudioControls");
@@ -152,6 +296,9 @@ namespace NoteEditor
             }
         }
 
+        /// <summary>
+        /// 재생/일시정지를 토글합니다.
+        /// </summary>
         private void TogglePlayPause()
         {
             if (isPlaying)
@@ -164,7 +311,57 @@ namespace NoteEditor
             }
         }
 
+        /// <summary>
+        /// 트랙을 선택합니다.
+        /// </summary>
+        /// <param name="track">선택할 트랙</param>
         public void SelectTrack(TrackData track)
+        {
+            if (track == null)
+            {
+                Debug.LogWarning("선택한 트랙이 없습니다.");
+                return;
+            }
+
+            // 오디오가 로드되지 않은 경우 로드
+            if (track.trackAudio == null && AudioDataManager.Instance != null)
+            {
+                Debug.Log($"트랙 '{track.trackName}'의 오디오를 로드합니다.");
+                StartCoroutine(LoadTrackAudioAndSelect(track.trackName));
+                return;
+            }
+
+            SelectTrackInternal(track);
+        }
+
+        /// <summary>
+        /// 트랙 오디오를 로드하고 선택하는 코루틴
+        /// </summary>
+        private System.Collections.IEnumerator LoadTrackAudioAndSelect(string trackName)
+        {
+            var loadTask = AudioDataManager.Instance.LoadTrackAudioAsync(trackName);
+
+            // 비동기 작업이 완료될 때까지 대기
+            while (!loadTask.IsCompleted)
+            {
+                yield return null;
+            }
+
+            if (loadTask.Result != null && loadTask.Result.trackAudio != null)
+            {
+                SelectTrackInternal(loadTask.Result);
+            }
+            else
+            {
+                Debug.LogWarning($"트랙 '{trackName}'의 오디오 로드에 실패했습니다.");
+            }
+        }
+
+        /// <summary>
+        /// 트랙을 내부적으로 선택합니다.
+        /// </summary>
+        /// <param name="track">선택할 트랙</param>
+        private void SelectTrackInternal(TrackData track)
         {
             if (track == null || track.trackAudio == null)
             {
@@ -176,8 +373,15 @@ namespace NoteEditor
             currentAudioSource.clip = track.trackAudio;
             currentPlaybackTime = 0;
 
+            // 트랙 인덱스 업데이트
+            currentTrackIndex = cachedTracks.IndexOf(track);
+            if (currentTrackIndex < 0)
+                currentTrackIndex = 0;
+
+            // BPM 업데이트
             CurrentBPM = track.bpm;
 
+            // 웨이브폼 업데이트
             var railGenerator = FindObjectOfType<RailGenerator>();
             if (railGenerator != null)
             {
@@ -188,42 +392,19 @@ namespace NoteEditor
             OnTrackChanged?.Invoke(track);
         }
 
-        public void LoadAllTracks()
-        {
-            if (!Directory.Exists(tracksPath))
-                return;
-
-            string[] files = Directory.GetFiles(tracksPath, "*.wav");
-            foreach (string file in files)
-            {
-                string fileName = Path.GetFileNameWithoutExtension(file);
-
-                // 메타데이터에서 로드된 트랙이지만 오디오가 없는 경우
-                TrackData existingTrack = tracks.FirstOrDefault(t => t.trackName == fileName);
-                if (existingTrack != null)
-                {
-                    if (existingTrack.trackAudio == null)
-                    {
-                        Debug.Log($"트랙 '{fileName}'의 오디오 파일을 로드합니다.");
-                        StartCoroutine(LoadAudioForTrack(existingTrack, file));
-                    }
-                    else
-                    {
-                        Debug.Log($"트랙 '{fileName}'은 이미 메타데이터에서 로드되었습니다.");
-                    }
-                    continue;
-                }
-
-                // 새로운 트랙 로드
-                StartCoroutine(LoadTrackFromFile(file));
-            }
-        }
-
+        /// <summary>
+        /// 모든 트랙 정보를 가져옵니다.
+        /// </summary>
+        /// <returns>트랙 데이터 목록</returns>
         public List<TrackData> GetAllTrackInfo()
         {
-            return tracks;
+            RefreshTrackList();
+            return cachedTracks;
         }
 
+        /// <summary>
+        /// 현재 트랙을 재생합니다.
+        /// </summary>
         public void PlayCurrentTrack()
         {
             if (currentTrack != null && currentAudioSource.clip != null)
@@ -237,489 +418,92 @@ namespace NoteEditor
             }
         }
 
+        /// <summary>
+        /// 재생 위치를 변경합니다.
+        /// </summary>
+        /// <param name="time">변경할 시간(초)</param>
         public void ChangePlaybackPosition(float time)
         {
             currentAudioSource.time = time;
         }
 
+        /// <summary>
+        /// 재생을 일시정지합니다.
+        /// </summary>
         public void Pause()
         {
             currentAudioSource.Pause();
             isPlaying = false;
         }
 
+        /// <summary>
+        /// 일시정지된 재생을 재개합니다.
+        /// </summary>
         public void Resume()
         {
             currentAudioSource.UnPause();
             isPlaying = true;
         }
 
+        /// <summary>
+        /// 재생을 중지합니다.
+        /// </summary>
         public void Stop()
         {
             currentAudioSource.Stop();
             isPlaying = false;
         }
 
+        /// <summary>
+        /// 볼륨을 설정합니다.
+        /// </summary>
+        /// <param name="volume">설정할 볼륨(0-1)</param>
         public void SetVolume(float volume)
         {
             currentAudioSource.volume = volume;
         }
 
+        /// <summary>
+        /// 다음 트랙으로 이동합니다.
+        /// </summary>
         public void NextTrack()
         {
-            if (tracks.Count > 0)
+            if (cachedTracks.Count > 0)
             {
-                currentTrackIndex = (currentTrackIndex + 1) % tracks.Count;
-                SelectTrack(tracks[currentTrackIndex]);
+                currentTrackIndex = (currentTrackIndex + 1) % cachedTracks.Count;
+                SelectTrack(cachedTracks[currentTrackIndex]);
 
                 PlayCurrentTrack();
             }
         }
 
+        /// <summary>
+        /// 이전 트랙으로 이동합니다.
+        /// </summary>
         public void PreviousTrack()
         {
-            if (tracks.Count > 0)
+            if (cachedTracks.Count > 0)
             {
-                currentTrackIndex = (currentTrackIndex - 1 + tracks.Count) % tracks.Count;
-                SelectTrack(tracks[currentTrackIndex]);
+                currentTrackIndex =
+                    (currentTrackIndex - 1 + cachedTracks.Count) % cachedTracks.Count;
+                SelectTrack(cachedTracks[currentTrackIndex]);
 
                 PlayCurrentTrack();
             }
         }
 
+        /// <summary>
+        /// 볼륨을 조정합니다.
+        /// </summary>
+        /// <param name="delta">볼륨 변화량</param>
         public void AdjustVolume(float delta)
         {
             float newVolume = Mathf.Clamp01(currentAudioSource.volume + delta);
             SetVolume(newVolume);
         }
 
-        public void SaveTrack(AudioClip clip, string trackName)
-        {
-            if (clip == null)
-                return;
-
-            string filePath = Path.GetFullPath(Path.Combine(tracksPath, trackName + ".wav"));
-
-            AudioConverter.Save(filePath, clip);
-
-            Debug.Log($"트랙 저장됨: {filePath}");
-        }
-
-        private async Task<bool> LoadTrackFromFileAsync(string filePath)
-        {
-            try
-            {
-                var result = await ResourceIO.LoadAudioFileAsync(filePath);
-
-                if (result.clip == null)
-                {
-                    Debug.LogError($"트랙 로드 실패: {filePath}");
-                    return false;
-                }
-
-                Sprite albumArt = LoadAlbumArt(result.fileName);
-
-                TrackData track = new TrackData
-                {
-                    trackName = result.fileName,
-                    trackAudio = result.clip,
-                    albumArt = albumArt,
-                };
-
-                TrackData existingTrack = tracks.FirstOrDefault(t => t.trackName == track.trackName);
-                if (existingTrack == null)
-                {
-                    tracks.Add(track);
-                    Debug.Log($"트랙 로드됨: {result.fileName}");
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"트랙 로드 중 예외 발생: {ex.Message}");
-                return false;
-            }
-        }
-
-        private System.Collections.IEnumerator LoadTrackFromFile(string filePath)
-        {
-            // 비동기 메서드를 코루틴으로 래핑
-            Task<bool> loadTask = LoadTrackFromFileAsync(filePath);
-
-            // 비동기 작업이 완료될 때까지 대기
-            while (!loadTask.IsCompleted)
-            {
-                yield return null;
-            }
-
-            if (loadTask.Exception != null)
-            {
-                Debug.LogError($"트랙 로드 중 예외 발생: {loadTask.Exception.Message}");
-            }
-        }
-
-        private async Task<bool> LoadAudioForTrackAsync(TrackData track, string filePath)
-        {
-            try
-            {
-                var result = await ResourceIO.LoadAudioFileAsync(filePath);
-
-                if (result.clip == null)
-                {
-                    Debug.LogError($"트랙 오디오 로드 실패: {filePath}");
-                    return false;
-                }
-
-                track.trackAudio = result.clip;
-
-                Debug.Log($"트랙 오디오 로드됨: {track.trackName}");
-
-                SelectTrack(track);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"트랙 오디오 로드 중 예외 발생: {ex.Message}");
-                return false;
-            }
-        }
-
-        private System.Collections.IEnumerator LoadAudioForTrack(TrackData track, string filePath)
-        {
-            // 비동기 메서드를 코루틴으로 래핑
-            Task<bool> loadTask = LoadAudioForTrackAsync(track, filePath);
-
-            // 비동기 작업이 완료될 때까지 대기
-            while (!loadTask.IsCompleted)
-            {
-                yield return null;
-            }
-
-            if (loadTask.Exception != null)
-            {
-                Debug.LogError($"트랙 오디오 로드 중 예외 발생: {loadTask.Exception.Message}");
-            }
-        }
-
-        public void AddTrack(TrackData track)
-        {
-            if (track != null && track.trackAudio != null)
-            {
-                TrackData existingTrack = tracks.FirstOrDefault(t => t.trackName == track.trackName);
-                if (existingTrack != null)
-                {
-                    int index = tracks.IndexOf(existingTrack);
-                    tracks[index] = track;
-                    Debug.Log($"트랙 업데이트: {track.trackName}");
-
-                    SaveTrack(track.trackAudio, track.trackName);
-
-                    if (track.albumArt != null)
-                    {
-                        SaveAlbumArt(track.albumArt, track.trackName);
-                    }
-
-                    SaveTrackMetadata();
-                }
-                else
-                {
-                    tracks.Add(track);
-                    Debug.Log($"새 트랙 추가: {track.trackName}");
-
-                    SaveTrack(track.trackAudio, track.trackName);
-
-                    if (track.albumArt != null)
-                    {
-                        SaveAlbumArt(track.albumArt, track.trackName);
-                    }
-
-                    SaveTrackMetadata();
-                }
-
-                if (currentTrack == null)
-                {
-                    SelectTrack(track);
-                }
-            }
-            else
-            {
-                Debug.LogError("유효하지 않은 트랙 데이터입니다.");
-            }
-        }
-
-        public void ClearAllTracks()
-        {
-            if (Directory.Exists(tracksPath))
-            {
-                try
-                {
-                    // 오디오 파일 삭제
-                    string[] audioFiles = Directory.GetFiles(tracksPath, "*.wav");
-                    foreach (string file in audioFiles)
-                    {
-                        File.Delete(file);
-                    }
-                    Debug.Log("모든 오디오 파일이 삭제되었습니다.");
-
-                    // 앨범 아트 폴더 삭제
-                    string albumArtPath = Path.Combine(tracksPath, "AlbumArts");
-                    if (Directory.Exists(albumArtPath))
-                    {
-                        string[] artFiles = Directory.GetFiles(albumArtPath, "*.png");
-                        foreach (string file in artFiles)
-                        {
-                            File.Delete(file);
-                        }
-                        Debug.Log("모든 앨범 아트 파일이 삭제되었습니다.");
-                    }
-
-                    // 메타데이터 파일 삭제
-                    string metadataPath = Path.Combine(tracksPath, "track_metadata.json");
-                    if (File.Exists(metadataPath))
-                    {
-                        File.Delete(metadataPath);
-                        Debug.Log("메타데이터 파일이 삭제되었습니다.");
-                    }
-
-                    // 트랙 리스트 초기화
-                    tracks.Clear();
-                    currentTrack = null;
-                    currentAudioSource.clip = null;
-                    currentTrackIndex = 0;
-
-                    Debug.Log("모든 트랙이 삭제되었습니다.");
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"트랙 삭제 중 오류 발생: {e.Message}");
-                }
-            }
-        }
-
-        public void DeleteTrack(string trackName)
-        {
-            TrackData trackToRemove = tracks.FirstOrDefault(t => t.trackName == trackName);
-            if (trackToRemove != null)
-            {
-                // 리스트에서 트랙 제거
-                tracks.Remove(trackToRemove);
-
-                // 오디오 파일 삭제
-                string filePath = Path.Combine(tracksPath, trackName + ".wav");
-                if (File.Exists(filePath))
-                {
-                    try
-                    {
-                        File.Delete(filePath);
-                        Debug.Log($"트랙 파일 삭제됨: {filePath}");
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError($"트랙 파일 삭제 중 오류 발생: {e.Message}");
-                    }
-                }
-
-                // 앨범 아트 파일 삭제
-                string albumArtPath = Path.Combine(tracksPath, "AlbumArts", trackName + ".png");
-                if (File.Exists(albumArtPath))
-                {
-                    try
-                    {
-                        File.Delete(albumArtPath);
-                        Debug.Log($"앨범 아트 파일 삭제됨: {albumArtPath}");
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError($"앨범 아트 파일 삭제 중 오류 발생: {e.Message}");
-                    }
-                }
-
-                // 현재 트랙이 삭제된 경우 다른 트랙으로 전환
-                if (currentTrack == trackToRemove)
-                {
-                    if (tracks.Count > 0)
-                    {
-                        SelectTrack(tracks[0]);
-                    }
-                    else
-                    {
-                        currentTrack = null;
-                        currentAudioSource.clip = null;
-                    }
-                }
-
-                // 메타데이터 파일 업데이트
-                SaveTrackMetadata();
-
-                Debug.Log($"트랙 삭제됨: {trackName}");
-            }
-            else
-            {
-                Debug.LogWarning($"삭제할 트랙을 찾을 수 없음: {trackName}");
-            }
-        }
-
-        public void SaveAlbumArt(Sprite albumArt, string trackName)
-        {
-            if (albumArt == null)
-                return;
-
-            try
-            {
-                string albumArtPath = Path.Combine(tracksPath, "AlbumArts");
-                if (!Directory.Exists(albumArtPath))
-                {
-                    Directory.CreateDirectory(albumArtPath);
-                }
-
-                string filePath = Path.Combine(albumArtPath, trackName + ".png");
-
-                Texture2D texture = albumArt.texture;
-                byte[] bytes = texture.EncodeToPNG();
-                File.WriteAllBytes(filePath, bytes);
-
-                Debug.Log($"앨범 아트 저장됨: {filePath}");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"앨범 아트 저장 중 오류 발생: {e.Message}");
-            }
-        }
-
-        public Sprite LoadAlbumArt(string trackName)
-        {
-            string albumArtPath = Path.Combine(tracksPath, "AlbumArts", trackName + ".png");
-            if (File.Exists(albumArtPath))
-            {
-                try
-                {
-                    byte[] bytes = File.ReadAllBytes(albumArtPath);
-                    Texture2D texture = new Texture2D(2, 2);
-                    texture.LoadImage(bytes);
-
-                    Sprite sprite = Sprite.Create(
-                        texture,
-                        new Rect(0, 0, texture.width, texture.height),
-                        new Vector2(0.5f, 0.5f)
-                    );
-                    return sprite;
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"앨범 아트 로드 중 오류 발생: {e.Message}");
-                }
-            }
-
-            return null;
-        }
-
-        public void SaveTrackMetadata()
-        {
-            try
-            {
-                List<TrackMetadata> metadataList = new List<TrackMetadata>();
-
-                foreach (var track in tracks)
-                {
-                    TrackMetadata metadata = new TrackMetadata
-                    {
-                        trackName = track.trackName,
-                        filePath = track.filePath,
-                        albumArtPath = track.albumArtPath,
-                        bpm = track.bpm,
-                    };
-
-                    // 현재 트랙이면 현재 BPM 값 사용
-                    if (track == currentTrack)
-                    {
-                        metadata.bpm = CurrentBPM;
-                    }
-
-                    metadataList.Add(metadata);
-                }
-
-                // 메타데이터 저장
-                string json = JsonUtility.ToJson(new TrackMetadataList { tracks = metadataList }, true);
-                string metadataPath = Path.Combine(tracksPath, "metadata.json");
-                File.WriteAllText(metadataPath, json);
-
-                Debug.Log("트랙 메타데이터가 저장되었습니다.");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"트랙 메타데이터 저장 중 오류 발생: {e.Message}");
-            }
-        }
-
-        private void LoadTrackMetadata()
-        {
-            string metadataPath = Path.Combine(tracksPath, "metadata.json");
-            if (File.Exists(metadataPath))
-            {
-                try
-                {
-                    string json = File.ReadAllText(metadataPath);
-                    TrackMetadataList metadataList = JsonUtility.FromJson<TrackMetadataList>(json);
-
-                    if (metadataList != null && metadataList.tracks != null)
-                    {
-                        Debug.Log(
-                            $"메타데이터에서 {metadataList.tracks.Count}개의 트랙 정보를 로드했습니다."
-                        );
-
-                        foreach (var metadata in metadataList.tracks)
-                        {
-                            TrackData track = new TrackData
-                            {
-                                trackName = metadata.trackName,
-                                filePath = metadata.filePath,
-                                albumArtPath = metadata.albumArtPath,
-                                bpm = metadata.bpm,
-                            };
-
-                            // 앨범 아트 로드
-                            if (!string.IsNullOrEmpty(metadata.albumArtPath))
-                            {
-                                track.albumArt = LoadAlbumArt(metadata.trackName);
-                            }
-
-                            // 중복 트랙 방지
-                            if (!tracks.Any(t => t.trackName == track.trackName))
-                            {
-                                tracks.Add(track);
-                                Debug.Log($"메타데이터에서 트랙 추가: {track.trackName}");
-
-                                // 오디오 파일 로드
-                                string audioFilePath = Path.Combine(tracksPath, track.trackName + ".wav");
-                                if (File.Exists(audioFilePath))
-                                {
-                                    StartCoroutine(LoadAudioForTrack(track, audioFilePath));
-                                }
-                                else
-                                {
-                                    Debug.LogWarning($"오디오 파일을 찾을 수 없습니다: {audioFilePath}");
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"트랙 메타데이터 로드 중 오류 발생: {e.Message}");
-                }
-            }
-            else
-            {
-                Debug.Log("메타데이터 파일이 없습니다. 새로 생성됩니다.");
-            }
-        }
-
-        // 트랙 변경 이벤트
-        public event Action<TrackData> OnTrackChanged;
-
         /// <summary>
-        /// 현재 트랙의 BPM을 설정합니다.
+        /// 현재 BPM을 설정합니다.
         /// </summary>
         /// <param name="bpm">설정할 BPM 값</param>
         public void SetBPM(float bpm)
@@ -732,25 +516,16 @@ namespace NoteEditor
 
             CurrentBPM = bpm;
 
-            // 현재 트랙이 있으면 BPM 저장
-            if (currentTrack != null)
+            // 웨이브폼 비트 마커 업데이트
+            var railGenerator = FindObjectOfType<RailGenerator>();
+            if (railGenerator != null)
             {
-                currentTrack.bpm = bpm;
-
-                // 웨이브폼 비트 마커 업데이트
-                var railGenerator = FindObjectOfType<RailGenerator>();
-                if (railGenerator != null)
-                {
-                    railGenerator.UpdateBeatSettings(bpm, 4); // 기본 4/4 박자
-                }
-
-                // 메타데이터 저장
-                SaveTrackMetadata();
+                railGenerator.UpdateBeatSettings(bpm, 4); // 기본 4/4 박자
             }
         }
 
         /// <summary>
-        /// 현재 트랙의 BPM을 가져옵니다.
+        /// 현재 BPM을 가져옵니다.
         /// </summary>
         /// <returns>현재 BPM 값</returns>
         public float GetBPM()

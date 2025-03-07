@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using UnityEngine;
 
-public static class AudioConverter
+public static class WavHelper
 {
     const int HEADER_SIZE = 44;
 
