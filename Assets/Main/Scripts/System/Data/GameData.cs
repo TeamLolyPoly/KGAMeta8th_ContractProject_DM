@@ -37,6 +37,27 @@ public class ArcNoteList
 {
     public List<ArcNoteData> patterns = new List<ArcNoteData>();
 }
+[Serializable]
+public class GridNoteData
+{
+    // 기본 정보
+    public bool isLeftGrid;       // 왼쪽/오른쪽 그리드 구분
+    public int gridX;            // 그리드 X 위치 (0-2: 왼쪽, 2-5: 오른쪽)
+    public int gridY;            // 그리드 Y 위치
+    
+    // 노트 설정
+    public NoteBaseType baseType = NoteBaseType.Short;
+    public NoteHitType noteType;  // Hand(왼쪽) 또는 Red/Blue(오른쪽)
+    public NoteDirection direction;
+    public NoteAxis noteAxis;
+    public float moveSpeed;
+}
+
+[Serializable]
+public class GridNoteList
+{
+    public List<GridNoteData> patterns = new List<GridNoteData>();
+}
 
 public class TrackData
 {
