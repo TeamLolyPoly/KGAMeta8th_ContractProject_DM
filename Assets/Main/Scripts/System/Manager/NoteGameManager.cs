@@ -21,6 +21,18 @@ public class NoteGameManager : Singleton<NoteGameManager>
     //현재 배율
     public int Multiplier { get; private set; } = 1;
 
+    private void Start()
+    {
+        InitializeGame();
+    }
+
+    public void InitializeGame() //새로운 게임 시작시 호출
+    {
+        currentScore = 0;
+        combo = 0;
+        Multiplier = 1;
+    }
+
     //노트 점수계산함수
     public void SetScore(float score, NoteRatings ratings)
     {
