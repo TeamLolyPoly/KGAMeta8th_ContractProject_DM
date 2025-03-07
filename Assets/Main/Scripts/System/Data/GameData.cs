@@ -6,7 +6,7 @@ using UnityEngine;
 public class NoteData
 {
     //기본 노트 타입은 숏으로 설정
-    public NoteBaseType baseType = NoteBaseType.Short; 
+    public NoteBaseType baseType = NoteBaseType.Short;
     public NoteHitType noteType;
     public NoteDirection direction;
     public NoteAxis noteAxis;
@@ -32,6 +32,7 @@ public class ArcNoteData
     //노트 타입
     public NoteHitType noteType;
 }
+
 [Serializable]
 public class ArcNoteList
 {
