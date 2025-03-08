@@ -56,7 +56,7 @@ public class NoteGameManager : Singleton<NoteGameManager>
         {
             Multiplier = 1;
             combo = 0;
-            test.text = $"combo: {combo} \ncurrentScore: {currentScore}";
+            print($"combo: {combo} \ncurrentScore: {currentScore}");
             return;
         }
         combo += 1;
@@ -68,7 +68,7 @@ public class NoteGameManager : Singleton<NoteGameManager>
         print($"ratingScore: {ratingScore}");
         print($"currentScore: {currentScore}");
         print($"combo: {combo}");
-        test.text = $"combo: {combo} \ncurrentScore: {currentScore}";
+        print($"combo: {combo} \ncurrentScore: {currentScore}");
     }
 
     //콤보별 배율 세팅함수
