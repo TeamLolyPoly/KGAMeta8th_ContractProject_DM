@@ -32,6 +32,7 @@ public class ArcNoteData
     //노트 타입
     public NoteHitType noteType;
 }
+
 [Serializable]
 public class ArcNoteList
 {
