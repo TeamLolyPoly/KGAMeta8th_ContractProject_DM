@@ -180,6 +180,155 @@ public class CombinedSpawnManager : MonoBehaviour
             }
         }
     }
+    public void TestSaveGridNotePattern()
+    {
+        var gridNoteList = new GridNoteList();
+    
+    // 테스트용 왼쪽 그리드 노트
+    var leftGridNote = new GridNoteData
+    {
+        isLeftGrid = true,
+        gridX = 1,
+        gridY = 1,
+        baseType = NoteBaseType.Short,
+        noteType = NoteHitType.Hand,
+        direction = NoteDirection.North,
+        noteAxis = NoteAxis.PZ,
+        moveSpeed = gridNoteSpeed
+    };
+    
+    // 테스트용 오른쪽 그리드 노트
+    var rightGridNote = new GridNoteData
+    {
+        isLeftGrid = false,
+        gridX = 3,
+        gridY = 2,
+        baseType = NoteBaseType.Short,
+        noteType = NoteHitType.Red,
+        direction = NoteDirection.South,
+        noteAxis = NoteAxis.PZ,
+        moveSpeed = gridNoteSpeed
+    };
+    
+    gridNoteList.patterns.Add(leftGridNote);
+    gridNoteList.patterns.Add(rightGridNote);
+
+    string json = JsonUtility.ToJson(gridNoteList, true);
+    string path = Application.dataPath + "/Resources/TestGridNotePatterns.json";
+    System.IO.File.WriteAllText(path, json);
+    
+    Debug.Log($"Saved Grid Note Patterns: \n{json}");
+}
+
+public void TestLoadGridNotePattern()
+{
+    string path = Application.dataPath + "/Resources/TestGridNotePatterns.json";
+    if (!System.IO.File.Exists(path))
+    {
+        Debug.LogError("Test pattern file not found!");
+        return;
+    }
+
+    string json = System.IO.File.ReadAllText(path);
+    var loadedPatterns = JsonUtility.FromJson<GridNoteList>(json);
+    
+    Debug.Log($"Loaded {loadedPatterns.patterns.Count} grid note patterns");
+    
+    foreach (var pattern in loadedPatterns.patterns)
+    {
+        Debug.Log($"Grid Note Pattern:" +
+            $"\nGrid Position: {(pattern.isLeftGrid ? "Left" : "Right")} ({pattern.gridX}, {pattern.gridY})" +
+            $"\nBase Type: {pattern.baseType}" +
+            $"\nNote Type: {pattern.noteType}" +
+            $"\nDirection: {pattern.direction}" +
+            $"\nAxis: {pattern.noteAxis}" +
+            $"\nMove Speed: {pattern.moveSpeed}");
+
+        // 선택적: 로드된 패턴으로 실제 노트 생성
+        SpawnGridNoteFromData(pattern);
+    }
+}
+
+private void SpawnGridNoteFromData(GridNoteData data)
+{
+    Vector3 startPos = gridManager.GetCellPosition(gridManager.SourceGrid, data.gridX, data.gridY);
+    Vector3 targetPos = gridManager.GetCellPosition(gridManager.TargetGrid, data.gridX, data.gridY);
+
+    NoteData noteData = new NoteData
+    {
+        baseType = data.baseType,
+        noteType = data.noteType,
+        direction = data.direction,
+        noteAxis = data.noteAxis,
+        target = targetPos,
+        moveSpeed = data.moveSpeed
+    };
+
+    GameObject prefab = data.isLeftGrid ? leftNotePrefab : rightNotePrefab;
+    GameObject note = Instantiate(prefab, startPos, Quaternion.identity);
+
+    if (data.isLeftGrid)
+    {
+        if (note.TryGetComponent<LeftNote>(out var leftNote))
+        {
+            leftNote.Initialize(noteData);
+        }
+    }
+    else
+    {
+        if (note.TryGetComponent<RightNote>(out var rightNote))
+        {
+            rightNote.Initialize(noteData);
+        }
+    }
+}
+// 원형 롱노트 테스트 메서드들
+public void TestSaveArcNotePattern()
+{
+    var arcNoteList = new ArcNoteList();
+    
+    // 테스트용 패턴 데이터 생성
+    var testPattern = new ArcNoteData
+    {
+        startIndex = 0,
+        arcLength = 10,
+        isSymmetric = true,
+        isClockwise = true,
+        sourceRadius = sourceRadius,
+        targetRadius = targetRadius,
+        moveSpeed = arcMoveSpeed,
+        spawnInterval = segmentSpawnInterval,
+        noteType = NoteHitType.Red
+    };
+    
+    arcNoteList.patterns.Add(testPattern);
+
+    string json = JsonUtility.ToJson(arcNoteList, true);
+    string path = Application.dataPath + "/Resources/TestArcNotePatterns.json";
+    System.IO.File.WriteAllText(path, json);
+    
+    Debug.Log($"Saved Arc Note Patterns: \n{json}");
+}
+
+public void TestLoadArcNotePattern()
+{
+    string path = Application.dataPath + "/Resources/TestArcNotePatterns.json";
+    if (!System.IO.File.Exists(path))
+    {
+        Debug.LogError("Test pattern file not found!");
+        return;
+    }
+
+    string json = System.IO.File.ReadAllText(path);
+    var loadedPatterns = JsonUtility.FromJson<ArcNoteList>(json);
+    
+    Debug.Log($"Loaded {loadedPatterns.patterns.Count} patterns");
+    
+    foreach (var pattern in loadedPatterns.patterns)
+    {
+        SpawnArcLongNote(pattern.startIndex, pattern.arcLength);
+    }
+}
 
     private void GenerateCirclePoints()
     {
