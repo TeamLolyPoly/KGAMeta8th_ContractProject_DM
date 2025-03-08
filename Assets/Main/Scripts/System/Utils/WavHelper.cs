@@ -13,6 +13,7 @@ public static class WavHelper
             filepath = filepath + ".wav";
         }
 
+        filepath = Path.GetFullPath(filepath);
         Debug.Log(filepath);
 
         var samples = new float[clip.samples * clip.channels];
