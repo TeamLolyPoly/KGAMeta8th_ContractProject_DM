@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -23,10 +24,6 @@ namespace NoteEditor
 
         public event Action<float> OnBPMChanged;
         private float currentBPM = 120f;
-
-        /// <summary>
-        /// 현재 BPM 값
-        /// </summary>
         public float CurrentBPM
         {
             get => currentBPM;
@@ -89,14 +86,9 @@ namespace NoteEditor
         /// </summary>
         public event Action<TrackData> OnTrackChanged;
 
-        protected override void Awake()
+        public IEnumerator Start()
         {
-            base.Awake();
-            currentAudioSource = gameObject.AddComponent<AudioSource>();
-        }
-
-        public void Start()
-        {
+            yield return new WaitUntil(() => AudioDataManager.Instance.IsInitialized);
             Initialize();
         }
 
@@ -116,18 +108,21 @@ namespace NoteEditor
                 AudioDataManager.Instance.OnTrackRemoved += OnTrackRemovedHandler;
                 AudioDataManager.Instance.OnTrackUpdated += OnTrackUpdatedHandler;
             }
+            currentAudioSource = gameObject.AddComponent<AudioSource>();
 
             IsInitialized = true;
         }
 
         private void OnDestroy()
         {
-            // AudioDataManager 이벤트 구독 해제
-            if (AudioDataManager.Instance != null)
+            if (Application.isPlaying)
             {
-                AudioDataManager.Instance.OnTrackAdded -= OnTrackAddedHandler;
-                AudioDataManager.Instance.OnTrackRemoved -= OnTrackRemovedHandler;
-                AudioDataManager.Instance.OnTrackUpdated -= OnTrackUpdatedHandler;
+                if (AudioDataManager.Instance != null)
+                {
+                    AudioDataManager.Instance.OnTrackAdded -= OnTrackAddedHandler;
+                    AudioDataManager.Instance.OnTrackRemoved -= OnTrackRemovedHandler;
+                    AudioDataManager.Instance.OnTrackUpdated -= OnTrackUpdatedHandler;
+                }
             }
         }
 
@@ -149,7 +144,6 @@ namespace NoteEditor
         {
             RefreshTrackList();
 
-            // 첫 번째 트랙이면 자동 선택
             if (currentTrack == null && cachedTracks.Count > 0)
             {
                 SelectTrack(track);
@@ -163,7 +157,6 @@ namespace NoteEditor
         {
             RefreshTrackList();
 
-            // 현재 트랙이 제거된 경우 다른 트랙으로 전환
             if (currentTrack == track)
             {
                 if (cachedTracks.Count > 0)
@@ -186,12 +179,10 @@ namespace NoteEditor
         {
             RefreshTrackList();
 
-            // 현재 트랙이 업데이트된 경우 반영
             if (currentTrack != null && currentTrack.trackName == track.trackName)
             {
                 currentTrack = track;
 
-                // 오디오 클립이 변경된 경우 반영
                 if (track.trackAudio != null && currentAudioSource.clip != track.trackAudio)
                 {
                     bool wasPlaying = isPlaying;
@@ -206,7 +197,6 @@ namespace NoteEditor
                     }
                 }
 
-                // BPM 업데이트
                 if (currentBPM != track.bpm)
                 {
                     CurrentBPM = track.bpm;
@@ -323,7 +313,6 @@ namespace NoteEditor
                 return;
             }
 
-            // 오디오가 로드되지 않은 경우 로드
             if (track.trackAudio == null && AudioDataManager.Instance != null)
             {
                 Debug.Log($"트랙 '{track.trackName}'의 오디오를 로드합니다.");
@@ -337,11 +326,10 @@ namespace NoteEditor
         /// <summary>
         /// 트랙 오디오를 로드하고 선택하는 코루틴
         /// </summary>
-        private System.Collections.IEnumerator LoadTrackAudioAndSelect(string trackName)
+        private IEnumerator LoadTrackAudioAndSelect(string trackName)
         {
             var loadTask = AudioDataManager.Instance.LoadTrackAudioAsync(trackName);
 
-            // 비동기 작업이 완료될 때까지 대기
             while (!loadTask.IsCompleted)
             {
                 yield return null;
@@ -373,15 +361,12 @@ namespace NoteEditor
             currentAudioSource.clip = track.trackAudio;
             currentPlaybackTime = 0;
 
-            // 트랙 인덱스 업데이트
             currentTrackIndex = cachedTracks.IndexOf(track);
             if (currentTrackIndex < 0)
                 currentTrackIndex = 0;
 
-            // BPM 업데이트
             CurrentBPM = track.bpm;
 
-            // 웨이브폼 업데이트
             var railGenerator = FindObjectOfType<RailGenerator>();
             if (railGenerator != null)
             {

@@ -20,6 +20,8 @@ namespace NoteEditor
 
         public bool useProgressOverlay = false;
 
+        public float railLength = 200f;
+
         public Color waveformColor = new Color(1f, 0.6f, 0.2f);
         public Color progressColor = new Color(0.2f, 0.6f, 1f);
 
@@ -66,7 +68,6 @@ namespace NoteEditor
             if (waveformImage == null)
                 waveformImage = GetComponent<RawImage>();
 
-            // 캔버스 스케일러 설정
             CanvasScaler scaler = GetComponentInParent<CanvasScaler>();
             if (scaler != null)
             {
@@ -136,7 +137,6 @@ namespace NoteEditor
             }
 
             UpdatePlayheadPosition();
-            UpdateProgressOverlay();
         }
 
         public void UpdateWaveform(AudioClip clip)
@@ -195,14 +195,21 @@ namespace NoteEditor
 
         private void UpdateProgressOverlay()
         {
-            if (currentClip == null || progressImage == null || !useProgressOverlay)
+            if (
+                currentClip == null
+                || progressImage == null
+                || !useProgressOverlay
+                || playheadMarker == null
+            )
                 return;
 
             float currentTime = GetCurrentPlaybackTime();
             float totalDuration = GetTotalDuration();
 
-            float progress = Mathf.Clamp01(currentTime / totalDuration);
-            progressImage.fillAmount = progress;
+            float normalizedPosition = (currentTime / totalDuration);
+            float railPosition = normalizedPosition * railLength;
+
+            progressImage.fillAmount = Mathf.Clamp01(railPosition / railLength);
         }
 
         private float GetCurrentPlaybackTime()
@@ -251,11 +258,6 @@ namespace NoteEditor
             float newTime = normalizedPosition * GetTotalDuration();
             AudioManager.Instance.ChangePlaybackPosition(newTime);
 
-            if (progressImage != null && useProgressOverlay)
-            {
-                progressImage.fillAmount = normalizedPosition;
-            }
-
             if (playheadMarker != null)
             {
                 UpdatePlayheadToPosition(normalizedPosition);
@@ -267,7 +269,7 @@ namespace NoteEditor
             if (playheadMarker == null)
                 return;
 
-            float xPosition = normalizedPosition * waveformRect.rect.width;
+            float xPosition = normalizedPosition * railLength;
             playheadMarker.anchoredPosition = new Vector2(xPosition, 0);
         }
 
@@ -291,7 +293,10 @@ namespace NoteEditor
 
             float clipDuration = currentClip.length;
             float secondsPerBeat = 60f / bpm;
-            int totalBeats = Mathf.FloorToInt(clipDuration / secondsPerBeat);
+            float secondsPerBar = secondsPerBeat * beatsPerBar;
+
+            float exactBeats = clipDuration / secondsPerBeat;
+            int totalBeats = Mathf.CeilToInt(exactBeats);
 
             beatMarkers = new float[totalBeats];
 
@@ -315,9 +320,8 @@ namespace NoteEditor
                         markerRect.anchorMax = new Vector2(0, 1);
                         markerRect.pivot = new Vector2(0.5f, 0.5f);
 
-                        float xPosition = normalizedPosition * waveformRect.rect.width;
+                        float xPosition = beatTime / clipDuration * railLength;
                         markerRect.anchoredPosition = new Vector2(xPosition, 0);
-
                         markerRect.sizeDelta = new Vector2(0.1f, 0);
 
                         Image markerImage = marker.GetComponent<Image>();
@@ -355,6 +359,15 @@ namespace NoteEditor
             if (waveformImage != null)
             {
                 waveformImage.texture = null;
+            }
+        }
+
+        public void SetRailLength(float length)
+        {
+            railLength = length;
+            if (showBeatMarkers && IsInitialized && currentClip != null)
+            {
+                GenerateBeatMarkers();
             }
         }
     }

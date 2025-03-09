@@ -29,7 +29,12 @@ namespace NoteEditor
 
             try
             {
-                Texture2D texture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false);
+                Texture2D texture = new Texture2D(
+                    textureWidth,
+                    textureHeight,
+                    TextureFormat.RGBA32,
+                    false
+                );
 #if UNITY_EDITOR
                 texture.alphaIsTransparency = true;
 #endif
@@ -43,7 +48,14 @@ namespace NoteEditor
                 {
                     int chunkWidth = Mathf.Min(CHUNK_SIZE, textureWidth - x);
                     Color32[] pixels = new Color32[chunkWidth * textureHeight];
-                    DrawWaveformChunk(pixels, chunkWidth, textureHeight, waveform, x, waveformColor);
+                    DrawWaveformChunk(
+                        pixels,
+                        chunkWidth,
+                        textureHeight,
+                        waveform,
+                        x,
+                        waveformColor
+                    );
                     texture.SetPixels32(x, 0, chunkWidth, textureHeight, pixels);
                 }
 
@@ -150,7 +162,8 @@ namespace NoteEditor
 
                 for (int y = 0; y < height; y++)
                 {
-                    pixels[y * chunkWidth + x] = (y >= startY && y < endY) ? waveformColor : clearColor;
+                    pixels[y * chunkWidth + x] =
+                        (y >= startY && y < endY) ? waveformColor : clearColor;
                 }
             }
         }
