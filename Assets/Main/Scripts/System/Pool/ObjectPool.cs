@@ -1,8 +1,8 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Collections.Generic;
-using System.Collections;
-using System.Linq;
 
 public class ObjectPool : MonoBehaviour
 {
@@ -52,7 +52,8 @@ public class ObjectPool : MonoBehaviour
     {
         foreach (var tag in poolDictionary.Keys.ToList())
         {
-            if (!poolStats.TryGetValue(tag, out PoolStats stats)) continue;
+            if (!poolStats.TryGetValue(tag, out PoolStats stats))
+                continue;
 
             Queue<Component> pool = poolDictionary[tag];
             int optimalSize = Mathf.Max(stats.maxUsed, DEFAULT_POOL_SIZE);
@@ -64,7 +65,9 @@ public class ObjectPool : MonoBehaviour
                 Destroy(obj.gameObject);
             }
 
-            Debug.Log($"Optimized pool {tag}: Size={pool.Count}, MaxUsed={stats.maxUsed}, TotalSpawns={stats.totalSpawns}");
+            Debug.Log(
+                $"Optimized pool {tag}: Size={pool.Count}, MaxUsed={stats.maxUsed}, TotalSpawns={stats.totalSpawns}"
+            );
         }
     }
 
@@ -129,7 +132,8 @@ public class ObjectPool : MonoBehaviour
         return obj;
     }
 
-    public T Spawn<T>(GameObject prefab, Vector3 position, Quaternion rotation) where T : Component
+    public T Spawn<T>(GameObject prefab, Vector3 position, Quaternion rotation)
+        where T : Component
     {
         T component = prefab.GetComponent<T>();
         if (component == null)
@@ -162,7 +166,7 @@ public class ObjectPool : MonoBehaviour
             for (int i = 0; i < EXPAND_SIZE; i++)
             {
                 CreateNewObjectInPool(tag, pool);
-            }        
+            }
         }
 
         Component obj = pool.Dequeue();
@@ -194,9 +198,11 @@ public class ObjectPool : MonoBehaviour
         return obj as T;
     }
 
-    public void Despawn<T>(T obj) where T : Component
+    public void Despawn<T>(T obj)
+        where T : Component
     {
-        if (obj == null) return;
+        if (obj == null)
+            return;
 
         string tag = obj.gameObject.name;
         if (tag.EndsWith("(Clone)"))
@@ -241,8 +247,10 @@ public class ObjectPool : MonoBehaviour
         {
             string tag = kvp.Key;
             PoolStats stats = kvp.Value;
-            Debug.Log($"Pool {tag}: Active={stats.currentActive}, MaxUsed={stats.maxUsed}, " +
-                     $"TotalSpawns={stats.totalSpawns}, PoolSize={poolDictionary[tag].Count}");
+            Debug.Log(
+                $"Pool {tag}: Active={stats.currentActive}, MaxUsed={stats.maxUsed}, "
+                    + $"TotalSpawns={stats.totalSpawns}, PoolSize={poolDictionary[tag].Count}"
+            );
         }
     }
 }

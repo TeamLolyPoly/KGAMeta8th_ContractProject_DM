@@ -1,4 +1,11 @@
 #region Note Related
+public enum NoteBaseType
+{
+    None,
+    Short,
+    Long,
+}
+
 public enum NoteDirection
 {
     None,
@@ -10,7 +17,6 @@ public enum NoteDirection
     Northwest,
     Southeast,
     Southwest,
-
 }
 
 public enum NoteAxis
@@ -20,13 +26,22 @@ public enum NoteAxis
     MZ,
     PX,
     MX,
-
 }
 
-public enum HitType
+public enum NoteHitType
 {
     None,
     Red,
     Blue,
+    Hand,
+}
+
+public enum NoteRatings
+{
+    Miss,
+    Perfect,
+    Great,
+    Good,
+    Success,
 }
 #endregion
