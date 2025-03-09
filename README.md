@@ -2,7 +2,7 @@
 
 ![header](https://capsule-render.vercel.app/api?type=transparent&color=39FF14&height=150&section=header&text=Project%20DM&fontSize=50&animation=fadeIn&fontColor=39FF14&desc=KGAMeta8th%20CompanyContractProject&descSize=25&descAlignY=75)
 
-# KGA 메타 8기 기업 협약 프로젝트 1팀 리포지토리
+# KGA 메타 8기 기업 협약 프로젝트 팀 LolyPoly 리포지토리
 
 <div align="center">
   <p align="center">
