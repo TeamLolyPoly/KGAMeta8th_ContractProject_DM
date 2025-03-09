@@ -19,6 +19,7 @@ namespace NoteEditor
         public Dropdown trackDropdown;
         public BoxButtonManager SetAlbumArtButton;
         public ButtonManager DeleteTrackButton;
+        public InputFieldManager BPMInput;
 
         public bool IsInitialized { get; private set; }
         private Sprite defaultAlbumArt;
@@ -30,19 +31,18 @@ namespace NoteEditor
         private bool isLoadingTrack = false;
         private bool isLoadingAlbumArt = false;
 
-        private AudioLoadManager audioLoadManager;
+        private AudioDataManager audioDataManager;
 
         public IEnumerator Start()
         {
             yield return new WaitUntil(() => AudioManager.Instance.IsInitialized);
-
-            audioLoadManager = AudioLoadManager.Instance;
 
             Initialize();
         }
 
         public void Initialize()
         {
+            audioDataManager = AudioDataManager.Instance;
             defaultAlbumArt = Resources.Load<Sprite>("Textures/AlbumArt");
             dropdownItemIcon = Resources.Load<Sprite>("Textures/DefaultAudioIcon");
             playButton.onClick.AddListener(OnPlayButtonClicked);
@@ -58,10 +58,15 @@ namespace NoteEditor
                 );
             }
 
-            if (audioLoadManager != null)
+            if (BPMInput != null)
             {
-                audioLoadManager.OnTrackLoaded += OnTrackLoaded;
-                audioLoadManager.OnAlbumArtLoaded += OnAlbumArtLoaded;
+                BPMInput.onSubmit.AddListener(() => OnBPMInputSubmit(BPMInput.inputText.text));
+            }
+
+            if (audioDataManager != null)
+            {
+                audioDataManager.OnTrackLoaded += OnTrackLoaded;
+                audioDataManager.OnAlbumArtLoaded += OnAlbumArtLoaded;
             }
 
             InitializeTrackDropdown();
@@ -70,10 +75,46 @@ namespace NoteEditor
 
         private void OnDestroy()
         {
-            if (audioLoadManager != null)
+            if (Application.isPlaying)
             {
-                audioLoadManager.OnTrackLoaded -= OnTrackLoaded;
-                audioLoadManager.OnAlbumArtLoaded -= OnAlbumArtLoaded;
+                if (audioDataManager != null)
+                {
+                    audioDataManager.OnTrackLoaded -= OnTrackLoaded;
+                    audioDataManager.OnAlbumArtLoaded -= OnAlbumArtLoaded;
+                }
+            }
+        }
+
+        private void SetTrackBPM(int bpm)
+        {
+            if (bpm <= 0)
+            {
+                Debug.LogWarning("BPM은 0보다 커야 합니다.");
+                return;
+            }
+
+            if (trackDataList.Count == 0 || trackDropdown.selectedItemIndex < 0)
+            {
+                Debug.LogWarning("선택된 트랙이 없습니다.");
+                return;
+            }
+
+            AudioManager.Instance.CurrentBPM = bpm;
+        }
+
+        private void OnBPMInputSubmit(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                if (trackDataList.Count > 0 && trackDropdown.selectedItemIndex >= 0)
+                {
+                    TrackData selectedTrack = trackDataList[trackDropdown.selectedItemIndex];
+                    BPMInput.inputText.text = selectedTrack.bpm.ToString();
+                }
+            }
+            else if (int.TryParse(value, out int bpm))
+            {
+                SetTrackBPM(bpm);
             }
         }
 
@@ -156,6 +197,11 @@ namespace NoteEditor
                     CurrentTrackInfo.SetBackground(defaultAlbumArt);
                 }
                 AudioManager.Instance.SelectTrack(selectedTrack);
+
+                if (BPMInput != null)
+                {
+                    BPMInput.inputText.text = selectedTrack.bpm.ToString();
+                }
             }
         }
 
@@ -226,7 +272,7 @@ namespace NoteEditor
 
         public void OnLoadTrackButtonClicked()
         {
-            if (isLoadingTrack || audioLoadManager == null)
+            if (isLoadingTrack || audioDataManager == null)
                 return;
 
             ExtensionFilter[] extensions =
@@ -244,7 +290,7 @@ namespace NoteEditor
                     if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
                     {
                         isLoadingTrack = true;
-                        audioLoadManager.LoadAudioFile(paths[0]);
+                        audioDataManager.LoadAudioFile(paths[0]);
                     }
                 }
             );
@@ -276,7 +322,7 @@ namespace NoteEditor
         {
             if (
                 isLoadingAlbumArt
-                || audioLoadManager == null
+                || audioDataManager == null
                 || trackDataList.Count == 0
                 || trackDropdown.selectedItemIndex < 0
             )
@@ -300,7 +346,7 @@ namespace NoteEditor
                     if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
                     {
                         isLoadingAlbumArt = true;
-                        audioLoadManager.LoadAlbumArt(paths[0], trackDropdown.selectedItemIndex);
+                        audioDataManager.LoadAlbumArt(paths[0], trackDropdown.selectedItemIndex);
                     }
                 }
             );
