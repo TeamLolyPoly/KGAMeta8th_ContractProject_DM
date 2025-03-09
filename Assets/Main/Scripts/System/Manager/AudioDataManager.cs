@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -15,24 +14,12 @@ namespace NoteEditor
         private AudioFileService fileService;
         private List<TrackData> tracks = new List<TrackData>();
 
-        /// <summary>
-        /// 트랙이 추가되었을 때 발생하는 이벤트
-        /// </summary>
         public event Action<TrackData> OnTrackAdded;
 
-        /// <summary>
-        /// 트랙이 제거되었을 때 발생하는 이벤트
-        /// </summary>
         public event Action<TrackData> OnTrackRemoved;
 
-        /// <summary>
-        /// 트랙이 업데이트되었을 때 발생하는 이벤트
-        /// </summary>
         public event Action<TrackData> OnTrackUpdated;
 
-        /// <summary>
-        /// 초기화 완료 여부
-        /// </summary>
         public bool IsInitialized { get; private set; }
 
         protected override void Awake()
@@ -41,9 +28,6 @@ namespace NoteEditor
             fileService = new AudioFileService();
         }
 
-        /// <summary>
-        /// 매니저를 초기화합니다.
-        /// </summary>
         public void Initialize()
         {
             AudioPathProvider.EnsureDirectoriesExist();
@@ -55,10 +39,6 @@ namespace NoteEditor
                 });
         }
 
-        /// <summary>
-        /// 모든 트랙을 비동기적으로 로드합니다.
-        /// </summary>
-        /// <returns>비동기 작업</returns>
         public async Task LoadAllTracksAsync()
         {
             // 메타데이터 로드
@@ -341,25 +321,16 @@ namespace NoteEditor
             }
         }
 
-        /// <summary>
-        /// 트랙에 앨범 아트를 설정합니다.
-        /// </summary>
-        /// <param name="trackName">트랙 이름</param>
-        /// <param name="albumArtPath">앨범 아트 파일 경로</param>
-        /// <param name="progress">진행 상황 보고 인터페이스</param>
-        /// <returns>업데이트된 트랙 데이터</returns>
         public async Task<TrackData> SetAlbumArtAsync(
             string trackName,
             string albumArtPath,
             IProgress<float> progress = null
         )
         {
-            // 트랙 찾기
             TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
 
             if (track != null)
             {
-                // 앨범 아트 로드 및 저장
                 track.albumArt = await fileService.ImportAlbumArtAsync(
                     albumArtPath,
                     trackName,
@@ -368,7 +339,6 @@ namespace NoteEditor
 
                 if (track.albumArt != null)
                 {
-                    // 메타데이터 업데이트
                     await UpdateTrackMetadataAsync();
 
                     OnTrackUpdated?.Invoke(track);
@@ -379,10 +349,6 @@ namespace NoteEditor
             return track;
         }
 
-        /// <summary>
-        /// 트랙 메타데이터를 업데이트합니다.
-        /// </summary>
-        /// <returns>비동기 작업</returns>
         private async Task UpdateTrackMetadataAsync()
         {
             List<TrackMetadata> metadataList = new List<TrackMetadata>();
@@ -393,7 +359,6 @@ namespace NoteEditor
                 {
                     trackName = track.trackName,
                     bpm = track.bpm,
-                    // 다른 메타데이터 필드는 필요에 따라 추가
                 };
 
                 metadataList.Add(metadata);
