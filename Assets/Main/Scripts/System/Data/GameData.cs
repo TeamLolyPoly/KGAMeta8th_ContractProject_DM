@@ -86,3 +86,10 @@ public class TrackMetadataList
 {
     public List<TrackMetadata> tracks;
 }
+
+[Serializable]
+public class BandAnimationData
+{
+    public Bandtype bandtype;
+    public AnimationClip[] animationClip;
+}
