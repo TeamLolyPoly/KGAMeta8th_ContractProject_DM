@@ -29,7 +29,7 @@ public class Note : MonoBehaviour
         ExitAngle;
     private float hitdis;
     private Transform TargetTrans;
-    private double spawnDspTime; // dspTime을 저장
+    public double spawnDspTime; // dspTime을 저장
 
     public virtual void Initialize(NoteData data)
     {
@@ -71,7 +71,11 @@ public class Note : MonoBehaviour
             //     noteData.moveSpeed * Time.deltaTime
             // );
             double elapsedTime = AudioSettings.dspTime - spawnDspTime;
-            float progress = (float)(elapsedTime * noteData.moveSpeed / Vector3.Distance(transform.position, noteData.target));
+            float progress = (float)(
+                elapsedTime
+                * noteData.moveSpeed
+                / Vector3.Distance(transform.position, noteData.target)
+            );
 
             TargetTrans.position = Vector3.Lerp(transform.position, noteData.target, progress);
             if (Vector3.Distance(TargetTrans.position, noteData.target) < 0.1f)
