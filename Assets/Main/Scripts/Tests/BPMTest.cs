@@ -21,22 +21,40 @@ public class BPMTest : MonoBehaviour
     [SerializeField]
     private float timeToTarget;
 
+    private double dspStartTime;
+
+    private void Start()
+    {
+        // dspTime을 시작 기준점으로 설정
+        dspStartTime = AudioSettings.dspTime;
+        CalculateSpeed();
+    }
+
     private void OnValidate()
     {
         CalculateSpeed();
     }
-
     private void CalculateSpeed()
     {
-        //BPM을 초당 비트로 계산
         float beatsPerSecond = bpm / 60f;
-        //속도 계산
+
         noteSpeed = distance * beatsPerSecond * speedMultiplier;
-        //도달 시간 계산
         timeToTarget = distance / noteSpeed;
 
         Debug.Log($"BPM: {bpm}, 거리: {distance}");
         Debug.Log($"계산된 속도: {noteSpeed:F2} units/sec");
         Debug.Log($"도달 시간: {timeToTarget:F2} sec");
+    }
+
+    private void Update()
+    {
+        // dspTime을 사용하여 노트 이동을 더 정확하게 테스트
+        double elapsedTime = AudioSettings.dspTime - dspStartTime;
+
+        if (elapsedTime >= timeToTarget)
+        {
+            Debug.Log($"[🎵] 노트 도착! 경과 시간: {elapsedTime:F2} sec");
+            dspStartTime = AudioSettings.dspTime; // 타이밍 재설정
+        }
     }
 }
