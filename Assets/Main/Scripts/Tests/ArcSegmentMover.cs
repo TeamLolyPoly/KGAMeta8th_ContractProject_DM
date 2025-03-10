@@ -9,6 +9,9 @@ public class ArcSegmentMover : MonoBehaviour
     private float moveSpeed;
     private bool isInitialized = false;
     private bool isHit = false;
+
+    private double spawnDspTime; // dspTime을 기준으로 생성 시간 저장
+
     [Header("충돌 설정")]
     [SerializeField] private string[] targetTags = { "Mace" }; // "Mace" 태그와 충돌 감지
     [SerializeField] private GameObject hitEffectPrefab; // 충돌 시 생성할 이펙트
@@ -22,6 +25,7 @@ public class ArcSegmentMover : MonoBehaviour
         // 이동 방향을 향하도록 회전
         transform.LookAt(targetPosition);
 
+        spawnDspTime = AudioSettings.dspTime; // dspTime을 기준으로 이동
         // 콜라이더가 없으면 추가
         if (!GetComponent<Collider>())
         {
@@ -35,11 +39,16 @@ public class ArcSegmentMover : MonoBehaviour
         if (!isInitialized) return;
 
         // 목표를 향해 직선으로 이동
-        transform.position = Vector3.MoveTowards(
-            transform.position,
-            targetPosition,
-            moveSpeed * Time.deltaTime
-        );
+        // transform.position = Vector3.MoveTowards(
+        //     transform.position,
+        //     targetPosition,
+        //     moveSpeed * Time.deltaTime
+        // );
+
+        double elapsedTime = AudioSettings.dspTime - spawnDspTime;
+        float progress = (float)(elapsedTime * moveSpeed / Vector3.Distance(startPosition, targetPosition));
+
+        transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
 
         // 목표에 도달하면 파괴
         if (Vector3.Distance(transform.position, targetPosition) < 0.01f)
