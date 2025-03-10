@@ -59,7 +59,7 @@ public class GridManager : Singleton<GridManager>
         GameObject targetObj = new GameObject("TargetGrid");
         targetGrid = targetObj.transform;
         targetGrid.parent = transform;
-        targetGrid.localPosition = new Vector3(0, 1.7f, 2f);
+        targetGrid.localPosition = new Vector3(0, 1.7f, 0);
         targetGrid.localRotation = Quaternion.Euler(0, 0, 0);
         CreateGrid(targetGrid, true);
     }
