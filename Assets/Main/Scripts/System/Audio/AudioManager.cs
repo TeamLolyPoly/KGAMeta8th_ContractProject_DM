@@ -394,7 +394,8 @@ namespace NoteEditor
         {
             if (currentTrack != null && currentAudioSource.clip != null)
             {
-                currentAudioSource.Play();
+                double startTime = AudioSettings.dspTime + 0.1; // 0.1초 후 정확한 시간에 재생 (지연 방지)
+                currentAudioSource.PlayScheduled(startTime);
                 isPlaying = true;
             }
             else
