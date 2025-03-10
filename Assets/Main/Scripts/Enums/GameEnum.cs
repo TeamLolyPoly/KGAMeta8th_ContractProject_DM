@@ -44,6 +44,8 @@ public enum NoteRatings
     Good,
     Success,
 }
+
+
 #endregion
 
 public enum Bandtype
