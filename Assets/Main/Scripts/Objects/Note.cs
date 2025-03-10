@@ -80,17 +80,6 @@ public class Note : MonoBehaviour
                     Destroy(gameObject);
                 }
             }
-            // TODO: NoteGameManager 관련 문제 해결하기
-            // 1. NoteGameManager.Instance가 null인 이유 확인
-            // 2. NoteGameManager의 test 변수 초기화 확인
-            // 3. 씬에 NoteGameManager 오브젝트 추가 확인
-            // 4. 예외 처리 대신 근본적인 해결책 적용
-
-            //if (Vector3.Distance(transform.position, noteData.target) < 0.1f)
-            //{
-            //    Miss();
-            //    Destroy(gameObject);
-            //}
         }
     }
 

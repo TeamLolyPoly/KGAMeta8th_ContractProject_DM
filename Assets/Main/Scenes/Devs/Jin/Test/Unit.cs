@@ -1,30 +1,36 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
     private Animator animator;
 
+    public Bandtype bandtype;
+
     private void Start()
     {
-        UnitManager.Instance.AddUnit(this);
+        UnitAnimationManager.Instance.AddUnit(this);
         animator = GetComponent<Animator>();
         if (animator == null)
         {
             animator = gameObject.AddComponent<Animator>();
         }
-        UnitManager.Instance.AttachAnimation(animator, this);
+        UnitAnimationManager.Instance.AttachAnimation(animator);
     }
 
     private void OnDisable()
     {
-        UnitManager.Instance.RemoveUnit(this);
+        UnitAnimationManager.Instance.RemoveUnit(this);
     }
 
     public AnimatorOverrideController GetAnimator()
     {
-        return animator.runtimeAnimatorController as AnimatorOverrideController;
+        AnimatorOverrideController overrideController =
+            animator.runtimeAnimatorController as AnimatorOverrideController;
+        if (overrideController == null)
+        {
+            overrideController = new AnimatorOverrideController(animator.runtimeAnimatorController);
+            animator.runtimeAnimatorController = overrideController;
+        }
+        return overrideController;
     }
 }
