@@ -29,6 +29,7 @@ public class Note : MonoBehaviour
         ExitAngle;
     private float hitdis;
     private Transform TargetTrans;
+    private double spawnDspTime; // dspTime을 저장
 
     public virtual void Initialize(NoteData data)
     {
@@ -57,17 +58,22 @@ public class Note : MonoBehaviour
         noteDownDirection = -transform.up;
         noteUpDirection = transform.up;
         print($"Down: {noteDownDirection} Up: {noteUpDirection}");
+        spawnDspTime = AudioSettings.dspTime; // dspTime을 기준으로 생성 시간 저장
     }
 
     protected virtual void Update()
     {
         if (isMoving)
         {
-            TargetTrans.position = Vector3.MoveTowards(
-                transform.position,
-                noteData.target,
-                noteData.moveSpeed * Time.deltaTime
-            );
+            // TargetTrans.position = Vector3.MoveTowards(
+            //     transform.position,
+            //     noteData.target,
+            //     noteData.moveSpeed * Time.deltaTime
+            // );
+            double elapsedTime = AudioSettings.dspTime - spawnDspTime;
+            float progress = (float)(elapsedTime * noteData.moveSpeed / Vector3.Distance(transform.position, noteData.target));
+
+            TargetTrans.position = Vector3.Lerp(transform.position, noteData.target, progress);
             if (Vector3.Distance(TargetTrans.position, noteData.target) < 0.1f)
             {
                 try
