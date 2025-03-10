@@ -47,3 +47,11 @@ public enum NoteRatings
 
 
 #endregion
+
+public enum Bandtype
+{
+    Drums,
+    Saxophone,
+    Guitar,
+    Bass_Guitar,
+}
