@@ -38,6 +38,7 @@ public class UnitAnimationManager : Singleton<UnitAnimationManager>, IInitializa
         NoteGameManager.Instance.onEngagementChange += AnimationClipChange;
 
         isInitialized = true;
+
     }
 
     private void Start()
