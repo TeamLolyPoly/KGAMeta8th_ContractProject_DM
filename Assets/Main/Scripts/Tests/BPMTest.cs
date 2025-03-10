@@ -6,7 +6,7 @@ public class BPMTest : MonoBehaviour
 {
     [Header("입력값")]
     [SerializeField]
-    private float bpm = 120f;
+    private float bpm = 128f;
 
     [SerializeField]
     private float distance = 15f;
