@@ -370,8 +370,11 @@ namespace NoteEditor
             var railGenerator = FindObjectOfType<RailGenerator>();
             if (railGenerator != null)
             {
-                railGenerator.UpdateWaveform(track.trackAudio);
+                Debug.Log(
+                    $"SelectTrackInternal - Track: {track.trackName}, BPM: {track.bpm}, Audio Length: {track.trackAudio.length}s"
+                );
                 railGenerator.UpdateBeatSettings(track.bpm, 4);
+                railGenerator.UpdateWaveform(track.trackAudio);
             }
 
             OnTrackChanged?.Invoke(track);

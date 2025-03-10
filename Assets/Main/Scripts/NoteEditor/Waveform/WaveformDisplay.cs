@@ -193,25 +193,6 @@ namespace NoteEditor
             UpdatePlayheadToPosition(normalizedPosition);
         }
 
-        private void UpdateProgressOverlay()
-        {
-            if (
-                currentClip == null
-                || progressImage == null
-                || !useProgressOverlay
-                || playheadMarker == null
-            )
-                return;
-
-            float currentTime = GetCurrentPlaybackTime();
-            float totalDuration = GetTotalDuration();
-
-            float normalizedPosition = (currentTime / totalDuration);
-            float railPosition = normalizedPosition * railLength;
-
-            progressImage.fillAmount = Mathf.Clamp01(railPosition / railLength);
-        }
-
         private float GetCurrentPlaybackTime()
         {
             if (AudioManager.Instance == null)
@@ -228,15 +209,6 @@ namespace NoteEditor
             return currentClip != null
                 ? currentClip.length
                 : AudioManager.Instance.currentPlaybackDuration;
-        }
-
-        public void SetProgressOverlayVisible(bool visible)
-        {
-            useProgressOverlay = visible;
-            if (progressImage != null)
-            {
-                progressImage.gameObject.SetActive(visible);
-            }
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -273,11 +245,9 @@ namespace NoteEditor
             playheadMarker.anchoredPosition = new Vector2(xPosition, 0);
         }
 
-        public void SetBeatMarkers(float[] markers)
+        public void SetRailLength(float length)
         {
-            beatMarkers = markers;
-            showBeatMarkers = markers != null && markers.Length > 0;
-
+            railLength = length;
             if (showBeatMarkers && IsInitialized && currentClip != null)
             {
                 GenerateBeatMarkers();
@@ -349,26 +319,41 @@ namespace NoteEditor
             beatMarkerObjects.Clear();
         }
 
+        /// <summary>
+        /// 진행도 색 업데이트 함수 사용하지 않게 됨
+        /// 실질적인 delta와 fill amount의 동기화가 정확하게 되지 않기에...
+        /// </summary>
+        private void UpdateProgressOverlay()
+        {
+            if (
+                currentClip == null
+                || progressImage == null
+                || !useProgressOverlay
+                || playheadMarker == null
+            )
+                return;
+
+            float currentTime = GetCurrentPlaybackTime();
+            float totalDuration = GetTotalDuration();
+
+            float normalizedPosition = (currentTime / totalDuration);
+            float railPosition = normalizedPosition * railLength;
+
+            progressImage.fillAmount = Mathf.Clamp01(railPosition / railLength);
+        }
+
+        public void SetProgressOverlayVisible(bool visible)
+        {
+            useProgressOverlay = visible;
+            if (progressImage != null)
+            {
+                progressImage.gameObject.SetActive(visible);
+            }
+        }
+
         private void OnDestroy()
         {
             ClearBeatMarkers();
-        }
-
-        public void ClearWaveform()
-        {
-            if (waveformImage != null)
-            {
-                waveformImage.texture = null;
-            }
-        }
-
-        public void SetRailLength(float length)
-        {
-            railLength = length;
-            if (showBeatMarkers && IsInitialized && currentClip != null)
-            {
-                GenerateBeatMarkers();
-            }
         }
     }
 }

@@ -45,14 +45,14 @@ public class CombinedSpawnManager : MonoBehaviour
 
     [Header("원형 위치 설정")]
     [SerializeField]
-    private float circleZOffset = 0f; // 그리드로부터 Z축 오프셋
+    private float circleZOffset = 0f;
 
     [SerializeField]
-    private float circleYOffset = 0f; // 그리드로부터 Y축 오프셋
+    private float circleYOffset = 0f;
 
     [Header("이펙트 설정")]
     [SerializeField]
-    private GameObject hitEffectPrefab; // 충돌 시 생성할 이펙트
+    private GameObject hitEffectPrefab;
 
     [Header("BPM 설정")]
     [SerializeField]
@@ -72,22 +72,22 @@ public class CombinedSpawnManager : MonoBehaviour
 
     [Header("타이밍 정보")]
     [SerializeField]
-    private float totalSongLength = 15f; // 15초
+    private float totalSongLength = 15f;
 
     [SerializeField]
-    private float targetHitTime = 7.5f; // 4마디 첫박
+    private float targetHitTime = 7.5f;
 
     [SerializeField]
-    private float secondsPerBeat; // 비트당 시간
+    private float secondsPerBeat;
 
     [SerializeField]
-    private float secondsPerBar; // 마디당 시간
+    private float secondsPerBar;
 
     [SerializeField]
-    private int currentBar; // 현재 마디
+    private int currentBar;
 
     [SerializeField]
-    private int currentBeat; // 현재 비트
+    private int currentBeat;
 
     [Header("단노트 BPM 설정")]
     [SerializeField]
@@ -95,13 +95,14 @@ public class CombinedSpawnManager : MonoBehaviour
 
     [SerializeField]
     private int totalBars = 32;
-    private double nextGridSpawnTime; // DSP 시간 기준 다음 노트 생성 시간
+
+    private double nextGridSpawnTime;
     private int currentGridBar = 0;
     private int currentGridBeat = 0;
 
     private double startDspTime;
     private bool isPlaying = false;
-    private const int BEATS_PER_BAR = 4; // 4/4박자 기준
+    private const int BEATS_PER_BAR = 4;
 
     private GridManager gridManager;
     private Vector3 sourceCenter;
