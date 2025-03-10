@@ -54,6 +54,55 @@ public class CombinedSpawnManager : MonoBehaviour
     [SerializeField]
     private GameObject hitEffectPrefab; // 충돌 시 생성할 이펙트
 
+    [Header("BPM 설정")]
+    [SerializeField]
+    private float bpm = 128f;
+
+    [SerializeField]
+    private AudioSource musicSource;
+
+    [SerializeField]
+    private AudioClip testMusic;
+
+    [SerializeField]
+    private AudioSource metronomeSource;
+
+    [SerializeField]
+    private AudioClip metronomeClip;
+
+    [Header("타이밍 정보")]
+    [SerializeField]
+    private float totalSongLength = 15f; // 15초
+
+    [SerializeField]
+    private float targetHitTime = 7.5f; // 4마디 첫박
+
+    [SerializeField]
+    private float secondsPerBeat; // 비트당 시간
+
+    [SerializeField]
+    private float secondsPerBar; // 마디당 시간
+
+    [SerializeField]
+    private int currentBar; // 현재 마디
+
+    [SerializeField]
+    private int currentBeat; // 현재 비트
+
+    [Header("단노트 BPM 설정")]
+    [SerializeField]
+    private bool useGridBPM = false;
+
+    [SerializeField]
+    private int totalBars = 32;
+    private double nextGridSpawnTime; // DSP 시간 기준 다음 노트 생성 시간
+    private int currentGridBar = 0;
+    private int currentGridBeat = 0;
+
+    private double startDspTime;
+    private bool isPlaying = false;
+    private const int BEATS_PER_BAR = 4; // 4/4박자 기준
+
     private GridManager gridManager;
     private Vector3 sourceCenter;
     private Vector3 targetCenter;
@@ -121,23 +170,121 @@ public class CombinedSpawnManager : MonoBehaviour
             symmetricSegmentPrefab.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
             DestroyImmediate(symmetricSegmentPrefab.GetComponent<Collider>());
         }
+        if (musicSource == null)
+        {
+            musicSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        if (testMusic != null)
+        {
+            musicSource.clip = testMusic;
+        }
+
+        CalculateBPMParameters();
     }
 
     private void Update()
     {
-        // 그리드 노트 생성 타이머
-        gridTimer += Time.deltaTime;
-        if (gridTimer >= gridSpawnInterval)
+        if (isPlaying)
         {
-            SpawnGridNote();
-            gridTimer = 0f;
+            double currentDspTime = AudioSettings.dspTime;
+            float currentTime = (float)(currentDspTime - startDspTime);
+            UpdateBarAndBeat(currentTime);
+
+            // BPM 기반 단노트 생성 (DSP 시간 사용)
+            if (useGridBPM && currentGridBar < totalBars)
+            {
+                if (currentDspTime >= nextGridSpawnTime)
+                {
+                    SpawnGridNote();
+
+                    // 다음 비트 시간 계산 (DSP 시간 기준)
+                    nextGridSpawnTime += secondsPerBeat;
+
+                    // 비트/마디 업데이트
+                    currentGridBeat++;
+                    if (currentGridBeat >= BEATS_PER_BAR)
+                    {
+                        currentGridBeat = 0;
+                        currentGridBar++;
+                    }
+
+                    Debug.Log(
+                        $"단노트 생성 - 마디: {currentGridBar + 1}, 비트: {currentGridBeat + 1}, DSP Time: {currentDspTime:F3}"
+                    );
+                }
+            }
+            else
+            {
+                // 기존 타이머 기반 생성
+                gridTimer += Time.deltaTime;
+                if (gridTimer >= gridSpawnInterval)
+                {
+                    SpawnGridNote();
+                    gridTimer = 0f;
+                }
+            }
         }
 
-        // 스페이스바를 누르면 원형 롱노트 생성
+        // 스페이스바 입력 처리 (기존 코드 + BPM 테스트 통합)
         if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
-            SpawnRandomArcLongNote();
+            if (!isPlaying)
+            {
+                StartBPMTest(); // BPM 테스트 시작 (음악 재생 포함)
+            }
+            else
+            {
+                StopBPMTest(); // BPM 테스트 중지
+            }
+            SpawnRandomArcLongNote(); // 기존 기능 유지
         }
+    }
+
+    private void CalculateBPMParameters()
+    {
+        secondsPerBeat = 60f / bpm;
+        secondsPerBar = secondsPerBeat * BEATS_PER_BAR;
+
+        Debug.Log($"=== BPM 설정 정보 ===");
+        Debug.Log($"BPM: {bpm}");
+        Debug.Log($"비트 길이: {secondsPerBeat:F3}초");
+        Debug.Log($"마디 길이: {secondsPerBar:F3}초");
+        Debug.Log($"목표 도달 시간: {targetHitTime:F3}초 (4마디 첫박)");
+        Debug.Log($"노트 속도: {arcMoveSpeed:F2} units/sec");
+    }
+
+    private void UpdateBarAndBeat(float currentTime)
+    {
+        float totalBeats = currentTime / secondsPerBeat;
+        currentBar = Mathf.FloorToInt(totalBeats / BEATS_PER_BAR);
+        currentBeat = Mathf.FloorToInt(totalBeats % BEATS_PER_BAR);
+    }
+
+    public void StartBPMTest()
+    {
+        startDspTime = AudioSettings.dspTime;
+
+        // 0.1초 지연으로 시작 (오디오 시스템 초기화 시간 확보)
+        double scheduleTime = startDspTime + 0.1;
+
+        // 메인 음악 재생
+        musicSource.PlayScheduled(scheduleTime);
+
+        // 첫 노트 생성 시간 설정
+        nextGridSpawnTime = scheduleTime;
+        currentGridBar = 0;
+        currentGridBeat = 0;
+
+        isPlaying = true;
+        Debug.Log($"BPM 테스트 시작 - DSP Start Time: {startDspTime:F3}");
+    }
+
+    public void StopBPMTest()
+    {
+        musicSource.Stop();
+        isPlaying = false;
+        Debug.Log("BPM 테스트 종료");
     }
 
     private void SpawnGridNote()
@@ -179,156 +326,179 @@ public class CombinedSpawnManager : MonoBehaviour
                 rightNote.Initialize(noteData);
             }
         }
+
+        // 메트로놈 소리 재생 (노트 생성과 동시에)
+        if (metronomeSource != null && metronomeClip != null)
+        {
+            metronomeSource.PlayOneShot(metronomeClip);
+        }
+
+        double spawnTime = AudioSettings.dspTime - startDspTime;
+        Debug.Log(
+            $"노트 생성 - 시간: {spawnTime:F3}, 마디: {currentGridBar + 1}, 비트: {currentGridBeat + 1}"
+        );
     }
+
     public void TestSaveGridNotePattern()
     {
         var gridNoteList = new GridNoteList();
-    
-    // 테스트용 왼쪽 그리드 노트
-    var leftGridNote = new GridNoteData
-    {
-        isLeftGrid = true,
-        gridX = 1,
-        gridY = 1,
-        baseType = NoteBaseType.Short,
-        noteType = NoteHitType.Hand,
-        direction = NoteDirection.North,
-        noteAxis = NoteAxis.PZ,
-        moveSpeed = gridNoteSpeed
-    };
-    
-    // 테스트용 오른쪽 그리드 노트
-    var rightGridNote = new GridNoteData
-    {
-        isLeftGrid = false,
-        gridX = 3,
-        gridY = 2,
-        baseType = NoteBaseType.Short,
-        noteType = NoteHitType.Red,
-        direction = NoteDirection.South,
-        noteAxis = NoteAxis.PZ,
-        moveSpeed = gridNoteSpeed
-    };
-    
-    gridNoteList.patterns.Add(leftGridNote);
-    gridNoteList.patterns.Add(rightGridNote);
 
-    string json = JsonUtility.ToJson(gridNoteList, true);
-    string path = Application.dataPath + "/Resources/TestGridNotePatterns.json";
-    System.IO.File.WriteAllText(path, json);
-    
-    Debug.Log($"Saved Grid Note Patterns: \n{json}");
-}
-
-public void TestLoadGridNotePattern()
-{
-    string path = Application.dataPath + "/Resources/TestGridNotePatterns.json";
-    if (!System.IO.File.Exists(path))
-    {
-        Debug.LogError("Test pattern file not found!");
-        return;
-    }
-
-    string json = System.IO.File.ReadAllText(path);
-    var loadedPatterns = JsonUtility.FromJson<GridNoteList>(json);
-    
-    Debug.Log($"Loaded {loadedPatterns.patterns.Count} grid note patterns");
-    
-    foreach (var pattern in loadedPatterns.patterns)
-    {
-        Debug.Log($"Grid Note Pattern:" +
-            $"\nGrid Position: {(pattern.isLeftGrid ? "Left" : "Right")} ({pattern.gridX}, {pattern.gridY})" +
-            $"\nBase Type: {pattern.baseType}" +
-            $"\nNote Type: {pattern.noteType}" +
-            $"\nDirection: {pattern.direction}" +
-            $"\nAxis: {pattern.noteAxis}" +
-            $"\nMove Speed: {pattern.moveSpeed}");
-
-        // 선택적: 로드된 패턴으로 실제 노트 생성
-        SpawnGridNoteFromData(pattern);
-    }
-}
-
-private void SpawnGridNoteFromData(GridNoteData data)
-{
-    Vector3 startPos = gridManager.GetCellPosition(gridManager.SourceGrid, data.gridX, data.gridY);
-    Vector3 targetPos = gridManager.GetCellPosition(gridManager.TargetGrid, data.gridX, data.gridY);
-
-    NoteData noteData = new NoteData
-    {
-        baseType = data.baseType,
-        noteType = data.noteType,
-        direction = data.direction,
-        noteAxis = data.noteAxis,
-        target = targetPos,
-        moveSpeed = data.moveSpeed
-    };
-
-    GameObject prefab = data.isLeftGrid ? leftNotePrefab : rightNotePrefab;
-    GameObject note = Instantiate(prefab, startPos, Quaternion.identity);
-
-    if (data.isLeftGrid)
-    {
-        if (note.TryGetComponent<LeftNote>(out var leftNote))
+        // 테스트용 왼쪽 그리드 노트
+        var leftGridNote = new GridNoteData
         {
-            leftNote.Initialize(noteData);
+            isLeftGrid = true,
+            gridX = 1,
+            gridY = 1,
+            baseType = NoteBaseType.Short,
+            noteType = NoteHitType.Hand,
+            direction = NoteDirection.North,
+            noteAxis = NoteAxis.PZ,
+            moveSpeed = gridNoteSpeed,
+        };
+
+        // 테스트용 오른쪽 그리드 노트
+        var rightGridNote = new GridNoteData
+        {
+            isLeftGrid = false,
+            gridX = 3,
+            gridY = 2,
+            baseType = NoteBaseType.Short,
+            noteType = NoteHitType.Red,
+            direction = NoteDirection.South,
+            noteAxis = NoteAxis.PZ,
+            moveSpeed = gridNoteSpeed,
+        };
+
+        gridNoteList.patterns.Add(leftGridNote);
+        gridNoteList.patterns.Add(rightGridNote);
+
+        string json = JsonUtility.ToJson(gridNoteList, true);
+        string path = Application.dataPath + "/Resources/TestGridNotePatterns.json";
+        System.IO.File.WriteAllText(path, json);
+
+        Debug.Log($"Saved Grid Note Patterns: \n{json}");
+    }
+
+    public void TestLoadGridNotePattern()
+    {
+        string path = Application.dataPath + "/Resources/TestGridNotePatterns.json";
+        if (!System.IO.File.Exists(path))
+        {
+            Debug.LogError("Test pattern file not found!");
+            return;
+        }
+
+        string json = System.IO.File.ReadAllText(path);
+        var loadedPatterns = JsonUtility.FromJson<GridNoteList>(json);
+
+        Debug.Log($"Loaded {loadedPatterns.patterns.Count} grid note patterns");
+
+        foreach (var pattern in loadedPatterns.patterns)
+        {
+            Debug.Log(
+                $"Grid Note Pattern:"
+                    + $"\nGrid Position: {(pattern.isLeftGrid ? "Left" : "Right")} ({pattern.gridX}, {pattern.gridY})"
+                    + $"\nBase Type: {pattern.baseType}"
+                    + $"\nNote Type: {pattern.noteType}"
+                    + $"\nDirection: {pattern.direction}"
+                    + $"\nAxis: {pattern.noteAxis}"
+                    + $"\nMove Speed: {pattern.moveSpeed}"
+            );
+
+            // 선택적: 로드된 패턴으로 실제 노트 생성
+            SpawnGridNoteFromData(pattern);
         }
     }
-    else
+
+    private void SpawnGridNoteFromData(GridNoteData data)
     {
-        if (note.TryGetComponent<RightNote>(out var rightNote))
+        Vector3 startPos = gridManager.GetCellPosition(
+            gridManager.SourceGrid,
+            data.gridX,
+            data.gridY
+        );
+        Vector3 targetPos = gridManager.GetCellPosition(
+            gridManager.TargetGrid,
+            data.gridX,
+            data.gridY
+        );
+
+        NoteData noteData = new NoteData
         {
-            rightNote.Initialize(noteData);
+            baseType = data.baseType,
+            noteType = data.noteType,
+            direction = data.direction,
+            noteAxis = data.noteAxis,
+            target = targetPos,
+            moveSpeed = data.moveSpeed,
+        };
+
+        GameObject prefab = data.isLeftGrid ? leftNotePrefab : rightNotePrefab;
+        GameObject note = Instantiate(prefab, startPos, Quaternion.identity);
+
+        if (data.isLeftGrid)
+        {
+            if (note.TryGetComponent<LeftNote>(out var leftNote))
+            {
+                leftNote.Initialize(noteData);
+            }
+        }
+        else
+        {
+            if (note.TryGetComponent<RightNote>(out var rightNote))
+            {
+                rightNote.Initialize(noteData);
+            }
         }
     }
-}
-// 원형 롱노트 테스트 메서드들
-public void TestSaveArcNotePattern()
-{
-    var arcNoteList = new ArcNoteList();
-    
-    // 테스트용 패턴 데이터 생성
-    var testPattern = new ArcNoteData
-    {
-        startIndex = 0,
-        arcLength = 10,
-        isSymmetric = true,
-        isClockwise = true,
-        sourceRadius = sourceRadius,
-        targetRadius = targetRadius,
-        moveSpeed = arcMoveSpeed,
-        spawnInterval = segmentSpawnInterval,
-        noteType = NoteHitType.Red
-    };
-    
-    arcNoteList.patterns.Add(testPattern);
 
-    string json = JsonUtility.ToJson(arcNoteList, true);
-    string path = Application.dataPath + "/Resources/TestArcNotePatterns.json";
-    System.IO.File.WriteAllText(path, json);
-    
-    Debug.Log($"Saved Arc Note Patterns: \n{json}");
-}
-
-public void TestLoadArcNotePattern()
-{
-    string path = Application.dataPath + "/Resources/TestArcNotePatterns.json";
-    if (!System.IO.File.Exists(path))
+    // 원형 롱노트 테스트 메서드들
+    public void TestSaveArcNotePattern()
     {
-        Debug.LogError("Test pattern file not found!");
-        return;
+        var arcNoteList = new ArcNoteList();
+
+        // 테스트용 패턴 데이터 생성
+        var testPattern = new ArcNoteData
+        {
+            startIndex = 0,
+            arcLength = 10,
+            isSymmetric = true,
+            isClockwise = true,
+            sourceRadius = sourceRadius,
+            targetRadius = targetRadius,
+            moveSpeed = arcMoveSpeed,
+            spawnInterval = segmentSpawnInterval,
+            noteType = NoteHitType.Red,
+        };
+
+        arcNoteList.patterns.Add(testPattern);
+
+        string json = JsonUtility.ToJson(arcNoteList, true);
+        string path = Application.dataPath + "/Resources/TestArcNotePatterns.json";
+        System.IO.File.WriteAllText(path, json);
+
+        Debug.Log($"Saved Arc Note Patterns: \n{json}");
     }
 
-    string json = System.IO.File.ReadAllText(path);
-    var loadedPatterns = JsonUtility.FromJson<ArcNoteList>(json);
-    
-    Debug.Log($"Loaded {loadedPatterns.patterns.Count} patterns");
-    
-    foreach (var pattern in loadedPatterns.patterns)
+    public void TestLoadArcNotePattern()
     {
-        SpawnArcLongNote(pattern.startIndex, pattern.arcLength);
+        string path = Application.dataPath + "/Resources/TestArcNotePatterns.json";
+        if (!System.IO.File.Exists(path))
+        {
+            Debug.LogError("Test pattern file not found!");
+            return;
+        }
+
+        string json = System.IO.File.ReadAllText(path);
+        var loadedPatterns = JsonUtility.FromJson<ArcNoteList>(json);
+
+        Debug.Log($"Loaded {loadedPatterns.patterns.Count} patterns");
+
+        foreach (var pattern in loadedPatterns.patterns)
+        {
+            SpawnArcLongNote(pattern.startIndex, pattern.arcLength);
+        }
     }
-}
 
     private void GenerateCirclePoints()
     {
@@ -418,6 +588,9 @@ public void TestLoadArcNotePattern()
         // 사용할 프리팹 선택
         GameObject prefabToUse = isSymmetric ? symmetricSegmentPrefab : primarySegmentPrefab;
 
+        // 시작 시간 기록
+        double spawnStartTime = AudioSettings.dspTime;
+
         // 호의 모든 세그먼트를 순차적으로 생성
         while (true)
         {
@@ -428,28 +601,27 @@ public void TestLoadArcNotePattern()
             //롱노트 데이터 초기화
             NoteData noteData = new NoteData()
             {
-                baseType = NoteBaseType.Long,     // 원형 노트는 항상 롱노트
+                baseType = NoteBaseType.Long, // 원형 노트는 항상 롱노트
                 moveSpeed = arcMoveSpeed,
                 target = targetPos,
-                direction = NoteDirection.North,  // 또는 상황에 맞는 방향
-                noteAxis = NoteAxis.PZ            // 또는 상황에 맞는 축    
+                direction = NoteDirection.North, // 또는 상황에 맞는 방향
+                noteAxis = NoteAxis.PZ, // 또는 상황에 맞는 축
             };
 
-            NoteGameManager.Instance.SetupNoteTypeData(noteData, false);// false = 오른쪽
+            NoteGameManager.Instance.SetupNoteTypeData(noteData, false); // false = 오른쪽
 
             // 선택된 프리팹으로 세그먼트 생성
             GameObject segment = Instantiate(prefabToUse, sourcePos, Quaternion.identity);
 
             // 세그먼트 이동 컴포넌트 추가
             ArcSegmentMover mover = segment.AddComponent<ArcSegmentMover>();
-            
+            mover.Initialize(sourcePos, targetPos, arcMoveSpeed);
+
             //세그먼트 초기화
             if (segment.TryGetComponent<Note>(out Note note))
             {
                 note.Initialize(noteData);
             }
-            
-            mover.Initialize(sourcePos, targetPos, arcMoveSpeed);
 
             //충돌 이펙트 설정
             if (hitEffectPrefab != null)
@@ -475,12 +647,32 @@ public void TestLoadArcNotePattern()
                 currentIndex = (currentIndex - 1 + segmentCount) % segmentCount;
             }
 
-            // 세그먼트 생성 간격만큼 대기
+            // BPM에 맞춰 생성 간격 조절
             yield return new WaitForSeconds(segmentSpawnInterval);
         }
 
         string symmetricText = isSymmetric ? "대칭 " : "";
         Debug.Log($"{symmetricText}호 롱노트 생성 완료: {segmentsSpawned}개 세그먼트");
+    }
+
+    // 현재 진행 상태 GUI 표시
+    private void OnGUI()
+    {
+        if (!isPlaying)
+            return;
+
+        double currentDspTime = AudioSettings.dspTime;
+        GUILayout.BeginArea(new Rect(10, 10, 300, 150));
+        GUILayout.Label($"현재 위치: 마디 {currentBar + 1}, 비트 {currentBeat + 1}");
+        GUILayout.Label($"DSP 경과 시간: {(currentDspTime - startDspTime):F3}초");
+        if (useGridBPM)
+        {
+            GUILayout.Label(
+                $"단노트 진행: {currentGridBar + 1}/{totalBars} 마디, {currentGridBeat + 1}/4 비트"
+            );
+            GUILayout.Label($"다음 노트 시간: {(nextGridSpawnTime - currentDspTime):F3}초 후");
+        }
+        GUILayout.EndArea();
     }
 
     // 디버그용 시각화

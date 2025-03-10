@@ -3,9 +3,6 @@ using UnityEngine;
 
 public class NoteGameManager : Singleton<NoteGameManager>
 {
-    [Header("테스트")]
-    public TextMeshProUGUI test;
-
     [SerializeField, Header("콤보 배율 기준")]
     private int[] comboMultiplier = { 10, 50, 100, 200, 300 };
 
@@ -20,6 +17,8 @@ public class NoteGameManager : Singleton<NoteGameManager>
 
     //현재 배율
     public int Multiplier { get; private set; } = 1;
+    //호응도 변화시 호출할 이벤트
+    public event System.Action<int> onEngagementChange;
 
     private void Start()
     {
