@@ -217,15 +217,21 @@ public class Note : MonoBehaviour
 
     private void OnCollisionEnter(Collision other)
     {
-        Vector3 hitPoint = other.contacts[0].normal;
-        hitdis = HitPoint(other);
-        EnterAngle = Vector3.Angle(hitPoint, noteDownDirection);
-        Debug.DrawRay(transform.position, hitPoint, Color.blue, 0.5f);
+        if (other.gameObject.TryGetComponent(out HitObject hitObject))
+        {
+            if (hitObject.hitObjectType == noteData.noteType)
+            {
+                Vector3 hitPoint = other.contacts[0].normal;
+                hitdis = HitPoint(other);
+                EnterAngle = Vector3.Angle(hitPoint, noteDownDirection);
+                Debug.DrawRay(transform.position, hitPoint, Color.blue, 0.5f);
 
-        print($"법선벡터 X: {hitPoint.x} Y : {hitPoint.y} Z : {hitPoint.z}");
-        print(
-            $"내 벡터 X: {noteDownDirection.x} Y : {noteDownDirection.y} Z : {noteDownDirection.z} range: {EnterAngle}"
-        );
+                print($"법선벡터 X: {hitPoint.x} Y : {hitPoint.y} Z : {hitPoint.z}");
+                print(
+                    $"내 벡터 X: {noteDownDirection.x} Y : {noteDownDirection.y} Z : {noteDownDirection.z} range: {EnterAngle}"
+                );
+            }
+        }
     }
 
     private void OnCollisionExit(Collision other)

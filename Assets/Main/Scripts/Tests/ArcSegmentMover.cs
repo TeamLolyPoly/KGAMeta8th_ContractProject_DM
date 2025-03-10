@@ -9,7 +9,7 @@ public class ArcSegmentMover : MonoBehaviour
     private float moveSpeed;
     private bool isInitialized = false;
     private bool isHit = false;
-
+    private int NoteScore = 20;
     private double spawnDspTime; // dspTime을 기준으로 생성 시간 저장
 
     [Header("충돌 설정")]
@@ -77,7 +77,8 @@ public class ArcSegmentMover : MonoBehaviour
         {
             Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
         }
-        // 점수 추가 또는 게임 이벤트 발생 (필요한 경우)
+        //노트게임 매니저로 점수 전달
+        NoteGameManager.Instance.SetScore(NoteScore, NoteRatings.Success);
         // 충돌 이벤트 발생 (필요한 경우)
         // 오브젝트 파괴
         Destroy(gameObject);
