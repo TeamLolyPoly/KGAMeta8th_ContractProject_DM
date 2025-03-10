@@ -2,15 +2,17 @@ using System.Collections;
 using Photon.Pun;
 using UnityEngine;
 
+[RequireComponent(typeof(PhotonView))]
 public class PoolManager : Singleton<PoolManager>, IInitializable
 {
     public bool IsInitialized { get; private set; }
-
     private static ObjectPool objectPool;
+    private PhotonView photonView;
 
     protected override void Awake()
     {
         base.Awake();
+        photonView = GetComponent<PhotonView>();
     }
 
     public void Initialize()
@@ -55,18 +57,14 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
         if (isNetworked && PhotonNetwork.IsConnected)
         {
             // 네트워크 오브젝트 생성
-            GameObject networkedObj = PhotonNetwork.Instantiate(
-                $"Items/{originalName}",
-                position,
-                rotation
-            );
+            GameObject networkedObj = PhotonNetwork.Instantiate($"Items/{originalName}", position, rotation);
             spawnedObj = networkedObj.GetComponent<T>();
         }
         else
             spawnedObj = objectPool.Spawn<T>(prefab, position, rotation);
 
         if (spawnedObj != null)
-            spawnedObj.gameObject.name = originalName;  
+            spawnedObj.gameObject.name = originalName;
 
         return spawnedObj;
     }
@@ -80,7 +78,12 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
         }
 
         if (isNetworked && PhotonNetwork.IsConnected)
-            PhotonNetwork.Destroy(obj.gameObject);
+        {
+            if (obj.GetComponent<PhotonView>().IsMine) // 자신의 객체만 삭제 가능
+            {
+                PhotonNetwork.Destroy(obj.gameObject);
+            }
+        }
         else
             objectPool.Despawn(obj);
     }

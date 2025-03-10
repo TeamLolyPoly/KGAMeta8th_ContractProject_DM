@@ -31,7 +31,6 @@ def find_active_dsr_issue(repo: Repository, date_string: str, issue_title: str) 
     return None
 
 def parse_existing_issue(body: str) -> dict:
-    """이슈 본문을 파싱하여 TODO 항목과 카테고리를 추출합니다."""
     todos = []
     current_category = 'General'
     in_todo_section = False

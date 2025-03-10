@@ -10,7 +10,6 @@ public class LoadingManager : Singleton<LoadingManager>
     public string loadingSceneName = "LoadingScene";
     public float minimumLoadingTime = 0.5f;
 
-    private GameObject loadingUIPrefab;
     private LoadingUI loadingUI;
     private ProgressBar progressBar;
 
@@ -19,21 +18,6 @@ public class LoadingManager : Singleton<LoadingManager>
     public event Action OnLoadingStarted;
     public event Action<float> OnProgressUpdated;
     public event Action OnLoadingFinished;
-
-    protected override void Awake()
-    {
-        base.Awake();
-        Initialize();
-    }
-
-    public void Initialize()
-    {
-        loadingUIPrefab = Resources.Load<GameObject>("Prefabs/UI/LoadingUI");
-        if (loadingUIPrefab == null)
-        {
-            Debug.LogError("LoadingUI 프리펩을 찾을 수 없습니다.");
-        }
-    }
 
     /// <summary>
     /// 씬을 로딩합니다.

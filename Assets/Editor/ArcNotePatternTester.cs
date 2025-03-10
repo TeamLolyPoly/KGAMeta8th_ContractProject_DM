@@ -1,7 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 
 public class ArcNotePatternTester : EditorWindow
 {
@@ -10,23 +8,26 @@ public class ArcNotePatternTester : EditorWindow
     [MenuItem("Tools/Arc Note Pattern Tester")]
     private static void Init()
     {
-        ArcNotePatternTester window = (ArcNotePatternTester)EditorWindow.GetWindow(typeof(ArcNotePatternTester));
+        ArcNotePatternTester window = (ArcNotePatternTester)GetWindow(typeof(ArcNotePatternTester));
         window.Show();
     }
 
     private void OnGUI()
     {
-        spawnManager = GameObject.FindObjectOfType<CombinedSpawnManager>();
-        
+        spawnManager = FindObjectOfType<CombinedSpawnManager>();
+
         if (spawnManager == null)
         {
-            EditorGUILayout.HelpBox("CombinedSpawnManager를 찾을 수 없습니다!", MessageType.Warning);
+            EditorGUILayout.HelpBox(
+                "CombinedSpawnManager를 찾을 수 없습니다!",
+                MessageType.Warning
+            );
             return;
         }
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("단노트 패턴 테스트", EditorStyles.boldLabel);
-        
+
         if (GUILayout.Button("단노트 패턴 저장"))
         {
             spawnManager.TestSaveGridNotePattern();
@@ -39,7 +40,7 @@ public class ArcNotePatternTester : EditorWindow
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("원형 롱노트 패턴 테스트", EditorStyles.boldLabel);
-        
+
         if (GUILayout.Button("원형 롱노트 패턴 저장"))
         {
             spawnManager.TestSaveArcNotePattern();
