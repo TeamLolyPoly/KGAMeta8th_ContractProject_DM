@@ -110,6 +110,10 @@ public class CombinedSpawnManager : MonoBehaviour
     private List<Vector3> targetPoints = new List<Vector3>();
     private float gridTimer;
 
+    #region 초기화 및 기본 동작
+    /// <summary>
+    /// 컴포넌트 초기화 및 기본 설정을 수행합니다.
+    /// </summary>
     private void Start()
     {
         gridManager = GridManager.Instance;
@@ -183,6 +187,9 @@ public class CombinedSpawnManager : MonoBehaviour
         CalculateBPMParameters();
     }
 
+    /// <summary>
+    /// 매 프레임마다 실행되며 노트 생성과 BPM 관련 업데이트를 처리합니다.
+    /// </summary>
     private void Update()
     {
         if (isPlaying)
@@ -240,7 +247,12 @@ public class CombinedSpawnManager : MonoBehaviour
             SpawnRandomArcLongNote(); // 기존 기능 유지
         }
     }
+    #endregion
 
+    #region BPM 및 타이밍 관리
+    /// <summary>
+    /// BPM 관련 매개변수를 계산하고 초기화합니다.
+    /// </summary>
     private void CalculateBPMParameters()
     {
         secondsPerBeat = 60f / bpm;
@@ -254,6 +266,9 @@ public class CombinedSpawnManager : MonoBehaviour
         Debug.Log($"노트 속도: {arcMoveSpeed:F2} units/sec");
     }
 
+    /// <summary>
+    /// 현재 진행 중인 마디와 비트를 업데이트합니다.
+    /// </summary>
     private void UpdateBarAndBeat(float currentTime)
     {
         float totalBeats = currentTime / secondsPerBeat;
@@ -261,6 +276,9 @@ public class CombinedSpawnManager : MonoBehaviour
         currentBeat = Mathf.FloorToInt(totalBeats % BEATS_PER_BAR);
     }
 
+    /// <summary>
+    /// BPM 테스트를 시작하고 음악을 재생합니다.
+    /// </summary>
     public void StartBPMTest()
     {
         startDspTime = AudioSettings.dspTime;
@@ -280,13 +298,21 @@ public class CombinedSpawnManager : MonoBehaviour
         Debug.Log($"BPM 테스트 시작 - DSP Start Time: {startDspTime:F3}");
     }
 
+    /// <summary>
+    /// BPM 테스트를 중지하고 음악 재생을 멈춥니다.
+    /// </summary>
     public void StopBPMTest()
     {
         musicSource.Stop();
         isPlaying = false;
         Debug.Log("BPM 테스트 종료");
     }
+    #endregion
 
+    #region 그리드 노트 생성 및 관리
+    /// <summary>
+    /// BPM에 맞춰 그리드 노트를 생성합니다.
+    /// </summary>
     private void SpawnGridNote()
     {
         NoteData noteData = new NoteData();
@@ -339,6 +365,9 @@ public class CombinedSpawnManager : MonoBehaviour
         );
     }
 
+    /// <summary>
+    /// 그리드 노트 패턴을 JSON 파일로 저장합니다.
+    /// </summary>
     public void TestSaveGridNotePattern()
     {
         var gridNoteList = new GridNoteList();
@@ -379,6 +408,10 @@ public class CombinedSpawnManager : MonoBehaviour
         Debug.Log($"Saved Grid Note Patterns: \n{json}");
     }
 
+    /// <summary>
+    /// JSON 파일에서 그리드 노트 패턴을 로드합니다.
+    /// </summary>
+
     public void TestLoadGridNotePattern()
     {
         string path = Application.dataPath + "/Resources/TestGridNotePatterns.json";
@@ -409,6 +442,10 @@ public class CombinedSpawnManager : MonoBehaviour
             SpawnGridNoteFromData(pattern);
         }
     }
+
+    /// <summary>
+    /// 저장된 데이터를 기반으로 그리드 노트를 생성합니다.
+    /// </summary>
 
     private void SpawnGridNoteFromData(GridNoteData data)
     {
@@ -451,55 +488,12 @@ public class CombinedSpawnManager : MonoBehaviour
             }
         }
     }
+    #endregion
 
-    // 원형 롱노트 테스트 메서드들
-    public void TestSaveArcNotePattern()
-    {
-        var arcNoteList = new ArcNoteList();
-
-        // 테스트용 패턴 데이터 생성
-        var testPattern = new ArcNoteData
-        {
-            startIndex = 0,
-            arcLength = 10,
-            isSymmetric = true,
-            isClockwise = true,
-            sourceRadius = sourceRadius,
-            targetRadius = targetRadius,
-            moveSpeed = arcMoveSpeed,
-            spawnInterval = segmentSpawnInterval,
-            noteType = NoteHitType.Red,
-        };
-
-        arcNoteList.patterns.Add(testPattern);
-
-        string json = JsonUtility.ToJson(arcNoteList, true);
-        string path = Application.dataPath + "/Resources/TestArcNotePatterns.json";
-        System.IO.File.WriteAllText(path, json);
-
-        Debug.Log($"Saved Arc Note Patterns: \n{json}");
-    }
-
-    public void TestLoadArcNotePattern()
-    {
-        string path = Application.dataPath + "/Resources/TestArcNotePatterns.json";
-        if (!System.IO.File.Exists(path))
-        {
-            Debug.LogError("Test pattern file not found!");
-            return;
-        }
-
-        string json = System.IO.File.ReadAllText(path);
-        var loadedPatterns = JsonUtility.FromJson<ArcNoteList>(json);
-
-        Debug.Log($"Loaded {loadedPatterns.patterns.Count} patterns");
-
-        foreach (var pattern in loadedPatterns.patterns)
-        {
-            SpawnArcLongNote(pattern.startIndex, pattern.arcLength);
-        }
-    }
-
+    #region 원형 롱노트 생성 및 관리
+    /// <summary>
+    /// 원형 경로의 포인트들을 생성합니다.
+    /// </summary>
     private void GenerateCirclePoints()
     {
         sourcePoints.Clear();
@@ -540,6 +534,9 @@ public class CombinedSpawnManager : MonoBehaviour
         );
     }
 
+    /// <summary>
+    /// 랜덤한 위치에 원형 롱노트를 생성합니다.
+    /// </summary>
     private void SpawnRandomArcLongNote()
     {
         // 랜덤 시작 인덱스와 호의 길이 선택
@@ -548,6 +545,12 @@ public class CombinedSpawnManager : MonoBehaviour
 
         SpawnArcLongNote(startIdx, arcLength);
     }
+
+    /// <summary>
+    /// 지정된 위치에 원형 롱노트를 생성합니다.
+    /// </summary>
+    /// <param name="startIndex">시작 인덱스</param>
+    /// <param name="arcLength">호의 길이</param>
 
     public void SpawnArcLongNote(int startIndex, int arcLength)
     {
@@ -577,6 +580,13 @@ public class CombinedSpawnManager : MonoBehaviour
 
         Debug.Log($"호 롱노트 생성: 시작 {startIndex}, 끝 {endIndex}, 길이 {arcLength}");
     }
+
+    /// <summary>
+    /// 원형 롱노트의 세그먼트들을 순차적으로 생성합니다.
+    /// </summary>
+    /// <param name="startIndex">시작 인덱스</param>
+    /// <param name="endIndex">끝 인덱스</param>
+    /// <param name="isSymmetric">대칭 여부</param>
 
     private IEnumerator SpawnArcSegments(int startIndex, int endIndex, bool isSymmetric)
     {
@@ -655,7 +665,66 @@ public class CombinedSpawnManager : MonoBehaviour
         Debug.Log($"{symmetricText}호 롱노트 생성 완료: {segmentsSpawned}개 세그먼트");
     }
 
-    // 현재 진행 상태 GUI 표시
+    /// <summary>
+    /// 원형 롱노트 패턴을 JSON 파일로 저장합니다.
+    /// </summary>
+
+    public void TestSaveArcNotePattern()
+    {
+        var arcNoteList = new ArcNoteList();
+
+        // 테스트용 패턴 데이터 생성
+        var testPattern = new ArcNoteData
+        {
+            startIndex = 0,
+            arcLength = 10,
+            isSymmetric = true,
+            isClockwise = true,
+            sourceRadius = sourceRadius,
+            targetRadius = targetRadius,
+            moveSpeed = arcMoveSpeed,
+            spawnInterval = segmentSpawnInterval,
+            noteType = NoteHitType.Red,
+        };
+
+        arcNoteList.patterns.Add(testPattern);
+
+        string json = JsonUtility.ToJson(arcNoteList, true);
+        string path = Application.dataPath + "/Resources/TestArcNotePatterns.json";
+        System.IO.File.WriteAllText(path, json);
+
+        Debug.Log($"Saved Arc Note Patterns: \n{json}");
+    }
+
+    /// <summary>
+    /// JSON 파일에서 원형 롱노트 패턴을 로드합니다.
+    /// </summary>
+
+    public void TestLoadArcNotePattern()
+    {
+        string path = Application.dataPath + "/Resources/TestArcNotePatterns.json";
+        if (!System.IO.File.Exists(path))
+        {
+            Debug.LogError("Test pattern file not found!");
+            return;
+        }
+
+        string json = System.IO.File.ReadAllText(path);
+        var loadedPatterns = JsonUtility.FromJson<ArcNoteList>(json);
+
+        Debug.Log($"Loaded {loadedPatterns.patterns.Count} patterns");
+
+        foreach (var pattern in loadedPatterns.patterns)
+        {
+            SpawnArcLongNote(pattern.startIndex, pattern.arcLength);
+        }
+    }
+    #endregion
+
+    #region 디버그
+    /// <summary>
+    /// 현재 진행 상태를 화면에 표시합니다.
+    /// </summary>
     private void OnGUI()
     {
         if (!isPlaying)
@@ -675,7 +744,9 @@ public class CombinedSpawnManager : MonoBehaviour
         GUILayout.EndArea();
     }
 
-    // 디버그용 시각화
+    /// <summary>
+    /// 디버그용 시각화를 수행합니다.
+    /// </summary>
     private void OnDrawGizmos()
     {
         if (!Application.isPlaying)
@@ -705,6 +776,14 @@ public class CombinedSpawnManager : MonoBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// 원을 그리는 디버그 기즈모를 그립니다.
+    /// </summary>
+    /// <param name="center">원의 중심점</param>
+    /// <param name="radius">원의 반지름</param>
+    /// <param name="segments">원을 구성하는 세그먼트 수</param>
+    /// <param name="vertical">수직 원 여부</param>
 
     private void DrawCircle(Vector3 center, float radius, int segments, bool vertical)
     {
@@ -761,4 +840,5 @@ public class CombinedSpawnManager : MonoBehaviour
 
         Gizmos.DrawSphere(center, 0.3f);
     }
+    #endregion
 }
