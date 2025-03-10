@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using ExitGames.Client.Photon.StructWrapping;
 using UnityEngine;
 
 public class Note : MonoBehaviour
@@ -22,15 +24,21 @@ public class Note : MonoBehaviour
     protected Vector3 noteDownDirection,
         noteUpDirection;
     protected float noteDistance;
-    private Renderer noteRenderer;
+    private Collider noteCollider;
     private float EnterAngle,
         ExitAngle;
     private float hitdis;
+    private Transform TargetTrans;
 
     public virtual void Initialize(NoteData data)
     {
+        TargetTrans = GetComponentInParent<Transform>();
+        if (TargetTrans != null)
+        {
+            TargetTrans = GetComponent<Transform>();
+        }
         noteTrans = GetComponent<Transform>();
-        noteRenderer = GetComponent<Renderer>();
+        noteCollider = GetComponent<Collider>();
         noteData = new NoteData()
         {
             baseType = data.baseType,
@@ -40,10 +48,9 @@ public class Note : MonoBehaviour
             moveSpeed = data.moveSpeed,
             noteType = data.noteType,
         };
-        if (noteRenderer != null)
+        if (noteCollider != null)
         {
             SetNoteDisTance();
-            SetNoteColor();   // 노트 색상 설정 메서드를 따로 만듬
         }
         NoteDirectionChange();
         NoteHitDirectionChange();
@@ -56,12 +63,12 @@ public class Note : MonoBehaviour
     {
         if (isMoving)
         {
-            transform.position = Vector3.MoveTowards(
+            TargetTrans.position = Vector3.MoveTowards(
                 transform.position,
                 noteData.target,
                 noteData.moveSpeed * Time.deltaTime
             );
-            if (Vector3.Distance(transform.position, noteData.target) < 0.1f)
+            if (Vector3.Distance(TargetTrans.position, noteData.target) < 0.1f)
             {
                 try
                 {
@@ -189,19 +196,19 @@ public class Note : MonoBehaviour
             ratings = NoteRatings.Good;
         }
         NoteGameManager.Instance.SetScore(Score, ratings);
-        Destroy(this.gameObject);
+        Destroy(TargetTrans.gameObject);
     }
 
     protected void Miss()
     {
         NoteGameManager.Instance.SetScore(0, NoteRatings.Miss);
-        Destroy(this.gameObject);
+        Destroy(TargetTrans.gameObject);
     }
 
     //노트가 허용하는 Hit거리를 구함
     private void SetNoteDisTance()
     {
-        float sizeY = noteRenderer.bounds.size.y;
+        float sizeY = noteCollider.bounds.size.y;
         print($"Y: {sizeY}");
         Vector3 dis = transform.position;
         dis.y += sizeY / 2;
@@ -251,7 +258,7 @@ public class Note : MonoBehaviour
                 Miss();
                 print("HitObject 타입이 다름");
             }
-            //Miss(); 현재 중복호출중
+            Miss();
         }
     }
 
@@ -262,22 +269,5 @@ public class Note : MonoBehaviour
         Vector3 notePos = transform.position - (-transform.up * noteDistance);
         print($"notepos {notePos} hitPoint{hitPoint}");
         return Vector3.Distance(hitPoint, notePos);
-    }
-    protected virtual void SetNoteColor()
-    {
-        if (noteRenderer == null) return;
-
-        switch (noteData.noteType)
-        {
-        case NoteHitType.Hand:
-            noteRenderer.material.color = Color.yellow;
-            break;
-        case NoteHitType.Red:
-            noteRenderer.material.color = Color.red;
-            break;
-        case NoteHitType.Blue:
-                noteRenderer.material.color = Color.blue;
-            break;
-        }
     }
 }

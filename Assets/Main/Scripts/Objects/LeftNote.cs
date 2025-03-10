@@ -1,5 +1,3 @@
 using UnityEngine;
 
-public class LeftNote : Note
-{
-}
+public class LeftNote : Note { }
