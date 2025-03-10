@@ -1,5 +1,6 @@
-using TMPro;
+using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class NoteGameManager : Singleton<NoteGameManager>
 {
@@ -17,8 +18,9 @@ public class NoteGameManager : Singleton<NoteGameManager>
 
     //현재 배율
     public int Multiplier { get; private set; } = 1;
+
     //호응도 변화시 호출할 이벤트
-    public event System.Action<int> onEngagementChange;
+    public event Action<int> onEngagementChange;
 
     private void Start()
     {

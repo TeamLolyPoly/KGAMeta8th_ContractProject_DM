@@ -6,7 +6,6 @@ namespace NoteEditor
     public class BeatMarker : MonoBehaviour
     {
         public Color markerColor = Color.white;
-        public float width = 2f;
 
         private Image markerImage;
 
@@ -19,12 +18,6 @@ namespace NoteEditor
             }
 
             markerImage.color = markerColor;
-
-            RectTransform rect = GetComponent<RectTransform>();
-            if (rect != null)
-            {
-                rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
-            }
         }
     }
 }
