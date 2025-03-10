@@ -1,19 +1,43 @@
 using System.Collections;
 using System.Collections.Generic;
+using Michsky.UI.Heat;
+using ProjectDM.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MainPanel : MonoBehaviour
+public class MainPanel : Panel
 {
-    [SerializeField]
-    private Button StartButton;
+    public override PanelType PanelType => PanelType.Main;
 
     [SerializeField]
-    private Button OptionButton;
+    private ButtonManager StartButton;
 
-    // Start is called before the first frame update
-    void Start() { }
+    [SerializeField]
+    private ButtonManager OptionButton;
 
-    // Update is called once per frame
-    void Update() { }
+    public override void Open()
+    {
+        StartButton.onClick.AddListener(OnStartButtonClick);
+        OptionButton.onClick.AddListener(OnOptionButtonClick);
+        base.Open();
+    }
+
+    public override void Close()
+    {
+        StartButton.onClick.RemoveListener(OnStartButtonClick);
+        OptionButton.onClick.RemoveListener(OnOptionButtonClick);
+        base.Close();
+    }
+
+    private void OnStartButtonClick()
+    {
+        //mode 패널 열기
+        UIManager.Instance.OpenPanel(PanelType.Mode);
+    }
+
+    private void OnOptionButtonClick()
+    {
+        //option 패널 열기
+        UIManager.Instance.OpenPanel(PanelType.Option);
+    }
 }
