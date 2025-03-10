@@ -185,34 +185,28 @@ public static class ResourceIO
 
                     string persistentPath = Application.persistentDataPath;
                     Texture2D textureCopy = texture;
-                    _ = Task.Run(() =>
+
+                    try
                     {
-                        try
+                        string albumArtPath = Path.Combine(persistentPath, "Tracks", "AlbumArts");
+
+                        if (!Directory.Exists(albumArtPath))
                         {
-                            string albumArtPath = Path.Combine(
-                                persistentPath,
-                                "Tracks",
-                                "AlbumArts"
-                            );
-
-                            if (!Directory.Exists(albumArtPath))
-                            {
-                                Directory.CreateDirectory(albumArtPath);
-                            }
-
-                            string filePath = Path.Combine(albumArtPath, fileName + ".png");
-
-                            if (!File.Exists(filePath))
-                            {
-                                byte[] bytes = textureCopy.EncodeToPNG();
-                                File.WriteAllBytes(filePath, bytes);
-                            }
+                            Directory.CreateDirectory(albumArtPath);
                         }
-                        catch (Exception ex)
+
+                        string albumArtFilePath = Path.Combine(albumArtPath, fileName + ".png");
+
+                        if (!File.Exists(albumArtFilePath))
                         {
-                            Debug.LogError($"앨범 아트 저장 중 예외 발생: {ex.Message}");
+                            byte[] bytes = textureCopy.EncodeToPNG();
+                            File.WriteAllBytes(albumArtFilePath, bytes);
                         }
-                    });
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"앨범 아트 저장 중 예외 발생: {ex.Message}");
+                    }
                 }
                 else
                 {

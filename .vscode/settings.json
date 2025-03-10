@@ -2,8 +2,9 @@
   "files.exclude": {
     "**/.DS_Store": true,
     "**/.git": true,
-    "**/.gitignore": true,
+    "**/.vs": true,
     "**/.gitmodules": true,
+    "**/.vsconfig": true,
     "**/*.booproj": true,
     "**/*.pidb": true,
     "**/*.suo": true,
@@ -48,12 +49,12 @@
     "library/": true,
     "obj/": true,
     "Obj/": true,
+    "Logs/": true,
+    "logs/": true,
     "ProjectSettings/": true,
+    "UserSettings/": true,
     "temp/": true,
-    "Temp/": true,
-    "**/.csproj": true,
-    "**/.sln": true
+    "Temp/": true
   },
-  "dotnet.defaultSolution": "KGAMeta8th_ContractProject_DM.sln",
-  "dotnet.preferCSharpExtension": true
+  "dotnet.defaultSolution": "KGAMeta8th_ContractProject_DM.sln"
 }
