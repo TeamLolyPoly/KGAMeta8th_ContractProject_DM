@@ -1,19 +1,27 @@
+using System.Collections;
 using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
     private Animator animator;
-
     public Bandtype bandtype;
 
-    private void Start()
+    private IEnumerator Start()
+    {
+        yield return new WaitUntil(() => UnitAnimationManager.Instance.IsInitialized);
+        Initialize();
+    }
+
+    private void Initialize()
     {
         UnitAnimationManager.Instance.AddUnit(this);
+
         animator = GetComponent<Animator>();
         if (animator == null)
         {
             animator = gameObject.AddComponent<Animator>();
         }
+
         UnitAnimationManager.Instance.AttachAnimation(animator);
     }
 

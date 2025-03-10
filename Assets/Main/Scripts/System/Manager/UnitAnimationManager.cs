@@ -1,30 +1,48 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UnitAnimationManager : Singleton<UnitAnimationManager>
+public class UnitAnimationManager : Singleton<UnitAnimationManager>, IInitializable
 {
     [SerializeField]
     private RuntimeAnimatorController unitAnimator;
 
     [SerializeField]
-    private BandAnimationData[] bandAnimationDatas;
+    private List<BandAnimationData> bandAnimationDatas = new List<BandAnimationData>();
 
     private Dictionary<Bandtype, BandAnimationData> bandAnimators =
         new Dictionary<Bandtype, BandAnimationData>();
     private List<Unit> units = new List<Unit>();
 
-    protected override void Awake()
+    private bool isInitialized = false;
+
+    public bool IsInitialized => isInitialized;
+
+    public void Initialize()
     {
-        base.Awake();
+        List<BandAnimationData> RemoveDatas = new List<BandAnimationData>();
+
         foreach (BandAnimationData bandAnimationData in bandAnimationDatas)
         {
+            if (bandAnimators.ContainsKey(bandAnimationData.bandtype))
+            {
+                RemoveDatas.Add(bandAnimationData);
+                continue;
+            }
             bandAnimators.Add(bandAnimationData.bandtype, bandAnimationData);
         }
+
+        foreach (BandAnimationData RemoveData in RemoveDatas)
+        {
+            bandAnimationDatas.Remove(RemoveData);
+        }
+        NoteGameManager.Instance.onEngagementChange += AnimationClipChange;
+
+        isInitialized = true;
     }
 
     private void Start()
     {
-        NoteGameManager.instance.onEngagementChange += AnimationClipChange;
+        Initialize();
     }
 
     public void AddUnit(Unit unit)
@@ -49,4 +67,5 @@ public class UnitAnimationManager : Singleton<UnitAnimationManager>
             unit.GetAnimator()["Walk"] = bandAnimators[unit.bandtype]?.animationClip[engagement];
         }
     }
+
 }
