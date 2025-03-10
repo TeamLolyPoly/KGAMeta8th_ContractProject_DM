@@ -3,17 +3,17 @@ using UnityEngine;
 
 public class TestAction : MonoBehaviourPun
 {
-    [PunRPC] //´Ù¸¥ Å¬¶óÀÌ¾ðÆ®°¡ È£ÃâÇÒ ¼ö ÀÖ´Â ÇÔ¼ö
+    [PunRPC] //ï¿½Ù¸ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ È£ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½Ô¼ï¿½
     public void TakeDamage(int damage)
     {
-        Debug.Log("ÇÃ·¹ÀÌ¾î°¡ " + damage + " ÇÇÇØ¸¦ ÀÔÀ½");
+        Debug.Log("ï¿½Ã·ï¿½ï¿½Ì¾î°¡ " + damage + " ï¿½ï¿½ï¿½Ø¸ï¿½ ï¿½ï¿½ï¿½ï¿½");
     }
 
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            photonView.RPC("TakeDamage", RpcTarget.All, 10); //¸ðµç Å¬¶óÀÌ¾ðÆ®¿¡ ÇÇÇØ Àû¿ë
+            photonView.RPC("TakeDamage", RpcTarget.All, 10); //ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         }
     }
 }

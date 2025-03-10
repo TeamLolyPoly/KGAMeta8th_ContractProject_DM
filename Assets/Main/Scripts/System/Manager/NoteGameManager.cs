@@ -21,6 +21,19 @@ public class NoteGameManager : Singleton<NoteGameManager>
     //현재 배율
     public int Multiplier { get; private set; } = 1;
 
+    private void Start()
+    {
+        RecordInitialize();
+    }
+
+    //게임 시작 전 초기화 함수
+    public void RecordInitialize()
+    {
+        currentScore = 0;
+        combo = 0;
+        Multiplier = 1;
+    }
+
     // 노트 타입 설정 함수
     public void SetupNoteTypeData(NoteData noteData, bool isLeftGrid)
     {
@@ -43,7 +56,7 @@ public class NoteGameManager : Singleton<NoteGameManager>
         {
             Multiplier = 1;
             combo = 0;
-            test.text = $"combo: {combo} \ncurrentScore: {currentScore}";
+            print($"combo: {combo} \ncurrentScore: {currentScore}");
             return;
         }
         combo += 1;
@@ -55,7 +68,7 @@ public class NoteGameManager : Singleton<NoteGameManager>
         print($"ratingScore: {ratingScore}");
         print($"currentScore: {currentScore}");
         print($"combo: {combo}");
-        test.text = $"combo: {combo} \ncurrentScore: {currentScore}";
+        print($"combo: {combo} \ncurrentScore: {currentScore}");
     }
 
     //콤보별 배율 세팅함수
