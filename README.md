@@ -24,7 +24,6 @@
 
 ## 📋 프로젝트 개요
 
-<summary><b>📌 프로젝트 정보</b></summary>
 <div align="center">
 
 ### 🎯 프로젝트 분류
