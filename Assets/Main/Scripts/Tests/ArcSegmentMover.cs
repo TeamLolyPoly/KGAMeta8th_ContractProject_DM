@@ -2,30 +2,29 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ArcSegmentMover : MonoBehaviour
+public class ArcSegmentMover : Note
 {
-    private Vector3 startPosition;
-    private Vector3 targetPosition;
-    private float moveSpeed;
     private bool isInitialized = false;
     private bool isHit = false;
-    private int NoteScore = 20;
-    private double spawnDspTime; // dspTime을 기준으로 생성 시간 저장
 
     [Header("충돌 설정")]
     [SerializeField] private string[] targetTags = { "Mace" }; // "Mace" 태그와 충돌 감지
     [SerializeField] private GameObject hitEffectPrefab; // 충돌 시 생성할 이펙트
-    public void Initialize(Vector3 start, Vector3 target, float speed)
+    public override void Initialize(NoteData data)
     {
-        startPosition = start;
-        targetPosition = target;
-        moveSpeed = speed;
+        noteData = new NoteData()
+        {
+            startPosition = data.startPosition,
+            targetPosition = data.targetPosition,
+            noteSpeed = data.noteSpeed,
+        };
         isInitialized = true;
 
         // 이동 방향을 향하도록 회전
-        transform.LookAt(targetPosition);
+        transform.LookAt(noteData.targetPosition);
 
         spawnDspTime = AudioSettings.dspTime; // dspTime을 기준으로 이동
+
         // 콜라이더가 없으면 추가
         if (!GetComponent<Collider>())
         {
@@ -46,13 +45,14 @@ public class ArcSegmentMover : MonoBehaviour
         // );
 
         double elapsedTime = AudioSettings.dspTime - spawnDspTime;
-        float progress = (float)(elapsedTime * moveSpeed / Vector3.Distance(startPosition, targetPosition));
+        float progress = (float)(elapsedTime * noteData.noteSpeed / Vector3.Distance(noteData.startPosition, noteData.targetPosition));
 
-        transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
+        transform.position = Vector3.Lerp(noteData.startPosition, noteData.targetPosition, progress);
 
         // 목표에 도달하면 파괴
-        if (Vector3.Distance(transform.position, targetPosition) < 0.01f)
+        if (Vector3.Distance(transform.position, noteData.targetPosition) < 0.01f)
         {
+            Miss();
             Destroy(gameObject);
         }
     }
@@ -66,6 +66,11 @@ public class ArcSegmentMover : MonoBehaviour
         {
             HandleCollision(other);
         }
+        //TODO: 다른 물체와 충돌해도 삭제판정이 필요함
+        // else
+        // {
+        //     Miss();
+        // }
     }
 
     private void HandleCollision(Collider other)
@@ -78,7 +83,7 @@ public class ArcSegmentMover : MonoBehaviour
             Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
         }
         //노트게임 매니저로 점수 전달
-        NoteGameManager.Instance.SetScore(NoteScore, NoteRatings.Success);
+        NoteGameManager.Instance.SetScore(noteScore, NoteRatings.Success);
         // 충돌 이벤트 발생 (필요한 경우)
         // 오브젝트 파괴
         Destroy(gameObject);

@@ -6,22 +6,19 @@ using UnityEngine;
 [Serializable]
 public class NoteData
 {
-    //기본 노트 타입은 숏으로 설정
-    public NoteBaseType baseType = NoteBaseType.Short;
+    //기본 노트 타입은 None으로 설정
+    public NoteBaseType baseType = NoteBaseType.None;
     public NoteHitType noteType;// Hand(왼쪽) 또는 Red/Blue(오른쪽)
     public NoteDirection direction;
     public NoteAxis noteAxis = NoteAxis.PZ;
-    public Vector3 target;
+    public Vector3 startPosition;
+    public Vector3 targetPosition;
     public Vector2 gridpos; // 그리드 x, y 위치
     public bool isLeftGrid; // 왼쪽/오른쪽 그리드 구분
-    public float noteSpeed;
-    public int bar;
-    public int beat;
-}
+    public float noteSpeed; // 노트 이동 속도
+    public int bar; // 박자
+    public int beat; // 비트
 
-[Serializable]
-public class ArcNoteData
-{
     //기본 패턴
     public int startIndex;
     public int arcLength;
@@ -31,17 +28,7 @@ public class ArcNoteData
     //원형 그리드 설정
     public float sourceRadius;
     public float targetRadius;
-    public float moveSpeed;
     public float spawnInterval;
-
-    //노트 타입
-    public NoteHitType noteType;
-}
-
-[Serializable]
-public class ArcNoteList
-{
-    public List<ArcNoteData> patterns = new List<ArcNoteData>();
 }
 [Serializable]
 public class NoteList
