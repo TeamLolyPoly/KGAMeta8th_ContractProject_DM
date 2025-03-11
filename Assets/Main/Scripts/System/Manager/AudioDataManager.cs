@@ -132,14 +132,14 @@ namespace NoteEditor
                 TrackData newTrack = new TrackData
                 {
                     trackName = result.trackName,
-                    trackAudio = result.clip,
                     bpm = 120f, // 기본 BPM
                 };
 
-                // 트랙 목록에 추가
+                // 오디오 클립 설정
+                newTrack.trackAudio = result.clip;
+
                 tracks.Add(newTrack);
 
-                // 메타데이터 업데이트
                 await UpdateTrackMetadataAsync();
 
                 OnTrackAdded?.Invoke(newTrack);
@@ -156,8 +156,11 @@ namespace NoteEditor
         /// <returns>비동기 작업</returns>
         public async Task UpdateTrackAsync(TrackData track)
         {
-            if (track == null)
+            if (track == null || string.IsNullOrEmpty(track.trackName))
+            {
+                Debug.LogError("유효하지 않은 트랙 데이터");
                 return;
+            }
 
             // 트랙 찾기
             TrackData existingTrack = tracks.FirstOrDefault(t => t.trackName == track.trackName);
@@ -268,47 +271,18 @@ namespace NoteEditor
             IProgress<float> progress = null
         )
         {
-            // 트랙 찾기
             TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
 
-            if (track != null && track.trackAudio == null)
+            if (track != null)
             {
                 // 오디오 로드
-                track.trackAudio = await fileService.LoadAudioAsync(trackName, progress);
+                AudioClip audioClip = await fileService.LoadAudioAsync(trackName, progress);
+                track.trackAudio = audioClip;
 
                 if (track.trackAudio != null)
                 {
-                    Debug.Log($"트랙 오디오 로드됨: {trackName}");
-                    OnTrackUpdated?.Invoke(track);
-                }
-            }
-
-            return track;
-        }
-
-        /// <summary>
-        /// 트랙의 앨범 아트를 로드합니다.
-        /// </summary>
-        /// <param name="trackName">트랙 이름</param>
-        /// <param name="progress">진행 상황 보고 인터페이스</param>
-        /// <returns>로드된 트랙 데이터</returns>
-        public async Task<TrackData> LoadTrackAlbumArtAsync(
-            string trackName,
-            IProgress<float> progress = null
-        )
-        {
-            // 트랙 찾기
-            TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
-
-            if (track != null && track.albumArt == null)
-            {
-                // 앨범 아트 로드
-                track.albumArt = await fileService.LoadAlbumArtAsync(trackName, progress);
-
-                if (track.albumArt != null)
-                {
-                    Debug.Log($"트랙 앨범 아트 로드됨: {trackName}");
-                    OnTrackUpdated?.Invoke(track);
+                    OnTrackLoaded?.Invoke(track);
+                    Debug.Log($"트랙 오디오 로드: {trackName}");
                 }
             }
 
@@ -323,18 +297,10 @@ namespace NoteEditor
         /// <returns>비동기 작업</returns>
         public async Task SetBPMAsync(string trackName, float bpm)
         {
-            if (bpm <= 0)
-            {
-                Debug.LogWarning("BPM은 0보다 커야 합니다.");
-                return;
-            }
-
-            // 트랙 찾기
             TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
 
             if (track != null)
             {
-                // BPM 업데이트
                 track.bpm = bpm;
 
                 // 메타데이터 업데이트
@@ -345,50 +311,36 @@ namespace NoteEditor
             }
         }
 
-        public async Task<TrackData> SetAlbumArtAsync(
-            string trackName,
-            string albumArtPath,
-            IProgress<float> progress = null
-        )
+        /// <summary>
+        /// 트랙 이름으로 앨범 아트를 가져옵니다.
+        /// </summary>
+        /// <param name="trackName">트랙 이름</param>
+        /// <returns>앨범 아트 Sprite</returns>
+        public Sprite GetAlbumArt(string trackName)
         {
-            TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
+            if (string.IsNullOrEmpty(trackName))
+                return null;
 
-            if (track != null)
-            {
-                track.albumArt = await fileService.ImportAlbumArtAsync(
-                    albumArtPath,
-                    trackName,
-                    progress
-                );
-
-                if (track.albumArt != null)
-                {
-                    await UpdateTrackMetadataAsync();
-
-                    OnTrackUpdated?.Invoke(track);
-                    Debug.Log($"트랙 앨범 아트 업데이트: {trackName}");
-                }
-            }
-
-            return track;
+            // 비동기 로드를 동기적으로 처리
+            var task = fileService.LoadAlbumArtAsync(trackName);
+            task.Wait();
+            return task.Result;
         }
 
-        private async Task UpdateTrackMetadataAsync()
+        /// <summary>
+        /// 트랙 이름으로 오디오 클립을 가져옵니다.
+        /// </summary>
+        /// <param name="trackName">트랙 이름</param>
+        /// <returns>AudioClip</returns>
+        public AudioClip GetAudioClip(string trackName)
         {
-            List<TrackMetadata> metadataList = new List<TrackMetadata>();
+            if (string.IsNullOrEmpty(trackName))
+                return null;
 
-            foreach (var track in tracks)
-            {
-                TrackMetadata metadata = new TrackMetadata
-                {
-                    trackName = track.trackName,
-                    bpm = track.bpm,
-                };
-
-                metadataList.Add(metadata);
-            }
-
-            await fileService.SaveMetadataAsync(metadataList);
+            // 비동기 로드를 동기적으로 처리
+            var task = fileService.LoadAudioAsync(trackName);
+            task.Wait();
+            return task.Result;
         }
 
         /// <summary>
@@ -414,7 +366,7 @@ namespace NoteEditor
         /// </summary>
         /// <param name="filePath">로드할 이미지 파일 경로</param>
         /// <param name="trackIndex">트랙 인덱스</param>
-        public void LoadAlbumArt(string filePath, int trackIndex)
+        public void SetAlbumArt(string filePath, int trackIndex)
         {
             if (string.IsNullOrEmpty(filePath))
                 return;
@@ -473,33 +425,23 @@ namespace NoteEditor
                 yield return null;
             }
 
-            TrackData loadedTrack = addTrackTask.Result;
+            TrackData newTrack = addTrackTask.Result;
 
-            if (loadedTrack == null)
+            if (newTrack == null)
             {
-                Debug.LogError("오디오 파일 로드 실패");
+                Debug.LogError("트랙 추가 실패");
                 pendingAudioFilePath = null;
                 LoadingManager.Instance.LoadScene(currentSceneName);
                 yield break;
             }
 
             updateProgress(0.9f);
-            loadingUI?.SetLoadingText("오디오 매니저에 트랙 추가 중...");
+            loadingUI?.SetLoadingText("트랙 정보 저장 중...");
             yield return new WaitForSeconds(0.2f);
 
             updateProgress(1.0f);
-            loadingUI?.SetLoadingText("완료! 노트 에디터로 돌아가는 중...");
-            yield return new WaitForSeconds(0.5f);
-
             pendingAudioFilePath = null;
-
-            LoadingManager.Instance.LoadScene(
-                currentSceneName,
-                () =>
-                {
-                    OnTrackLoaded?.Invoke(loadedTrack);
-                }
-            );
+            LoadingManager.Instance.LoadScene(currentSceneName);
         }
 
         /// <summary>
@@ -507,7 +449,7 @@ namespace NoteEditor
         /// </summary>
         private IEnumerator LoadAlbumArtProcess()
         {
-            if (string.IsNullOrEmpty(pendingAlbumArtFilePath) || selectedTrackIndex < 0)
+            if (string.IsNullOrEmpty(pendingAlbumArtFilePath))
             {
                 LoadingManager.Instance.LoadScene(currentSceneName);
                 yield break;
@@ -516,7 +458,7 @@ namespace NoteEditor
             LoadingUI loadingUI = FindObjectOfType<LoadingUI>();
             Action<float> updateProgress = LoadingManager.Instance.UpdateProgress;
 
-            updateProgress(0.1f);
+            updateProgress(0.2f);
             loadingUI?.SetLoadingText("앨범 아트 로드 중...");
 
             if (loadingUI != null)
@@ -563,7 +505,7 @@ namespace NoteEditor
 
             TrackData updatedTrack = setAlbumArtTask.Result;
 
-            if (updatedTrack == null || updatedTrack.albumArt == null)
+            if (updatedTrack == null)
             {
                 Debug.LogError("앨범 아트 로드 실패");
                 pendingAlbumArtFilePath = null;
@@ -577,22 +519,9 @@ namespace NoteEditor
             yield return new WaitForSeconds(0.2f);
 
             updateProgress(1.0f);
-            loadingUI?.SetLoadingText("완료! 노트 에디터로 돌아가는 중...");
-            yield return new WaitForSeconds(0.5f);
-
-            string trackName = updatedTrack.trackName;
-            Sprite albumArt = updatedTrack.albumArt;
-
             pendingAlbumArtFilePath = null;
             selectedTrackIndex = -1;
-
-            LoadingManager.Instance.LoadScene(
-                currentSceneName,
-                () =>
-                {
-                    OnAlbumArtLoaded?.Invoke(trackName, albumArt);
-                }
-            );
+            LoadingManager.Instance.LoadScene(currentSceneName);
         }
 
         /// <summary>
@@ -605,6 +534,54 @@ namespace NoteEditor
                 int randomIndex = UnityEngine.Random.Range(0, tips.Length);
                 loadingUI.SetLoadingText(tips[randomIndex]);
             }
+        }
+
+        private async Task UpdateTrackMetadataAsync()
+        {
+            List<TrackData> metadataList = new List<TrackData>();
+
+            foreach (var track in tracks)
+            {
+                TrackData metadata = new TrackData { trackName = track.trackName, bpm = track.bpm };
+
+                metadataList.Add(metadata);
+            }
+
+            await fileService.SaveMetadataAsync(metadataList);
+        }
+
+        /// <summary>
+        /// 앨범 아트를 설정합니다.
+        /// </summary>
+        /// <param name="trackName">트랙 이름</param>
+        /// <param name="albumArtPath">앨범 아트 파일 경로</param>
+        /// <param name="progress">진행 상황 보고 인터페이스</param>
+        /// <returns>업데이트된 트랙 데이터</returns>
+        public async Task<TrackData> SetAlbumArtAsync(
+            string trackName,
+            string albumArtPath,
+            IProgress<float> progress = null
+        )
+        {
+            TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
+
+            if (track != null)
+            {
+                Sprite albumArt = await fileService.ImportAlbumArtAsync(
+                    albumArtPath,
+                    trackName,
+                    progress
+                );
+
+                if (albumArt != null)
+                {
+                    // 앨범 아트 로드 이벤트 발생
+                    OnAlbumArtLoaded?.Invoke(trackName, albumArt);
+                    Debug.Log($"앨범 아트 설정: {trackName}");
+                }
+            }
+
+            return track;
         }
     }
 }

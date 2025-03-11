@@ -10,20 +10,11 @@ namespace NoteEditor
     {
         private static string _basePath = Path.Combine(Application.persistentDataPath, "Tracks");
 
-        /// <summary>
-        /// 오디오 파일의 기본 디렉토리 경로
-        /// </summary>
         public static string BasePath => _basePath;
 
-        /// <summary>
-        /// 앨범 아트 파일의 디렉토리 경로
-        /// </summary>
         public static string AlbumArtPath => Path.Combine(BasePath, "AlbumArts");
 
-        /// <summary>
-        /// 메타데이터 파일 경로
-        /// </summary>
-        public static string MetadataPath => Path.Combine(BasePath, "metadata.json");
+        public static string TrackDataPath => Path.Combine(BasePath, "Data");
 
         /// <summary>
         /// 기본 경로를 설정합니다.
@@ -62,6 +53,9 @@ namespace NoteEditor
         {
             if (!Directory.Exists(BasePath))
                 Directory.CreateDirectory(BasePath);
+
+            if (!Directory.Exists(TrackDataPath))
+                Directory.CreateDirectory(TrackDataPath);
 
             if (!Directory.Exists(AlbumArtPath))
                 Directory.CreateDirectory(AlbumArtPath);

@@ -16,8 +16,10 @@ namespace NoteEditor
         private Dictionary<string, AudioClip> audioCache = new Dictionary<string, AudioClip>();
         private Dictionary<string, Sprite> imageCache = new Dictionary<string, Sprite>();
 
+        #region 오디오 파일 관련 메서드
+
         /// <summary>
-        /// 오디오 파일을 비동기적으로 로드합니다.
+        /// 트랙 이름으로 오디오 파일을 로드합니다.
         /// </summary>
         /// <param name="trackName">트랙 이름</param>
         /// <param name="progress">진행 상황 보고 인터페이스</param>
@@ -27,7 +29,6 @@ namespace NoteEditor
             IProgress<float> progress = null
         )
         {
-            // 캐시 확인
             if (audioCache.TryGetValue(trackName, out AudioClip cachedClip))
             {
                 Debug.Log($"오디오 캐시에서 로드: {trackName}");
@@ -71,7 +72,6 @@ namespace NoteEditor
                         AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
                         clip.name = trackName;
 
-                        // 캐시에 저장
                         audioCache[trackName] = clip;
 
                         progress?.Report(1.0f);
@@ -135,10 +135,8 @@ namespace NoteEditor
 
                         progress?.Report(0.7f);
 
-                        // 파일 저장
                         await SaveAudioAsync(clip, trackName);
 
-                        // 캐시에 저장
                         audioCache[trackName] = clip;
 
                         progress?.Report(1.0f);
@@ -159,7 +157,74 @@ namespace NoteEditor
         }
 
         /// <summary>
-        /// 앨범 아트를 비동기적으로 로드합니다.
+        /// 오디오 파일을 저장합니다.
+        /// </summary>
+        /// <param name="clip">저장할 AudioClip</param>
+        /// <param name="trackName">트랙 이름</param>
+        /// <param name="onMainThreadProcess">메인 스레드에서 실행할 텍스처 처리 콜백</param>
+        /// <returns>비동기 작업</returns>
+        public async Task SaveAudioAsync(
+            AudioClip clip,
+            string trackName,
+            Action<float[], short[], byte[]> onMainThreadProcess = null
+        )
+        {
+            if (clip == null)
+                return;
+
+            string filePath = AudioPathProvider.GetAudioFilePath(trackName);
+
+            float[] samples = new float[clip.samples * clip.channels];
+            clip.GetData(samples, 0);
+
+            int frequency = clip.frequency;
+            int channels = clip.channels;
+            int sampleCount = clip.samples;
+
+            short[] intData = new short[samples.Length];
+            byte[] bytesData = new byte[samples.Length * 2];
+
+            if (onMainThreadProcess != null)
+            {
+                onMainThreadProcess(samples, intData, bytesData);
+            }
+            else
+            {
+                int rescaleFactor = 32767;
+                for (int i = 0; i < samples.Length; i++)
+                {
+                    intData[i] = (short)(samples[i] * rescaleFactor);
+                    byte[] byteArr = BitConverter.GetBytes(intData[i]);
+                    byteArr.CopyTo(bytesData, i * 2);
+                }
+            }
+            await Task.Run(() =>
+            {
+                try
+                {
+                    AudioPathProvider.EnsureDirectoriesExist();
+
+                    using (FileStream fileStream = CreateEmptyWav(filePath))
+                    {
+                        WriteWavHeader(fileStream, frequency, channels, sampleCount);
+                        fileStream.Write(bytesData, 0, bytesData.Length);
+                    }
+
+                    Debug.Log($"오디오 파일 저장됨: {filePath}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"오디오 파일 저장 중 오류 발생: {ex.Message}");
+                }
+            });
+        }
+
+        #endregion
+
+        #region 앨범 아트 관련 메서드
+
+        /// <summary>
+        /// 트랙 이름으로 앨범 아트를 로드합니다.
         /// </summary>
         /// <param name="trackName">트랙 이름</param>
         /// <param name="progress">진행 상황 보고 인터페이스</param>
@@ -169,7 +234,6 @@ namespace NoteEditor
             IProgress<float> progress = null
         )
         {
-            // 캐시 확인
             if (imageCache.TryGetValue(trackName, out Sprite cachedSprite))
             {
                 Debug.Log($"이미지 캐시에서 로드: {trackName}");
@@ -214,7 +278,6 @@ namespace NoteEditor
                             new Vector2(0.5f, 0.5f)
                         );
 
-                        // 캐시에 저장
                         imageCache[trackName] = sprite;
 
                         progress?.Report(1.0f);
@@ -279,10 +342,9 @@ namespace NoteEditor
 
                         progress?.Report(0.7f);
 
-                        // 파일 저장
+                        // 앨범 아트를 PersistentDataPath에 저장
                         await SaveAlbumArtAsync(sprite, trackName);
 
-                        // 캐시에 저장
                         imageCache[trackName] = sprite;
 
                         progress?.Report(1.0f);
@@ -303,76 +365,232 @@ namespace NoteEditor
         }
 
         /// <summary>
-        /// 오디오 파일을 저장합니다.
+        /// 앨범 아트를 저장합니다.
         /// </summary>
-        /// <param name="clip">저장할 AudioClip</param>
+        /// <param name="albumArt">저장할 Sprite</param>
         /// <param name="trackName">트랙 이름</param>
         /// <param name="onMainThreadProcess">메인 스레드에서 실행할 텍스처 처리 콜백</param>
         /// <returns>비동기 작업</returns>
-        public async Task SaveAudioAsync(
-            AudioClip clip,
+        public async Task SaveAlbumArtAsync(
+            Sprite albumArt,
             string trackName,
-            Action<float[], short[], byte[]> onMainThreadProcess = null
+            Action<byte[]> onMainThreadProcess = null
         )
         {
-            if (clip == null)
+            if (albumArt == null)
                 return;
 
-            string filePath = AudioPathProvider.GetAudioFilePath(trackName);
+            string filePath = AudioPathProvider.GetAlbumArtPath(trackName);
 
-            // 메인 스레드에서 AudioClip 데이터 추출
-            float[] samples = new float[clip.samples * clip.channels];
-            clip.GetData(samples, 0);
-
-            // 메인 스레드에서 AudioClip 속성 추출
-            int frequency = clip.frequency;
-            int channels = clip.channels;
-            int sampleCount = clip.samples;
-
-            // 메인 스레드에서 추가 처리가 필요한 경우
-            short[] intData = new short[samples.Length];
-            byte[] bytesData = new byte[samples.Length * 2];
+            byte[] bytes = albumArt.texture.EncodeToPNG();
 
             if (onMainThreadProcess != null)
             {
-                onMainThreadProcess(samples, intData, bytesData);
-            }
-            else
-            {
-                // 기본 처리 로직
-                int rescaleFactor = 32767;
-                for (int i = 0; i < samples.Length; i++)
-                {
-                    intData[i] = (short)(samples[i] * rescaleFactor);
-                    byte[] byteArr = BitConverter.GetBytes(intData[i]);
-                    byteArr.CopyTo(bytesData, i * 2);
-                }
+                onMainThreadProcess(bytes);
             }
 
-            // 파일 저장은 백그라운드 스레드에서 수행
             await Task.Run(() =>
             {
                 try
                 {
                     AudioPathProvider.EnsureDirectoriesExist();
-
-                    // WavHelper.Save 대신 직접 파일 저장 로직 구현
-                    using (FileStream fileStream = CreateEmptyWav(filePath))
-                    {
-                        WriteWavHeader(fileStream, frequency, channels, sampleCount);
-                        fileStream.Write(bytesData, 0, bytesData.Length);
-                    }
-
-                    Debug.Log($"트랙 저장됨: {filePath}");
+                    File.WriteAllBytes(filePath, bytes);
+                    Debug.Log($"앨범 아트 저장됨: {filePath}");
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"오디오 파일 저장 중 오류 발생: {ex.Message}");
+                    Debug.LogError($"앨범 아트 저장 중 오류 발생: {ex.Message}");
                 }
             });
         }
 
-        // WAV 파일 생성을 위한 헬퍼 메서드
+        #endregion
+
+        #region 메타데이터 관련 메서드
+
+        /// <summary>
+        /// 트랙 메타데이터를 로드합니다.
+        /// </summary>
+        /// <returns>트랙 메타데이터 리스트</returns>
+        public async Task<List<TrackData>> LoadMetadataAsync()
+        {
+            string filePath = AudioPathProvider.TrackDataPath;
+
+            if (!File.Exists(filePath))
+            {
+                Debug.Log("메타데이터 파일이 없습니다.");
+                return new List<TrackData>();
+            }
+
+            try
+            {
+                string json = await Task.Run(() => File.ReadAllText(filePath));
+                return JsonConvert.DeserializeObject<List<TrackData>>(json);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"메타데이터 로드 중 오류 발생: {ex.Message}");
+                return new List<TrackData>();
+            }
+        }
+
+        /// <summary>
+        /// 트랙 메타데이터를 저장합니다.
+        /// </summary>
+        /// <param name="metadata">저장할 메타데이터 리스트</param>
+        /// <returns>비동기 작업</returns>
+        public async Task SaveMetadataAsync(List<TrackData> metadata)
+        {
+            string filePath = AudioPathProvider.TrackDataPath;
+
+            try
+            {
+                AudioPathProvider.EnsureDirectoriesExist();
+
+                var dataPath = Path.Combine(filePath, "TrackData.json");
+
+                string json = JsonConvert.SerializeObject(metadata);
+                await Task.Run(() => File.WriteAllText(dataPath, json));
+
+                Debug.Log("트랙 메타데이터가 저장되었습니다.");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"메타데이터 저장 중 오류 발생: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 트랙 파일을 삭제합니다.
+        /// </summary>
+        /// <param name="trackName">삭제할 트랙 이름</param>
+        /// <returns>비동기 작업</returns>
+        public async Task DeleteTrackFilesAsync(string trackName)
+        {
+            await Task.Run(() =>
+            {
+                try
+                {
+                    string audioFilePath = AudioPathProvider.GetAudioFilePath(trackName);
+                    if (File.Exists(audioFilePath))
+                    {
+                        File.Delete(audioFilePath);
+                        Debug.Log($"트랙 파일 삭제됨: {audioFilePath}");
+                    }
+
+                    string albumArtPath = AudioPathProvider.GetAlbumArtPath(trackName);
+                    if (File.Exists(albumArtPath))
+                    {
+                        File.Delete(albumArtPath);
+                        Debug.Log($"앨범 아트 파일 삭제됨: {albumArtPath}");
+                    }
+
+                    audioCache.Remove(trackName);
+                    imageCache.Remove(trackName);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"트랙 파일 삭제 중 오류 발생: {ex.Message}");
+                }
+            });
+        }
+
+        /// <summary>
+        /// 모든 트랙 파일을 삭제합니다.
+        /// </summary>
+        /// <returns>비동기 작업</returns>
+        public async Task DeleteAllTrackFilesAsync()
+        {
+            await Task.Run(() =>
+            {
+                try
+                {
+                    if (Directory.Exists(AudioPathProvider.BasePath))
+                    {
+                        string[] audioFiles = Directory.GetFiles(
+                            AudioPathProvider.BasePath,
+                            "*.wav"
+                        );
+                        foreach (string file in audioFiles)
+                        {
+                            File.Delete(file);
+                        }
+                        Debug.Log("모든 오디오 파일이 삭제되었습니다.");
+                    }
+
+                    if (Directory.Exists(AudioPathProvider.AlbumArtPath))
+                    {
+                        string[] artFiles = Directory.GetFiles(
+                            AudioPathProvider.AlbumArtPath,
+                            "*.png"
+                        );
+                        foreach (string file in artFiles)
+                        {
+                            File.Delete(file);
+                        }
+                        Debug.Log("모든 앨범 아트 파일이 삭제되었습니다.");
+                    }
+
+                    if (File.Exists(AudioPathProvider.TrackDataPath))
+                    {
+                        File.Delete(AudioPathProvider.TrackDataPath);
+                        Debug.Log("메타데이터 파일이 삭제되었습니다.");
+                    }
+
+                    ClearCache();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"모든 트랙 파일 삭제 중 오류 발생: {ex.Message}");
+                }
+            });
+        }
+
+        #endregion
+
+        #region 유틸리티 메서드
+
+        /// <summary>
+        /// 캐시를 초기화합니다.
+        /// </summary>
+        public void ClearCache()
+        {
+            audioCache.Clear();
+            imageCache.Clear();
+            Debug.Log("오디오 및 이미지 캐시가 초기화되었습니다.");
+        }
+
+        /// <summary>
+        /// 파일 확장자로부터 오디오 타입을 가져옵니다.
+        /// </summary>
+        /// <param name="filePath">파일 경로</param>
+        /// <returns>오디오 타입</returns>
+        private AudioType GetAudioTypeFromExtension(string filePath)
+        {
+            string extension = Path.GetExtension(filePath).ToLower();
+
+            switch (extension)
+            {
+                case ".mp3":
+                    return AudioType.MPEG;
+                case ".ogg":
+                    return AudioType.OGGVORBIS;
+                case ".wav":
+                    return AudioType.WAV;
+                case ".aiff":
+                case ".aif":
+                    return AudioType.AIFF;
+                default:
+                    Debug.LogWarning($"지원되지 않는 오디오 형식: {extension}, WAV로 처리합니다.");
+                    return AudioType.WAV;
+            }
+        }
+
+        /// <summary>
+        /// WAV 파일 생성을 위한 헬퍼 메서드
+        /// </summary>
+        /// <param name="filepath">파일 경로</param>
+        /// <returns>FileStream</returns>
         private FileStream CreateEmptyWav(string filepath)
         {
             string directoryPath = Path.GetDirectoryName(filepath);
@@ -392,7 +610,13 @@ namespace NoteEditor
             return fileStream;
         }
 
-        // WAV 헤더 작성 메서드 - AudioClip 대신 필요한 값들을 직접 전달받음
+        /// <summary>
+        /// WAV 헤더 작성 메서드 - AudioClip 대신 필요한 값들을 직접 전달받음
+        /// </summary>
+        /// <param name="fileStream">파일 스트림</param>
+        /// <param name="frequency">주파수</param>
+        /// <param name="channels">채널</param>
+        /// <param name="samples">샘플</param>
         private void WriteWavHeader(FileStream fileStream, int frequency, int channels, int samples)
         {
             fileStream.Seek(0, SeekOrigin.Begin);
@@ -441,220 +665,6 @@ namespace NoteEditor
             fileStream.Write(subChunk2, 0, 4);
         }
 
-        /// <summary>
-        /// 앨범 아트를 저장합니다.
-        /// </summary>
-        /// <param name="albumArt">저장할 Sprite</param>
-        /// <param name="trackName">트랙 이름</param>
-        /// <param name="onMainThreadProcess">메인 스레드에서 실행할 텍스처 처리 콜백</param>
-        /// <returns>비동기 작업</returns>
-        public async Task SaveAlbumArtAsync(
-            Sprite albumArt,
-            string trackName,
-            Action<byte[]> onMainThreadProcess = null
-        )
-        {
-            if (albumArt == null)
-                return;
-
-            string filePath = AudioPathProvider.GetAlbumArtPath(trackName);
-
-            // 메인 스레드에서 텍스처 데이터 추출
-            byte[] bytes = albumArt.texture.EncodeToPNG();
-
-            // 메인 스레드에서 추가 처리가 필요한 경우
-            if (onMainThreadProcess != null)
-            {
-                onMainThreadProcess(bytes);
-            }
-
-            // 파일 저장은 백그라운드 스레드에서 수행
-            await Task.Run(() =>
-            {
-                try
-                {
-                    AudioPathProvider.EnsureDirectoriesExist();
-                    File.WriteAllBytes(filePath, bytes);
-                    Debug.Log($"앨범 아트 저장됨: {filePath}");
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"앨범 아트 저장 중 오류 발생: {ex.Message}");
-                }
-            });
-        }
-
-        /// <summary>
-        /// 트랙 메타데이터를 로드합니다.
-        /// </summary>
-        /// <returns>트랙 메타데이터 리스트</returns>
-        public async Task<List<TrackMetadata>> LoadMetadataAsync()
-        {
-            string filePath = AudioPathProvider.MetadataPath;
-
-            if (!File.Exists(filePath))
-            {
-                Debug.Log("메타데이터 파일이 없습니다.");
-                return new List<TrackMetadata>();
-            }
-
-            try
-            {
-                string json = await Task.Run(() => File.ReadAllText(filePath));
-                return JsonConvert.DeserializeObject<List<TrackMetadata>>(json);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"메타데이터 로드 중 오류 발생: {ex.Message}");
-                return new List<TrackMetadata>();
-            }
-        }
-
-        /// <summary>
-        /// 트랙 메타데이터를 저장합니다.
-        /// </summary>
-        /// <param name="metadata">저장할 메타데이터 리스트</param>
-        /// <returns>비동기 작업</returns>
-        public async Task SaveMetadataAsync(List<TrackMetadata> metadata)
-        {
-            string filePath = AudioPathProvider.MetadataPath;
-
-            try
-            {
-                AudioPathProvider.EnsureDirectoriesExist();
-
-                string json = JsonConvert.SerializeObject(metadata, Formatting.Indented);
-                await Task.Run(() => File.WriteAllText(filePath, json));
-
-                Debug.Log("트랙 메타데이터가 저장되었습니다.");
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"메타데이터 저장 중 오류 발생: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// 트랙 파일을 삭제합니다.
-        /// </summary>
-        /// <param name="trackName">삭제할 트랙 이름</param>
-        /// <returns>비동기 작업</returns>
-        public async Task DeleteTrackFilesAsync(string trackName)
-        {
-            await Task.Run(() =>
-            {
-                try
-                {
-                    // 오디오 파일 삭제
-                    string audioFilePath = AudioPathProvider.GetAudioFilePath(trackName);
-                    if (File.Exists(audioFilePath))
-                    {
-                        File.Delete(audioFilePath);
-                        Debug.Log($"트랙 파일 삭제됨: {audioFilePath}");
-                    }
-
-                    // 앨범 아트 파일 삭제
-                    string albumArtPath = AudioPathProvider.GetAlbumArtPath(trackName);
-                    if (File.Exists(albumArtPath))
-                    {
-                        File.Delete(albumArtPath);
-                        Debug.Log($"앨범 아트 파일 삭제됨: {albumArtPath}");
-                    }
-
-                    // 캐시에서 제거
-                    audioCache.Remove(trackName);
-                    imageCache.Remove(trackName);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"트랙 파일 삭제 중 오류 발생: {ex.Message}");
-                }
-            });
-        }
-
-        /// <summary>
-        /// 모든 트랙 파일을 삭제합니다.
-        /// </summary>
-        /// <returns>비동기 작업</returns>
-        public async Task DeleteAllTrackFilesAsync()
-        {
-            await Task.Run(() =>
-            {
-                try
-                {
-                    // 오디오 파일 삭제
-                    if (Directory.Exists(AudioPathProvider.BasePath))
-                    {
-                        string[] audioFiles = Directory.GetFiles(
-                            AudioPathProvider.BasePath,
-                            "*.wav"
-                        );
-                        foreach (string file in audioFiles)
-                        {
-                            File.Delete(file);
-                        }
-                        Debug.Log("모든 오디오 파일이 삭제되었습니다.");
-                    }
-
-                    // 앨범 아트 파일 삭제
-                    if (Directory.Exists(AudioPathProvider.AlbumArtPath))
-                    {
-                        string[] artFiles = Directory.GetFiles(
-                            AudioPathProvider.AlbumArtPath,
-                            "*.png"
-                        );
-                        foreach (string file in artFiles)
-                        {
-                            File.Delete(file);
-                        }
-                        Debug.Log("모든 앨범 아트 파일이 삭제되었습니다.");
-                    }
-
-                    // 메타데이터 파일 삭제
-                    if (File.Exists(AudioPathProvider.MetadataPath))
-                    {
-                        File.Delete(AudioPathProvider.MetadataPath);
-                        Debug.Log("메타데이터 파일이 삭제되었습니다.");
-                    }
-
-                    // 캐시 초기화
-                    ClearCache();
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"모든 트랙 파일 삭제 중 오류 발생: {ex.Message}");
-                }
-            });
-        }
-
-        /// <summary>
-        /// 캐시를 초기화합니다.
-        /// </summary>
-        public void ClearCache()
-        {
-            audioCache.Clear();
-            imageCache.Clear();
-            Debug.Log("오디오 및 이미지 캐시가 초기화되었습니다.");
-        }
-
-        /// <summary>
-        /// 파일 확장자에 따른 AudioType을 반환합니다.
-        /// </summary>
-        private AudioType GetAudioTypeFromExtension(string filePath)
-        {
-            string extension = Path.GetExtension(filePath).ToLower();
-
-            switch (extension)
-            {
-                case ".mp3":
-                    return AudioType.MPEG;
-                case ".wav":
-                    return AudioType.WAV;
-                case ".ogg":
-                    return AudioType.OGGVORBIS;
-                default:
-                    return AudioType.UNKNOWN;
-            }
-        }
+        #endregion
     }
 }

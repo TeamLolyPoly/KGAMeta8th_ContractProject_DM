@@ -346,7 +346,7 @@ namespace NoteEditor
                     if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
                     {
                         isLoadingAlbumArt = true;
-                        audioDataManager.LoadAlbumArt(paths[0], trackDropdown.selectedItemIndex);
+                        audioDataManager.SetAlbumArt(paths[0], trackDropdown.selectedItemIndex);
                     }
                 }
             );

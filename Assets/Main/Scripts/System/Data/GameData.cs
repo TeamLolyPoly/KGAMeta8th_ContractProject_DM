@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using NoteEditor;
 using UnityEngine;
 
@@ -8,7 +9,7 @@ public class NoteData
 {
     //기본 노트 타입은 None으로 설정
     public NoteBaseType baseType = NoteBaseType.None;
-    public NoteHitType noteType;// Hand(왼쪽) 또는 Red/Blue(오른쪽)
+    public NoteHitType noteType; // Hand(왼쪽) 또는 Red/Blue(오른쪽)
     public NoteDirection direction;
     public NoteAxis noteAxis = NoteAxis.PZ;
     public Vector3 startPosition;
@@ -30,22 +31,15 @@ public class NoteData
     public float targetRadius;
     public float spawnInterval;
 }
+
 [Serializable]
 public class NoteList
 {
     public List<NoteData> patterns = new List<NoteData>();
 }
 
-public class TrackData
-{
-    public string trackName;
-    public Sprite albumArt;
-    public AudioClip trackAudio;
-    public float bpm = 120f;
-}
-
 [Serializable]
-public class TrackMetadata
+public class TrackData
 {
     public string trackName;
     public string artistName;
@@ -54,12 +48,48 @@ public class TrackMetadata
     public string genre;
     public float duration;
     public float bpm = 120f;
-}
 
-[Serializable]
-public class TrackMetadataList
-{
-    public List<TrackMetadata> tracks;
+    [JsonIgnore]
+    private Sprite _albumArt;
+
+    [JsonIgnore]
+    private AudioClip _audioClip;
+
+    [JsonIgnore]
+    public Sprite albumArt
+    {
+        get
+        {
+            if (
+                _albumArt == null
+                && !string.IsNullOrEmpty(trackName)
+                && AudioDataManager.Instance != null
+            )
+            {
+                _albumArt = AudioDataManager.Instance.GetAlbumArt(trackName);
+            }
+            return _albumArt;
+        }
+        set { _albumArt = value; }
+    }
+
+    [JsonIgnore]
+    public AudioClip trackAudio
+    {
+        get
+        {
+            if (
+                _audioClip == null
+                && !string.IsNullOrEmpty(trackName)
+                && AudioDataManager.Instance != null
+            )
+            {
+                _audioClip = AudioDataManager.Instance.GetAudioClip(trackName);
+            }
+            return _audioClip;
+        }
+        set { _audioClip = value; }
+    }
 }
 
 [Serializable]
