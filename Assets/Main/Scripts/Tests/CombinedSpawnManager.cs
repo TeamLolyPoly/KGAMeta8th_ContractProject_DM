@@ -332,7 +332,7 @@ public class CombinedSpawnManager : MonoBehaviour
         Vector3 startPos = gridManager.GetCellPosition(gridManager.SourceGrid, x, y);
         Vector3 targetPos = gridManager.GetCellPosition(gridManager.TargetGrid, x, y);
 
-        noteData.target = targetPos;
+        noteData.targetPosition = targetPos;
 
         GameObject prefab = isLeftHand ? leftNotePrefab : rightNotePrefab;
         GameObject note = Instantiate(prefab, startPos, Quaternion.identity);
@@ -465,7 +465,7 @@ public class CombinedSpawnManager : MonoBehaviour
             noteType = data.noteType,
             direction = data.direction,
             noteAxis = data.noteAxis,
-            target = targetPos,
+            targetPosition = targetPos,
             noteSpeed = data.noteSpeed,
         };
 
@@ -612,9 +612,9 @@ public class CombinedSpawnManager : MonoBehaviour
             {
                 baseType = NoteBaseType.Long, // 원형 노트는 항상 롱노트
                 noteSpeed = arcMoveSpeed,
-                target = targetPos,
+                startPosition = sourcePos,
+                targetPosition = targetPos,
                 direction = NoteDirection.North, // 또는 상황에 맞는 방향
-                noteAxis = NoteAxis.PZ, // 또는 상황에 맞는 축
             };
 
             NoteGameManager.Instance.SetupNoteTypeData(noteData, false); // false = 오른쪽
@@ -624,7 +624,7 @@ public class CombinedSpawnManager : MonoBehaviour
 
             // 세그먼트 이동 컴포넌트 추가
             ArcSegmentMover mover = segment.AddComponent<ArcSegmentMover>();
-            mover.Initialize(sourcePos, targetPos, arcMoveSpeed);
+            mover.Initialize(noteData);
 
             //세그먼트 초기화
             if (segment.TryGetComponent<Note>(out Note note))
@@ -670,10 +670,10 @@ public class CombinedSpawnManager : MonoBehaviour
 
     public void TestSaveArcNotePattern()
     {
-        var arcNoteList = new ArcNoteList();
+        var NoteList = new NoteList();
 
         // 테스트용 패턴 데이터 생성
-        var testPattern = new ArcNoteData
+        var testPattern = new NoteData
         {
             startIndex = 0,
             arcLength = 10,
@@ -681,14 +681,14 @@ public class CombinedSpawnManager : MonoBehaviour
             isClockwise = true,
             sourceRadius = sourceRadius,
             targetRadius = targetRadius,
-            moveSpeed = arcMoveSpeed,
+            noteSpeed = arcMoveSpeed,
             spawnInterval = segmentSpawnInterval,
             noteType = NoteHitType.Red,
         };
 
-        arcNoteList.patterns.Add(testPattern);
+        NoteList.patterns.Add(testPattern);
 
-        string json = JsonUtility.ToJson(arcNoteList, true);
+        string json = JsonUtility.ToJson(NoteList, true);
         string path = Application.dataPath + "/Resources/TestArcNotePatterns.json";
         System.IO.File.WriteAllText(path, json);
 
@@ -709,7 +709,7 @@ public class CombinedSpawnManager : MonoBehaviour
         }
 
         string json = System.IO.File.ReadAllText(path);
-        var loadedPatterns = JsonUtility.FromJson<ArcNoteList>(json);
+        var loadedPatterns = JsonUtility.FromJson<NoteList>(json);
 
         Debug.Log($"Loaded {loadedPatterns.patterns.Count} patterns");
 
