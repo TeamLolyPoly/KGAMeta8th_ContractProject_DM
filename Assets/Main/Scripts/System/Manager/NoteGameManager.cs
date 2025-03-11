@@ -1,8 +1,8 @@
-using UnityEngine;
 using System;
-using Random = UnityEngine.Random;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class NoteGameManager : Singleton<NoteGameManager>, IInitializable
 {
@@ -15,16 +15,22 @@ public class NoteGameManager : Singleton<NoteGameManager>, IInitializable
 
     [SerializeField, Header("호응도 콤보 기준")]
     private int[] engagementThreshold = { 10, 30 };
+
     //현재 점수
     public float currentScore { get; private set; } = 0;
+
     //현재 콤보
     public int combo { get; private set; } = 0;
+
     //최대 콤보
     public int highCombo { get; private set; } = 0;
+
     //현재 배율
     public int Multiplier { get; private set; } = 1;
+
     //정확별 타격 횟수 저장 딕셔너리
-    public Dictionary<NoteRatings, int> ratingComboCount { get; private set; } = new Dictionary<NoteRatings, int>();
+    public Dictionary<NoteRatings, int> ratingComboCount { get; private set; } =
+        new Dictionary<NoteRatings, int>();
     private bool isInitialized = false;
 
     public bool IsInitialized => isInitialized;
@@ -33,6 +39,7 @@ public class NoteGameManager : Singleton<NoteGameManager>, IInitializable
     public event Action<int> onEngagementChange;
 
     private Coroutine engagementCoroutine;
+
     //게임 시작 전 초기화 함수
     public void Initialize()
     {
@@ -55,6 +62,7 @@ public class NoteGameManager : Singleton<NoteGameManager>, IInitializable
 
         isInitialized = true;
     }
+
     private void Start()
     {
         Initialize();
@@ -87,7 +95,8 @@ public class NoteGameManager : Singleton<NoteGameManager>, IInitializable
             return;
         }
         combo += 1;
-        if (combo > highCombo) highCombo = combo;
+        if (combo > highCombo)
+            highCombo = combo;
         int ratingScore = GetRatingScore(ratings);
         Multiplier = SetMultiplier();
 
@@ -127,6 +136,7 @@ public class NoteGameManager : Singleton<NoteGameManager>, IInitializable
                 return 0;
         }
     }
+
     //TODO: 콤보 초기화 및 상승시 발생할 이벤트 추가
     private IEnumerator SetEngagementCoroutine()
     {
@@ -151,5 +161,4 @@ public class NoteGameManager : Singleton<NoteGameManager>, IInitializable
             }
         }
     }
-
 }

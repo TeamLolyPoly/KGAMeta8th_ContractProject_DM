@@ -72,9 +72,6 @@ public class CombinedSpawnManager : MonoBehaviour
 
     [Header("타이밍 정보")]
     [SerializeField]
-    private float totalSongLength = 15f;
-
-    [SerializeField]
     private float targetHitTime = 7.5f;
 
     [SerializeField]
