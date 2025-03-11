@@ -17,7 +17,7 @@
     </a>
     <br/>
     <a href="#" alt="Team Size">
-      <img src="https://img.shields.io/badge/Team_Size-9_Members-009688?style=for-the-badge&logo=github&logoColor=white"/>
+      <img src="https://img.shields.io/badge/Team_Size-8_Members-009688?style=for-the-badge&logo=github&logoColor=white"/>
     </a>
   </p>
 </div>
@@ -92,10 +92,6 @@
   <tr>
     <td align="center" width="200">
       <h4>📋 기획자</h4>
-    </td>
-    <td align="center" width="200">
-      <img src="https://avatars.githubusercontent.com/u/192933139?v=4" width="80" height="80" style="border-radius: 50%"><br/>
-      <b>김성연</b>
     </td>
     <td align="center" width="200">
       <img src="https://avatars.githubusercontent.com/u/192932754?v=4" width="80" height="80" style="border-radius: 50%"><br/>
