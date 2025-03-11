@@ -5,7 +5,7 @@ using UnityEngine;
 public class Note : MonoBehaviour
 {
     [SerializeField, Header("블럭 타격 오차범위")]
-    protected float directionalRange = 10f;
+    protected float directionalRange = 50f;
 
     [SerializeField, Header("노트 점수")]
     protected int NoteScore = 100;
@@ -46,7 +46,7 @@ public class Note : MonoBehaviour
             noteAxis = data.noteAxis,
             direction = data.direction,
             target = data.target,
-            moveSpeed = data.moveSpeed,
+            noteSpeed = data.noteSpeed,
             noteType = data.noteType,
         };
         if (noteCollider != null)
@@ -73,7 +73,7 @@ public class Note : MonoBehaviour
             double elapsedTime = AudioSettings.dspTime - spawnDspTime;
             float progress = (float)(
                 elapsedTime
-                * noteData.moveSpeed
+                * noteData.noteSpeed
                 / Vector3.Distance(transform.position, noteData.target)
             );
 

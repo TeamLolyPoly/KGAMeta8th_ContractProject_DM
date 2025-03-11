@@ -323,7 +323,7 @@ public class CombinedSpawnManager : MonoBehaviour
 
         noteData.direction = (NoteDirection)Random.Range(1, 8);
         noteData.noteAxis = NoteAxis.PZ;
-        noteData.moveSpeed = gridNoteSpeed;
+        noteData.noteSpeed = gridNoteSpeed;
 
         int x = isLeftHand ? Random.Range(0, 3) : Random.Range(2, 5);
         int y = Random.Range(0, gridManager.VerticalCells);
@@ -370,38 +370,36 @@ public class CombinedSpawnManager : MonoBehaviour
     /// </summary>
     public void TestSaveGridNotePattern()
     {
-        var gridNoteList = new GridNoteList();
+        var NoteList = new NoteList();
 
         // 테스트용 왼쪽 그리드 노트
-        var leftGridNote = new GridNoteData
+        var leftGridNote = new NoteData
         {
             isLeftGrid = true,
-            gridX = 1,
-            gridY = 1,
+            gridpos = new Vector2(1, 1),
             baseType = NoteBaseType.Short,
             noteType = NoteHitType.Hand,
             direction = NoteDirection.North,
             noteAxis = NoteAxis.PZ,
-            moveSpeed = gridNoteSpeed,
+            noteSpeed = gridNoteSpeed,
         };
 
         // 테스트용 오른쪽 그리드 노트
-        var rightGridNote = new GridNoteData
+        var rightGridNote = new NoteData
         {
             isLeftGrid = false,
-            gridX = 3,
-            gridY = 2,
+            gridpos = new Vector2(3, 2),
             baseType = NoteBaseType.Short,
             noteType = NoteHitType.Red,
             direction = NoteDirection.South,
             noteAxis = NoteAxis.PZ,
-            moveSpeed = gridNoteSpeed,
+            noteSpeed = gridNoteSpeed,
         };
 
-        gridNoteList.patterns.Add(leftGridNote);
-        gridNoteList.patterns.Add(rightGridNote);
+        NoteList.patterns.Add(leftGridNote);
+        NoteList.patterns.Add(rightGridNote);
 
-        string json = JsonUtility.ToJson(gridNoteList, true);
+        string json = JsonUtility.ToJson(NoteList, true);
         string path = Application.dataPath + "/Resources/TestGridNotePatterns.json";
         System.IO.File.WriteAllText(path, json);
 
@@ -422,7 +420,7 @@ public class CombinedSpawnManager : MonoBehaviour
         }
 
         string json = System.IO.File.ReadAllText(path);
-        var loadedPatterns = JsonUtility.FromJson<GridNoteList>(json);
+        var loadedPatterns = JsonUtility.FromJson<NoteList>(json);
 
         Debug.Log($"Loaded {loadedPatterns.patterns.Count} grid note patterns");
 
@@ -430,12 +428,12 @@ public class CombinedSpawnManager : MonoBehaviour
         {
             Debug.Log(
                 $"Grid Note Pattern:"
-                    + $"\nGrid Position: {(pattern.isLeftGrid ? "Left" : "Right")} ({pattern.gridX}, {pattern.gridY})"
+                    + $"\nGrid Position: {(pattern.isLeftGrid ? "Left" : "Right")} ({pattern.gridpos.x}, {pattern.gridpos.y})"
                     + $"\nBase Type: {pattern.baseType}"
                     + $"\nNote Type: {pattern.noteType}"
                     + $"\nDirection: {pattern.direction}"
                     + $"\nAxis: {pattern.noteAxis}"
-                    + $"\nMove Speed: {pattern.moveSpeed}"
+                    + $"\nMove Speed: {pattern.noteSpeed}"
             );
 
             // 선택적: 로드된 패턴으로 실제 노트 생성
@@ -447,17 +445,17 @@ public class CombinedSpawnManager : MonoBehaviour
     /// 저장된 데이터를 기반으로 그리드 노트를 생성합니다.
     /// </summary>
 
-    private void SpawnGridNoteFromData(GridNoteData data)
+    private void SpawnGridNoteFromData(NoteData data)
     {
         Vector3 startPos = gridManager.GetCellPosition(
             gridManager.SourceGrid,
-            data.gridX,
-            data.gridY
+            (int)data.gridpos.x,
+            (int)data.gridpos.y
         );
         Vector3 targetPos = gridManager.GetCellPosition(
             gridManager.TargetGrid,
-            data.gridX,
-            data.gridY
+            (int)data.gridpos.x,
+            (int)data.gridpos.y
         );
 
         NoteData noteData = new NoteData
@@ -467,7 +465,7 @@ public class CombinedSpawnManager : MonoBehaviour
             direction = data.direction,
             noteAxis = data.noteAxis,
             target = targetPos,
-            moveSpeed = data.moveSpeed,
+            noteSpeed = data.noteSpeed,
         };
 
         GameObject prefab = data.isLeftGrid ? leftNotePrefab : rightNotePrefab;
@@ -612,7 +610,7 @@ public class CombinedSpawnManager : MonoBehaviour
             NoteData noteData = new NoteData()
             {
                 baseType = NoteBaseType.Long, // 원형 노트는 항상 롱노트
-                moveSpeed = arcMoveSpeed,
+                noteSpeed = arcMoveSpeed,
                 target = targetPos,
                 direction = NoteDirection.North, // 또는 상황에 맞는 방향
                 noteAxis = NoteAxis.PZ, // 또는 상황에 맞는 축

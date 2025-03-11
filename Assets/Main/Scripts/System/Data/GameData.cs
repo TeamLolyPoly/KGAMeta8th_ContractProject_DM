@@ -7,11 +7,15 @@ public class NoteData
 {
     //기본 노트 타입은 숏으로 설정
     public NoteBaseType baseType = NoteBaseType.Short;
-    public NoteHitType noteType;
+    public NoteHitType noteType;// Hand(왼쪽) 또는 Red/Blue(오른쪽)
     public NoteDirection direction;
-    public NoteAxis noteAxis;
+    public NoteAxis noteAxis = NoteAxis.PZ;
     public Vector3 target;
-    public float moveSpeed;
+    public Vector2 gridpos; // 그리드 x, y 위치
+    public bool isLeftGrid; // 왼쪽/오른쪽 그리드 구분
+    public float noteSpeed;
+    public int bar;
+    public int beat;
 }
 
 [Serializable]
@@ -38,27 +42,10 @@ public class ArcNoteList
 {
     public List<ArcNoteData> patterns = new List<ArcNoteData>();
 }
-
 [Serializable]
-public class GridNoteData
+public class NoteList
 {
-    // 기본 정보
-    public bool isLeftGrid; // 왼쪽/오른쪽 그리드 구분
-    public int gridX; // 그리드 X 위치 (0-2: 왼쪽, 2-5: 오른쪽)
-    public int gridY; // 그리드 Y 위치
-
-    // 노트 설정
-    public NoteBaseType baseType = NoteBaseType.Short;
-    public NoteHitType noteType; // Hand(왼쪽) 또는 Red/Blue(오른쪽)
-    public NoteDirection direction;
-    public NoteAxis noteAxis;
-    public float moveSpeed;
-}
-
-[Serializable]
-public class GridNoteList
-{
-    public List<GridNoteData> patterns = new List<GridNoteData>();
+    public List<NoteData> patterns = new List<NoteData>();
 }
 
 public class TrackData
