@@ -370,8 +370,11 @@ namespace NoteEditor
             var railGenerator = FindObjectOfType<RailGenerator>();
             if (railGenerator != null)
             {
-                railGenerator.UpdateWaveform(track.trackAudio);
+                Debug.Log(
+                    $"SelectTrackInternal - Track: {track.trackName}, BPM: {track.bpm}, Audio Length: {track.trackAudio.length}s"
+                );
                 railGenerator.UpdateBeatSettings(track.bpm, 4);
+                railGenerator.UpdateWaveform(track.trackAudio);
             }
 
             OnTrackChanged?.Invoke(track);
@@ -394,7 +397,7 @@ namespace NoteEditor
         {
             if (currentTrack != null && currentAudioSource.clip != null)
             {
-                double startTime = AudioSettings.dspTime + 0.1; // 0.1초 후 정확한 시간에 재생 (지연 방지)
+                double startTime = AudioSettings.dspTime;
                 currentAudioSource.PlayScheduled(startTime);
                 isPlaying = true;
             }
@@ -486,37 +489,6 @@ namespace NoteEditor
         {
             float newVolume = Mathf.Clamp01(currentAudioSource.volume + delta);
             SetVolume(newVolume);
-        }
-
-        /// <summary>
-        /// 현재 BPM을 설정합니다.
-        /// </summary>
-        /// <param name="bpm">설정할 BPM 값</param>
-        public void SetBPM(float bpm)
-        {
-            if (bpm <= 0)
-            {
-                Debug.LogWarning("BPM은 0보다 커야 합니다.");
-                return;
-            }
-
-            CurrentBPM = bpm;
-
-            // 웨이브폼 비트 마커 업데이트
-            var railGenerator = FindObjectOfType<RailGenerator>();
-            if (railGenerator != null)
-            {
-                railGenerator.UpdateBeatSettings(bpm, 4); // 기본 4/4 박자
-            }
-        }
-
-        /// <summary>
-        /// 현재 BPM을 가져옵니다.
-        /// </summary>
-        /// <returns>현재 BPM 값</returns>
-        public float GetBPM()
-        {
-            return CurrentBPM;
         }
     }
 }

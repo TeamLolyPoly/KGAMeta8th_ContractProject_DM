@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,10 +12,10 @@ namespace NoteEditor
         private int laneCount = 5;
 
         [SerializeField]
-        private float unitsPerBar = 10f; // 한 마디당 유닛 길이
+        private float unitsPerBar = 10f;
 
         [SerializeField]
-        private float minRailLength = 20f; // 최소 레일 길이
+        private float minRailLength = 20f;
 
         [SerializeField]
         private float railWidth = 1f;
@@ -61,7 +62,7 @@ namespace NoteEditor
         private float railLength = 20f;
 
         private AudioClip currentAudioClip;
-        private float totalBars; // 전체 마디 수
+        private float totalBars;
 
         public float TotalBars => totalBars;
         public float UnitsPerBar => unitsPerBar;
@@ -85,7 +86,6 @@ namespace NoteEditor
             AudioManager.Instance.OnTrackChanged += OnTrackChanged;
             AudioManager.Instance.OnBPMChanged += OnBPMChanged;
 
-            // 현재 트랙이 있다면 초기 설정
             if (AudioManager.Instance.currentTrack != null)
             {
                 OnTrackChanged(AudioManager.Instance.currentTrack);
@@ -104,7 +104,7 @@ namespace NoteEditor
                         CreateWaveformDisplay();
                         isInitialized = true;
                     }
-                    catch (System.Exception e)
+                    catch (Exception e)
                     {
                         Debug.LogError($"Failed to initialize RailGenerator: {e}");
                         CleanupObjects();
@@ -143,7 +143,7 @@ namespace NoteEditor
                 {
                     if (lane != null)
                     {
-                        DestroyImmediate(lane);
+                        Destroy(lane);
                     }
                 }
                 lanes = null;
@@ -155,7 +155,7 @@ namespace NoteEditor
                 {
                     if (division != null)
                     {
-                        DestroyImmediate(division);
+                        Destroy(division);
                     }
                 }
                 divisions = null;
@@ -163,7 +163,7 @@ namespace NoteEditor
 
             if (judgeLine != null)
             {
-                DestroyImmediate(judgeLine);
+                Destroy(judgeLine);
                 judgeLine = null;
             }
 
@@ -171,7 +171,7 @@ namespace NoteEditor
             {
                 if (waveformDisplay.gameObject != null)
                 {
-                    DestroyImmediate(waveformDisplay.gameObject);
+                    Destroy(waveformDisplay.gameObject);
                 }
                 waveformDisplay = null;
             }
@@ -180,14 +180,14 @@ namespace NoteEditor
             {
                 if (waveformCanvas.gameObject != null)
                 {
-                    DestroyImmediate(waveformCanvas.gameObject);
+                    Destroy(waveformCanvas.gameObject);
                 }
                 waveformCanvas = null;
             }
 
             if (railContainer != null)
             {
-                DestroyImmediate(railContainer);
+                Destroy(railContainer);
                 railContainer = null;
             }
 
@@ -198,7 +198,7 @@ namespace NoteEditor
         {
             if (railContainer != null)
             {
-                DestroyImmediate(railContainer);
+                Destroy(railContainer);
                 railContainer = null;
             }
 
@@ -232,17 +232,14 @@ namespace NoteEditor
                     lanes[i] = lane;
                 }
 
-                // BPM 기반 마디와 비트 라인 생성
                 float secondsPerBeat = 60f / bpm;
                 float secondsPerBar = secondsPerBeat * beatsPerBar;
                 float totalSeconds = currentAudioClip != null ? currentAudioClip.length : 0f;
 
-                // 정확한 마디 수 계산
                 float exactBars = totalSeconds / secondsPerBar;
 
                 List<GameObject> divisionsList = new List<GameObject>();
 
-                // 마디와 비트 라인 생성
                 int totalBars = Mathf.CeilToInt(exactBars);
                 for (int bar = 0; bar <= totalBars; bar++)
                 {
@@ -250,7 +247,6 @@ namespace NoteEditor
 
                     if (barStartPos <= railLength)
                     {
-                        // 마디 라인 생성
                         GameObject barLine = GameObject.CreatePrimitive(PrimitiveType.Cube);
                         barLine.name = $"BarLine_{bar}";
                         barLine.transform.parent = railContainer.transform;
@@ -261,7 +257,6 @@ namespace NoteEditor
                         barRenderer.material.color = barLineColor;
                         divisionsList.Add(barLine);
 
-                        // 해당 마디 내의 비트 라인 생성
                         for (int beat = 1; beat < beatsPerBar; beat++)
                         {
                             float beatPos =
@@ -299,7 +294,7 @@ namespace NoteEditor
                 Renderer judgeRenderer = judgeLine.GetComponent<Renderer>();
                 judgeRenderer.material.color = new Color(0, 0.8f, 1f);
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogError($"Failed to create rail: {e}");
                 CleanupObjects();
@@ -314,7 +309,7 @@ namespace NoteEditor
 
             if (waveformCanvas != null)
             {
-                DestroyImmediate(waveformCanvas.gameObject);
+                Destroy(waveformCanvas.gameObject);
                 waveformCanvas = null;
             }
 
@@ -370,60 +365,16 @@ namespace NoteEditor
                     }
                 }
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogError($"Failed to create waveform display: {e}");
                 if (waveformCanvas != null)
                 {
-                    DestroyImmediate(waveformCanvas.gameObject);
+                    Destroy(waveformCanvas.gameObject);
                     waveformCanvas = null;
                 }
                 throw;
             }
-        }
-
-        private void UpdateWaveformCanvasPosition()
-        {
-            if (waveformCanvas != null && railContainer != null)
-            {
-                float totalWidth = (laneCount * railWidth) + ((laneCount - 1) * railSpacing);
-
-                float rightEdgeX = totalWidth / 2f - 1f;
-
-                waveformCanvas.transform.localPosition = new Vector3(
-                    rightEdgeX - totalWidth,
-                    waveformOffset,
-                    0
-                );
-            }
-        }
-
-        public void SetRailLength(float length)
-        {
-            if (length <= 0)
-                return;
-
-            railLength = length;
-            CleanupObjects();
-            CreateRail();
-            CreateWaveformDisplay();
-        }
-
-        public void SetShowBeatMarkers(bool show)
-        {
-            if (waveformDisplay != null)
-            {
-                waveformDisplay.showBeatMarkers = show;
-                if (waveformDisplay.IsInitialized && show)
-                {
-                    waveformDisplay.GenerateBeatMarkers();
-                }
-            }
-        }
-
-        public WaveformDisplay GetWaveformDisplay()
-        {
-            return waveformDisplay;
         }
 
         public void SetAudioClip(AudioClip clip)
@@ -435,12 +386,10 @@ namespace NoteEditor
             {
                 currentAudioClip = clip;
 
-                // 오디오 길이를 마디 단위로 계산
                 float totalSeconds = clip.length;
                 float secondsPerBar = (60f / bpm) * beatsPerBar;
                 totalBars = totalSeconds / secondsPerBar;
 
-                // 레일 길이 재계산
                 float calculatedLength = totalBars * unitsPerBar;
                 float newLength = Mathf.Max(calculatedLength, minRailLength);
 
@@ -457,7 +406,7 @@ namespace NoteEditor
                     StartCoroutine(WaitForWaveformInitialization(clip));
                 }
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogError($"Failed to set audio clip: {e}");
                 CleanupObjects();
@@ -484,6 +433,10 @@ namespace NoteEditor
 
         public void UpdateBeatSettings(float bpm, int beatsPerBar)
         {
+            Debug.Log(
+                $"UpdateBeatSettings 시작 - 현재 BPM: {this.bpm}, 새 BPM: {bpm}, 현재 railLength: {railLength}"
+            );
+
             this.bpm = bpm;
             this.beatsPerBar = beatsPerBar;
 
@@ -493,11 +446,32 @@ namespace NoteEditor
                 float secondsPerBar = (60f / bpm) * beatsPerBar;
                 totalBars = totalSeconds / secondsPerBar;
 
-                // 마디 수를 올림하지 않고 정확한 값 사용
                 float calculatedLength = totalBars * unitsPerBar;
                 float newLength = Mathf.Max(calculatedLength, minRailLength);
 
-                railLength = newLength;
+                Debug.Log(
+                    $"UpdateBeatSettings 계산 - Audio Length: {totalSeconds}s, Bars: {totalBars}, Calculated Length: {calculatedLength}, New Length: {newLength}"
+                );
+
+                if (!Mathf.Approximately(railLength, newLength))
+                {
+                    railLength = newLength;
+                    Debug.Log($"railLength 업데이트됨: {railLength}");
+
+                    CleanupObjects();
+                    CreateRail();
+                    CreateWaveformDisplay();
+
+                    if (waveformDisplay != null && currentAudioClip != null)
+                    {
+                        waveformDisplay.UpdateWaveform(currentAudioClip);
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogWarning("UpdateBeatSettings called but currentAudioClip is null");
+                railLength = minRailLength;
             }
 
             if (waveformDisplay != null)
@@ -507,14 +481,9 @@ namespace NoteEditor
                 waveformDisplay.SetRailLength(railLength);
             }
 
-            CleanupObjects();
-            CreateRail();
-            CreateWaveformDisplay();
-
-            if (waveformDisplay != null && currentAudioClip != null)
-            {
-                waveformDisplay.UpdateWaveform(currentAudioClip);
-            }
+            Debug.Log(
+                $"UpdateBeatSettings 완료: BPM = {bpm}, BeatsPerBar = {beatsPerBar}, RailLength = {railLength}"
+            );
         }
 
         public void UpdateWaveform(AudioClip clip)
@@ -525,27 +494,13 @@ namespace NoteEditor
             }
         }
 
-        public void SetUnitsPerBar(float units)
-        {
-            if (units <= 0)
-                return;
-
-            unitsPerBar = units;
-
-            // 현재 트랙이 있다면 레일 재생성
-            if (AudioManager.Instance.currentTrack != null)
-            {
-                OnTrackChanged(AudioManager.Instance.currentTrack);
-            }
-        }
-
         private void OnTrackChanged(TrackData track)
         {
             if (track == null)
                 return;
 
             bpm = track.bpm;
-            beatsPerBar = 4; // 기본값으로 4/4 박자 사용
+            beatsPerBar = 4;
 
             if (track.trackAudio != null)
             {
@@ -559,16 +514,6 @@ namespace NoteEditor
                 return;
 
             UpdateBeatSettings(newBpm, beatsPerBar);
-        }
-
-        // 현재 오디오 클립의 정보를 가져오는 메서드 추가
-        public (float totalSeconds, float barsCount) GetCurrentAudioInfo()
-        {
-            if (currentAudioClip == null)
-                return (0f, 0f);
-
-            float totalSeconds = currentAudioClip.length;
-            return (totalSeconds, totalBars);
         }
     }
 }
