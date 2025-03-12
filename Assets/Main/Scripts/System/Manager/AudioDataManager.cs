@@ -65,26 +65,25 @@ namespace NoteEditor
 
         public async Task LoadAllTracksAsync()
         {
-            // 메타데이터 로드
             var metadata = await fileService.LoadMetadataAsync();
             Debug.Log($"메타데이터에서 {metadata.Count}개의 트랙 정보를 로드했습니다.");
 
-            // 기존 트랙 목록 초기화
             tracks.Clear();
 
-            // 각 트랙 정보 처리
             foreach (var trackMetadata in metadata)
             {
                 TrackData track = new TrackData
                 {
                     trackName = trackMetadata.trackName,
                     bpm = trackMetadata.bpm,
+                    artistName = trackMetadata.artistName,
+                    albumName = trackMetadata.albumName,
+                    year = trackMetadata.year,
+                    genre = trackMetadata.genre,
+                    duration = trackMetadata.duration,
                 };
 
-                // 트랙 목록에 추가
                 tracks.Add(track);
-
-                // 오디오 및 앨범 아트 로드는 필요할 때 지연 로드
             }
 
             Debug.Log($"{tracks.Count}개의 트랙이 로드되었습니다.");
@@ -101,7 +100,6 @@ namespace NoteEditor
             IProgress<float> progress = null
         )
         {
-            // 오디오 파일 로드
             var result = await fileService.ImportAudioFileAsync(filePath, progress);
 
             if (result.clip == null)
@@ -110,15 +108,12 @@ namespace NoteEditor
                 return null;
             }
 
-            // 기존 트랙 확인
             TrackData existingTrack = tracks.FirstOrDefault(t => t.trackName == result.trackName);
 
             if (existingTrack != null)
             {
-                // 기존 트랙 업데이트
-                existingTrack.trackAudio = result.clip;
+                existingTrack.TrackAudio = result.clip;
 
-                // 메타데이터 업데이트
                 await UpdateTrackMetadataAsync();
 
                 OnTrackUpdated?.Invoke(existingTrack);
@@ -128,15 +123,9 @@ namespace NoteEditor
             }
             else
             {
-                // 새 트랙 생성
-                TrackData newTrack = new TrackData
-                {
-                    trackName = result.trackName,
-                    bpm = 120f, // 기본 BPM
-                };
+                TrackData newTrack = new TrackData { trackName = result.trackName, bpm = 120f };
 
-                // 오디오 클립 설정
-                newTrack.trackAudio = result.clip;
+                newTrack.TrackAudio = result.clip;
 
                 tracks.Add(newTrack);
 
@@ -162,28 +151,23 @@ namespace NoteEditor
                 return;
             }
 
-            // 트랙 찾기
             TrackData existingTrack = tracks.FirstOrDefault(t => t.trackName == track.trackName);
 
             if (existingTrack != null)
             {
-                // 트랙 업데이트
                 int index = tracks.IndexOf(existingTrack);
                 tracks[index] = track;
 
-                // 오디오 파일 저장 (필요한 경우)
-                if (track.trackAudio != null)
+                if (track.TrackAudio != null)
                 {
-                    await fileService.SaveAudioAsync(track.trackAudio, track.trackName);
+                    await fileService.SaveAudioAsync(track.TrackAudio, track.trackName);
                 }
 
-                // 앨범 아트 저장 (필요한 경우)
-                if (track.albumArt != null)
+                if (track.AlbumArt != null)
                 {
-                    await fileService.SaveAlbumArtAsync(track.albumArt, track.trackName);
+                    await fileService.SaveAlbumArtAsync(track.AlbumArt, track.trackName);
                 }
 
-                // 메타데이터 업데이트
                 await UpdateTrackMetadataAsync();
 
                 OnTrackUpdated?.Invoke(track);
@@ -198,18 +182,14 @@ namespace NoteEditor
         /// <returns>비동기 작업</returns>
         public async Task DeleteTrackAsync(string trackName)
         {
-            // 트랙 찾기
             TrackData trackToRemove = tracks.FirstOrDefault(t => t.trackName == trackName);
 
             if (trackToRemove != null)
             {
-                // 트랙 파일 삭제
                 await fileService.DeleteTrackFilesAsync(trackName);
 
-                // 트랙 목록에서 제거
                 tracks.Remove(trackToRemove);
 
-                // 메타데이터 업데이트
                 await UpdateTrackMetadataAsync();
 
                 OnTrackRemoved?.Invoke(trackToRemove);
@@ -223,7 +203,6 @@ namespace NoteEditor
         /// <returns>비동기 작업</returns>
         public async Task DeleteAllTracksAsync()
         {
-            // 모든 트랙 파일 삭제
             await fileService.DeleteAllTrackFilesAsync();
 
             // 삭제된 트랙 목록 저장
@@ -277,9 +256,9 @@ namespace NoteEditor
             {
                 // 오디오 로드
                 AudioClip audioClip = await fileService.LoadAudioAsync(trackName, progress);
-                track.trackAudio = audioClip;
+                track.TrackAudio = audioClip;
 
-                if (track.trackAudio != null)
+                if (track.TrackAudio != null)
                 {
                     OnTrackLoaded?.Invoke(track);
                     Debug.Log($"트랙 오디오 로드: {trackName}");
@@ -321,10 +300,27 @@ namespace NoteEditor
             if (string.IsNullOrEmpty(trackName))
                 return null;
 
-            // 비동기 로드를 동기적으로 처리
+            // 캐시된 앨범 아트가 있는지 확인
+            TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
+            if (track != null && track.AlbumArt != null)
+                return track.AlbumArt;
+
+            // 비동기 로드를 시작하지만 결과를 기다리지 않음
+            // 대신 null을 반환하고 나중에 로드가 완료되면 이벤트를 통해 알림
+            StartCoroutine(LoadAlbumArtCoroutine(trackName));
+            return null;
+        }
+
+        private IEnumerator LoadAlbumArtCoroutine(string trackName)
+        {
             var task = fileService.LoadAlbumArtAsync(trackName);
-            task.Wait();
-            return task.Result;
+            yield return new WaitUntil(() => task.IsCompleted);
+
+            if (!task.IsFaulted && task.Result != null)
+            {
+                Debug.Log($"앨범 아트 로드 완료: {trackName}");
+                OnAlbumArtLoaded?.Invoke(trackName, task.Result);
+            }
         }
 
         /// <summary>
@@ -337,10 +333,31 @@ namespace NoteEditor
             if (string.IsNullOrEmpty(trackName))
                 return null;
 
-            // 비동기 로드를 동기적으로 처리
+            TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
+            if (track != null && track.TrackAudio != null)
+                return track.TrackAudio;
+
+            StartCoroutine(LoadAudioClipCoroutine(trackName));
+            return null;
+        }
+
+        private IEnumerator LoadAudioClipCoroutine(string trackName)
+        {
             var task = fileService.LoadAudioAsync(trackName);
-            task.Wait();
-            return task.Result;
+            yield return new WaitUntil(() => task.IsCompleted);
+
+            if (!task.IsFaulted && task.Result != null)
+            {
+                Debug.Log($"오디오 로드 완료: {trackName}");
+
+                // 트랙 찾기
+                TrackData updatedTrack = tracks.FirstOrDefault(t => t.trackName == trackName);
+                if (updatedTrack != null)
+                {
+                    updatedTrack.TrackAudio = task.Result;
+                    OnTrackLoaded?.Invoke(updatedTrack);
+                }
+            }
         }
 
         /// <summary>
@@ -582,6 +599,25 @@ namespace NoteEditor
             }
 
             return track;
+        }
+
+        protected override void OnDestroy()
+        {
+            if (tracks != null)
+            {
+                foreach (var track in tracks)
+                {
+                    if (track.TrackAudio != null)
+                    {
+                        track.TrackAudio = null;
+                    }
+                }
+            }
+
+            pendingAudioFilePath = null;
+            pendingAlbumArtFilePath = null;
+
+            base.OnDestroy();
         }
     }
 }

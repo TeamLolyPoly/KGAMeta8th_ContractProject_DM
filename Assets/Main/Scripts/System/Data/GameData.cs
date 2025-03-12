@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using NoteEditor;
 using UnityEngine;
 
+#region Runtime
 [Serializable]
 public class NoteData
 {
@@ -37,7 +37,9 @@ public class NoteList
 {
     public List<NoteData> patterns = new List<NoteData>();
 }
+#endregion
 
+#region NoteEditor
 [Serializable]
 public class TrackData
 {
@@ -56,38 +58,16 @@ public class TrackData
     private AudioClip _audioClip;
 
     [JsonIgnore]
-    public Sprite albumArt
+    public Sprite AlbumArt
     {
-        get
-        {
-            if (
-                _albumArt == null
-                && !string.IsNullOrEmpty(trackName)
-                && AudioDataManager.Instance != null
-            )
-            {
-                _albumArt = AudioDataManager.Instance.GetAlbumArt(trackName);
-            }
-            return _albumArt;
-        }
+        get { return _albumArt; }
         set { _albumArt = value; }
     }
 
     [JsonIgnore]
-    public AudioClip trackAudio
+    public AudioClip TrackAudio
     {
-        get
-        {
-            if (
-                _audioClip == null
-                && !string.IsNullOrEmpty(trackName)
-                && AudioDataManager.Instance != null
-            )
-            {
-                _audioClip = AudioDataManager.Instance.GetAudioClip(trackName);
-            }
-            return _audioClip;
-        }
+        get { return _audioClip; }
         set { _audioClip = value; }
     }
 }
@@ -98,3 +78,4 @@ public class BandAnimationData
     public Bandtype bandtype;
     public AnimationClip[] animationClip;
 }
+#endregion

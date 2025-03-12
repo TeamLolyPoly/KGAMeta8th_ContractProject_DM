@@ -8,8 +8,8 @@ public class Note : MonoBehaviour
     protected NoteData noteData;
 
     protected double spawnDspTime; // dspTime을 기준으로 생성 시간 저장
-    public virtual void Initialize(NoteData data)
-    { }
+
+    public virtual void Initialize(NoteData data) { }
 
     protected void Miss()
     {
