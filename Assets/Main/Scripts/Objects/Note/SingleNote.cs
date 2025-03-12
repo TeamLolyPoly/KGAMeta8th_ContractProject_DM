@@ -22,12 +22,12 @@ public class SingleNote : Note
         noteUpDirection;
     protected float noteDistance;
     private Collider noteCollider;
-    private float EnterAngle, ExitAngle;
+    private float EnterAngle,
+        ExitAngle;
     private float hitdis;
 
     public override void Initialize(NoteData data)
     {
-
         noteTrans = GetComponent<Transform>();
         noteCollider = GetComponent<Collider>();
         noteData = new NoteData()
@@ -35,10 +35,16 @@ public class SingleNote : Note
             baseType = data.baseType,
             noteAxis = data.noteAxis,
             direction = data.direction,
+            startPosition = data.startPosition,
             targetPosition = data.targetPosition,
             noteSpeed = data.noteSpeed,
             noteType = data.noteType,
+            gridpos = data.gridpos,
+            isLeftGrid = data.isLeftGrid,
+            bar = data.bar,
+            beat = data.beat,
         };
+
         if (noteCollider != null)
         {
             SetNoteDisTance();
@@ -53,32 +59,26 @@ public class SingleNote : Note
 
     protected virtual void Update()
     {
-        if (isMoving)
+        if (isMoving && noteData != null)
         {
-            // TargetTrans.position = Vector3.MoveTowards(
-            //     transform.position,
-            //     noteData.target,
-            //     noteData.moveSpeed * Time.deltaTime
-            // );
             double elapsedTime = AudioSettings.dspTime - spawnDspTime;
-            float progress = (float)(
-                elapsedTime
-                * noteData.noteSpeed
-                / Vector3.Distance(transform.position, noteData.targetPosition)
+            float totalDistance = Vector3.Distance(noteData.startPosition, noteData.targetPosition);
+            float currentDistance = noteData.noteSpeed * (float)elapsedTime;
+            float progress = Mathf.Clamp01(currentDistance / totalDistance);
+
+            transform.position = Vector3.Lerp(
+                noteData.startPosition,
+                noteData.targetPosition,
+                progress
             );
 
-            transform.position = Vector3.Lerp(transform.position, noteData.targetPosition, progress);
-            if (Vector3.Distance(transform.position, noteData.targetPosition) < 0.1f)
+            if (progress >= 1f)
             {
-                try
+                if (NoteGameManager.Instance != null)
                 {
-                    Miss();
+                    NoteGameManager.Instance.SetScore(0, NoteRatings.Miss);
                 }
-                catch (System.NullReferenceException)
-                {
-                    Debug.LogWarning("NullReferenceException 발생. 노트를 직접 파괴합니다.");
-                    Destroy(gameObject);
-                }
+                Destroy(gameObject);
             }
         }
     }
@@ -259,4 +259,3 @@ public class SingleNote : Note
         return Vector3.Distance(hitPoint, notePos);
     }
 }
-
