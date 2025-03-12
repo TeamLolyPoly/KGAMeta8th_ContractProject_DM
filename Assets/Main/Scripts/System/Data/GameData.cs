@@ -25,17 +25,15 @@ public class NoteData
     public int arcLength;
     public bool isSymmetric;
     public bool isClockwise;
-
-    //원형 그리드 설정
-    public float sourceRadius;
-    public float targetRadius;
-    public float spawnInterval;
 }
 
 [Serializable]
 public class NoteList
 {
     public List<NoteData> patterns = new List<NoteData>();
+
+    public float bpm = 120f; // 에디터에서 설정할 BPM
+    public int beatsPerBar = 4; // 에디터에서 설정할 박자 수
 }
 
 [Serializable]
