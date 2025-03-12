@@ -1,8 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using Michsky.UI.Heat;
 using ProjectDM.UI;
-using UnityEngine;
 
 public class ModePanel : Panel
 {
