@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class SingleNote : Note
@@ -12,19 +10,16 @@ public class SingleNote : Note
 
     [SerializeField, Header("노트 플레이어 방향 기울기")]
     protected float noteLookAtAngle = 40f;
-
-    // [SerializeField, Header("노트 정확도 점수배율")]
-    // protected float[] accuracyScore = { 0.8f, 0.5f };
-    protected bool isMoving = true;
-
     protected Transform noteTrans;
-    protected Vector3 noteDownDirection,
-        noteUpDirection;
+    protected Vector3 noteDownDirection;
+    protected Vector3 noteUpDirection;
     protected float noteDistance;
-    private Collider noteCollider;
-    private float EnterAngle,
-        ExitAngle;
+    private float EnterAngle;
+    private float ExitAngle;
     private float hitdis;
+
+    private Collider noteCollider;
+    protected bool isMoving = true;
 
     public override void Initialize(NoteData data)
     {
@@ -54,7 +49,7 @@ public class SingleNote : Note
         noteDownDirection = -transform.up;
         noteUpDirection = transform.up;
         print($"Down: {noteDownDirection} Up: {noteUpDirection}");
-        spawnDspTime = AudioSettings.dspTime; // dspTime을 기준으로 생성 시간 저장
+        spawnDspTime = AudioSettings.dspTime;
     }
 
     protected virtual void Update()
@@ -163,7 +158,6 @@ public class SingleNote : Note
         );
     }
 
-    //hit위치에서 중앙까지의 거리를 비교후 점수 계산
     protected void HitScore(float hitdis)
     {
         NoteRatings ratings;
@@ -187,7 +181,6 @@ public class SingleNote : Note
         Destroy(gameObject);
     }
 
-    //노트가 허용하는 Hit거리를 구함
     private void SetNoteDisTance()
     {
         float sizeY = noteCollider.bounds.size.y;
@@ -200,9 +193,9 @@ public class SingleNote : Note
 
     private void OnCollisionEnter(Collision other)
     {
-        if (other.gameObject.TryGetComponent(out HitObject hitObject))
+        if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
         {
-            if (hitObject.hitObjectType == noteData.noteType)
+            if (noteInteractor.noteType == noteData.noteType)
             {
                 Vector3 hitPoint = other.contacts[0].normal;
                 hitdis = HitPoint(other);
@@ -227,9 +220,9 @@ public class SingleNote : Note
             $"Exit 내 벡터 X:{noteUpDirection.x} Y : {noteUpDirection.y} Z : {noteUpDirection.z} ExitAngle: {ExitAngle}"
         );
         Debug.DrawRay(transform.position, ExitPoint, Color.red, 0.5f);
-        if (other.gameObject.TryGetComponent(out HitObject hitObject))
+        if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
         {
-            if (hitObject.hitObjectType == noteData.noteType)
+            if (noteInteractor.noteType == noteData.noteType)
             {
                 if (EnterAngle <= directionalRange && ExitAngle <= directionalRange)
                 {

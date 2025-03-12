@@ -206,20 +206,20 @@ public class CombinedSpawnManager : MonoBehaviour
         GameObject prefab = spawnData.isLeftGrid ? leftNotePrefab : rightNotePrefab;
         GameObject note = Instantiate(prefab, startPos, Quaternion.identity);
 
-        if (spawnData.isLeftGrid)
-        {
-            if (note.TryGetComponent<LeftNote>(out var leftNote))
-            {
-                leftNote.Initialize(spawnData);
-            }
-        }
-        else
-        {
-            if (note.TryGetComponent<RightNote>(out var rightNote))
-            {
-                rightNote.Initialize(spawnData);
-            }
-        }
+        // if (spawnData.isLeftGrid)
+        // {
+        //     if (note.TryGetComponent<LeftNote>(out var leftNote))
+        //     {
+        //         leftNote.Initialize(spawnData);
+        //     }
+        // }
+        // else
+        // {
+        //     if (note.TryGetComponent<RightNote>(out var rightNote))
+        //     {
+        //         rightNote.Initialize(spawnData);
+        //     }
+        // }
 
         double spawnTime = AudioSettings.dspTime - startDspTime;
         Debug.Log(

@@ -12,8 +12,8 @@ public class NoteData
     public NoteHitType noteType; // Hand(왼쪽) 또는 Red/Blue(오른쪽)
     public NoteDirection direction;
     public NoteAxis noteAxis = NoteAxis.PZ;
-    public Vector3 startPosition;
-    public Vector3 targetPosition;
+    public Vector2 startPosition;
+    public Vector2 targetPosition;
     public Vector2 gridpos; // 그리드 x, y 위치
     public bool isLeftGrid; // 왼쪽/오른쪽 그리드 구분
     public float noteSpeed; // 노트 이동 속도
