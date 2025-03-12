@@ -1,14 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using ProjectDM.UI;
 using UnityEngine;
 
 public enum PanelType
 {
-    Main,
+    Title,
     Mode,
-    Option,
+    Album,
     Music,
+    Difficult,
+    Option,
+    Result,
+    ResultDetail,
 }
 
 public class UIManager : Singleton<UIManager>, IInitializable
@@ -30,13 +35,17 @@ public class UIManager : Singleton<UIManager>, IInitializable
 
     public void Initialize()
     {
-        //초기화 할때 필요한 과정 넣기
-        //패널의 참조나 , 리소스에서 로드하는 것등등
-        CloseAllPanels(); // 모든 패널을 닫고 시작
-        Debug.Log("모든 패널 닫기 완료 ");
-        // 메인 패널 열기
-        OpenPanel(PanelType.Main);
-        Debug.Log("메인 패널 열기 완료 ");
+        // Canvas 아래의 모든 패널 찾기
+        Panels = mainCanvas.GetComponentsInChildren<Panel>(true).ToList();
+        Debug.Log($"Found {Panels.Count} panels in Canvas");
+
+        // 모든 패널 닫기
+        CloseAllPanels();
+        Debug.Log("모든 패널 닫기 완료");
+
+        // Title 패널만 열기
+        OpenPanel(PanelType.Title);
+        Debug.Log("Title 패널 열기 완료");
 
         isInitialized = true;
     }
