@@ -1,6 +1,8 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ArcSegmentMover : Note
+public class LongNoteSegment : Note
 {
     private bool isInitialized = false;
     private bool isHit = false;
@@ -16,23 +18,28 @@ public class ArcSegmentMover : Note
     {
         noteData = new NoteData()
         {
+            baseType = data.baseType,
+            noteType = data.noteType,
+            noteAxis = data.noteAxis,
+            direction = data.direction,
             startPosition = data.startPosition,
             targetPosition = data.targetPosition,
             noteSpeed = data.noteSpeed,
+            isClockwise = data.isClockwise,
+            isSymmetric = data.isSymmetric,
+            bar = data.bar,
+            beat = data.beat,
         };
+
         isInitialized = true;
-
-        // 이동 방향을 향하도록 회전
         transform.LookAt(noteData.targetPosition);
+        spawnDspTime = AudioSettings.dspTime;
 
-        spawnDspTime = AudioSettings.dspTime; // dspTime을 기준으로 이동
-
-        // 콜라이더가 없으면 추가
         if (!GetComponent<Collider>())
         {
             SphereCollider collider = gameObject.AddComponent<SphereCollider>();
             collider.isTrigger = true;
-            collider.radius = 0.5f; // 적절한 크기로 조정
+            collider.radius = 0.5f;
         }
     }
 
@@ -41,19 +48,10 @@ public class ArcSegmentMover : Note
         if (!isInitialized)
             return;
 
-        // 목표를 향해 직선으로 이동
-        // transform.position = Vector3.MoveTowards(
-        //     transform.position,
-        //     targetPosition,
-        //     moveSpeed * Time.deltaTime
-        // );
-
         double elapsedTime = AudioSettings.dspTime - spawnDspTime;
-        float progress = (float)(
-            elapsedTime
-            * noteData.noteSpeed
-            / Vector3.Distance(noteData.startPosition, noteData.targetPosition)
-        );
+        float totalDistance = Vector3.Distance(noteData.startPosition, noteData.targetPosition);
+        float currentDistance = noteData.noteSpeed * (float)elapsedTime;
+        float progress = Mathf.Clamp01(currentDistance / totalDistance);
 
         transform.position = Vector3.Lerp(
             noteData.startPosition,
@@ -62,44 +60,41 @@ public class ArcSegmentMover : Note
         );
 
         // 목표에 도달하면 파괴
-        if (Vector3.Distance(transform.position, noteData.targetPosition) < 0.01f)
+        if (progress >= 1f)
         {
-            Miss();
+            if (NoteGameManager.Instance != null)
+            {
+                NoteGameManager.Instance.SetScore(0, NoteRatings.Miss);
+            }
             Destroy(gameObject);
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        // 이미 충돌했거나 초기화되지 않았으면 무시
         if (isHit || !isInitialized)
             return;
 
-        // "Mace" 태그와 충돌했는지 확인
         if (other.CompareTag("Mace"))
         {
             HandleCollision(other);
         }
-        //TODO: 다른 물체와 충돌해도 삭제판정이 필요함
-        // else
-        // {
-        //     Miss();
-        // }
     }
 
     private void HandleCollision(Collider other)
     {
         isHit = true;
 
-        // 충돌 이펙트 생성
         if (hitEffectPrefab != null)
         {
             Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
         }
-        //노트게임 매니저로 점수 전달
-        NoteGameManager.Instance.SetScore(noteScore, NoteRatings.Success);
-        // 충돌 이벤트 발생 (필요한 경우)
-        // 오브젝트 파괴
+
+        if (NoteGameManager.Instance != null)
+        {
+            NoteGameManager.Instance.SetScore(noteScore, NoteRatings.Success);
+        }
+
         Destroy(gameObject);
     }
 
