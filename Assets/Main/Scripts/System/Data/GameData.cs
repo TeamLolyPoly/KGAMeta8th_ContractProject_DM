@@ -7,18 +7,18 @@ using UnityEngine;
 [Serializable]
 public class NoteData
 {
-    //기본 노트 타입은 None으로 설정
     public NoteBaseType baseType = NoteBaseType.None;
-    public NoteHitType noteType; // Hand(왼쪽) 또는 Red/Blue(오른쪽)
+    public NoteHitType noteType;
     public NoteDirection direction;
     public NoteAxis noteAxis = NoteAxis.PZ;
-    public Vector2 startPosition;
-    public Vector2 targetPosition;
-    public Vector2 gridpos; // 그리드 x, y 위치
-    public bool isLeftGrid; // 왼쪽/오른쪽 그리드 구분
-    public float noteSpeed; // 노트 이동 속도
-    public int bar; // 박자
-    public int beat; // 비트
+    public Vector3 startPosition;
+    public Vector3 targetPosition;
+    public Vector2 StartCell;
+    public Vector2 TargetCell;
+    public bool isLeftGrid;
+    public float noteSpeed;
+    public int bar;
+    public int beat;
 
     //기본 패턴
     public int startIndex;
@@ -28,12 +28,11 @@ public class NoteData
 }
 
 [Serializable]
-public class NoteList
+public class NoteMap
 {
-    public List<NoteData> patterns = new List<NoteData>();
-
-    public float bpm = 120f; // 에디터에서 설정할 BPM
-    public int beatsPerBar = 4; // 에디터에서 설정할 박자 수
+    public List<NoteData> notes = new List<NoteData>();
+    public float bpm = 120f;
+    public int beatsPerBar = 4;
 }
 #endregion
 

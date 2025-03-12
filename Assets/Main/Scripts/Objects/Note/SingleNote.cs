@@ -34,7 +34,7 @@ public class SingleNote : Note
             targetPosition = data.targetPosition,
             noteSpeed = data.noteSpeed,
             noteType = data.noteType,
-            gridpos = data.gridpos,
+            StartCell = data.StartCell,
             isLeftGrid = data.isLeftGrid,
             bar = data.bar,
             beat = data.beat,
