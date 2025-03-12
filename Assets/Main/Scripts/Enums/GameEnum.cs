@@ -45,11 +45,11 @@ public enum NoteRatings
     Success,
 }
 
-
 #endregion
 
 public enum Bandtype
 {
+    None,
     Drums,
     Saxophone,
     Guitar,

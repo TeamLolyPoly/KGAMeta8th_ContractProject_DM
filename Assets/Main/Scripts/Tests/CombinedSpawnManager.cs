@@ -313,27 +313,33 @@ public class CombinedSpawnManager : MonoBehaviour
     /// </summary>
     private void SpawnGridNote()
     {
+        // 1. 기본 노트 데이터 생성
         NoteData noteData = new NoteData();
         bool isLeftHand = Random.value > 0.5f; // 50% 확률로 왼쪽/오른쪽 결정
 
-        // 노트 타입 설정을 NoteGameManager에 위임
+         // 2. NoteGameManager를 통해 노트 타입 설정
         NoteGameManager.Instance.SetupNoteTypeData(noteData, isLeftHand);
 
+        // 3. 노트 기본 속성 설정
         noteData.direction = (NoteDirection)Random.Range(1, 8);
         noteData.noteAxis = NoteAxis.PZ;
         noteData.noteSpeed = gridNoteSpeed;
 
+        // 4. 노트 위치 설정        
         int x = isLeftHand ? Random.Range(0, 3) : Random.Range(2, 5);
         int y = Random.Range(0, gridManager.VerticalCells);
-
+        
+         // 5. 시작/목표 위치 계산
         Vector3 startPos = gridManager.GetCellPosition(gridManager.SourceGrid, x, y);
         Vector3 targetPos = gridManager.GetCellPosition(gridManager.TargetGrid, x, y);
 
         noteData.targetPosition = targetPos;
 
+        // 6. 노트 생성 및 초기화
         GameObject prefab = isLeftHand ? leftNotePrefab : rightNotePrefab;
         GameObject note = Instantiate(prefab, startPos, Quaternion.identity);
 
+         // 7. 노트 컴포넌트 초기화
         if (isLeftHand)
         {
             LeftNote leftNote = note.GetComponent<LeftNote>();
@@ -586,6 +592,7 @@ public class CombinedSpawnManager : MonoBehaviour
 
     private IEnumerator SpawnArcSegments(int startIndex, int endIndex, bool isSymmetric)
     {
+         // 1. 기본 설정
         // 시계 방향으로 이동할지 결정
         bool clockwise = true;
         int currentIndex = startIndex;
@@ -597,14 +604,15 @@ public class CombinedSpawnManager : MonoBehaviour
         // 시작 시간 기록
         double spawnStartTime = AudioSettings.dspTime;
 
-        // 호의 모든 세그먼트를 순차적으로 생성
+        // 2. 호의 모든 세그먼트를 순차적으로 생성
         while (true)
         {
+            // 3. 현재 세그먼트의 위치 계산
             // 현재 인덱스의 소스 및 타겟 위치
             Vector3 sourcePos = sourcePoints[currentIndex];
             Vector3 targetPos = targetPoints[currentIndex];
 
-            //롱노트 데이터 초기화
+              // 4. 노트 데이터 설정
             NoteData noteData = new NoteData()
             {
                 baseType = NoteBaseType.Long, // 원형 노트는 항상 롱노트
@@ -614,16 +622,16 @@ public class CombinedSpawnManager : MonoBehaviour
                 direction = NoteDirection.North, // 또는 상황에 맞는 방향
             };
 
+            // 5. 노트 타입 설정
             NoteGameManager.Instance.SetupNoteTypeData(noteData, false); // false = 오른쪽
 
-            // 선택된 프리팹으로 세그먼트 생성
+            // 6. 세그먼트 생성 및 초기화
             GameObject segment = Instantiate(prefabToUse, sourcePos, Quaternion.identity);
-
             // 세그먼트 이동 컴포넌트 추가
             ArcSegmentMover mover = segment.AddComponent<ArcSegmentMover>();
             mover.Initialize(noteData);
 
-            //세그먼트 초기화
+            // 7. 노트 컴포넌트 초기화
             if (segment.TryGetComponent<Note>(out Note note))
             {
                 note.Initialize(noteData);
