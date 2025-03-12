@@ -13,6 +13,8 @@ public enum PanelType
 
 public class UIManager : Singleton<UIManager>, IInitializable
 {
+    [SerializeField]
+    private Canvas mainCanvas;
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
 
