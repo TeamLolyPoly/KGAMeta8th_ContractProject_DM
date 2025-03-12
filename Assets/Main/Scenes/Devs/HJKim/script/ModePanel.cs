@@ -1,12 +1,37 @@
+using Michsky.UI.Heat;
+using ProjectDM;
 using ProjectDM.UI;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 public class ModePanel : Panel
 {
     public override PanelType PanelType => PanelType.Mode;
 
-    // Start is called before the first frame update
-    void Start() { }
+    [SerializeField]
+    private BoxButtonManager singleButton;
 
-    // Update is called once per frame
-    void Update() { }
+    [SerializeField]
+    private BoxButtonManager multiButton;
+
+    [SerializeField]
+    private PanelButton backButton;
+
+    public override void Open()
+    {
+        backButton.onClick.AddListener(OnBackButtonClick);
+        base.Open();
+    }
+
+    public override void Close()
+    {
+        backButton.onClick.RemoveListener(OnBackButtonClick);
+        base.Close();
+    }
+
+    private void OnBackButtonClick()
+    {
+        UIManager.Instance.OpenPanel(PanelType.Title);
+    }
 }

@@ -10,22 +10,22 @@ public class TitlePanel : Panel
     public override PanelType PanelType => PanelType.Title;
 
     [SerializeField]
-    private PanelButton StartButton;
+    private PanelButton startButton;
 
     [SerializeField]
-    private PanelButton SettingButton;
+    private PanelButton settingButton;
 
     public override void Open()
     {
-        StartButton.onClick.AddListener(OnStartButtonClick);
-        SettingButton.onClick.AddListener(OnOptionButtonClick);
+        startButton.onClick.AddListener(OnStartButtonClick);
+        settingButton.onClick.AddListener(OnOptionButtonClick);
         base.Open();
     }
 
     public override void Close()
     {
-        StartButton.onClick.RemoveListener(OnStartButtonClick);
-        SettingButton.onClick.RemoveListener(OnOptionButtonClick);
+        startButton.onClick.RemoveListener(OnStartButtonClick);
+        settingButton.onClick.RemoveListener(OnOptionButtonClick);
         base.Close();
     }
 

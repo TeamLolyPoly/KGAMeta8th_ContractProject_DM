@@ -11,9 +11,9 @@ public enum PanelType
     Album,
     Music,
     Difficult,
-    Option,
-    Result,
     ResultDetail,
+    Result,
+    Option,
 }
 
 public class UIManager : Singleton<UIManager>, IInitializable
@@ -52,14 +52,19 @@ public class UIManager : Singleton<UIManager>, IInitializable
 
     public void OpenPanel(PanelType panelType)
     {
-        Panel panel = Panels.Find(p => p.PanelType == panelType);
-        if (panel == null)
-        {
-            panel = Instantiate(PanelPrefabs.Find(p => p.PanelType == panelType));
-            Panels.Add(panel);
-        }
+        // 먼저 모든 패널을 닫습니다
+        CloseAllPanels();
 
-        panel.Open();
+        // 요청된 패널을 찾습니다
+        Panel panel = Panels.Find(p => p.PanelType == panelType);
+        if (panel != null)
+        {
+            panel.Open();
+        }
+        else
+        {
+            Debug.LogError($"Panel not found: {panelType}");
+        }
     }
 
     public void ClosePanel(PanelType panelType)
