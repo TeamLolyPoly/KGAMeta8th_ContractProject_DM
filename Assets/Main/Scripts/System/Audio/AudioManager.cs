@@ -99,7 +99,6 @@ namespace NoteEditor
         {
             SetupInputActions();
 
-            // AudioDataManager 이벤트 구독
             if (AudioDataManager.Instance != null)
             {
                 RefreshTrackList();
@@ -113,15 +112,26 @@ namespace NoteEditor
             IsInitialized = true;
         }
 
-        private void OnDestroy()
+        private void ClearAllListeners()
         {
-            if (Application.isPlaying)
+            if (AudioDataManager.Instance != null)
             {
-                if (AudioDataManager.Instance != null)
+                AudioDataManager.Instance.OnTrackAdded -= OnTrackAddedHandler;
+                AudioDataManager.Instance.OnTrackRemoved -= OnTrackRemovedHandler;
+                AudioDataManager.Instance.OnTrackUpdated -= OnTrackUpdatedHandler;
+            }
+        }
+
+        private void OnDisable()
+        {
+            ClearAllListeners();
+
+            if (audioControlActions != null)
+            {
+                var actionMap = audioControlActions.FindActionMap("AudioPlayer");
+                if (actionMap != null)
                 {
-                    AudioDataManager.Instance.OnTrackAdded -= OnTrackAddedHandler;
-                    AudioDataManager.Instance.OnTrackRemoved -= OnTrackRemovedHandler;
-                    AudioDataManager.Instance.OnTrackUpdated -= OnTrackUpdatedHandler;
+                    actionMap.Disable();
                 }
             }
         }
@@ -183,12 +193,12 @@ namespace NoteEditor
             {
                 currentTrack = track;
 
-                if (track.trackAudio != null && currentAudioSource.clip != track.trackAudio)
+                if (track.TrackAudio != null && currentAudioSource.clip != track.TrackAudio)
                 {
                     bool wasPlaying = isPlaying;
                     float currentTime = currentPlaybackTime;
 
-                    currentAudioSource.clip = track.trackAudio;
+                    currentAudioSource.clip = track.TrackAudio;
                     currentPlaybackTime = currentTime;
 
                     if (wasPlaying)
@@ -274,18 +284,6 @@ namespace NoteEditor
             }
         }
 
-        private void OnDisable()
-        {
-            if (audioControlActions != null)
-            {
-                var actionMap = audioControlActions.FindActionMap("AudioPlayer");
-                if (actionMap != null)
-                {
-                    actionMap.Disable();
-                }
-            }
-        }
-
         /// <summary>
         /// 재생/일시정지를 토글합니다.
         /// </summary>
@@ -313,7 +311,7 @@ namespace NoteEditor
                 return;
             }
 
-            if (track.trackAudio == null && AudioDataManager.Instance != null)
+            if (track.TrackAudio == null && AudioDataManager.Instance != null)
             {
                 Debug.Log($"트랙 '{track.trackName}'의 오디오를 로드합니다.");
                 StartCoroutine(LoadTrackAudioAndSelect(track.trackName));
@@ -335,7 +333,7 @@ namespace NoteEditor
                 yield return null;
             }
 
-            if (loadTask.Result != null && loadTask.Result.trackAudio != null)
+            if (loadTask.Result != null && loadTask.Result.TrackAudio != null)
             {
                 SelectTrackInternal(loadTask.Result);
             }
@@ -351,14 +349,14 @@ namespace NoteEditor
         /// <param name="track">선택할 트랙</param>
         private void SelectTrackInternal(TrackData track)
         {
-            if (track == null || track.trackAudio == null)
+            if (track == null || track.TrackAudio == null)
             {
                 Debug.LogWarning("선택한 트랙이 없거나 오디오가 로드되지 않았습니다.");
                 return;
             }
 
             currentTrack = track;
-            currentAudioSource.clip = track.trackAudio;
+            currentAudioSource.clip = track.TrackAudio;
             currentPlaybackTime = 0;
 
             currentTrackIndex = cachedTracks.IndexOf(track);
@@ -371,10 +369,10 @@ namespace NoteEditor
             if (railGenerator != null)
             {
                 Debug.Log(
-                    $"SelectTrackInternal - Track: {track.trackName}, BPM: {track.bpm}, Audio Length: {track.trackAudio.length}s"
+                    $"SelectTrackInternal - Track: {track.trackName}, BPM: {track.bpm}, Audio Length: {track.TrackAudio.length}s"
                 );
                 railGenerator.UpdateBeatSettings(track.bpm, 4);
-                railGenerator.UpdateWaveform(track.trackAudio);
+                railGenerator.UpdateWaveform(track.TrackAudio);
             }
 
             OnTrackChanged?.Invoke(track);
@@ -489,6 +487,33 @@ namespace NoteEditor
         {
             float newVolume = Mathf.Clamp01(currentAudioSource.volume + delta);
             SetVolume(newVolume);
+        }
+
+        protected override void OnDestroy()
+        {
+            if (currentAudioSource != null)
+            {
+                currentAudioSource.Stop();
+                currentAudioSource.clip = null;
+            }
+
+            if (AudioDataManager.Instance != null)
+            {
+                AudioDataManager.Instance.OnTrackAdded -= OnTrackAddedHandler;
+                AudioDataManager.Instance.OnTrackRemoved -= OnTrackRemovedHandler;
+                AudioDataManager.Instance.OnTrackUpdated -= OnTrackUpdatedHandler;
+            }
+
+            if (audioControlActions != null)
+            {
+                var actionMap = audioControlActions.FindActionMap("AudioPlayer");
+                if (actionMap != null)
+                {
+                    actionMap.Disable();
+                }
+            }
+
+            base.OnDestroy();
         }
     }
 }
