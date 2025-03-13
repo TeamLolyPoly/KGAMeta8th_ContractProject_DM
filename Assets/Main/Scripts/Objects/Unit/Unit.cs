@@ -30,7 +30,7 @@ public class Unit : MonoBehaviour
         UnitAnimationManager.Instance.RemoveUnit(this);
     }
 
-    public AnimatorOverrideController GetAnimator()
+    public void SetAnimationClip(AnimationClip animationClip)
     {
         AnimatorOverrideController overrideController =
             animator.runtimeAnimatorController as AnimatorOverrideController;
@@ -39,6 +39,6 @@ public class Unit : MonoBehaviour
             overrideController = new AnimatorOverrideController(animator.runtimeAnimatorController);
             animator.runtimeAnimatorController = overrideController;
         }
-        return overrideController;
+        overrideController["Action"] = animationClip;
     }
 }

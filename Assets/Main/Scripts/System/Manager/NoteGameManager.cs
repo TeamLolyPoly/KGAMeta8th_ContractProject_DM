@@ -27,6 +27,8 @@ public class NoteGameManager : Singleton<NoteGameManager>, IInitializable
 
     //현재 배율
     public int Multiplier { get; private set; } = 1;
+    //현재 호응도도
+    public Engagement currentengagement { get; private set; } = Engagement.First;
 
     //정확별 타격 횟수 저장 딕셔너리
     public Dictionary<NoteRatings, int> ratingComboCount { get; private set; } =
@@ -36,9 +38,7 @@ public class NoteGameManager : Singleton<NoteGameManager>, IInitializable
     public bool IsInitialized => isInitialized;
 
     //호응도 변화시 호출할 이벤트
-    public event Action<int> onEngagementChange;
-
-    private Coroutine engagementCoroutine;
+    public event Action<Engagement> onEngagementChange;
 
     //게임 시작 전 초기화 함수
     public void Initialize()
@@ -47,18 +47,13 @@ public class NoteGameManager : Singleton<NoteGameManager>, IInitializable
         combo = 0;
         highCombo = 0;
         Multiplier = 1;
+        currentengagement = Engagement.First;
 
         ratingComboCount.Clear();
         foreach (NoteRatings rating in Enum.GetValues(typeof(NoteRatings)))
         {
             ratingComboCount.Add(rating, 0);
         }
-
-        if (engagementCoroutine != null)
-        {
-            StopCoroutine(engagementCoroutine);
-        }
-        engagementCoroutine = StartCoroutine(SetEngagementCoroutine());
 
         isInitialized = true;
     }
@@ -95,6 +90,7 @@ public class NoteGameManager : Singleton<NoteGameManager>, IInitializable
             return;
         }
         combo += 1;
+        SetEngagement();
         if (combo > highCombo)
             highCombo = combo;
         int ratingScore = GetRatingScore(ratings);
@@ -138,27 +134,25 @@ public class NoteGameManager : Singleton<NoteGameManager>, IInitializable
     }
 
     //TODO: 콤보 초기화 및 상승시 발생할 이벤트 추가
-    private IEnumerator SetEngagementCoroutine()
+    private void SetEngagement()
     {
-        onEngagementChange?.Invoke(0);
-        int currentengagement = 0;
-        while (true)
+        onEngagementChange?.Invoke(currentengagement);
+
+        if (combo < engagementThreshold[0] && currentengagement != Engagement.First)
         {
-            if (combo < engagementThreshold[0] && currentengagement != 0)
-            {
-                onEngagementChange?.Invoke(0);
-                currentengagement = 0;
-            }
-            if (combo > engagementThreshold[0] && currentengagement != 1)
-            {
-                onEngagementChange?.Invoke(1);
-                currentengagement = 1;
-            }
-            if (combo > engagementThreshold[1] && currentengagement != 2)
-            {
-                onEngagementChange?.Invoke(2);
-                currentengagement = 2;
-            }
+            onEngagementChange?.Invoke(currentengagement);
+            currentengagement = Engagement.First;
         }
+        if (combo > engagementThreshold[0] && currentengagement != Engagement.Second)
+        {
+            onEngagementChange?.Invoke(currentengagement);
+            currentengagement = Engagement.Second;
+        }
+        if (combo > engagementThreshold[1] && currentengagement != Engagement.Third)
+        {
+            onEngagementChange?.Invoke(currentengagement);
+            currentengagement = Engagement.Third;
+        }
+
     }
 }
