@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class GridGenerator : MonoBehaviour
+public class GridGenerator : MonoBehaviour, IInitializable
 {
     [SerializeField]
     private int totalHorizontalCells = 5;
@@ -37,6 +37,15 @@ public class GridGenerator : MonoBehaviour
     public int HandGridSize => handGridSize;
     public float CellSize => cellSize;
     public float GridDistance => gridDistance;
+
+    private bool isInitialized = false;
+    public bool IsInitialized => isInitialized;
+
+    public void Initialize()
+    {
+        CreateGrids();
+        isInitialized = true;
+    }
 
     private void CreateGrids()
     {
@@ -126,5 +135,18 @@ public class GridGenerator : MonoBehaviour
         float yPos = startY + (y * (cellSize + cellSpacing));
 
         return gridTransform.TransformPoint(new Vector3(xPos, yPos, 0));
+    }
+
+    public Vector3 GetGridCenter(Transform gridTransform)
+    {
+        return gridTransform.position;
+    }
+
+    public Vector3 GetHandGridCenter(Transform gridTransform, bool isLeftHand)
+    {
+        int centerX = isLeftHand ? HandGridSize / 2 : TotalHorizontalCells - HandGridSize / 2 - 1;
+        int centerY = VerticalCells / 2;
+
+        return GetCellPosition(gridTransform, centerX, centerY);
     }
 }

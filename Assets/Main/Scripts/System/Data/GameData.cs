@@ -19,8 +19,6 @@ public class NoteData
     public float noteSpeed;
     public int bar;
     public int beat;
-
-    //기본 패턴
     public int startIndex;
     public int arcLength;
     public bool isSymmetric;

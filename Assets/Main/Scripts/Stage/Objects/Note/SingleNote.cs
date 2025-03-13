@@ -191,7 +191,7 @@ public class SingleNote : Note
         print($"노트 길이: {noteDistance}");
     }
 
-    private void OnCollisionEnter(Collision other)
+    protected override void OnCollisionEnter(Collision other)
     {
         if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
         {
@@ -243,7 +243,6 @@ public class SingleNote : Note
         }
     }
 
-    //맞은 기준으로 노트의 중앙에서 부터의 거리를 구함
     private float HitPoint(Collision other)
     {
         Vector3 hitPoint = other.GetContact(0).point;
