@@ -10,9 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 7014172176518476141}
   - component: {fileID: 7014172176518476142}
-  - component: {fileID: 1204409101523281208}
+  - component: {fileID: 1081540714085321617}
   m_Layer: 0
-  m_Name: Note
+  m_Name: LongNote
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 7014172176518476143}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
   m_Children:
   - {fileID: 7014172178321975789}
   - {fileID: 7014172177751669121}
@@ -51,7 +51,7 @@ CapsuleCollider:
   m_Height: 2.2
   m_Direction: 2
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1204409101523281208
+--- !u!114 &1081540714085321617
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -60,14 +60,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 7014172176518476143}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9c16d7a9581fe9847a2f4f35f2bb9eae, type: 3}
+  m_Script: {fileID: 11500000, guid: 63c1263b1cf11484c8af6f0b8c0fbc32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  directionalRange: 50
-  accuracyPoint:
-  - 0.34
-  - 0.67
-  noteLookAtAngle: 40
+  Rim: {fileID: 7014172177751669122}
 --- !u!1 &7014172176562307040
 GameObject:
   m_ObjectHideFlags: 0

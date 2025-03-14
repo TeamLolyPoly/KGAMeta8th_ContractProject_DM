@@ -4,7 +4,8 @@ using UnityEngine;
 public class AnimationSystem : MonoBehaviour, IInitializable
 {
     private AnimData animData;
-    private Dictionary<Bandtype, BandAnimationData> bandAnimators = new Dictionary<Bandtype, BandAnimationData>();
+    private Dictionary<Bandtype, BandAnimationData> bandAnimators =
+        new Dictionary<Bandtype, BandAnimationData>();
     private List<Unit> units = new List<Unit>();
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
@@ -13,11 +14,6 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     {
         animData = Resources.Load<AnimData>("SO/AnimData");
 
-        foreach (BandAnimationData bad in animData.bandAnimationDatas)
-        {
-            print(bad.bandtype);
-        }
-
         bandAnimators.Clear();
 
         foreach (BandAnimationData bandAnimationData in animData.bandAnimationDatas)
@@ -25,10 +21,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             bandAnimators.Add(bandAnimationData.bandtype, bandAnimationData);
         }
 
-        //GameManager.Instance.onEngagementChange += AnimationClipChange;
-
         isInitialized = true;
-
     }
 
     public void AddUnit(Unit unit)
@@ -43,7 +36,9 @@ public class AnimationSystem : MonoBehaviour, IInitializable
 
     public void AttachAnimation(Animator targetAnimator)
     {
-        targetAnimator.runtimeAnimatorController = new AnimatorOverrideController(animData.unitAnimator);
+        targetAnimator.runtimeAnimatorController = new AnimatorOverrideController(
+            animData.unitAnimator
+        );
     }
 
     //TODO: 애니메이션 클립명 변경 필요함
@@ -65,5 +60,4 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             }
         }
     }
-
 }

@@ -1,21 +1,19 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 
 public class GameManager : Singleton<GameManager>, IInitializable
 {
     public int currentBar { get; private set; } = 0;
     public int currentBeat { get; private set; } = 0;
-    private float startDelay = 3f;
+    private float startDelay = 1f;
     private double startDspTime;
 
     public event Action<bool> OnGameStateChanged;
     public event Action<int, int> OnBeatChanged;
-
     private AudioSource musicSource;
-
-    [SerializeField, Header("노트 맵")]
     private NoteMap noteMap;
     public NoteMap NoteMap => noteMap;
     private NoteSpawner noteSpawner;
@@ -39,7 +37,18 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         ResetGameState();
 
+        Test();
+
         isInitialized = true;
+    }
+
+    public void Test()
+    {
+        string TestNoteMap = Resources.Load<TextAsset>("JSON/TestMap").text;
+        NoteMap noteMap = JsonConvert.DeserializeObject<NoteMap>(TestNoteMap);
+        print(noteMap);
+        LoadNoteMap(noteMap);
+        StartGame();
     }
 
     private void ResetGameState()
@@ -55,25 +64,24 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         gridGenerator = new GameObject("GridGenerator").AddComponent<GridGenerator>();
 
+        gridGenerator.Initialize();
+
         scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
 
-        unitAnimationManager = new GameObject(
-            "unitAnimationManager"
-        ).AddComponent<AnimationSystem>();
+        scoreSystem.Initialize();
 
-        unitAnimationManager.Initialize();
+        // unitAnimationManager = new GameObject(
+        //     "unitAnimationManager"
+        // ).AddComponent<AnimationSystem>();
 
-        noteSpawner.Initialize(gridGenerator, noteMap);
+        // unitAnimationManager.Initialize();
     }
 
     public void LoadNoteMap(NoteMap noteMap)
     {
         this.noteMap = noteMap;
 
-        if (noteSpawner != null && noteSpawner.IsInitialized)
-        {
-            noteSpawner.Initialize(gridGenerator, noteMap);
-        }
+        noteSpawner.Initialize(gridGenerator, noteMap);
     }
 
     private void Update()
