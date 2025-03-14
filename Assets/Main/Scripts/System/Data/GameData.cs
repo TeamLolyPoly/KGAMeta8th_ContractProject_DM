@@ -1,43 +1,40 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using NoteEditor;
 using UnityEngine;
 
+#region Runtime
 [Serializable]
 public class NoteData
 {
-    //기본 노트 타입은 None으로 설정
     public NoteBaseType baseType = NoteBaseType.None;
-    public NoteHitType noteType; // Hand(왼쪽) 또는 Red/Blue(오른쪽)
+    public NoteHitType noteType;
     public NoteDirection direction;
     public NoteAxis noteAxis = NoteAxis.PZ;
     public Vector3 startPosition;
     public Vector3 targetPosition;
-    public Vector2 gridpos; // 그리드 x, y 위치
-    public bool isLeftGrid; // 왼쪽/오른쪽 그리드 구분
-    public float noteSpeed; // 노트 이동 속도
-    public int bar; // 박자
-    public int beat; // 비트
-
-    //기본 패턴
+    public Vector2 StartCell;
+    public Vector2 TargetCell;
+    public bool isLeftGrid;
+    public float noteSpeed;
+    public int bar;
+    public int beat;
     public int startIndex;
     public int arcLength;
     public bool isSymmetric;
     public bool isClockwise;
-
-    //원형 그리드 설정
-    public float sourceRadius;
-    public float targetRadius;
-    public float spawnInterval;
 }
 
 [Serializable]
-public class NoteList
+public class NoteMap
 {
-    public List<NoteData> patterns = new List<NoteData>();
+    public List<NoteData> notes = new List<NoteData>();
+    public float bpm = 120f;
+    public int beatsPerBar = 4;
 }
+#endregion
 
+#region NoteEditor
 [Serializable]
 public class TrackData
 {
@@ -56,38 +53,16 @@ public class TrackData
     private AudioClip _audioClip;
 
     [JsonIgnore]
-    public Sprite albumArt
+    public Sprite AlbumArt
     {
-        get
-        {
-            if (
-                _albumArt == null
-                && !string.IsNullOrEmpty(trackName)
-                && AudioDataManager.Instance != null
-            )
-            {
-                _albumArt = AudioDataManager.Instance.GetAlbumArt(trackName);
-            }
-            return _albumArt;
-        }
+        get { return _albumArt; }
         set { _albumArt = value; }
     }
 
     [JsonIgnore]
-    public AudioClip trackAudio
+    public AudioClip TrackAudio
     {
-        get
-        {
-            if (
-                _audioClip == null
-                && !string.IsNullOrEmpty(trackName)
-                && AudioDataManager.Instance != null
-            )
-            {
-                _audioClip = AudioDataManager.Instance.GetAudioClip(trackName);
-            }
-            return _audioClip;
-        }
+        get { return _audioClip; }
         set { _audioClip = value; }
     }
 }
@@ -98,3 +73,4 @@ public class BandAnimationData
     public Bandtype bandtype;
     public AnimationClip[] animationClip;
 }
+#endregion

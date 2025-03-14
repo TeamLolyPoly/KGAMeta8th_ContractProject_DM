@@ -414,7 +414,7 @@ namespace NoteEditor
         /// <returns>트랙 메타데이터 리스트</returns>
         public async Task<List<TrackData>> LoadMetadataAsync()
         {
-            string filePath = AudioPathProvider.TrackDataPath;
+            string filePath = Path.Combine(AudioPathProvider.TrackDataPath, "TrackData.json");
 
             if (!File.Exists(filePath))
             {
