@@ -1,29 +1,34 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ScoreSystem : MonoBehaviour, IInitializable
 {
-    [SerializeField, Header("콤보 배율 기준")]
-    private int[] comboMultiplier = { 100, 200, 300, 400, 500 };
-    public int Multiplier { get; private set; } = 1;
-
-    [SerializeField, Header("정확도 추가점수")]
-    private int[] multiplierScore = { 20, 15, 10 };
-
-    [SerializeField, Header("호응도 콤보 기준")]
-    private int[] engagementThreshold = { 10, 30 };
-
+    private ScoreSetingData scoreSetingData;
+    //각 정확도 기록 딕셔너리
     public Dictionary<NoteRatings, int> ratingComboCount { get; private set; } =
         new Dictionary<NoteRatings, int>();
-    public float currentScore { get; private set; } = 0;
 
+    //정확도별 추가점수
+    public Dictionary<NoteRatings, int> multiplierScore { get; private set; } =
+    new Dictionary<NoteRatings, int>();
+    //밴드 호응도 딕셔너리
+    public Dictionary<int, Engagement> BandengagementType { get; private set; } = new Dictionary<int, Engagement>();
+    private Engagement currentBandEngagement;
+    //점수 배율
+    public int Multiplier { get; private set; } = 1;
+    //점수
+    public float currentScore { get; private set; } = 0;
+    //콤보
     public int combo { get; private set; } = 0;
 
+    //최고 콤보
     public int highCombo { get; private set; } = 0;
 
-    public event Action<int> onEngagementChange;
+    //밴드 호응도 이벤트
+    public event Action<Engagement> onBandEngagementChange;
 
     private bool isInitialized = false;
 
@@ -31,12 +36,24 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     public void Initialize()
     {
-        isInitialized = true;
+        scoreSetingData = Resources.Load<ScoreSetingData>("SO/ScoreSetingData");
+
+        ratingComboCount.Clear();
 
         foreach (NoteRatings rating in Enum.GetValues(typeof(NoteRatings)))
         {
             ratingComboCount.Add(rating, 0);
         }
+        for (int i = 0; i < scoreSetingData.engagementThreshold.Length; i++)
+        {
+            BandengagementType.Add(scoreSetingData.engagementThreshold[i], (Engagement)i);
+        }
+        for (int i = 0; i < scoreSetingData.multiplierScore.Count; i++)
+        {
+            multiplierScore.Add(scoreSetingData.multiplierScore[i].ratings, scoreSetingData.multiplierScore[i].ratingScore);
+        }
+
+        onBandEngagementChange.Invoke(Engagement.First);
     }
 
     public void SetScore(float score, NoteRatings ratings)
@@ -54,7 +71,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         {
             highCombo = combo;
         }
-        SetEngagement();
+        SetBandEngagement();
         int ratingScore = GetRatingScore(ratings);
         Multiplier = SetMultiplier();
 
@@ -62,17 +79,18 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
         print($"ratingScore: {ratingScore}");
         print($"currentScore: {currentScore}");
+        print($"Multiplier: {Multiplier}");
         print($"combo: {combo}");
         print($"combo: {combo} \ncurrentScore: {currentScore}");
     }
 
     private int SetMultiplier()
     {
-        for (int i = 0; i < comboMultiplier.Length; i++)
+        for (int i = 0; i < scoreSetingData.comboMultiplier.Length; i++)
         {
-            if (combo > comboMultiplier[i])
+            if (combo > scoreSetingData.comboMultiplier[i])
             {
-                return Multiplier = i + 1;
+                return i + 1;
             }
         }
         return 1;
@@ -80,40 +98,28 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     private int GetRatingScore(NoteRatings ratings)
     {
-        switch (ratings)
+        if (multiplierScore.TryGetValue(ratings, out int score))
         {
-            case NoteRatings.Perfect:
-                return multiplierScore[0];
-            case NoteRatings.Great:
-                return multiplierScore[1];
-            case NoteRatings.Good:
-                return multiplierScore[2];
-            default:
-                return 0;
+            return score;
+        }
+        return 0;
+    }
+
+    private void SetBandEngagement()
+    {
+        Engagement newEngagement = BandengagementType
+       .Where(pair => combo > pair.Key)
+       .OrderByDescending(pair => pair.Key)
+       .Select(pair => pair.Value)
+       .DefaultIfEmpty(Engagement.First)
+       .First();
+
+        if (currentBandEngagement != newEngagement)
+        {
+            onBandEngagementChange.Invoke(newEngagement);
+            currentBandEngagement = newEngagement;
         }
     }
 
-    private void SetEngagement()
-    {
-        onEngagementChange?.Invoke(0);
-        int currentengagement = 0;
-        while (true)
-        {
-            if (combo < engagementThreshold[0] && currentengagement != 0)
-            {
-                onEngagementChange?.Invoke(0);
-                currentengagement = 0;
-            }
-            if (combo > engagementThreshold[0] && currentengagement != 1)
-            {
-                onEngagementChange?.Invoke(1);
-                currentengagement = 1;
-            }
-            if (combo > engagementThreshold[1] && currentengagement != 2)
-            {
-                onEngagementChange?.Invoke(2);
-                currentengagement = 2;
-            }
-        }
-    }
 }
+

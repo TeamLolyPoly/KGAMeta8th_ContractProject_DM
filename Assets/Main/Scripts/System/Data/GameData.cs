@@ -106,5 +106,45 @@ public class AnimData : ScriptableObject
             bandAnimationDatas.Remove(bandAnimationDatas.Last());
         }
     }
+}
+[CreateAssetMenu(fileName = "ScoreSetingData", menuName = "Project_DM/Data/ScoreData")]
+public class ScoreSetingData : ScriptableObject
+{
+    [Header("콤보 배율 기준")]
+    public int[] comboMultiplier;
+    [Header("호응도 콤보 기준")]
+    public int[] engagementThreshold;
 
+    [Header("노트 정확도 추가점수")]
+    public List<multiplierScore> multiplierScore
+    = new List<multiplierScore>();
+
+    private void OnValidate()
+    {
+        Array dataCount = Enum.GetValues(typeof(NoteRatings));
+
+        if (multiplierScore.Count < dataCount.Length)
+        {
+            foreach (NoteRatings type in dataCount)
+            {
+                multiplierScore data = new multiplierScore();
+                data.ratings = type;
+                multiplierScore.Add(data);
+            }
+        }
+        for (int i = 0; i < dataCount.Length; i++)
+        {
+            multiplierScore[i].ratings = (NoteRatings)i;
+        }
+        while (multiplierScore.Count > dataCount.Length)
+        {
+            multiplierScore.Remove(multiplierScore.Last());
+        }
+    }
+}
+[Serializable]
+public class multiplierScore
+{
+    public NoteRatings ratings;
+    public int ratingScore = 0;
 }

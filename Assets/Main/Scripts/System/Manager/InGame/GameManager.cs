@@ -7,13 +7,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
 {
 
     #region Runtime
-
-    public float currentScore { get; private set; } = 0;
-
-    public int combo { get; private set; } = 0;
-
-    public int highCombo { get; private set; } = 0;
-
     public int currentBar { get; private set; } = 0;
 
     public int currentBeat { get; private set; } = 0;
@@ -84,7 +77,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         unitAnimationManager = new GameObject("unitAnimationManager").AddComponent<AnimationSystem>();
 
+        //Initialize순서 중요
         unitAnimationManager.Initialize();
+
+        scoreSystem.Initialize();
 
         noteSpawner.Initialize(gridGenerator, noteMap);
     }

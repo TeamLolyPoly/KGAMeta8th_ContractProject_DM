@@ -13,11 +13,6 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     {
         animData = Resources.Load<AnimData>("SO/AnimData");
 
-        foreach (BandAnimationData bad in animData.bandAnimationDatas)
-        {
-            print(bad.bandtype);
-        }
-
         bandAnimators.Clear();
 
         foreach (BandAnimationData bandAnimationData in animData.bandAnimationDatas)
@@ -25,7 +20,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             bandAnimators.Add(bandAnimationData.bandtype, bandAnimationData);
         }
 
-        //GameManager.Instance.onEngagementChange += AnimationClipChange;
+        GameManager.Instance.ScoreSystem.onBandEngagementChange += AnimationClipChange;
 
         isInitialized = true;
 
@@ -46,14 +41,13 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         targetAnimator.runtimeAnimatorController = new AnimatorOverrideController(animData.unitAnimator);
     }
 
-    //TODO: 애니메이션 클립명 변경 필요함
     public void AnimationClipChange(Engagement engagement)
     {
         foreach (Unit unit in units)
         {
             if (bandAnimators.TryGetValue(unit.bandtype, out BandAnimationData AnimationData))
             {
-                if ((int)engagement + 1 <= AnimationData.animationClip.Length)
+                if ((int)engagement < AnimationData.animationClip.Length)
                 {
                     AnimationClip animationClip = AnimationData?.animationClip[(int)engagement];
 

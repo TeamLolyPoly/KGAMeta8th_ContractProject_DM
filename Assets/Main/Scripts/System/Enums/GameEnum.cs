@@ -60,4 +60,12 @@ public enum Engagement
     First = 0,
     Second,
     Third,
+    Fourth,
+    Fifth,
+    Sixth,
+    Seventh,
+    Eighth,
+    Ninth,
+    Tenth
 }
+
