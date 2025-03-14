@@ -20,14 +20,9 @@ public class GridGenerator : MonoBehaviour, IInitializable
     [SerializeField]
     private float gridDistance = 15f;
 
-    [SerializeField]
-    private Material leftHandMaterial;
-
-    [SerializeField]
-    private Material rightHandMaterial;
-
-    [SerializeField]
-    private Material overlapMaterial;
+    private Material LeftGridMaterial;
+    private Material RightGridMaterial;
+    private Material OverlapGridMaterial;
 
     public Transform sourceOrigin { get; private set; }
     public Transform targetOrigin { get; private set; }
@@ -43,6 +38,9 @@ public class GridGenerator : MonoBehaviour, IInitializable
 
     public void Initialize()
     {
+        LeftGridMaterial = Resources.Load<Material>("Materials/LeftGrid");
+        RightGridMaterial = Resources.Load<Material>("Materials/RightGrid");
+        OverlapGridMaterial = Resources.Load<Material>("Materials/OverlapGrid");
         CreateGrids();
         isInitialized = true;
     }
@@ -54,17 +52,17 @@ public class GridGenerator : MonoBehaviour, IInitializable
         sourceOrigin.parent = transform;
         sourceOrigin.localPosition = new Vector3(0, 1.7f, gridDistance);
         sourceOrigin.localRotation = Quaternion.Euler(0, 0, 0);
-        CreateGrid(sourceOrigin, false);
+        CreateGrid(sourceOrigin);
 
         GameObject targetObj = new GameObject("TargetGrid");
         targetOrigin = targetObj.transform;
         targetOrigin.parent = transform;
         targetOrigin.localPosition = new Vector3(0, 1.7f, 0);
         targetOrigin.localRotation = Quaternion.Euler(0, 0, 0);
-        CreateGrid(targetOrigin, true);
+        CreateGrid(targetOrigin);
     }
 
-    private void CreateGrid(Transform gridParent, bool isTarget)
+    private void CreateGrid(Transform gridParent)
     {
         float totalWidth =
             (totalHorizontalCells * cellSize) + ((totalHorizontalCells - 1) * cellSpacing);
@@ -90,23 +88,23 @@ public class GridGenerator : MonoBehaviour, IInitializable
         float yPos = startY + (y * (cellSize + cellSpacing));
         cell.transform.localPosition = new Vector3(xPos, yPos, 0);
 
-        GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         visual.transform.parent = cell.transform;
         visual.transform.localPosition = Vector3.zero;
-        visual.transform.localScale = new Vector3(cellSize, cellSize, 0.1f);
+        visual.transform.localScale = new Vector3(cellSize, cellSize, cellSize);
 
         MeshRenderer renderer = visual.GetComponent<MeshRenderer>();
         if (x < handGridSize)
         {
-            renderer.material = leftHandMaterial;
+            renderer.material = LeftGridMaterial;
         }
         if (x >= totalHorizontalCells - handGridSize)
         {
-            renderer.material = rightHandMaterial;
+            renderer.material = RightGridMaterial;
         }
         if (x >= handGridSize - 1 && x < totalHorizontalCells - handGridSize + 1)
         {
-            renderer.material = overlapMaterial;
+            renderer.material = OverlapGridMaterial;
         }
 
         Cell cellInfo = cell.AddComponent<Cell>();
