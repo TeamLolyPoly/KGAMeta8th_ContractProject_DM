@@ -57,15 +57,15 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
 
-        unitAnimationManager = new GameObject(
-            "unitAnimationManager"
-        ).AddComponent<AnimationSystem>();
+        unitAnimationManager = new GameObject("unitAnimationManager").AddComponent<AnimationSystem>();
 
+        //Initialize순서 중요
         unitAnimationManager.Initialize();
+
+        scoreSystem.Initialize();
 
         noteSpawner.Initialize(gridGenerator, noteMap);
     }
-
     public void LoadNoteMap(NoteMap noteMap)
     {
         this.noteMap = noteMap;
