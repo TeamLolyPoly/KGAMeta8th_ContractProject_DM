@@ -144,11 +144,13 @@ public class NoteSpawner : MonoBehaviour
 
         StartCoroutine(SpawnNotesCoroutine());
 
-        Debug.Log($"=== 노트 생성 시작 ===");
-        Debug.Log($"BPM: {noteMap.bpm}");
-        Debug.Log($"박자: {noteMap.beatsPerBar}/4");
-        Debug.Log($"비트 간격: {60f / noteMap.bpm:F3}초");
-        Debug.Log($"마디 길이: {(60f / noteMap.bpm) * noteMap.beatsPerBar:F3}초");
+        Debug.Log(
+            $"=== 노트 생성 시작 === \n"
+                + $"BPM: {noteMap.bpm}\n"
+                + $"박자: {noteMap.beatsPerBar}/4\n"
+                + $"비트 간격: {60f / noteMap.bpm:F3}초\n"
+                + $"마디 길이: {(60f / noteMap.bpm) * noteMap.beatsPerBar:F3}초"
+        );
     }
 
     public void StopSpawning()
