@@ -5,58 +5,40 @@ using UnityEngine;
 
 public class GameManager : Singleton<GameManager>, IInitializable
 {
-
-    #region Runtime
     public int currentBar { get; private set; } = 0;
-
     public int currentBeat { get; private set; } = 0;
-
-    #endregion
-
-    #region Game State Management
-
-    [SerializeField, Header("게임 설정")]
-    private float startDelay = 3f; // 게임 시작 전 대기 시간
-
-    [SerializeField]
-    private AudioSource musicSource;
-
+    private float startDelay = 3f;
     private double startDspTime;
-    private bool isPlaying = false;
-    private double nextBeatTime;
 
-    // 게임 상태 이벤트
     public event Action<bool> OnGameStateChanged;
-
-    // 비트 이벤트
     public event Action<int, int> OnBeatChanged;
 
-    #endregion
+    private AudioSource musicSource;
 
     [SerializeField, Header("노트 맵")]
     private NoteMap noteMap;
-
     public NoteMap NoteMap => noteMap;
-
     private NoteSpawner noteSpawner;
-
     private GridGenerator gridGenerator;
-
     private ScoreSystem scoreSystem;
     public ScoreSystem ScoreSystem => scoreSystem;
-
     private AnimationSystem unitAnimationManager;
     public AnimationSystem UnitAnimationManager => unitAnimationManager;
-
     private bool isInitialized = false;
-
     public bool IsInitialized => isInitialized;
+    private bool isPlaying = false;
+
+    private void Start()
+    {
+        Initialize();
+    }
 
     public void Initialize()
     {
-        GetSpawners();
+        InitializeSystem();
 
         ResetGameState();
+
         isInitialized = true;
     }
 
@@ -67,7 +49,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         isPlaying = false;
     }
 
-    public void GetSpawners()
+    public void InitializeSystem()
     {
         noteSpawner = new GameObject("NoteSpawner").AddComponent<NoteSpawner>();
 
@@ -75,12 +57,11 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
 
-        unitAnimationManager = new GameObject("unitAnimationManager").AddComponent<AnimationSystem>();
+        unitAnimationManager = new GameObject(
+            "unitAnimationManager"
+        ).AddComponent<AnimationSystem>();
 
-        //Initialize순서 중요
         unitAnimationManager.Initialize();
-
-        scoreSystem.Initialize();
 
         noteSpawner.Initialize(gridGenerator, noteMap);
     }
@@ -93,11 +74,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         {
             noteSpawner.Initialize(gridGenerator, noteMap);
         }
-    }
-
-    private void Start()
-    {
-        Initialize();
     }
 
     private void Update()
@@ -128,8 +104,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
             OnBeatChanged?.Invoke(currentBar, currentBeat);
         }
     }
-
-    #region Game Control
 
     public void StartGame()
     {
@@ -213,8 +187,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         Debug.Log("게임 중지");
     }
 
-    #endregion
-
     private void OnGUI()
     {
         if (!isPlaying)
@@ -224,6 +196,9 @@ public class GameManager : Singleton<GameManager>, IInitializable
         GUILayout.BeginArea(new Rect(10, 10, 300, 150));
         GUILayout.Label($"현재 위치: 마디 {currentBar + 1}, 비트 {currentBeat + 1}");
         GUILayout.Label($"DSP 경과 시간: {(currentDspTime - startDspTime):F3}초");
+        GUILayout.Label($"현재 점수: {scoreSystem.currentScore}");
+        GUILayout.Label($"콤보: {scoreSystem.combo}");
+        GUILayout.Label($"최고 콤보: {scoreSystem.highCombo}");
         GUILayout.EndArea();
     }
 }
