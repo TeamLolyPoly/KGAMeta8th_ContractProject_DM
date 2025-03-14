@@ -118,78 +118,11 @@ public class BandAnimationData
     public Bandtype bandtype;
     public AnimationClip[] animationClip;
 }
-#endregion
 
-[CreateAssetMenu(fileName = "AnimData", menuName = "Project_DM/Data/Runtime/AnimData")]
-public class AnimData : ScriptableObject
-{
-    [SerializeField]
-    public RuntimeAnimatorController unitAnimator;
-
-    [SerializeField]
-    public List<BandAnimationData> bandAnimationDatas = new List<BandAnimationData>();
-
-    private void OnValidate()
-    {
-        Array dataCount = Enum.GetValues(typeof(Bandtype));
-
-        if (bandAnimationDatas.Count < dataCount.Length)
-        {
-            foreach (Bandtype type in dataCount)
-            {
-                BandAnimationData data = new BandAnimationData();
-                data.bandtype = type;
-                bandAnimationDatas.Add(data);
-            }
-        }
-        for (int i = 0; i < dataCount.Length; i++)
-        {
-            bandAnimationDatas[i].bandtype = (Bandtype)i;
-        }
-        while (bandAnimationDatas.Count > dataCount.Length)
-        {
-            bandAnimationDatas.Remove(bandAnimationDatas.Last());
-        }
-    }
-}
-[CreateAssetMenu(fileName = "ScoreSetingData", menuName = "Project_DM/Data/ScoreData")]
-public class ScoreSetingData : ScriptableObject
-{
-    [Header("콤보 배율 기준")]
-    public int[] comboMultiplier;
-    [Header("호응도 콤보 기준")]
-    public int[] engagementThreshold;
-
-    [Header("노트 정확도 추가점수")]
-    public List<multiplierScore> multiplierScore
-    = new List<multiplierScore>();
-
-    private void OnValidate()
-    {
-        Array dataCount = Enum.GetValues(typeof(NoteRatings));
-
-        if (multiplierScore.Count < dataCount.Length)
-        {
-            foreach (NoteRatings type in dataCount)
-            {
-                multiplierScore data = new multiplierScore();
-                data.ratings = type;
-                multiplierScore.Add(data);
-            }
-        }
-        for (int i = 0; i < dataCount.Length; i++)
-        {
-            multiplierScore[i].ratings = (NoteRatings)i;
-        }
-        while (multiplierScore.Count > dataCount.Length)
-        {
-            multiplierScore.Remove(multiplierScore.Last());
-        }
-    }
-}
 [Serializable]
-public class multiplierScore
+public class MultiplierScore
 {
     public NoteRatings ratings;
     public int ratingScore = 0;
 }
+#endregion
