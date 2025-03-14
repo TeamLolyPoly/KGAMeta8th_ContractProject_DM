@@ -4,17 +4,19 @@ using UnityEngine;
 public class Unit : MonoBehaviour
 {
     private Animator animator;
+    private AnimationSystem unitAnimationManager;
     public Bandtype bandtype;
 
     private IEnumerator Start()
     {
-        yield return new WaitUntil(() => UnitAnimationManager.Instance.IsInitialized);
+        yield return new WaitUntil(() => GameManager.Instance.IsInitialized);
+        unitAnimationManager = GameManager.Instance.UnitAnimationManager;
         Initialize();
     }
 
     private void Initialize()
     {
-        UnitAnimationManager.Instance.AddUnit(this);
+        unitAnimationManager.AddUnit(this);
 
         animator = GetComponent<Animator>();
         if (animator == null)
@@ -22,15 +24,15 @@ public class Unit : MonoBehaviour
             animator = gameObject.AddComponent<Animator>();
         }
 
-        UnitAnimationManager.Instance.AttachAnimation(animator);
+        unitAnimationManager.AttachAnimation(animator);
     }
 
     private void OnDisable()
     {
-        UnitAnimationManager.Instance.RemoveUnit(this);
+        unitAnimationManager.RemoveUnit(this);
     }
 
-    public AnimatorOverrideController GetAnimator()
+    public void SetAnimationClip(AnimationClip animationClip)
     {
         AnimatorOverrideController overrideController =
             animator.runtimeAnimatorController as AnimatorOverrideController;
@@ -39,6 +41,6 @@ public class Unit : MonoBehaviour
             overrideController = new AnimatorOverrideController(animator.runtimeAnimatorController);
             animator.runtimeAnimatorController = overrideController;
         }
-        return overrideController;
+        overrideController["Action"] = animationClip;
     }
 }
