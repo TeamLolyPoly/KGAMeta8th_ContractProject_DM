@@ -69,9 +69,9 @@ public class SingleNote : Note
 
             if (progress >= 1f)
             {
-                if (NoteGameManager.Instance != null)
+                if (GameManager.Instance != null)
                 {
-                    NoteGameManager.Instance.SetScore(0, NoteRatings.Miss);
+                    GameManager.Instance.ScoreSystem.SetScore(0, NoteRatings.Miss);
                 }
                 Destroy(gameObject);
             }
@@ -177,7 +177,7 @@ public class SingleNote : Note
             print($"Good noteDis :{noteDistance} , Hitdis: {hitdis}");
             ratings = NoteRatings.Good;
         }
-        NoteGameManager.Instance.SetScore(Score, ratings);
+        GameManager.Instance.ScoreSystem.SetScore(Score, ratings);
         Destroy(gameObject);
     }
 
