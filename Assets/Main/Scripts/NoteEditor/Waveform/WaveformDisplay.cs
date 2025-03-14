@@ -113,10 +113,10 @@ namespace NoteEditor
 
             if (
                 AudioManager.Instance.currentTrack != null
-                && AudioManager.Instance.currentTrack.trackAudio != null
+                && AudioManager.Instance.currentTrack.TrackAudio != null
             )
             {
-                UpdateWaveform(AudioManager.Instance.currentTrack.trackAudio);
+                UpdateWaveform(AudioManager.Instance.currentTrack.TrackAudio);
             }
 
             IsInitialized = true;
@@ -129,11 +129,11 @@ namespace NoteEditor
 
             if (
                 AudioManager.Instance.currentTrack != null
-                && AudioManager.Instance.currentTrack.trackAudio != null
-                && currentClip != AudioManager.Instance.currentTrack.trackAudio
+                && AudioManager.Instance.currentTrack.TrackAudio != null
+                && currentClip != AudioManager.Instance.currentTrack.TrackAudio
             )
             {
-                UpdateWaveform(AudioManager.Instance.currentTrack.trackAudio);
+                UpdateWaveform(AudioManager.Instance.currentTrack.TrackAudio);
             }
 
             UpdatePlayheadPosition();

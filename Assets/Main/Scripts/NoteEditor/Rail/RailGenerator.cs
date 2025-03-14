@@ -94,7 +94,7 @@ namespace NoteEditor
             {
                 if (isInitialized)
                 {
-                    CleanupObjects();
+                    Cleanup();
                 }
                 else
                 {
@@ -107,35 +107,34 @@ namespace NoteEditor
                     catch (Exception e)
                     {
                         Debug.LogError($"Failed to initialize RailGenerator: {e}");
-                        CleanupObjects();
+                        Cleanup();
                     }
                 }
             }
             isInitialized = true;
         }
 
-        private void OnDestroy()
+        private void ClearAllListeners()
         {
             if (AudioManager.Instance != null)
             {
                 AudioManager.Instance.OnTrackChanged -= OnTrackChanged;
                 AudioManager.Instance.OnBPMChanged -= OnBPMChanged;
             }
-            CleanupObjects();
         }
 
         private void OnDisable()
         {
-            CleanupObjects();
-            StopAllCoroutines();
+            Cleanup();
         }
 
-        private void CleanupObjects()
+        private void Cleanup()
         {
             if (this == null)
                 return;
 
             StopAllCoroutines();
+            ClearAllListeners();
 
             if (lanes != null)
             {
@@ -297,7 +296,7 @@ namespace NoteEditor
             catch (Exception e)
             {
                 Debug.LogError($"Failed to create rail: {e}");
-                CleanupObjects();
+                Cleanup();
                 throw;
             }
         }
@@ -396,7 +395,7 @@ namespace NoteEditor
                 if (!Mathf.Approximately(railLength, newLength))
                 {
                     railLength = newLength;
-                    CleanupObjects();
+                    Cleanup();
                     CreateRail();
                     CreateWaveformDisplay();
                 }
@@ -409,7 +408,7 @@ namespace NoteEditor
             catch (Exception e)
             {
                 Debug.LogError($"Failed to set audio clip: {e}");
-                CleanupObjects();
+                Cleanup();
             }
         }
 
@@ -458,7 +457,7 @@ namespace NoteEditor
                     railLength = newLength;
                     Debug.Log($"railLength 업데이트됨: {railLength}");
 
-                    CleanupObjects();
+                    Cleanup();
                     CreateRail();
                     CreateWaveformDisplay();
 
@@ -470,7 +469,6 @@ namespace NoteEditor
             }
             else
             {
-                Debug.LogWarning("UpdateBeatSettings called but currentAudioClip is null");
                 railLength = minRailLength;
             }
 
@@ -502,9 +500,9 @@ namespace NoteEditor
             bpm = track.bpm;
             beatsPerBar = 4;
 
-            if (track.trackAudio != null)
+            if (track.TrackAudio != null)
             {
-                SetAudioClip(track.trackAudio);
+                SetAudioClip(track.TrackAudio);
             }
         }
 

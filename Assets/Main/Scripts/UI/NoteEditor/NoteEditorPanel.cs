@@ -130,7 +130,7 @@ namespace NoteEditor
             foreach (TrackData track in tracks)
             {
                 Debug.Log(
-                    $"트랙 추가: {track.trackName}, 앨범아트: {(track.albumArt != null ? "있음" : "없음")}"
+                    $"트랙 추가: {track.trackName}, 앨범아트: {(track.AlbumArt != null ? "있음" : "없음")}"
                 );
                 try
                 {
@@ -166,9 +166,9 @@ namespace NoteEditor
                 trackDropdown.selectedItemIndex = 0;
                 AudioManager.Instance.SelectTrack(tracks[0]);
                 CurrentTrackInfo.SetText(tracks[0].trackName);
-                if (tracks[0].albumArt != null)
+                if (tracks[0].AlbumArt != null)
                 {
-                    CurrentTrackInfo.SetBackground(tracks[0].albumArt);
+                    CurrentTrackInfo.SetBackground(tracks[0].AlbumArt);
                 }
                 else
                 {
@@ -188,9 +188,9 @@ namespace NoteEditor
             {
                 TrackData selectedTrack = trackDataList[selectedIndex];
                 CurrentTrackInfo.SetText(selectedTrack.trackName);
-                if (selectedTrack.albumArt != null)
+                if (selectedTrack.AlbumArt != null)
                 {
-                    CurrentTrackInfo.SetBackground(selectedTrack.albumArt);
+                    CurrentTrackInfo.SetBackground(selectedTrack.AlbumArt);
                 }
                 else
                 {
