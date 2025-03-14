@@ -1,6 +1,6 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -12,8 +12,6 @@ public class NoteData
     public NoteHitType noteType;
     public NoteDirection direction;
     public NoteAxis noteAxis = NoteAxis.PZ;
-    public Vector3 startPosition;
-    public Vector3 targetPosition;
     public Vector2 StartCell;
     public Vector2 TargetCell;
     public bool isLeftGrid;
@@ -21,9 +19,55 @@ public class NoteData
     public int bar;
     public int beat;
     public int startIndex;
-    public int arcLength;
     public bool isSymmetric;
     public bool isClockwise;
+
+    // 롱노트 지속 시간 관련 필드
+    public int durationBars; // 롱노트가 지속되는 마디 수
+    public int durationBeats; // 롱노트가 지속되는 박자 수
+
+    [NonSerialized]
+    public GridGenerator gridGenerator;
+
+    public Vector3 GetStartPosition()
+    {
+        if (gridGenerator == null)
+            return Vector3.zero;
+
+        return gridGenerator.GetCellPosition(
+            gridGenerator.sourceOrigin,
+            (int)StartCell.x,
+            (int)StartCell.y
+        );
+    }
+
+    public Vector3 GetTargetPosition()
+    {
+        if (gridGenerator == null)
+            return Vector3.zero;
+
+        return gridGenerator.GetCellPosition(
+            gridGenerator.targetOrigin,
+            (int)TargetCell.x,
+            (int)TargetCell.y
+        );
+    }
+
+    public int CalculateArcLength(int segmentCount, float bpm, int beatsPerBar, float spawnInterval)
+    {
+        if (baseType != NoteBaseType.Long)
+            return 0;
+
+        float secondsPerBeat = 60f / bpm;
+        float totalDurationSeconds = (durationBars * beatsPerBar + durationBeats) * secondsPerBeat;
+
+        int calculatedArcLength = Mathf.RoundToInt(totalDurationSeconds / spawnInterval);
+
+        calculatedArcLength = Mathf.Max(1, calculatedArcLength);
+        calculatedArcLength = Mathf.Min(calculatedArcLength, segmentCount - 1);
+
+        return calculatedArcLength;
+    }
 }
 
 [Serializable]
@@ -81,6 +125,7 @@ public class AnimData : ScriptableObject
 {
     [SerializeField]
     public RuntimeAnimatorController unitAnimator;
+
     [SerializeField]
     public List<BandAnimationData> bandAnimationDatas = new List<BandAnimationData>();
 

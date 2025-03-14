@@ -4,7 +4,8 @@ using UnityEngine;
 public class AnimationSystem : MonoBehaviour, IInitializable
 {
     private AnimData animData;
-    private Dictionary<Bandtype, BandAnimationData> bandAnimators = new Dictionary<Bandtype, BandAnimationData>();
+    private Dictionary<Bandtype, BandAnimationData> bandAnimators =
+        new Dictionary<Bandtype, BandAnimationData>();
     private List<Unit> units = new List<Unit>();
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
@@ -23,7 +24,6 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         GameManager.Instance.ScoreSystem.onBandEngagementChange += AnimationClipChange;
 
         isInitialized = true;
-
     }
 
     public void AddUnit(Unit unit)
@@ -38,7 +38,9 @@ public class AnimationSystem : MonoBehaviour, IInitializable
 
     public void AttachAnimation(Animator targetAnimator)
     {
-        targetAnimator.runtimeAnimatorController = new AnimatorOverrideController(animData.unitAnimator);
+        targetAnimator.runtimeAnimatorController = new AnimatorOverrideController(
+            animData.unitAnimator
+        );
     }
 
     public void AnimationClipChange(Engagement engagement)
@@ -59,5 +61,4 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             }
         }
     }
-
 }

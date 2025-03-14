@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class SingleNote : Note
+public class ShortNote : Note
 {
     [SerializeField, Header("블럭 타격 오차범위")]
     protected float directionalRange = 50f;
@@ -23,55 +23,39 @@ public class SingleNote : Note
 
     public override void Initialize(NoteData data)
     {
-        noteTrans = GetComponent<Transform>();
+        base.Initialize(data);
+
+        noteTrans = transform;
         noteCollider = GetComponent<Collider>();
-        noteData = new NoteData()
-        {
-            baseType = data.baseType,
-            noteAxis = data.noteAxis,
-            direction = data.direction,
-            startPosition = data.startPosition,
-            targetPosition = data.targetPosition,
-            noteSpeed = data.noteSpeed,
-            noteType = data.noteType,
-            StartCell = data.StartCell,
-            isLeftGrid = data.isLeftGrid,
-            bar = data.bar,
-            beat = data.beat,
-        };
 
         if (noteCollider != null)
         {
             SetNoteDisTance();
         }
+
         NoteDirectionChange();
         NoteHitDirectionChange();
         noteDownDirection = -transform.up;
         noteUpDirection = transform.up;
         print($"Down: {noteDownDirection} Up: {noteUpDirection}");
-        spawnDspTime = AudioSettings.dspTime;
     }
 
     protected virtual void Update()
     {
-        if (isMoving && noteData != null)
+        if (isMoving && isInitialized)
         {
             double elapsedTime = AudioSettings.dspTime - spawnDspTime;
-            float totalDistance = Vector3.Distance(noteData.startPosition, noteData.targetPosition);
+            float totalDistance = Vector3.Distance(startPosition, targetPosition);
             float currentDistance = noteData.noteSpeed * (float)elapsedTime;
             float progress = Mathf.Clamp01(currentDistance / totalDistance);
 
-            transform.position = Vector3.Lerp(
-                noteData.startPosition,
-                noteData.targetPosition,
-                progress
-            );
+            transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
 
             if (progress >= 1f)
             {
                 if (GameManager.Instance != null)
                 {
-                    GameManager.Instance.ScoreSystem.SetScore(0, NoteRatings.Miss);
+                    scoreSystem.SetScore(0, NoteRatings.Miss);
                 }
                 Destroy(gameObject);
             }
@@ -80,9 +64,9 @@ public class SingleNote : Note
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.black;
-        Gizmos.DrawLine(transform.localPosition, transform.position + noteDownDirection);
         Gizmos.color = Color.green;
+        Gizmos.DrawLine(transform.localPosition, transform.position + noteDownDirection);
+        Gizmos.color = Color.black;
         Gizmos.DrawLine(transform.localPosition, transform.position + noteUpDirection);
     }
 
@@ -177,7 +161,7 @@ public class SingleNote : Note
             print($"Good noteDis :{noteDistance} , Hitdis: {hitdis}");
             ratings = NoteRatings.Good;
         }
-        GameManager.Instance.ScoreSystem.SetScore(Score, ratings);
+        scoreSystem.SetScore(Score, ratings);
         Destroy(gameObject);
     }
 
@@ -201,6 +185,8 @@ public class SingleNote : Note
                 hitdis = HitPoint(other);
                 EnterAngle = Vector3.Angle(hitPoint, noteDownDirection);
                 Debug.DrawRay(transform.position, hitPoint, Color.blue, 0.5f);
+
+                Instantiate(hitFX, transform.position, Quaternion.identity);
 
                 print($"Enter 법선벡터 X: {hitPoint.x} Y : {hitPoint.y} Z : {hitPoint.z}");
                 print(
