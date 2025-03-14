@@ -9,22 +9,22 @@ public class OptionPanel : Panel
     public override PanelType PanelType => PanelType.Option;
 
     [SerializeField]
-    private PanelButton backButton;
+    private PanelButton closeButton;
 
     public override void Open()
     {
-        backButton.onClick.AddListener(OnBackButtonClick);
+        closeButton.onClick.AddListener(OnCloseButtonClick);
         base.Open();
     }
 
     public override void Close()
     {
-        backButton.onClick.RemoveListener(OnBackButtonClick);
+        closeButton.onClick.RemoveListener(OnCloseButtonClick);
         base.Close();
     }
 
-    private void OnBackButtonClick()
+    private void OnCloseButtonClick()
     {
-        UIManager.Instance.OpenPanel(PanelType.Title);
+        UIManager.Instance.ClosePanel(PanelType.Option);
     }
 }

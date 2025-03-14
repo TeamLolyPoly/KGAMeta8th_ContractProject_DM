@@ -15,10 +15,14 @@ public class TitlePanel : Panel
     [SerializeField]
     private PanelButton settingButton;
 
+    [SerializeField]
+    private PanelButton quitButton;
+
     public override void Open()
     {
         startButton.onClick.AddListener(OnStartButtonClick);
         settingButton.onClick.AddListener(OnOptionButtonClick);
+        quitButton.onClick.AddListener(OnQuitButtonClick);
         base.Open();
     }
 
@@ -26,6 +30,7 @@ public class TitlePanel : Panel
     {
         startButton.onClick.RemoveListener(OnStartButtonClick);
         settingButton.onClick.RemoveListener(OnOptionButtonClick);
+        quitButton.onClick.RemoveListener(OnQuitButtonClick);
         base.Close();
     }
 
@@ -37,7 +42,11 @@ public class TitlePanel : Panel
 
     private void OnOptionButtonClick()
     {
-        //option 패널 열기
-        UIManager.Instance.OpenPanel(PanelType.Option);
+        UIManager.Instance.ToggleOptionPanel();
+    }
+
+    private void OnQuitButtonClick()
+    {
+        Application.Quit();
     }
 }

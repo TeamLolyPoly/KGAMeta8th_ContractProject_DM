@@ -52,10 +52,20 @@ public class UIManager : Singleton<UIManager>, IInitializable
 
     public void OpenPanel(PanelType panelType)
     {
-        // 먼저 모든 패널을 닫습니다
+        // 옵션 패널은 다른 패널들을 닫지 않고 열립니다
+        if (panelType == PanelType.Option)
+        {
+            Panel optionPanel = Panels.Find(p => p.PanelType == panelType);
+            if (optionPanel != null)
+            {
+                optionPanel.Open();
+            }
+            return;
+        }
+
+        // 다른 패널들은 기존 방식대로 처리
         CloseAllPanels();
 
-        // 요청된 패널을 찾습니다
         Panel panel = Panels.Find(p => p.PanelType == panelType);
         if (panel != null)
         {
@@ -83,6 +93,27 @@ public class UIManager : Singleton<UIManager>, IInitializable
         foreach (var panel in Panels)
         {
             panel.Close();
+        }
+    }
+
+    // 옵션 패널의 토글을 위한 메서드
+    public void ToggleOptionPanel()
+    {
+        Panel optionPanel = Panels.Find(p => p.PanelType == PanelType.Option);
+        if (optionPanel == null)
+        {
+            Debug.LogError("Option panel not found");
+            return;
+        }
+
+        // 옵션 패널이 활성화되어 있으면 닫고, 아니면 엽니다
+        if (optionPanel.gameObject.activeSelf)
+        {
+            optionPanel.Close();
+        }
+        else
+        {
+            optionPanel.Open();
         }
     }
 }
