@@ -49,9 +49,15 @@ public enum NoteRatings
 
 public enum Bandtype
 {
-    None,
     Drums,
     Saxophone,
     Guitar,
     Bass_Guitar,
+}
+
+public enum Engagement
+{
+    First = 0,
+    Second,
+    Third,
 }

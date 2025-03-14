@@ -53,9 +53,9 @@ public class Note : MonoBehaviour, IInitializable
             Instantiate(hitFX, transform.position, Quaternion.identity);
         }
 
-        if (NoteGameManager.Instance != null)
+        if (GameManager.Instance != null)
         {
-            NoteGameManager.Instance.SetScore(noteScore, NoteRatings.Success);
+            GameManager.Instance.ScoreSystem.SetScore(noteScore, NoteRatings.Success);
         }
 
         Destroy(gameObject);
@@ -63,7 +63,7 @@ public class Note : MonoBehaviour, IInitializable
 
     protected void Miss()
     {
-        NoteGameManager.Instance.SetScore(0, NoteRatings.Miss);
+        GameManager.Instance.ScoreSystem.SetScore(0, NoteRatings.Miss);
         Destroy(gameObject);
     }
 
