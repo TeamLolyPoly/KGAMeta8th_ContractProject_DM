@@ -33,7 +33,7 @@ public enum NoteHitType
     None,
     Red,
     Blue,
-    Hand,
+    Yellow,
 }
 
 public enum NoteRatings
