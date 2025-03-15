@@ -16,9 +16,12 @@ public class AnimationSystem : MonoBehaviour, IInitializable
 
         bandAnimators.Clear();
 
-        foreach (BandAnimationData bandAnimationData in animData.bandAnimationDatas)
+        if (animData != null)
         {
-            bandAnimators.Add(bandAnimationData.bandtype, bandAnimationData);
+            foreach (BandAnimationData bandAnimationData in animData.bandAnimationDatas)
+            {
+                bandAnimators.Add(bandAnimationData.bandtype, bandAnimationData);
+            }
         }
 
         GameManager.Instance.ScoreSystem.onBandEngagementChange += AnimationClipChange;

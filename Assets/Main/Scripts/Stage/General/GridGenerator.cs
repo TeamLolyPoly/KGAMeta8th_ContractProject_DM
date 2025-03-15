@@ -38,9 +38,9 @@ public class GridGenerator : MonoBehaviour, IInitializable
 
     public void Initialize()
     {
-        LeftGridMaterial = Resources.Load<Material>("Materials/LeftGrid");
-        RightGridMaterial = Resources.Load<Material>("Materials/RightGrid");
-        OverlapGridMaterial = Resources.Load<Material>("Materials/OverlapGrid");
+        LeftGridMaterial = Resources.Load<Material>("Materials/Stage/LeftGrid");
+        RightGridMaterial = Resources.Load<Material>("Materials/Stage/RightGrid");
+        OverlapGridMaterial = Resources.Load<Material>("Materials/Stage/OverlapGrid");
         CreateGrids();
         isInitialized = true;
     }
