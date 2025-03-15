@@ -8,7 +8,6 @@ namespace NoteEditor
 {
     public class RailGenerator : MonoBehaviour, IInitializable
     {
-        [SerializeField]
         private int laneCount = 5;
 
         [SerializeField]
@@ -23,33 +22,26 @@ namespace NoteEditor
         [SerializeField]
         private float railSpacing = 0.1f;
 
-        [SerializeField]
         private Material railMaterial;
-
-        [SerializeField]
-        private Color railColor = new Color(0, 0.8f, 0.8f);
-
-        [SerializeField]
-        private Color lineColor = new Color(0, 1f, 0);
-
-        [SerializeField]
-        private Color barLineColor = new Color(1f, 0, 0);
-
-        [SerializeField]
+        private Material barLineMaterial;
+        private Material beatLineMaterial;
         private GameObject waveformDisplayPrefab;
 
-        [SerializeField]
         private float waveformOffset = 0.2f;
-
-        [SerializeField]
-        private float waveformWidth = 5f;
+        private float waveformWidth = 1.5f;
 
         [SerializeField]
         private Color waveformColor = new Color(1f, 0.6f, 0.2f);
 
+        [SerializeField]
+        private Color beatMarkerColor = new Color(0, 0.8f, 1f);
+
+        [SerializeField]
+        private Color downBeatMarkerColor = new Color(0, 0.8f, 1f);
+
         private GameObject[] lanes;
         private GameObject[] divisions;
-        private GameObject judgeLine;
+        private GameObject startLine;
         private GameObject railContainer;
         private WaveformDisplay waveformDisplay;
         private Canvas waveformCanvas;
@@ -81,8 +73,19 @@ namespace NoteEditor
             Initialize();
         }
 
+        public void GetResources()
+        {
+            railMaterial = Resources.Load<Material>("Materials/NoteEditor/Rail");
+            barLineMaterial = Resources.Load<Material>("Materials/NoteEditor/BarLine");
+            beatLineMaterial = Resources.Load<Material>("Materials/NoteEditor/BeatLine");
+            waveformDisplayPrefab = Resources.Load<GameObject>(
+                "Prefabs/NoteEditor/WaveformDisplay"
+            );
+        }
+
         public void Initialize()
         {
+            GetResources();
             AudioManager.Instance.OnTrackChanged += OnTrackChanged;
             AudioManager.Instance.OnBPMChanged += OnBPMChanged;
 
@@ -160,10 +163,10 @@ namespace NoteEditor
                 divisions = null;
             }
 
-            if (judgeLine != null)
+            if (startLine != null)
             {
-                Destroy(judgeLine);
-                judgeLine = null;
+                Destroy(startLine);
+                startLine = null;
             }
 
             if (waveformDisplay != null)
@@ -210,73 +213,100 @@ namespace NoteEditor
                 float totalWidth = (laneCount * railWidth) + ((laneCount - 1) * railSpacing);
                 float startX = -totalWidth / 2f + (railWidth / 2f);
 
+                float totalBars = AudioManager.Instance.TotalBars;
+                float barLength = railLength / totalBars;
+
                 lanes = new GameObject[laneCount];
-                for (int i = 0; i < laneCount; i++)
-                {
-                    float xPos = startX + (i * (railWidth + railSpacing));
-
-                    GameObject lane = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    lane.name = $"Lane_{i}";
-                    lane.transform.parent = railContainer.transform;
-                    lane.transform.localPosition = new Vector3(xPos, 0, railLength / 2f);
-                    lane.transform.localScale = new Vector3(railWidth, 0.1f, railLength);
-
-                    Renderer renderer = lane.GetComponent<Renderer>();
-                    if (railMaterial != null)
-                    {
-                        renderer.material = new Material(railMaterial);
-                    }
-                    renderer.material.color = railColor;
-
-                    lanes[i] = lane;
-                }
-
-                float secondsPerBeat = 60f / bpm;
-                float secondsPerBar = secondsPerBeat * beatsPerBar;
-                float totalSeconds = currentAudioClip != null ? currentAudioClip.length : 0f;
-
-                float exactBars = totalSeconds / secondsPerBar;
-
                 List<GameObject> divisionsList = new List<GameObject>();
 
-                int totalBars = Mathf.CeilToInt(exactBars);
-                for (int bar = 0; bar <= totalBars; bar++)
+                GameObject lanesContainer = new GameObject("LanesContainer");
+                lanesContainer.transform.parent = railContainer.transform;
+                lanesContainer.transform.localPosition = Vector3.zero;
+
+                GameObject linesContainer = new GameObject("LinesContainer");
+                linesContainer.transform.parent = railContainer.transform;
+                linesContainer.transform.localPosition = Vector3.zero;
+
+                for (int lane = 0; lane < laneCount; lane++)
                 {
-                    float barStartPos = (bar / exactBars) * railLength;
+                    float xPos = startX + (lane * (railWidth + railSpacing));
 
-                    if (barStartPos <= railLength)
+                    GameObject laneContainer = new GameObject($"Lane_{lane}");
+                    laneContainer.transform.parent = lanesContainer.transform;
+                    laneContainer.transform.localPosition = Vector3.zero;
+
+                    for (int bar = 0; bar <= Mathf.CeilToInt(totalBars); bar++)
                     {
-                        GameObject barLine = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        barLine.name = $"BarLine_{bar}";
-                        barLine.transform.parent = railContainer.transform;
-                        barLine.transform.localPosition = new Vector3(0, 0.06f, barStartPos);
-                        barLine.transform.localScale = new Vector3(totalWidth + 0.4f, 0.03f, 0.05f);
+                        float barStartPos = (bar / totalBars) * railLength;
 
-                        Renderer barRenderer = barLine.GetComponent<Renderer>();
-                        barRenderer.material.color = barLineColor;
-                        divisionsList.Add(barLine);
-
-                        for (int beat = 1; beat < beatsPerBar; beat++)
+                        if (barStartPos <= railLength)
                         {
-                            float beatPos =
-                                barStartPos + (beat * (railLength / (exactBars * beatsPerBar)));
-                            if (beatPos <= railLength)
+                            GameObject barContainer = new GameObject($"Bar_{bar}");
+                            barContainer.transform.parent = laneContainer.transform;
+                            barContainer.transform.localPosition = Vector3.zero;
+
+                            GameObject laneSegment = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                            laneSegment.name = "RailSegment";
+                            laneSegment.transform.parent = barContainer.transform;
+
+                            float segmentLength = barLength;
+                            float segmentPos = barStartPos + (segmentLength / 2f);
+
+                            laneSegment.transform.localPosition = new Vector3(xPos, 0, segmentPos);
+                            laneSegment.transform.localScale = new Vector3(
+                                railWidth,
+                                0.1f,
+                                segmentLength
+                            );
+
+                            Renderer renderer = laneSegment.GetComponent<Renderer>();
+                            if (railMaterial != null)
                             {
-                                GameObject beatLine = GameObject.CreatePrimitive(
-                                    PrimitiveType.Cube
-                                );
-                                beatLine.name = $"BeatLine_{bar}_{beat}";
-                                beatLine.transform.parent = railContainer.transform;
-                                beatLine.transform.localPosition = new Vector3(0, 0.06f, beatPos);
-                                beatLine.transform.localScale = new Vector3(
-                                    totalWidth + 0.2f,
-                                    0.01f,
+                                renderer.material = railMaterial;
+                            }
+
+                            if (bar == 0)
+                                lanes[lane] = laneSegment;
+
+                            if (lane == 0)
+                            {
+                                GameObject barLine = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                                barLine.name = $"BarLine_{bar}";
+                                barLine.transform.position = new Vector3(0, 0.06f, barStartPos);
+                                barLine.transform.localScale = new Vector3(
+                                    totalWidth + 0.4f,
+                                    0.03f,
                                     0.05f
                                 );
 
-                                Renderer beatRenderer = beatLine.GetComponent<Renderer>();
-                                beatRenderer.material.color = lineColor;
-                                divisionsList.Add(beatLine);
+                                Renderer barRenderer = barLine.GetComponent<Renderer>();
+                                barRenderer.material = barLineMaterial;
+                                divisionsList.Add(barLine);
+
+                                for (int beat = 1; beat < AudioManager.Instance.BeatsPerBar; beat++)
+                                {
+                                    float beatPos =
+                                        barStartPos
+                                        + (beat * (barLength / AudioManager.Instance.BeatsPerBar));
+                                    GameObject beatLine = GameObject.CreatePrimitive(
+                                        PrimitiveType.Cube
+                                    );
+                                    beatLine.name = $"BeatLine_{beat}";
+                                    beatLine.transform.position = new Vector3(0, 0.06f, beatPos);
+                                    beatLine.transform.localScale = new Vector3(
+                                        totalWidth + 0.2f,
+                                        0.01f,
+                                        0.05f
+                                    );
+
+                                    Renderer beatRenderer = beatLine.GetComponent<Renderer>();
+                                    beatRenderer.material = beatLineMaterial;
+                                    divisionsList.Add(beatLine);
+
+                                    beatLine.transform.parent = barLine.transform;
+                                }
+
+                                barLine.transform.parent = linesContainer.transform;
                             }
                         }
                     }
@@ -284,14 +314,14 @@ namespace NoteEditor
 
                 divisions = divisionsList.ToArray();
 
-                judgeLine = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                judgeLine.name = "JudgeLine";
-                judgeLine.transform.parent = railContainer.transform;
-                judgeLine.transform.localPosition = new Vector3(0, 0.07f, 0);
-                judgeLine.transform.localScale = new Vector3(totalWidth + 0.5f, 0.05f, 0.2f);
+                startLine = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                startLine.name = "StartLine";
+                startLine.transform.parent = linesContainer.transform;
+                startLine.transform.localPosition = new Vector3(0, 0.07f, 0);
+                startLine.transform.localScale = new Vector3(totalWidth + 0.5f, 0.05f, 0.2f);
 
-                Renderer judgeRenderer = judgeLine.GetComponent<Renderer>();
-                judgeRenderer.material.color = new Color(0, 0.8f, 1f);
+                Renderer startRenderer = startLine.GetComponent<Renderer>();
+                startRenderer.material.color = new Color(0, 0.8f, 1f);
             }
             catch (Exception e)
             {
@@ -319,12 +349,13 @@ namespace NoteEditor
 
                 GameObject canvasObj = new GameObject("WaveformCanvas");
                 canvasObj.transform.parent = railContainer.transform;
+
                 canvasObj.transform.localPosition = new Vector3(
                     rightEdgeX - totalWidth,
                     waveformOffset,
-                    0
+                    railLength / 2f
                 );
-                canvasObj.transform.localRotation = Quaternion.Euler(90, 90, 0);
+                canvasObj.transform.localRotation = Quaternion.Euler(90, 270, 0);
 
                 waveformCanvas = canvasObj.AddComponent<Canvas>();
                 waveformCanvas.renderMode = RenderMode.WorldSpace;
@@ -332,7 +363,10 @@ namespace NoteEditor
 
                 RectTransform canvasRect = canvasObj.GetComponent<RectTransform>();
                 canvasRect.sizeDelta = new Vector2(railLength, waveformWidth);
-                canvasRect.pivot = new Vector2(1f, 0.5f);
+
+                canvasRect.pivot = new Vector2(0.5f, 0.5f);
+                canvasRect.anchorMin = new Vector2(0.5f, 0.5f);
+                canvasRect.anchorMax = new Vector2(0.5f, 0.5f);
 
                 CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
                 scaler.dynamicPixelsPerUnit = 100f;
@@ -342,11 +376,13 @@ namespace NoteEditor
 
                 if (waveformDisplayPrefab != null)
                 {
-                    GameObject waveformObj = Instantiate(
-                        waveformDisplayPrefab,
-                        canvasObj.transform
-                    );
-                    waveformDisplay = waveformObj.GetComponent<WaveformDisplay>();
+                    WaveformDisplay waveformObj = Instantiate(
+                            waveformDisplayPrefab,
+                            canvasObj.transform
+                        )
+                        .GetComponent<WaveformDisplay>();
+                    waveformObj.name = "WaveformDisplay";
+                    waveformDisplay = waveformObj;
 
                     if (waveformDisplay != null)
                     {
@@ -356,11 +392,16 @@ namespace NoteEditor
                         waveformRect.offsetMin = Vector2.zero;
                         waveformRect.offsetMax = Vector2.zero;
 
-                        waveformDisplay.waveformColor = waveformColor;
-                        waveformDisplay.showBeatMarkers = true;
                         waveformDisplay.bpm = bpm;
                         waveformDisplay.beatsPerBar = beatsPerBar;
+                        waveformDisplay.SetColors(
+                            beatMarkerColor,
+                            downBeatMarkerColor,
+                            waveformColor
+                        );
                         waveformDisplay.SetRailLength(railLength);
+
+                        waveformDisplay.Initialize();
                     }
                 }
             }

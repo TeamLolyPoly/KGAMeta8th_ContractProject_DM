@@ -9,7 +9,6 @@ namespace NoteEditor
     public class WaveformDisplay : MonoBehaviour, IPointerClickHandler, IInitializable
     {
         public RawImage waveformImage;
-        public Image progressImage;
         public RectTransform waveformRect;
         public RectTransform playheadMarker;
         public Color playheadColor = Color.red;
@@ -18,19 +17,13 @@ namespace NoteEditor
 
         public float pixelsPerUnit = 200f;
 
-        public bool useProgressOverlay = false;
-
         public float railLength = 200f;
 
-        public Color waveformColor = new Color(1f, 0.6f, 0.2f);
-        public Color progressColor = new Color(0.2f, 0.6f, 1f);
-
-        public bool showBeatMarkers = false;
-        public Color beatMarkerColor = Color.white;
-        public Color downBeatMarkerColor = Color.yellow;
+        private Color waveformColor = new Color(1f, 0.6f, 0.2f);
+        private Color beatMarkerColor = Color.white;
+        private Color downBeatMarkerColor = Color.yellow;
 
         public float bpm = 120f;
-
         public int beatsPerBar = 4;
 
         public GameObject beatMarkerPrefab;
@@ -40,7 +33,6 @@ namespace NoteEditor
         private AudioClip currentClip;
         private Vector2 waveformSize;
         private bool isInitialized = false;
-        private float[] beatMarkers;
         private List<GameObject> beatMarkerObjects = new List<GameObject>();
 
         public bool IsInitialized
@@ -49,19 +41,18 @@ namespace NoteEditor
             private set => isInitialized = value;
         }
 
-        private void Start()
+        public void SetColors(Color beatMarkerColor, Color downBeatMarkerColor, Color waveformColor)
         {
-            StartCoroutine(InitializeRoutine());
-        }
-
-        private IEnumerator InitializeRoutine()
-        {
-            yield return new WaitUntil(() => AudioManager.Instance.IsInitialized);
-            Initialize();
+            this.beatMarkerColor = beatMarkerColor;
+            this.downBeatMarkerColor = downBeatMarkerColor;
+            this.waveformColor = waveformColor;
         }
 
         public void Initialize()
         {
+            beatMarkerPrefab = Resources.Load<GameObject>("Prefabs/NoteEditor/BeatMarker");
+            downBeatMarkerPrefab = Resources.Load<GameObject>("Prefabs/NoteEditor/DownBeatMarker");
+
             if (waveformRect == null)
                 waveformRect = GetComponent<RectTransform>();
 
@@ -75,24 +66,10 @@ namespace NoteEditor
                 scaler.scaleFactor = 1f;
             }
 
-            if (progressImage != null)
-            {
-                progressImage.color = progressColor;
-                progressImage.type = Image.Type.Filled;
-                progressImage.fillMethod = Image.FillMethod.Horizontal;
-                progressImage.fillOrigin = (int)Image.OriginHorizontal.Left;
-                progressImage.fillAmount = 0;
-
-                progressImage.rectTransform.anchorMin = Vector2.zero;
-                progressImage.rectTransform.anchorMax = Vector2.one;
-                progressImage.rectTransform.offsetMin = Vector2.zero;
-                progressImage.rectTransform.offsetMax = Vector2.zero;
-            }
-
             if (playheadMarker != null)
             {
-                playheadMarker.anchorMin = new Vector2(0, 0);
-                playheadMarker.anchorMax = new Vector2(0, 1);
+                playheadMarker.anchorMin = new Vector2(0.5f, 0);
+                playheadMarker.anchorMax = new Vector2(0.5f, 1);
                 playheadMarker.pivot = new Vector2(0f, 0.5f);
                 playheadMarker.anchoredPosition = Vector2.zero;
                 playheadMarker.sizeDelta = new Vector2(1f, 0);
@@ -111,6 +88,13 @@ namespace NoteEditor
             waveformImage.rectTransform.offsetMin = Vector2.zero;
             waveformImage.rectTransform.offsetMax = Vector2.zero;
 
+            AudioManager.Instance.OnBPMChanged += OnBPMChanged;
+            AudioManager.Instance.OnBeatsPerBarChanged += OnBeatsPerBarChanged;
+            AudioManager.Instance.OnTotalBarsChanged += OnTotalBarsChanged;
+
+            bpm = AudioManager.Instance.CurrentBPM;
+            beatsPerBar = AudioManager.Instance.BeatsPerBar;
+
             if (
                 AudioManager.Instance.currentTrack != null
                 && AudioManager.Instance.currentTrack.TrackAudio != null
@@ -120,6 +104,32 @@ namespace NoteEditor
             }
 
             IsInitialized = true;
+        }
+
+        private void OnBPMChanged(float newBPM)
+        {
+            bpm = newBPM;
+            if (IsInitialized && currentClip != null)
+            {
+                GenerateBeatMarkers();
+            }
+        }
+
+        private void OnBeatsPerBarChanged(int newBeatsPerBar)
+        {
+            beatsPerBar = newBeatsPerBar;
+            if (IsInitialized && currentClip != null)
+            {
+                GenerateBeatMarkers();
+            }
+        }
+
+        private void OnTotalBarsChanged(float newTotalBars)
+        {
+            if (IsInitialized && currentClip != null)
+            {
+                GenerateBeatMarkers();
+            }
         }
 
         private void Update()
@@ -159,25 +169,10 @@ namespace NoteEditor
                 waveformImage.texture.filterMode = FilterMode.Bilinear;
                 waveformImage.texture.anisoLevel = 16;
 
-                if (progressImage != null)
-                {
-                    progressImage.sprite = Sprite.Create(
-                        waveformTexture,
-                        new Rect(0, 0, waveformTexture.width, waveformTexture.height),
-                        new Vector2(0.5f, 0.5f),
-                        pixelsPerUnit
-                    );
-                    progressImage.fillAmount = 0;
-                }
-
-                if (showBeatMarkers)
-                {
-                    GenerateBeatMarkers();
-                }
+                GenerateBeatMarkers();
             }
 
             waveformImage.gameObject.SetActive(true);
-            progressImage.gameObject.SetActive(true);
         }
 
         private void UpdatePlayheadPosition()
@@ -241,14 +236,15 @@ namespace NoteEditor
             if (playheadMarker == null)
                 return;
 
-            float xPosition = normalizedPosition * railLength;
+            float waveformWidth = waveformRect.rect.width;
+            float xPosition = (normalizedPosition * waveformWidth) - (waveformWidth / 2f);
             playheadMarker.anchoredPosition = new Vector2(xPosition, 0);
         }
 
         public void SetRailLength(float length)
         {
             railLength = length;
-            if (showBeatMarkers && IsInitialized && currentClip != null)
+            if (IsInitialized && currentClip != null)
             {
                 GenerateBeatMarkers();
             }
@@ -261,47 +257,51 @@ namespace NoteEditor
             if (currentClip == null || bpm <= 0)
                 return;
 
-            float clipDuration = currentClip.length;
-            float secondsPerBeat = 60f / bpm;
-            float secondsPerBar = secondsPerBeat * beatsPerBar;
+            float totalBars = AudioManager.Instance.TotalBars;
+            float waveformWidth = waveformRect.rect.width;
 
-            float exactBeats = clipDuration / secondsPerBeat;
-            int totalBeats = Mathf.CeilToInt(exactBeats);
-
-            beatMarkers = new float[totalBeats];
-
-            for (int i = 0; i < totalBeats; i++)
+            for (int bar = 0; bar <= Mathf.CeilToInt(totalBars); bar++)
             {
-                float beatTime = i * secondsPerBeat;
-                float normalizedPosition = beatTime / clipDuration;
-                beatMarkers[i] = normalizedPosition;
+                float barStartPos = (bar / totalBars) * waveformWidth;
+                float adjustedBarPos = barStartPos - (waveformWidth / 2f);
+                CreateBeatMarker(adjustedBarPos, true);
 
-                bool isDownBeat = i % beatsPerBar == 0;
-                GameObject markerPrefab = isDownBeat ? downBeatMarkerPrefab : beatMarkerPrefab;
-
-                if (markerPrefab != null)
+                for (int beat = 1; beat < beatsPerBar; beat++)
                 {
-                    GameObject marker = Instantiate(markerPrefab, waveformRect);
-                    RectTransform markerRect = marker.GetComponent<RectTransform>();
-
-                    if (markerRect != null)
+                    float beatPos =
+                        barStartPos + (beat * (waveformWidth / (totalBars * beatsPerBar)));
+                    float adjustedBeatPos = beatPos - (waveformWidth / 2f);
+                    if (beatPos <= waveformWidth)
                     {
-                        markerRect.anchorMin = new Vector2(0, 0);
-                        markerRect.anchorMax = new Vector2(0, 1);
-                        markerRect.pivot = new Vector2(0.5f, 0.5f);
-
-                        float xPosition = beatTime / clipDuration * railLength;
-                        markerRect.anchoredPosition = new Vector2(xPosition, 0);
-                        markerRect.sizeDelta = new Vector2(0.1f, 0);
-
-                        Image markerImage = marker.GetComponent<Image>();
-                        if (markerImage != null)
-                        {
-                            markerImage.color = isDownBeat ? downBeatMarkerColor : beatMarkerColor;
-                        }
-
-                        beatMarkerObjects.Add(marker);
+                        CreateBeatMarker(adjustedBeatPos, false);
                     }
+                }
+            }
+        }
+
+        private void CreateBeatMarker(float position, bool isDownBeat)
+        {
+            GameObject markerPrefab = isDownBeat ? downBeatMarkerPrefab : beatMarkerPrefab;
+            if (markerPrefab != null)
+            {
+                GameObject marker = Instantiate(markerPrefab, waveformRect);
+                RectTransform markerRect = marker.GetComponent<RectTransform>();
+
+                if (markerRect != null)
+                {
+                    markerRect.anchorMin = new Vector2(0.5f, 0);
+                    markerRect.anchorMax = new Vector2(0.5f, 1);
+                    markerRect.pivot = new Vector2(0.5f, 0.5f);
+                    markerRect.anchoredPosition = new Vector2(position, 0);
+                    markerRect.sizeDelta = new Vector2(0.1f, 0);
+
+                    Image markerImage = marker.GetComponent<Image>();
+                    if (markerImage != null)
+                    {
+                        markerImage.color = isDownBeat ? downBeatMarkerColor : beatMarkerColor;
+                    }
+
+                    beatMarkerObjects.Add(marker);
                 }
             }
         }
@@ -319,40 +319,14 @@ namespace NoteEditor
             beatMarkerObjects.Clear();
         }
 
-        /// <summary>
-        /// 진행도 색 업데이트 함수 사용하지 않게 됨
-        /// 실질적인 delta와 fill amount의 동기화가 정확하게 되지 않기에...
-        /// </summary>
-        private void UpdateProgressOverlay()
-        {
-            if (
-                currentClip == null
-                || progressImage == null
-                || !useProgressOverlay
-                || playheadMarker == null
-            )
-                return;
-
-            float currentTime = GetCurrentPlaybackTime();
-            float totalDuration = GetTotalDuration();
-
-            float normalizedPosition = (currentTime / totalDuration);
-            float railPosition = normalizedPosition * railLength;
-
-            progressImage.fillAmount = Mathf.Clamp01(railPosition / railLength);
-        }
-
-        public void SetProgressOverlayVisible(bool visible)
-        {
-            useProgressOverlay = visible;
-            if (progressImage != null)
-            {
-                progressImage.gameObject.SetActive(visible);
-            }
-        }
-
         private void OnDestroy()
         {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.OnBPMChanged -= OnBPMChanged;
+                AudioManager.Instance.OnBeatsPerBarChanged -= OnBeatsPerBarChanged;
+                AudioManager.Instance.OnTotalBarsChanged -= OnTotalBarsChanged;
+            }
             ClearBeatMarkers();
         }
     }
