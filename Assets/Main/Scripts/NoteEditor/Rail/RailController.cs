@@ -6,38 +6,23 @@ using UnityEngine.UI;
 
 namespace NoteEditor
 {
-    public class RailGenerator : MonoBehaviour, IInitializable
+    public class RailController : MonoBehaviour, IInitializable
     {
         private int laneCount = 5;
-
-        [SerializeField]
         private float unitsPerBar = 10f;
-
-        [SerializeField]
         private float minRailLength = 20f;
-
-        [SerializeField]
         private float railWidth = 1f;
-
-        [SerializeField]
         private float railSpacing = 0.1f;
 
         private Material railMaterial;
         private Material barLineMaterial;
         private Material beatLineMaterial;
         private GameObject waveformDisplayPrefab;
-
         private float waveformOffset = 0.2f;
         private float waveformWidth = 1.5f;
-
-        [SerializeField]
         private Color waveformColor = new Color(1f, 0.6f, 0.2f);
-
-        [SerializeField]
-        private Color beatMarkerColor = new Color(0, 0.8f, 1f);
-
-        [SerializeField]
-        private Color downBeatMarkerColor = new Color(0, 0.8f, 1f);
+        private Color beatMarkerColor = Color.white;
+        private Color downBeatMarkerColor = Color.yellow;
 
         private GameObject[] lanes;
         private GameObject[] divisions;
@@ -47,41 +32,13 @@ namespace NoteEditor
         private Canvas waveformCanvas;
         private bool isInitialized = false;
         public bool IsInitialized => isInitialized;
-
         private float bpm = 120f;
         private int beatsPerBar = 4;
-
         private float railLength = 20f;
-
         private AudioClip currentAudioClip;
         private float totalBars;
-
         public float TotalBars => totalBars;
         public float UnitsPerBar => unitsPerBar;
-        public AudioClip CurrentAudioClip => currentAudioClip;
-
-        private IEnumerator Start()
-        {
-            yield return new WaitUntil(
-                () =>
-                    AudioManager.Instance != null
-                    && AudioManager.Instance.IsInitialized
-                    && AudioDataManager.Instance != null
-                    && AudioDataManager.Instance.IsInitialized
-            );
-
-            Initialize();
-        }
-
-        public void GetResources()
-        {
-            railMaterial = Resources.Load<Material>("Materials/NoteEditor/Rail");
-            barLineMaterial = Resources.Load<Material>("Materials/NoteEditor/BarLine");
-            beatLineMaterial = Resources.Load<Material>("Materials/NoteEditor/BeatLine");
-            waveformDisplayPrefab = Resources.Load<GameObject>(
-                "Prefabs/NoteEditor/WaveformDisplay"
-            );
-        }
 
         public void Initialize()
         {
@@ -115,6 +72,16 @@ namespace NoteEditor
                 }
             }
             isInitialized = true;
+        }
+
+        public void GetResources()
+        {
+            railMaterial = Resources.Load<Material>("Materials/NoteEditor/Rail");
+            barLineMaterial = Resources.Load<Material>("Materials/NoteEditor/BarLine");
+            beatLineMaterial = Resources.Load<Material>("Materials/NoteEditor/BeatLine");
+            waveformDisplayPrefab = Resources.Load<GameObject>(
+                "Prefabs/NoteEditor/WaveformDisplay"
+            );
         }
 
         private void ClearAllListeners()

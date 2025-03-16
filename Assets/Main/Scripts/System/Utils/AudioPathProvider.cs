@@ -16,6 +16,8 @@ namespace NoteEditor
 
         public static string TrackDataPath => Path.Combine(BasePath, "Data");
 
+        public static string NoteMapPath => Path.Combine(BasePath, "NoteMaps");
+
         /// <summary>
         /// 기본 경로를 설정합니다.
         /// </summary>
@@ -47,6 +49,16 @@ namespace NoteEditor
         }
 
         /// <summary>
+        /// 트랙 이름으로 노트맵 파일 경로를 가져옵니다.
+        /// </summary>
+        /// <param name="trackName">트랙 이름</param>
+        /// <returns>노트맵 파일 경로</returns>
+        public static string GetNoteMapPath(string trackName)
+        {
+            return Path.Combine(NoteMapPath, $"{trackName}.json");
+        }
+
+        /// <summary>
         /// 필요한 디렉토리가 존재하는지 확인하고, 없으면 생성합니다.
         /// </summary>
         public static void EnsureDirectoriesExist()
@@ -59,6 +71,9 @@ namespace NoteEditor
 
             if (!Directory.Exists(AlbumArtPath))
                 Directory.CreateDirectory(AlbumArtPath);
+
+            if (!Directory.Exists(NoteMapPath))
+                Directory.CreateDirectory(NoteMapPath);
         }
     }
 }
