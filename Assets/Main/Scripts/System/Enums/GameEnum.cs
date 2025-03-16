@@ -33,7 +33,7 @@ public enum NoteHitType
     None,
     Red,
     Blue,
-    Hand,
+    Yellow,
 }
 
 public enum NoteRatings
@@ -60,4 +60,12 @@ public enum Engagement
     First = 0,
     Second,
     Third,
+    Fourth,
+    Fifth,
+    Sixth,
+    Seventh,
+    Eighth,
+    Ninth,
+    Tenth
 }
+
