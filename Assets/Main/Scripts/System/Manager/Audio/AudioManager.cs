@@ -15,13 +15,11 @@ namespace NoteEditor
         private bool isPlaying = false;
         private float volume = 1.0f;
 
-        public event Action<float> OnBPMChanged;
-        public event Action<TrackData> OnTrackChanged;
-        public event Action<float> OnTotalBarsChanged;
-
         private float currentBPM = 120f;
         private int currentBeatsPerBar = 4;
-        private float totalBars = 0f;
+        private float totalBars = 0;
+
+        public float TotalBars => totalBars;
 
         public float CurrentBPM
         {
@@ -36,8 +34,6 @@ namespace NoteEditor
                     {
                         currentTrack.bpm = value;
                     }
-
-                    OnBPMChanged?.Invoke(currentBPM);
 
                     UpdateTotalBars();
                 }
@@ -56,8 +52,6 @@ namespace NoteEditor
                 }
             }
         }
-
-        public float TotalBars => totalBars;
 
         /// <summary>
         /// 현재 재생 시간
@@ -208,8 +202,6 @@ namespace NoteEditor
             BeatsPerBar = 4;
 
             UpdateTotalBars();
-
-            OnTrackChanged?.Invoke(track);
         }
 
         /// <summary>
@@ -223,9 +215,6 @@ namespace NoteEditor
                 float secondsPerBeat = 60f / currentBPM;
                 float secondsPerBar = secondsPerBeat * currentBeatsPerBar;
                 totalBars = clipDuration / secondsPerBar;
-
-                // 이벤트 발생
-                OnTotalBarsChanged?.Invoke(totalBars);
             }
         }
 
