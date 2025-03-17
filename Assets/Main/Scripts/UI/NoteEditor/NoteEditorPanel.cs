@@ -1,13 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
 using Michsky.UI.Heat;
 using SFB;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using Dropdown = Michsky.UI.Heat.Dropdown;
 
 namespace NoteEditor
@@ -89,6 +85,7 @@ namespace NoteEditor
             }
 
             InitializeTrackDropdown();
+            InitializeAlbumArtButton();
             IsInitialized = true;
             Debug.Log("[NoteEditorPanel] 초기화 완료");
         }
@@ -191,11 +188,39 @@ namespace NoteEditor
                             }
                         }
                     }
+                    else
+                    {
+                        trackDropdown.CreateNewItem("No Tracks", dropdownItemIcon, true);
+                        trackDropdown.SetDropdownIndex(0);
+                    }
                 }
             }
             catch (Exception e)
             {
                 Debug.LogError($"드롭다운 초기화 오류: {e.Message}");
+            }
+        }
+
+        private void InitializeAlbumArtButton()
+        {
+            if (SetAlbumArtButton != null)
+            {
+                if (trackDataList.Count == 0)
+                {
+                    SetAlbumArtButton.buttonIcon = defaultAlbumArt;
+                    SetAlbumArtButton.buttonDescription = "앨범 아트 선택";
+                    SetAlbumArtButton.SetText("로드된 트랙 없음");
+                }
+                else
+                {
+                    SetAlbumArtButton.buttonIcon = trackDataList[
+                        trackDropdown.selectedItemIndex
+                    ].AlbumArt;
+                    SetAlbumArtButton.buttonDescription = "앨범 아트 선택";
+                    SetAlbumArtButton.SetText(
+                        trackDataList[trackDropdown.selectedItemIndex].trackName
+                    );
+                }
             }
         }
 
@@ -247,7 +272,8 @@ namespace NoteEditor
         {
             int minutes = Mathf.FloorToInt(timeInSeconds / 60);
             int seconds = Mathf.FloorToInt(timeInSeconds % 60);
-            return $"{minutes:00}:{seconds:00}";
+            int milliseconds = Mathf.FloorToInt((timeInSeconds * 1000) % 1000);
+            return $"{minutes:00}:{seconds:00}:{milliseconds:00}";
         }
 
         public void LoadTrack()
@@ -403,11 +429,10 @@ namespace NoteEditor
                 beatsPerBarInput.inputText.text = AudioManager.Instance.BeatsPerBar.ToString();
             }
 
-            // 트랙 드롭다운 업데이트
             int index = trackDataList.FindIndex(t => t.trackName == track.trackName);
             if (index >= 0 && trackDropdown != null)
             {
-                trackDropdown.selectedItemIndex = index;
+                trackDropdown.SetDropdownIndex(index);
             }
 
             UpdateStatusText($"트랙 변경됨: {track.trackName}");
@@ -417,6 +442,7 @@ namespace NoteEditor
         {
             trackDataList = editorManager.GetAllTrackInfo();
             InitializeTrackDropdown();
+            InitializeAlbumArtButton();
         }
     }
 }

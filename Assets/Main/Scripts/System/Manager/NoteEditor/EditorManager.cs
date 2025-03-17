@@ -89,29 +89,42 @@ namespace NoteEditor
 
         private IEnumerator InitializeComponents()
         {
-            yield return new WaitUntil(() => AudioManager.Instance.IsInitialized);
-            yield return new WaitUntil(() => EditorDataManager.Instance.IsInitialized);
+            yield return new WaitUntil(
+                () => AudioManager.Instance != null && AudioManager.Instance.IsInitialized
+            );
+            yield return new WaitUntil(
+                () => EditorDataManager.Instance != null && EditorDataManager.Instance.IsInitialized
+            );
 
-            RefreshTrackList();
+            Debug.Log("[EditorManager] 컴포넌트 초기화 시작");
 
+            // 먼저 리소스 로드 및 기본 초기화
             if (railController != null && !railController.IsInitialized)
             {
                 railController.Initialize();
+                yield return new WaitUntil(() => railController.IsInitialized);
+                Debug.Log("[EditorManager] RailController 초기화 완료");
             }
 
             if (cellController != null && !cellController.IsInitialized)
             {
                 cellController.Initialize();
+                yield return new WaitUntil(() => cellController.IsInitialized);
+                Debug.Log("[EditorManager] CellController 초기화 완료");
             }
 
             if (noteEditor != null && !noteEditor.IsInitialized)
             {
                 noteEditor.Initialize();
+                yield return new WaitUntil(() => noteEditor.IsInitialized);
+                Debug.Log("[EditorManager] NoteEditor 초기화 완료");
             }
 
             if (editorPanel != null && !editorPanel.IsInitialized)
             {
                 editorPanel.Initialize();
+                yield return new WaitUntil(() => editorPanel.IsInitialized);
+                Debug.Log("[EditorManager] EditorPanel 초기화 완료");
             }
 
             editorCamera = Camera.main;
@@ -123,7 +136,9 @@ namespace NoteEditor
             }
 
             SetupInputActions();
+            RefreshTrackList();
 
+            // 트랙 로드 및 선택
             if (cachedTracks.Count > 0)
             {
                 SelectTrack(cachedTracks[0]);

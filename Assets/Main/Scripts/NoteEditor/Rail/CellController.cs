@@ -29,37 +29,50 @@ namespace NoteEditor
 
         public void Initialize()
         {
-            GetResources();
-            railController = EditorManager.Instance.railController;
-
-            if (railController != null)
-            {
-                railWidth = 1f;
-                railSpacing = 0.1f;
-            }
-
-            if (isInitialized)
-            {
-                CleanupCells();
-            }
-
             try
             {
-                CreateCellContainer();
-                GenerateCells();
+                LoadResources();
                 isInitialized = true;
+                Debug.Log("[CellController] 초기화 완료 - 리소스 로드됨");
             }
             catch (Exception e)
             {
-                Debug.LogError($"셀 생성 실패: {e.Message}");
-                CleanupCells();
+                Debug.LogError($"[CellController] 초기화 실패: {e.Message}");
+                isInitialized = false;
             }
         }
 
-        private void GetResources()
+        private void LoadResources()
         {
             cellMaterial = Resources.Load<Material>("Materials/NoteEditor/Cell");
             selectedCellMaterial = Resources.Load<Material>("Materials/NoteEditor/SelectedCell");
+        }
+
+        public void Setup()
+        {
+            railController = EditorManager.Instance.railController;
+            if (railController == null || !railController.IsInitialized)
+            {
+                Debug.LogWarning("[CellController] RailController가 초기화되지 않았습니다.");
+                return;
+            }
+
+            railWidth = railController.RailWidth;
+            railSpacing = railController.RailSpacing;
+
+            if (railController.TotalBars <= 0)
+            {
+                Debug.LogWarning(
+                    "[CellController] RailController의 TotalBars가 유효하지 않습니다."
+                );
+                return;
+            }
+
+            CleanupCells();
+            CreateCellContainer();
+            GenerateCells();
+
+            Debug.Log("[CellController] 셀 설정 완료");
         }
 
         private void CreateCellContainer()
@@ -74,8 +87,16 @@ namespace NoteEditor
             cellContainer.transform.localPosition = Vector3.zero;
         }
 
-        private void GenerateCells()
+        public void GenerateCells()
         {
+            if (railController == null || railController.TotalBars <= 0)
+            {
+                Debug.LogWarning(
+                    "[CellController] RailController가 초기화되지 않았거나 TotalBars 값이 유효하지 않습니다. 셀 생성을 건너뜁니다."
+                );
+                return;
+            }
+
             cells.Clear();
             selectedCell = null;
 
@@ -97,8 +118,7 @@ namespace NoteEditor
             {
                 float barStartPos = (bar / totalBars) * railLength;
 
-                int beatsPerBar =
-                    AudioManager.Instance != null ? AudioManager.Instance.BeatsPerBar : 4;
+                int beatsPerBar = railController.BeatsPerBar;
 
                 for (int beat = 0; beat < beatsPerBar; beat++)
                 {
@@ -130,6 +150,8 @@ namespace NoteEditor
                     }
                 }
             }
+
+            Debug.Log($"[CellController] 셀 생성 완료: 총 {cells.Count}개의 셀 생성됨");
         }
 
         private void CreateCell(int bar, int beat, int lane, int y, Vector3 position)
@@ -210,8 +232,6 @@ namespace NoteEditor
                 Destroy(cellContainer);
                 cellContainer = null;
             }
-
-            isInitialized = false;
         }
 
         private void OnDisable()
@@ -229,8 +249,6 @@ namespace NoteEditor
                 Destroy(cellContainer);
                 cellContainer = null;
             }
-
-            isInitialized = false;
         }
     }
 }
