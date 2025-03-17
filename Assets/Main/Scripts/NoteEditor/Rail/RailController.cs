@@ -43,35 +43,53 @@ namespace NoteEditor
         public void Initialize()
         {
             GetResources();
-            AudioManager.Instance.OnTrackChanged += OnTrackChanged;
-            AudioManager.Instance.OnBPMChanged += OnBPMChanged;
 
             if (AudioManager.Instance.currentTrack != null)
             {
-                OnTrackChanged(AudioManager.Instance.currentTrack);
-            }
-            else
-            {
-                if (isInitialized)
+                bpm = AudioManager.Instance.currentTrack.bpm;
+                beatsPerBar = AudioManager.Instance.BeatsPerBar;
+                totalBars = AudioManager.Instance.TotalBars;
+
+                if (AudioManager.Instance.currentTrack.TrackAudio != null)
                 {
-                    Cleanup();
+                    currentAudioClip = AudioManager.Instance.currentTrack.TrackAudio;
+                    float totalSeconds = currentAudioClip.length;
+                    float secondsPerBar = (60f / bpm) * beatsPerBar;
+                    totalBars = totalSeconds / secondsPerBar;
+
+                    float calculatedLength = totalBars * unitsPerBar;
+                    railLength = Mathf.Max(calculatedLength, minRailLength);
                 }
                 else
                 {
-                    try
-                    {
-                        CreateRail();
-                        CreateWaveformDisplay();
-                        isInitialized = true;
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError($"Failed to initialize RailGenerator: {e}");
-                        Cleanup();
-                    }
+                    railLength = minRailLength;
                 }
             }
-            isInitialized = true;
+            else
+            {
+                bpm = 120f;
+                beatsPerBar = 4;
+                totalBars = 4f;
+                unitsPerBar = 10f;
+                railLength = minRailLength;
+            }
+
+            if (isInitialized)
+            {
+                Cleanup();
+            }
+
+            try
+            {
+                CreateRail();
+                CreateWaveformDisplay();
+                isInitialized = true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to initialize RailGenerator: {e}");
+                Cleanup();
+            }
         }
 
         public void GetResources()
@@ -84,27 +102,17 @@ namespace NoteEditor
             );
         }
 
-        private void ClearAllListeners()
-        {
-            if (AudioManager.Instance != null)
-            {
-                AudioManager.Instance.OnTrackChanged -= OnTrackChanged;
-                AudioManager.Instance.OnBPMChanged -= OnBPMChanged;
-            }
-        }
-
         private void OnDisable()
         {
             Cleanup();
         }
 
-        private void Cleanup()
+        public void Cleanup()
         {
             if (this == null)
                 return;
 
             StopAllCoroutines();
-            ClearAllListeners();
 
             if (lanes != null)
             {
@@ -485,6 +493,9 @@ namespace NoteEditor
                 waveformDisplay.bpm = bpm;
                 waveformDisplay.beatsPerBar = beatsPerBar;
                 waveformDisplay.SetRailLength(railLength);
+
+                waveformDisplay.OnBPMChanged(bpm);
+                waveformDisplay.OnBeatsPerBarChanged(beatsPerBar);
             }
 
             Debug.Log(
@@ -500,26 +511,19 @@ namespace NoteEditor
             }
         }
 
-        private void OnTrackChanged(TrackData track)
+        public void OnTrackChanged(TrackData track)
         {
             if (track == null)
                 return;
 
-            bpm = track.bpm;
-            beatsPerBar = 4;
+            Debug.Log($"RailController: Track changed to {track.trackName}");
+
+            UpdateBeatSettings(track.bpm, AudioManager.Instance.BeatsPerBar);
 
             if (track.TrackAudio != null)
             {
                 SetAudioClip(track.TrackAudio);
             }
-        }
-
-        private void OnBPMChanged(float newBpm)
-        {
-            if (Mathf.Approximately(bpm, newBpm))
-                return;
-
-            UpdateBeatSettings(newBpm, beatsPerBar);
         }
     }
 }
