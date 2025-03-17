@@ -1,8 +1,8 @@
 {
-    "name": "AudioControls",
+    "name": "EditorControls",
     "maps": [
         {
-            "name": "AudioPlayer",
+            "name": "NoteEditor",
             "id": "c2984bec-69cb-4b07-af49-a01e4e1dd20d",
             "actions": [
                 {
@@ -45,6 +45,33 @@
                     "name": "VolumeDown",
                     "type": "Button",
                     "id": "fd16a1ef-1d8d-4c25-8a63-85d30e6b3426",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "CreateNote",
+                    "type": "Button",
+                    "id": "85d09189-9edd-4496-8a9e-9279ff0649d8",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "CreateLongNote",
+                    "type": "Button",
+                    "id": "4d9fbea3-e55d-4053-8c3b-518a5a246f76",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "DeleteNote",
+                    "type": "Button",
+                    "id": "6f98e05b-e42f-4c57-88ce-ea8241751f90",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -104,6 +131,39 @@
                     "processors": "",
                     "groups": "",
                     "action": "VolumeDown",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "02e03211-1df6-4785-bd77-4d4f67686271",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "CreateNote",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a546ce63-1220-471f-a0ae-e60b7729677b",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "CreateLongNote",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b46add56-ec3e-4eef-b2c3-4d43c4154924",
+                    "path": "<Keyboard>/delete",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "DeleteNote",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

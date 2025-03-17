@@ -242,10 +242,10 @@ namespace NoteEditor
         /// </summary>
         private void SetupInputActions()
         {
-            audioControlActions = Resources.Load<InputActionAsset>("Input/AudioControls");
+            audioControlActions = Resources.Load<InputActionAsset>("Input/EditorControls");
             if (audioControlActions != null)
             {
-                var actionMap = audioControlActions.FindActionMap("AudioPlayer");
+                var actionMap = audioControlActions.FindActionMap("NoteEditor");
                 if (actionMap != null)
                 {
                     playPauseAction = actionMap.FindAction("PlayPause");
@@ -390,7 +390,7 @@ namespace NoteEditor
             BeatsPerBar = 4; // 기본값 설정
             UpdateTotalBars();
 
-            var railGenerator = FindObjectOfType<RailGenerator>();
+            var railGenerator = FindObjectOfType<RailController>();
             if (railGenerator != null)
             {
                 Debug.Log(

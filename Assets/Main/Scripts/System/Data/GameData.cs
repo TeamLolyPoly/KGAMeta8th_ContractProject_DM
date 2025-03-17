@@ -12,8 +12,37 @@ public class NoteData
     public NoteHitType noteType;
     public NoteDirection direction;
     public NoteAxis noteAxis = NoteAxis.PZ;
+
+    [JsonIgnore]
     public Vector2 StartCell;
+
+    [JsonIgnore]
     public Vector2 TargetCell;
+
+    public float StartCellX
+    {
+        get { return StartCell.x; }
+        set { StartCell = new Vector2(value, StartCell.y); }
+    }
+
+    public float StartCellY
+    {
+        get { return StartCell.y; }
+        set { StartCell = new Vector2(StartCell.x, value); }
+    }
+
+    public float TargetCellX
+    {
+        get { return TargetCell.x; }
+        set { TargetCell = new Vector2(value, TargetCell.y); }
+    }
+
+    public float TargetCellY
+    {
+        get { return TargetCell.y; }
+        set { TargetCell = new Vector2(TargetCell.x, value); }
+    }
+
     public bool isLeftGrid;
     public float noteSpeed;
     public int bar;
@@ -22,11 +51,10 @@ public class NoteData
     public bool isSymmetric;
     public bool isClockwise;
 
-    // 롱노트 지속 시간 관련 필드
-    public int durationBars; // 롱노트가 지속되는 마디 수
-    public int durationBeats; // 롱노트가 지속되는 박자 수
+    public int durationBars;
+    public int durationBeats;
 
-    [NonSerialized]
+    [JsonIgnore]
     public GridGenerator gridGenerator;
 
     public Vector3 GetStartPosition()
@@ -90,6 +118,7 @@ public class TrackData
     public string genre;
     public float duration;
     public float bpm = 120f;
+    public NoteMap noteMap;
 
     [JsonIgnore]
     private Sprite _albumArt;

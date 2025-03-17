@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -559,12 +561,205 @@ namespace NoteEditor
 
             foreach (var track in tracks)
             {
-                TrackData metadata = new TrackData { trackName = track.trackName, bpm = track.bpm };
+                TrackData metadata = new TrackData
+                {
+                    trackName = track.trackName,
+                    bpm = track.bpm,
+                    artistName = track.artistName,
+                    albumName = track.albumName,
+                    year = track.year,
+                    genre = track.genre,
+                    duration = track.duration,
+                };
+
+                if (track.noteMap != null)
+                {
+                    string noteMapPath = AudioPathProvider.GetNoteMapPath(track.trackName);
+                    string noteMapJson = JsonConvert.SerializeObject(
+                        track.noteMap,
+                        Formatting.Indented
+                    );
+
+                    string directory = Path.GetDirectoryName(noteMapPath);
+                    if (!Directory.Exists(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
+
+                    await Task.Run(() => File.WriteAllText(noteMapPath, noteMapJson));
+                    Debug.Log($"노트맵 저장 완료: {noteMapPath}");
+                }
 
                 metadataList.Add(metadata);
             }
 
             await fileService.SaveMetadataAsync(metadataList);
+        }
+
+        /// <summary>
+        /// 트랙 메타데이터를 업데이트합니다.
+        /// </summary>
+        /// <param name="track">업데이트할 트랙 데이터</param>
+        /// <returns>업데이트된 트랙 데이터</returns>
+        public async Task<TrackData> UpdateTrackMetadataAsync(TrackData track)
+        {
+            if (track == null)
+                return null;
+
+            try
+            {
+                TrackData existingTrack = tracks.FirstOrDefault(t =>
+                    t.trackName == track.trackName
+                );
+                if (existingTrack != null)
+                {
+                    int index = tracks.IndexOf(existingTrack);
+                    tracks[index] = track;
+
+                    if (track.noteMap != null)
+                    {
+                        string noteMapPath = AudioPathProvider.GetNoteMapPath(track.trackName);
+                        string noteMapJson = JsonConvert.SerializeObject(
+                            track.noteMap,
+                            Formatting.Indented
+                        );
+
+                        string directory = Path.GetDirectoryName(noteMapPath);
+                        if (!Directory.Exists(directory))
+                        {
+                            Directory.CreateDirectory(directory);
+                        }
+
+                        await Task.Run(() => File.WriteAllText(noteMapPath, noteMapJson));
+                        Debug.Log($"노트맵 저장 완료: {noteMapPath}");
+                    }
+
+                    await UpdateTrackMetadataAsync();
+
+                    OnTrackUpdated?.Invoke(track);
+                    return track;
+                }
+                else
+                {
+                    Debug.LogWarning($"업데이트할 트랙을 찾을 수 없음: {track.trackName}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"트랙 메타데이터 업데이트 중 오류 발생: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 트랙의 노트맵을 로드합니다.
+        /// </summary>
+        /// <param name="trackName">트랙 이름</param>
+        /// <returns>로드된 노트맵</returns>
+        public async Task<NoteMap> LoadNoteMapAsync(string trackName)
+        {
+            if (string.IsNullOrEmpty(trackName))
+                return null;
+
+            try
+            {
+                string noteMapPath = AudioPathProvider.GetNoteMapPath(trackName);
+
+                if (!File.Exists(noteMapPath))
+                {
+                    Debug.LogWarning($"노트맵 파일을 찾을 수 없음: {noteMapPath}");
+                    return null;
+                }
+
+                string json = await Task.Run(() => File.ReadAllText(noteMapPath));
+                NoteMap noteMap = JsonConvert.DeserializeObject<NoteMap>(json);
+
+                TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
+                if (track != null)
+                {
+                    track.noteMap = noteMap;
+                    OnTrackUpdated?.Invoke(track);
+                }
+
+                Debug.Log($"노트맵 로드 완료: {noteMapPath}");
+                return noteMap;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"노트맵 로드 중 오류 발생: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 노트맵을 저장합니다.
+        /// </summary>
+        /// <param name="trackName">트랙 이름</param>
+        /// <param name="noteMap">저장할 노트맵</param>
+        /// <returns>성공 여부</returns>
+        public async Task<bool> SaveNoteMapAsync(string trackName, NoteMap noteMap)
+        {
+            if (string.IsNullOrEmpty(trackName) || noteMap == null)
+                return false;
+
+            try
+            {
+                string noteMapPath = AudioPathProvider.GetNoteMapPath(trackName);
+
+                JsonSerializerSettings settings = new JsonSerializerSettings
+                {
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                    Formatting = Formatting.Indented,
+                };
+
+                string noteMapJson = JsonConvert.SerializeObject(noteMap, settings);
+
+                string directory = Path.GetDirectoryName(noteMapPath);
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                await Task.Run(() => File.WriteAllText(noteMapPath, noteMapJson));
+
+                TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
+                if (track != null)
+                {
+                    track.noteMap = noteMap;
+                    OnTrackUpdated?.Invoke(track);
+                }
+
+                Debug.Log($"노트맵 저장 완료: {noteMapPath}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"노트맵 저장 중 오류 발생: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 트랙을 로드할 때 노트맵도 함께 로드합니다.
+        /// </summary>
+        /// <param name="trackName">트랙 이름</param>
+        /// <returns>로드된 트랙 데이터</returns>
+        public async Task<TrackData> LoadTrackWithNoteMapAsync(string trackName)
+        {
+            TrackData track = await LoadTrackAudioAsync(trackName);
+
+            if (track != null)
+            {
+                // 노트맵 로드 시도
+                NoteMap noteMap = await LoadNoteMapAsync(trackName);
+                if (noteMap != null)
+                {
+                    track.noteMap = noteMap;
+                }
+            }
+
+            return track;
         }
 
         /// <summary>
