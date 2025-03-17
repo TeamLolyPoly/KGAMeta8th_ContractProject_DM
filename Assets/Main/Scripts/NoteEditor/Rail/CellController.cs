@@ -81,6 +81,13 @@ namespace NoteEditor
 
             float totalBars = railController.TotalBars;
             float unitsPerBar = railController.UnitsPerBar;
+
+            if (totalBars <= 0 || unitsPerBar <= 0)
+            {
+                Debug.LogError($"Invalid values: TotalBars={totalBars}, UnitsPerBar={unitsPerBar}");
+                return;
+            }
+
             float railLength = totalBars * unitsPerBar;
 
             float totalWidth = (laneCount * railWidth) + ((laneCount - 1) * railSpacing);
@@ -210,6 +217,20 @@ namespace NoteEditor
         private void OnDisable()
         {
             CleanupCells();
+        }
+
+        public void Cleanup()
+        {
+            cells.Clear();
+            selectedCell = null;
+
+            if (cellContainer != null)
+            {
+                Destroy(cellContainer);
+                cellContainer = null;
+            }
+
+            isInitialized = false;
         }
     }
 }

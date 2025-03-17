@@ -18,7 +18,7 @@ public class GridGenerator : MonoBehaviour, IInitializable
     private float cellSpacing = 0.05f;
 
     [SerializeField]
-    private float gridDistance = 15f;
+    private float gridDistance = 30f;
 
     private Material LeftGridMaterial;
     private Material RightGridMaterial;

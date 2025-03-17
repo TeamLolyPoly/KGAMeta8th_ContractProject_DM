@@ -59,7 +59,7 @@ public abstract class Singleton<T> : MonoBehaviour
     {
         StackTrace stackTrace = new StackTrace(2, true);
 
-        string callStack = "Call Stack :";
+        string callStack = "";
 
         for (int i = 0; i < stackTrace.FrameCount && i < 10; i++)
         {
@@ -71,13 +71,12 @@ public abstract class Singleton<T> : MonoBehaviour
 
             if (string.IsNullOrEmpty(fileName))
             {
-                callStack += $"\n  at {className}.{methodName}()";
+                callStack += $" at {className}.{methodName}()";
             }
             else
             {
                 string shortFileName = Path.GetFileName(fileName);
-                callStack +=
-                    $"\n  at {className}.{methodName}() in {shortFileName}:line {lineNumber}";
+                callStack += $" at {className}.{methodName}() in {shortFileName}:line {lineNumber}";
             }
         }
 

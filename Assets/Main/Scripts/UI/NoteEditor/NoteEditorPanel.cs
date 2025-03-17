@@ -7,6 +7,7 @@ using Michsky.UI.Heat;
 using SFB;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Dropdown = Michsky.UI.Heat.Dropdown;
 
 namespace NoteEditor
@@ -46,22 +47,20 @@ namespace NoteEditor
         public bool IsInitialized { get; private set; }
         private Sprite defaultAlbumArt;
         private Sprite dropdownItemIcon;
-
-        private bool isPlaying = false;
         private List<TrackData> trackDataList = new List<TrackData>();
 
         private bool isLoadingTrack = false;
         private bool isLoadingAlbumArt = false;
 
-        private AudioDataManager audioDataManager;
+        private EditorDataManager audioDataManager;
 
         public void Initialize()
         {
-            audioDataManager = AudioDataManager.Instance;
+            audioDataManager = EditorDataManager.Instance;
             defaultAlbumArt = Resources.Load<Sprite>("Textures/AlbumArt");
             dropdownItemIcon = Resources.Load<Sprite>("Textures/DefaultAudioIcon");
             LoadTrackButton.onClick.AddListener(OnLoadTrackButtonClicked);
-            editor = EditorManager.Instance.editor;
+            editor = EditorManager.Instance.noteEditor;
             if (SetAlbumArtButton != null)
             {
                 SetAlbumArtButton.onClick.AddListener(OnSetAlbumArtButtonClicked);
@@ -78,62 +77,46 @@ namespace NoteEditor
                 BPMInput.onSubmit.AddListener(() => OnBPMInputSubmit(BPMInput.inputText.text));
             }
 
-            if (audioDataManager != null)
+            if (beatsPerBarInput != null)
             {
-                audioDataManager.OnTrackLoaded += OnTrackLoaded;
-                audioDataManager.OnAlbumArtLoaded += OnAlbumArtLoaded;
+                beatsPerBarInput.inputText.text = "4";
+                beatsPerBarInput.onSubmit.AddListener(
+                    () => OnBeatsPerBarChanged(beatsPerBarInput.inputText.text)
+                );
             }
 
-            if (AudioManager.Instance != null)
+            if (saveButton != null)
             {
-                AudioManager.Instance.OnTrackChanged += OnTrackChangedHandler;
-                AudioManager.Instance.OnBPMChanged += OnBPMChangedHandler;
+                saveButton.onClick.AddListener(OnSaveButtonClicked);
             }
 
             InitializeTrackDropdown();
-
-            if (editor != null)
-            {
-                if (saveButton != null)
-                    saveButton.onClick.AddListener(OnSaveButtonClicked);
-
-                if (beatsPerBarInput != null)
-                {
-                    beatsPerBarInput.inputText.text = "4";
-                    beatsPerBarInput.onSubmit.AddListener(
-                        () => OnBeatsPerBarChanged(beatsPerBarInput.inputText.text)
-                    );
-                }
-
-                UpdateStatusText("노트 에디터 준비 완료");
-                UpdateSelectedCellInfo(null);
-            }
-
             IsInitialized = true;
+            Debug.Log("[NoteEditorPanel] 초기화 완료");
         }
 
         private void OnDestroy()
         {
-            if (Application.isPlaying)
-            {
-                if (audioDataManager != null)
-                {
-                    audioDataManager.OnTrackLoaded -= OnTrackLoaded;
-                    audioDataManager.OnAlbumArtLoaded -= OnAlbumArtLoaded;
-                }
+            if (LoadTrackButton != null)
+                LoadTrackButton.onClick.RemoveAllListeners();
 
-                if (AudioManager.Instance != null)
-                {
-                    AudioManager.Instance.OnTrackChanged -= OnTrackChangedHandler;
-                    AudioManager.Instance.OnBPMChanged -= OnBPMChangedHandler;
-                }
-            }
+            if (SetAlbumArtButton != null)
+                SetAlbumArtButton.onClick.RemoveAllListeners();
+
+            if (DeleteTrackButton != null)
+                DeleteTrackButton.onClick.RemoveAllListeners();
+
+            if (BPMInput != null)
+                BPMInput.onSubmit.RemoveAllListeners();
+
+            if (beatsPerBarInput != null)
+                beatsPerBarInput.onSubmit.RemoveAllListeners();
 
             if (saveButton != null)
                 saveButton.onClick.RemoveAllListeners();
 
-            if (beatsPerBarInput != null)
-                beatsPerBarInput.onSubmit.RemoveAllListeners();
+            if (trackDropdown != null)
+                trackDropdown.onValueChanged.RemoveAllListeners();
         }
 
         private void SetTrackBPM(int bpm)
@@ -194,94 +177,56 @@ namespace NoteEditor
 
         public void InitializeTrackDropdown()
         {
-            trackDataList.Clear();
-            List<TrackData> tracks = AudioManager.Instance.GetAllTrackInfo();
-            Debug.Log($"트랙 데이터 로드: {tracks.Count}개 트랙 발견");
-            trackDataList = tracks;
-
-            trackDropdown.items.Clear();
-
-            foreach (TrackData track in tracks)
-            {
-                Debug.Log(
-                    $"트랙 추가: {track.trackName}, 앨범아트: {(track.AlbumArt != null ? "있음" : "없음")}"
-                );
-                try
-                {
-                    trackDropdown.CreateNewItem(track.trackName, dropdownItemIcon, false);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"드롭다운 아이템 추가 오류: {e.Message}");
-                }
-            }
-
             try
             {
-                if (tracks.Count > 0)
+                if (trackDropdown != null)
                 {
-                    trackDropdown.Initialize();
-                }
-                else
-                {
-                    trackDropdown.CreateNewItem("No Track", dropdownItemIcon, false);
-                    trackDropdown.Initialize();
+                    trackDropdown.items.Clear();
+                    trackDropdown.selectedItemIndex = -1;
+
+                    trackDataList = EditorManager.Instance.GetAllTrackInfo();
+
+                    if (trackDataList.Count > 0)
+                    {
+                        foreach (var track in trackDataList)
+                        {
+                            trackDropdown.CreateNewItem(
+                                track.trackName,
+                                track.AlbumArt != null ? track.AlbumArt : dropdownItemIcon,
+                                false
+                            );
+                        }
+
+                        trackDropdown.onValueChanged.AddListener(OnTrackDropdownValueChanged);
+                        trackDropdown.Initialize();
+
+                        if (EditorManager.Instance.currentTrack != null)
+                        {
+                            int index = trackDataList.FindIndex(t =>
+                                t.trackName == EditorManager.Instance.currentTrack.trackName
+                            );
+                            if (index >= 0)
+                            {
+                                trackDropdown.selectedItemIndex = index;
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception e)
             {
                 Debug.LogError($"드롭다운 초기화 오류: {e.Message}");
             }
-
-            trackDropdown.onValueChanged.AddListener(OnTrackDropdownValueChanged);
-
-            if (tracks.Count > 0)
-            {
-                trackDropdown.selectedItemIndex = 0;
-                AudioManager.Instance.SelectTrack(tracks[0]);
-                CurrentTrackInfo.SetText(tracks[0].trackName);
-                if (tracks[0].AlbumArt != null)
-                {
-                    CurrentTrackInfo.SetBackground(tracks[0].AlbumArt);
-                }
-                else
-                {
-                    CurrentTrackInfo.SetBackground(defaultAlbumArt);
-                }
-            }
-            else
-            {
-                CurrentTrackInfo.SetText("No Track");
-                CurrentTrackInfo.SetBackground(defaultAlbumArt);
-            }
         }
 
-        private void OnTrackDropdownValueChanged(int selectedIndex)
+        private void OnTrackDropdownValueChanged(int index)
         {
-            if (selectedIndex >= 0 && selectedIndex < trackDataList.Count)
-            {
-                TrackData selectedTrack = trackDataList[selectedIndex];
-                CurrentTrackInfo.SetText(selectedTrack.trackName);
-                if (selectedTrack.AlbumArt != null)
-                {
-                    CurrentTrackInfo.SetBackground(selectedTrack.AlbumArt);
-                }
-                else
-                {
-                    CurrentTrackInfo.SetBackground(defaultAlbumArt);
-                }
-                AudioManager.Instance.SelectTrack(selectedTrack);
+            if (index < 0 || index >= trackDataList.Count)
+                return;
 
-                if (BPMInput != null)
-                {
-                    BPMInput.inputText.text = selectedTrack.bpm.ToString();
+            TrackData selectedTrack = trackDataList[index];
 
-                    if (editor != null)
-                    {
-                        editor.UpdateBPM(selectedTrack.bpm);
-                    }
-                }
-            }
+            EditorManager.Instance.SelectTrack(selectedTrack);
         }
 
         private void Update()
@@ -292,23 +237,20 @@ namespace NoteEditor
             }
 
             if (
-                AudioManager.Instance.currentAudioSource == null
-                || AudioManager.Instance.currentAudioSource.clip == null
+                AudioManager.Instance != null
+                && AudioManager.Instance.currentAudioSource != null
+                && currentTrackPlaybackTime != null
             )
             {
-                currentTrackPlaybackTime.text = "00:00.00 | 00:00.00";
-                return;
+                float currentTime = AudioManager.Instance.currentPlaybackTime;
+                float duration = AudioManager.Instance.currentPlaybackDuration;
+
+                // 시간을 분:초 형식으로 표시
+                string currentTimeStr = FormatTime(currentTime);
+                string durationStr = FormatTime(duration);
+
+                currentTrackPlaybackTime.text = $"{currentTimeStr} / {durationStr}";
             }
-
-            float currentTime = AudioManager.Instance.currentPlaybackTime;
-            float totalTime = AudioManager.Instance.currentPlaybackDuration;
-
-            string currentTimeFormatted = FormatTime(currentTime);
-            string totalTimeFormatted = FormatTime(totalTime);
-
-            currentTrackPlaybackTime.text = $"{currentTimeFormatted} | {totalTimeFormatted}";
-
-            UpdatePlayButtonState();
 
             if (editor != null && editor.IsInitialized)
             {
@@ -323,25 +265,8 @@ namespace NoteEditor
         private string FormatTime(float timeInSeconds)
         {
             int minutes = Mathf.FloorToInt(timeInSeconds / 60);
-            float seconds = timeInSeconds % 60;
-
-            return string.Format("{0:00}:{1:00.00}", minutes, seconds);
-        }
-
-        private void UpdatePlayButtonState()
-        {
-            if (AudioManager.Instance.currentAudioSource == null)
-            {
-                isPlaying = false;
-                return;
-            }
-
-            bool audioIsPlaying = AudioManager.Instance.currentAudioSource.isPlaying;
-
-            if (isPlaying != audioIsPlaying)
-            {
-                isPlaying = audioIsPlaying;
-            }
+            int seconds = Mathf.FloorToInt(timeInSeconds % 60);
+            return $"{minutes:00}:{seconds:00}";
         }
 
         public void OnLoadTrackButtonClicked()
@@ -368,6 +293,9 @@ namespace NoteEditor
                     }
                 }
             );
+
+            // 트랙 목록 갱신
+            RefreshTrackList();
         }
 
         private void OnTrackLoaded(TrackData newTrack)
@@ -377,7 +305,7 @@ namespace NoteEditor
             if (newTrack == null)
                 return;
 
-            trackDataList = AudioManager.Instance.GetAllTrackInfo();
+            trackDataList = EditorManager.Instance.GetAllTrackInfo();
 
             UpdateTrackDropdown();
 
@@ -444,7 +372,7 @@ namespace NoteEditor
             if (string.IsNullOrEmpty(trackName) || albumArt == null)
                 return;
 
-            trackDataList = AudioManager.Instance.GetAllTrackInfo();
+            trackDataList = EditorManager.Instance.GetAllTrackInfo();
 
             UpdateTrackDropdown();
 
@@ -472,11 +400,11 @@ namespace NoteEditor
                 TrackData selectedTrack = trackDataList[selectedIndex];
                 string trackName = selectedTrack.trackName;
 
-                await AudioDataManager.Instance.DeleteTrackAsync(trackName);
+                await EditorDataManager.Instance.DeleteTrackAsync(trackName);
 
                 trackDropdown.RemoveItem(trackName, true);
 
-                trackDataList = AudioManager.Instance.GetAllTrackInfo();
+                trackDataList = EditorManager.Instance.GetAllTrackInfo();
                 Debug.Log($"삭제 후 남은 트랙 수: {trackDataList.Count}");
 
                 if (trackDataList.Count == 0)
@@ -508,13 +436,16 @@ namespace NoteEditor
 
                 Debug.Log($"트랙 삭제됨: {trackName}");
             }
+
+            // 트랙 목록 갱신
+            RefreshTrackList();
         }
 
         private void UpdateTrackDropdown()
         {
             trackDropdown.items.Clear();
 
-            trackDataList = AudioManager.Instance.GetAllTrackInfo();
+            trackDataList = EditorManager.Instance.GetAllTrackInfo();
 
             if (trackDataList.Count == 0)
             {
@@ -605,17 +536,26 @@ namespace NoteEditor
             }
         }
 
-        private void OnTrackChangedHandler(TrackData track)
+        public void OnTrackChangedHandler(TrackData track)
         {
             if (track == null)
                 return;
 
-            UpdateStatusText($"트랙 변경됨: {track.trackName}, 노트맵 로드 중...");
+            Debug.Log($"NoteEditorPanel: Track changed to {track.trackName}");
 
-            int trackIndex = trackDataList.FindIndex(t => t.trackName == track.trackName);
-            if (trackIndex >= 0 && trackIndex != trackDropdown.selectedItemIndex)
+            if (CurrentTrackInfo != null)
             {
-                trackDropdown.selectedItemIndex = trackIndex;
+                CurrentTrackInfo.SetText(track.trackName);
+                CurrentTrackInfo.buttonDescription = $"BPM: {track.bpm}";
+
+                if (track.AlbumArt != null)
+                {
+                    CurrentTrackInfo.buttonIcon = track.AlbumArt;
+                }
+                else
+                {
+                    CurrentTrackInfo.buttonIcon = defaultAlbumArt;
+                }
             }
 
             if (BPMInput != null)
@@ -623,22 +563,27 @@ namespace NoteEditor
                 BPMInput.inputText.text = track.bpm.ToString();
             }
 
-            if (editor != null && editor.IsInitialized)
+            if (beatsPerBarInput != null && track.noteMap != null)
             {
-                if (track.noteMap != null)
-                {
-                    if (beatsPerBarInput != null)
-                    {
-                        beatsPerBarInput.inputText.text = track.noteMap.beatsPerBar.ToString();
-                    }
+                beatsPerBarInput.inputText.text = track.noteMap.beatsPerBar.ToString();
+            }
+            else if (beatsPerBarInput != null)
+            {
+                beatsPerBarInput.inputText.text = AudioManager.Instance.BeatsPerBar.ToString();
+            }
 
-                    UpdateStatusText($"트랙 변경됨: {track.trackName}, 노트맵 로드 완료");
-                }
-                else
+            UpdateTrackDropdown();
+
+            if (trackDropdown != null)
+            {
+                int index = trackDataList.FindIndex(t => t.trackName == track.trackName);
+                if (index >= 0)
                 {
-                    LoadNoteMapForTrack(track.trackName);
+                    trackDropdown.selectedItemIndex = index;
                 }
             }
+
+            UpdateStatusText($"트랙 변경됨: {track.trackName}");
         }
 
         private void LoadNoteMapForTrack(string trackName)
@@ -685,14 +630,25 @@ namespace NoteEditor
             }
         }
 
-        private void OnBPMChangedHandler(float newBpm)
+        public void OnBPMChangedHandler(float newBpm)
         {
             if (BPMInput != null)
             {
                 BPMInput.inputText.text = newBpm.ToString();
             }
 
+            if (CurrentTrackInfo != null && AudioManager.Instance.currentTrack != null)
+            {
+                CurrentTrackInfo.buttonDescription = $"BPM: {newBpm}";
+            }
+
             UpdateStatusText($"BPM 변경됨: {newBpm}");
+        }
+
+        public void RefreshTrackList()
+        {
+            trackDataList = EditorManager.Instance.GetAllTrackInfo();
+            InitializeTrackDropdown();
         }
     }
 }
