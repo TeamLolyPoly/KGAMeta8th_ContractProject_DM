@@ -647,14 +647,5 @@ namespace NoteEditor
                 }
             }
         }
-
-        public void UpdateTotalBars(float totalBars)
-        {
-            if (NoteMap != null)
-            {
-                NoteMap.totalBars = totalBars;
-                Debug.Log($"NoteEditor: Total bars updated to {totalBars}");
-            }
-        }
     }
 }

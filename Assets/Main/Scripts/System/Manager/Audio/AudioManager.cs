@@ -12,9 +12,8 @@ namespace NoteEditor
         public AudioSource currentAudioSource;
         public bool IsInitialized { get; private set; }
 
-        private int currentTrackIndex = 0;
         private bool isPlaying = false;
-        private List<TrackData> cachedTracks = new List<TrackData>();
+        private float volume = 1.0f;
 
         public event Action<float> OnBPMChanged;
         public event Action<TrackData> OnTrackChanged;
@@ -23,8 +22,6 @@ namespace NoteEditor
         private float currentBPM = 120f;
         private int currentBeatsPerBar = 4;
         private float totalBars = 0f;
-
-        private float volume = 1.0f;
 
         public float CurrentBPM
         {
@@ -99,112 +96,9 @@ namespace NoteEditor
         /// </summary>
         public void Initialize()
         {
-            if (EditorDataManager.Instance != null)
-            {
-                RefreshTrackList();
-
-                EditorDataManager.Instance.OnTrackAdded += OnTrackAddedHandler;
-                EditorDataManager.Instance.OnTrackRemoved += OnTrackRemovedHandler;
-                EditorDataManager.Instance.OnTrackUpdated += OnTrackUpdatedHandler;
-            }
-
             currentAudioSource = gameObject.AddComponent<AudioSource>();
             IsInitialized = true;
             Debug.Log("[AudioManager] 초기화 완료");
-        }
-
-        private void ClearAllListeners()
-        {
-            if (EditorDataManager.Instance != null)
-            {
-                EditorDataManager.Instance.OnTrackAdded -= OnTrackAddedHandler;
-                EditorDataManager.Instance.OnTrackRemoved -= OnTrackRemovedHandler;
-                EditorDataManager.Instance.OnTrackUpdated -= OnTrackUpdatedHandler;
-            }
-        }
-
-        private void OnDisable()
-        {
-            ClearAllListeners();
-        }
-
-        /// <summary>
-        /// 트랙 목록을 새로고침합니다.
-        /// </summary>
-        public void RefreshTrackList()
-        {
-            if (EditorDataManager.Instance != null)
-            {
-                cachedTracks = EditorDataManager.Instance.GetAllTracks();
-            }
-        }
-
-        /// <summary>
-        /// 트랙 추가 이벤트 핸들러
-        /// </summary>
-        private void OnTrackAddedHandler(TrackData track)
-        {
-            RefreshTrackList();
-
-            if (currentTrack == null && cachedTracks.Count > 0)
-            {
-                SelectTrack(track);
-            }
-        }
-
-        /// <summary>
-        /// 트랙 제거 이벤트 핸들러
-        /// </summary>
-        private void OnTrackRemovedHandler(TrackData track)
-        {
-            RefreshTrackList();
-
-            if (currentTrack == track)
-            {
-                if (cachedTracks.Count > 0)
-                {
-                    SelectTrack(cachedTracks[0]);
-                }
-                else
-                {
-                    currentTrack = null;
-                    currentAudioSource.clip = null;
-                    Stop();
-                }
-            }
-        }
-
-        /// <summary>
-        /// 트랙 업데이트 이벤트 핸들러
-        /// </summary>
-        private void OnTrackUpdatedHandler(TrackData track)
-        {
-            RefreshTrackList();
-
-            if (currentTrack != null && currentTrack.trackName == track.trackName)
-            {
-                currentTrack = track;
-
-                if (track.TrackAudio != null && currentAudioSource.clip != track.TrackAudio)
-                {
-                    bool wasPlaying = isPlaying;
-                    float currentTime = currentPlaybackTime;
-
-                    currentAudioSource.clip = track.TrackAudio;
-                    currentPlaybackTime = currentTime;
-
-                    if (wasPlaying)
-                    {
-                        PlayCurrentTrack();
-                    }
-                }
-
-                // BPM이 변경되었으면 업데이트
-                if (!Mathf.Approximately(currentBPM, track.bpm))
-                {
-                    CurrentBPM = track.bpm;
-                }
-            }
         }
 
         /// <summary>
@@ -220,102 +114,6 @@ namespace NoteEditor
             {
                 PlayCurrentTrack();
             }
-        }
-
-        /// <summary>
-        /// 트랙을 선택합니다.
-        /// </summary>
-        /// <param name="track">선택할 트랙</param>
-        public void SelectTrack(TrackData track)
-        {
-            if (track == null)
-            {
-                Debug.LogWarning("선택한 트랙이 없습니다.");
-                return;
-            }
-
-            if (track.TrackAudio == null && EditorDataManager.Instance != null)
-            {
-                Debug.Log($"트랙 '{track.trackName}'의 오디오를 로드합니다.");
-                StartCoroutine(LoadTrackAudioAndSelect(track.trackName));
-                return;
-            }
-
-            SelectTrackInternal(track);
-        }
-
-        /// <summary>
-        /// 트랙 오디오를 로드하고 선택하는 코루틴
-        /// </summary>
-        private IEnumerator LoadTrackAudioAndSelect(string trackName)
-        {
-            var loadTask = EditorDataManager.Instance.LoadTrackAudioAsync(trackName);
-
-            while (!loadTask.IsCompleted)
-            {
-                yield return null;
-            }
-
-            if (loadTask.Result != null && loadTask.Result.TrackAudio != null)
-            {
-                SelectTrackInternal(loadTask.Result);
-            }
-            else
-            {
-                Debug.LogWarning($"트랙 '{trackName}'의 오디오 로드에 실패했습니다.");
-            }
-        }
-
-        /// <summary>
-        /// 트랙을 내부적으로 선택합니다.
-        /// </summary>
-        /// <param name="track">선택할 트랙</param>
-        private void SelectTrackInternal(TrackData track)
-        {
-            if (track == null || track.TrackAudio == null)
-            {
-                Debug.LogWarning("선택한 트랙이 없거나 오디오가 로드되지 않았습니다.");
-                return;
-            }
-
-            if (
-                currentTrack != null
-                && currentTrack.trackName == track.trackName
-                && currentAudioSource.clip == track.TrackAudio
-            )
-            {
-                Debug.Log($"트랙 '{track.trackName}'은 이미 선택되어 있습니다.");
-                return;
-            }
-
-            currentTrack = track;
-            currentAudioSource.clip = track.TrackAudio;
-            currentPlaybackTime = 0;
-
-            currentTrackIndex = cachedTracks.IndexOf(track);
-            if (currentTrackIndex < 0)
-                currentTrackIndex = 0;
-
-            CurrentBPM = track.bpm;
-            BeatsPerBar = 4;
-
-            UpdateTotalBars();
-
-            Debug.Log(
-                $"SelectTrackInternal - Track: {track.trackName}, BPM: {track.bpm}, Audio Length: {track.TrackAudio.length}s"
-            );
-
-            OnTrackChanged?.Invoke(track);
-        }
-
-        /// <summary>
-        /// 모든 트랙 정보를 가져옵니다.
-        /// </summary>
-        /// <returns>트랙 데이터 목록</returns>
-        public List<TrackData> GetAllTrackInfo()
-        {
-            RefreshTrackList();
-            return cachedTracks;
         }
 
         /// <summary>
@@ -381,35 +179,6 @@ namespace NoteEditor
         }
 
         /// <summary>
-        /// 다음 트랙으로 이동합니다.
-        /// </summary>
-        public void NextTrack()
-        {
-            if (cachedTracks.Count > 0)
-            {
-                currentTrackIndex = (currentTrackIndex + 1) % cachedTracks.Count;
-                SelectTrack(cachedTracks[currentTrackIndex]);
-
-                PlayCurrentTrack();
-            }
-        }
-
-        /// <summary>
-        /// 이전 트랙으로 이동합니다.
-        /// </summary>
-        public void PreviousTrack()
-        {
-            if (cachedTracks.Count > 0)
-            {
-                currentTrackIndex =
-                    (currentTrackIndex - 1 + cachedTracks.Count) % cachedTracks.Count;
-                SelectTrack(cachedTracks[currentTrackIndex]);
-
-                PlayCurrentTrack();
-            }
-        }
-
-        /// <summary>
         /// 볼륨을 조정합니다.
         /// </summary>
         /// <param name="delta">볼륨 변화량</param>
@@ -421,6 +190,26 @@ namespace NoteEditor
                 currentAudioSource.volume = volume;
             }
             Debug.Log($"Volume adjusted to: {volume}");
+        }
+
+        /// <summary>
+        /// 트랙을 설정합니다. (EditorManager에서 호출)
+        /// </summary>
+        public void SetTrack(TrackData track, AudioClip clip)
+        {
+            if (track == null || clip == null)
+                return;
+
+            currentTrack = track;
+            currentAudioSource.clip = clip;
+            currentPlaybackTime = 0;
+
+            CurrentBPM = track.bpm;
+            BeatsPerBar = 4;
+
+            UpdateTotalBars();
+
+            OnTrackChanged?.Invoke(track);
         }
 
         /// <summary>
@@ -448,7 +237,6 @@ namespace NoteEditor
                 currentAudioSource.clip = null;
             }
 
-            ClearAllListeners();
             base.OnDestroy();
         }
     }

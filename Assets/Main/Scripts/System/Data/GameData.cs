@@ -104,7 +104,7 @@ public class NoteMap
     public List<NoteData> notes = new List<NoteData>();
     public float bpm = 120f;
     public int beatsPerBar = 4;
-    public float totalBars = 4f;
+    public int TotalNoteCount => notes.Count;
 }
 #endregion
 
