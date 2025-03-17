@@ -457,9 +457,8 @@ namespace NoteEditor
 
             if (currentAudioClip != null)
             {
-                float totalSeconds = currentAudioClip.length;
-                float secondsPerBar = (60f / bpm) * beatsPerBar;
-                totalBars = totalSeconds / secondsPerBar;
+                float totalSeconds = AudioManager.Instance.currentAudioSource.clip.length;
+                totalBars = AudioManager.Instance.TotalBars;
 
                 float calculatedLength = totalBars * unitsPerBar;
                 float newLength = Mathf.Max(calculatedLength, minRailLength);

@@ -16,6 +16,7 @@ namespace NoteEditor
         private InputActionAsset audioControlActions;
 
         private NoteEditorPanel noteEditorPanel;
+        private EditorManager editorManager;
 
         private NoteMap noteMap;
         private bool isInitialized = false;
@@ -28,9 +29,10 @@ namespace NoteEditor
 
         public void Initialize()
         {
-            railController = EditorManager.Instance.railController;
-            cellController = EditorManager.Instance.cellController;
-            noteEditorPanel = EditorManager.Instance.editorPanel;
+            editorManager = EditorManager.Instance;
+            railController = editorManager.railController;
+            cellController = editorManager.cellController;
+            noteEditorPanel = editorManager.editorPanel;
             try
             {
                 noteMap = new NoteMap();
@@ -42,7 +44,7 @@ namespace NoteEditor
 
                 if (AudioManager.Instance != null && AudioManager.Instance.currentTrack != null)
                 {
-                    OnTrackChangedHandler(AudioManager.Instance.currentTrack);
+                    SetTrack(AudioManager.Instance.currentTrack);
                 }
 
                 isInitialized = true;
@@ -55,7 +57,7 @@ namespace NoteEditor
             }
         }
 
-        public void OnTrackAddedHandler(TrackData track)
+        public void SetTrack(TrackData track)
         {
             if (track == null)
                 return;
@@ -65,21 +67,7 @@ namespace NoteEditor
                 && AudioManager.Instance.currentTrack.trackName == track.trackName
             )
             {
-                if (track.noteMap != null)
-                {
-                    noteMap = track.noteMap;
-                    Debug.Log($"트랙 추가 시 노트맵 로드: {track.trackName}");
-                }
-                else
-                {
-                    noteMap = new NoteMap
-                    {
-                        bpm = track.bpm,
-                        beatsPerBar = AudioManager.Instance.BeatsPerBar,
-                        notes = new List<NoteData>(),
-                    };
-                    Debug.Log($"트랙 추가 시 새 노트맵 생성: {track.trackName}");
-                }
+                StartCoroutine(LoadNoteMapRoutine(track.trackName));
 
                 if (railController != null)
                 {
@@ -92,103 +80,21 @@ namespace NoteEditor
                 }
 
                 ApplyNotesToCells();
+
+                AutoSaveNoteMap();
             }
-        }
-
-        public void OnTrackUpdatedHandler(TrackData track)
-        {
-            if (track == null)
-                return;
-
-            if (
-                AudioManager.Instance.currentTrack != null
-                && AudioManager.Instance.currentTrack.trackName == track.trackName
-            )
+            else if (track.bpm != noteMap.bpm)
             {
-                if (track.noteMap != null && track.noteMap != noteMap)
-                {
-                    noteMap = track.noteMap;
-                    Debug.Log($"트랙 업데이트 시 노트맵 로드: {track.trackName}");
-
-                    if (railController != null)
-                    {
-                        railController.UpdateBeatSettings(noteMap.bpm, noteMap.beatsPerBar);
-                    }
-
-                    if (cellController != null)
-                    {
-                        cellController.Initialize();
-                    }
-
-                    ApplyNotesToCells();
-                }
-                else if (track.bpm != noteMap.bpm)
-                {
-                    noteMap.bpm = track.bpm;
-
-                    if (railController != null)
-                    {
-                        railController.UpdateBeatSettings(noteMap.bpm, noteMap.beatsPerBar);
-                    }
-                }
-            }
-        }
-
-        public void OnTrackLoadedHandler(TrackData track)
-        {
-            if (track == null)
-                return;
-
-            if (
-                AudioManager.Instance.currentTrack != null
-                && AudioManager.Instance.currentTrack.trackName == track.trackName
-            )
-            {
-                if (track.noteMap != null)
-                {
-                    noteMap = track.noteMap;
-                    Debug.Log($"트랙 로드 시 노트맵 로드: {track.trackName}");
-                }
-                else
-                {
-                    LoadNoteMap();
-                }
-            }
-        }
-
-        public void OnTrackChangedHandler(TrackData track)
-        {
-            if (track == null)
-                return;
-
-            Debug.Log($"트랙 변경됨: {track.trackName}");
-
-            AutoSaveNoteMap();
-
-            if (track.noteMap != null)
-            {
-                noteMap = track.noteMap;
-                Debug.Log($"트랙 변경 시 노트맵 로드: {track.trackName}");
+                noteMap.bpm = track.bpm;
 
                 if (railController != null)
                 {
                     railController.UpdateBeatSettings(noteMap.bpm, noteMap.beatsPerBar);
                 }
-
-                if (cellController != null)
-                {
-                    cellController.Initialize();
-                }
-
-                ApplyNotesToCells();
-            }
-            else
-            {
-                StartCoroutine(LoadNoteMapForTrackCoroutine(track.trackName));
             }
         }
 
-        private IEnumerator LoadNoteMapForTrackCoroutine(string trackName)
+        private IEnumerator LoadNoteMapRoutine(string trackName)
         {
             if (EditorDataManager.Instance == null)
             {
@@ -584,7 +490,7 @@ namespace NoteEditor
             }
         }
 
-        public void OnBPMChangedHandler(float newBpm)
+        public void ChangeBPM(float newBpm)
         {
             if (noteMap == null)
                 return;
@@ -610,25 +516,13 @@ namespace NoteEditor
             }
         }
 
-        public void OnTrackChanged(TrackData track)
-        {
-            if (track == null)
-                return;
-
-            Debug.Log($"NoteEditor: Track changed to {track.trackName}");
-
-            // 기존 OnTrackChangedHandler 메서드 호출
-            OnTrackChangedHandler(track);
-        }
-
-        public void OnTrackRemovedHandler(TrackData track)
+        public void RemoveTrack(TrackData track)
         {
             if (track == null)
                 return;
 
             Debug.Log($"NoteEditor: Track removed: {track.trackName}");
 
-            // 현재 편집 중인 트랙이 제거된 경우 노트맵 초기화
             if (
                 AudioManager.Instance.currentTrack == null
                 || AudioManager.Instance.currentTrack.trackName == track.trackName
