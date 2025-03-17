@@ -14,6 +14,9 @@ namespace NoteEditor
         private float railWidth = 1f;
         private float railSpacing = 0.1f;
 
+        public float RailWidth => railWidth;
+        public float RailSpacing => railSpacing;
+
         private Material railMaterial;
         private Material barLineMaterial;
         private Material beatLineMaterial;
@@ -35,64 +38,27 @@ namespace NoteEditor
         private float bpm = 120f;
         private int beatsPerBar = 4;
         private float railLength = 20f;
-        private AudioClip currentAudioClip;
-        private float totalBars;
+        private float totalBars = 0f;
         public float TotalBars => totalBars;
         public float UnitsPerBar => unitsPerBar;
+        public int BeatsPerBar => beatsPerBar;
 
         public void Initialize()
         {
-            GetResources();
-
-            if (AudioManager.Instance.currentTrack != null)
-            {
-                bpm = AudioManager.Instance.currentTrack.bpm;
-                beatsPerBar = AudioManager.Instance.BeatsPerBar;
-                totalBars = AudioManager.Instance.TotalBars;
-
-                if (AudioManager.Instance.currentTrack.TrackAudio != null)
-                {
-                    currentAudioClip = AudioManager.Instance.currentTrack.TrackAudio;
-                    float totalSeconds = currentAudioClip.length;
-                    float secondsPerBar = (60f / bpm) * beatsPerBar;
-                    totalBars = totalSeconds / secondsPerBar;
-
-                    float calculatedLength = totalBars * unitsPerBar;
-                    railLength = Mathf.Max(calculatedLength, minRailLength);
-                }
-                else
-                {
-                    railLength = minRailLength;
-                }
-            }
-            else
-            {
-                bpm = 120f;
-                beatsPerBar = 4;
-                totalBars = 4f;
-                unitsPerBar = 10f;
-                railLength = minRailLength;
-            }
-
-            if (isInitialized)
-            {
-                Cleanup();
-            }
-
             try
             {
-                CreateRail();
-                CreateWaveformDisplay();
+                LoadResources();
                 isInitialized = true;
+                Debug.Log("[RailController] 초기화 완료 - 리소스 로드됨");
             }
             catch (Exception e)
             {
-                Debug.LogError($"Failed to initialize RailGenerator: {e}");
-                Cleanup();
+                Debug.LogError($"[RailController] 초기화 실패: {e.Message}");
+                isInitialized = false;
             }
         }
 
-        public void GetResources()
+        private void LoadResources()
         {
             railMaterial = Resources.Load<Material>("Materials/NoteEditor/Rail");
             barLineMaterial = Resources.Load<Material>("Materials/NoteEditor/BarLine");
@@ -167,16 +133,22 @@ namespace NoteEditor
                 Destroy(railContainer);
                 railContainer = null;
             }
-
-            isInitialized = false;
         }
 
-        private void CreateRail()
+        public void CreateRail()
         {
             if (railContainer != null)
             {
                 Destroy(railContainer);
                 railContainer = null;
+            }
+
+            if (totalBars <= 0)
+            {
+                Debug.LogWarning(
+                    "[RailController] totalBars가 유효하지 않아 레일을 생성할 수 없습니다."
+                );
+                return;
             }
 
             try
@@ -188,7 +160,6 @@ namespace NoteEditor
                 float totalWidth = (laneCount * railWidth) + ((laneCount - 1) * railSpacing);
                 float startX = -totalWidth / 2f + (railWidth / 2f);
 
-                float totalBars = AudioManager.Instance.TotalBars;
                 float barLength = railLength / totalBars;
 
                 lanes = new GameObject[laneCount];
@@ -258,11 +229,10 @@ namespace NoteEditor
                                 barRenderer.material = barLineMaterial;
                                 divisionsList.Add(barLine);
 
-                                for (int beat = 1; beat < AudioManager.Instance.BeatsPerBar; beat++)
+                                for (int beat = 1; beat < beatsPerBar; beat++)
                                 {
                                     float beatPos =
-                                        barStartPos
-                                        + (beat * (barLength / AudioManager.Instance.BeatsPerBar));
+                                        barStartPos + (beat * (barLength / beatsPerBar));
                                     GameObject beatLine = GameObject.CreatePrimitive(
                                         PrimitiveType.Cube
                                     );
@@ -297,6 +267,10 @@ namespace NoteEditor
 
                 Renderer startRenderer = startLine.GetComponent<Renderer>();
                 startRenderer.material.color = new Color(0, 0.8f, 1f);
+
+                Debug.Log(
+                    $"[RailController] 레일 생성 완료: 총 마디 수 = {totalBars}, 길이 = {railLength}"
+                );
             }
             catch (Exception e)
             {
@@ -306,7 +280,7 @@ namespace NoteEditor
             }
         }
 
-        private void CreateWaveformDisplay()
+        public void CreateWaveformDisplay()
         {
             if (railContainer == null)
                 return;
@@ -379,6 +353,8 @@ namespace NoteEditor
                         waveformDisplay.Initialize();
                     }
                 }
+
+                Debug.Log("[RailController] 웨이브폼 디스플레이 생성 완료");
             }
             catch (Exception e)
             {
@@ -392,39 +368,35 @@ namespace NoteEditor
             }
         }
 
-        public void SetAudioClip(AudioClip clip)
+        public void SetupRail(float bpm, int beatsPerBar, AudioClip clip)
         {
             if (clip == null)
+            {
+                Debug.LogWarning("[RailController] 오디오 클립이 없어 레일을 설정할 수 없습니다.");
                 return;
-
-            try
-            {
-                currentAudioClip = clip;
-
-                float totalSeconds = clip.length;
-                float secondsPerBar = (60f / bpm) * beatsPerBar;
-                totalBars = totalSeconds / secondsPerBar;
-
-                float calculatedLength = totalBars * unitsPerBar;
-                float newLength = Mathf.Max(calculatedLength, minRailLength);
-
-                if (!Mathf.Approximately(railLength, newLength))
-                {
-                    railLength = newLength;
-                    Cleanup();
-                    CreateRail();
-                    CreateWaveformDisplay();
-                }
-
-                if (waveformDisplay != null && waveformDisplay.gameObject != null)
-                {
-                    StartCoroutine(WaitForWaveformInitialization(clip));
-                }
             }
-            catch (Exception e)
+
+            this.bpm = bpm;
+            this.beatsPerBar = beatsPerBar;
+
+            float totalSeconds = clip.length;
+            float secondsPerBar = (60f / bpm) * beatsPerBar;
+            totalBars = totalSeconds / secondsPerBar;
+
+            float calculatedLength = totalBars * unitsPerBar;
+            railLength = Mathf.Max(calculatedLength, minRailLength);
+
+            Debug.Log(
+                $"[RailController] 레일 설정: BPM = {bpm}, BeatsPerBar = {beatsPerBar}, TotalBars = {totalBars}, Length = {railLength}"
+            );
+
+            Cleanup();
+            CreateRail();
+            CreateWaveformDisplay();
+
+            if (waveformDisplay != null)
             {
-                Debug.LogError($"Failed to set audio clip: {e}");
-                Cleanup();
+                StartCoroutine(WaitForWaveformInitialization(clip));
             }
         }
 
@@ -446,83 +418,33 @@ namespace NoteEditor
             }
         }
 
-        public void UpdateBeatSettings(float bpm, int beatsPerBar)
-        {
-            Debug.Log(
-                $"UpdateBeatSettings 시작 - 현재 BPM: {this.bpm}, 새 BPM: {bpm}, 현재 railLength: {railLength}"
-            );
-
-            this.bpm = bpm;
-            this.beatsPerBar = beatsPerBar;
-
-            if (currentAudioClip != null)
-            {
-                float totalSeconds = currentAudioClip.length;
-                float secondsPerBar = (60f / bpm) * beatsPerBar;
-                totalBars = totalSeconds / secondsPerBar;
-
-                float calculatedLength = totalBars * unitsPerBar;
-                float newLength = Mathf.Max(calculatedLength, minRailLength);
-
-                Debug.Log(
-                    $"UpdateBeatSettings 계산 - Audio Length: {totalSeconds}s, Bars: {totalBars}, Calculated Length: {calculatedLength}, New Length: {newLength}"
-                );
-
-                if (!Mathf.Approximately(railLength, newLength))
-                {
-                    railLength = newLength;
-                    Debug.Log($"railLength 업데이트됨: {railLength}");
-
-                    Cleanup();
-                    CreateRail();
-                    CreateWaveformDisplay();
-
-                    if (waveformDisplay != null && currentAudioClip != null)
-                    {
-                        waveformDisplay.UpdateWaveform(currentAudioClip);
-                    }
-                }
-            }
-            else
-            {
-                railLength = minRailLength;
-            }
-
-            if (waveformDisplay != null)
-            {
-                waveformDisplay.bpm = bpm;
-                waveformDisplay.beatsPerBar = beatsPerBar;
-                waveformDisplay.SetRailLength(railLength);
-
-                waveformDisplay.OnBPMChanged(bpm);
-                waveformDisplay.OnBeatsPerBarChanged(beatsPerBar);
-            }
-
-            Debug.Log(
-                $"UpdateBeatSettings 완료: BPM = {bpm}, BeatsPerBar = {beatsPerBar}, RailLength = {railLength}"
-            );
-        }
-
         public void UpdateWaveform(AudioClip clip)
         {
-            if (waveformDisplay != null)
+            if (waveformDisplay != null && clip != null)
             {
                 waveformDisplay.UpdateWaveform(clip);
             }
         }
 
-        public void OnTrackChanged(TrackData track)
+        public void UpdateBPM(float newBpm)
         {
-            if (track == null)
-                return;
+            this.bpm = newBpm;
 
-            Debug.Log($"RailController: Track changed to {track.trackName}");
-
-            UpdateBeatSettings(track.bpm, AudioManager.Instance.BeatsPerBar);
-
-            if (track.TrackAudio != null)
+            if (waveformDisplay != null)
             {
-                SetAudioClip(track.TrackAudio);
+                waveformDisplay.bpm = newBpm;
+                waveformDisplay.OnBPMChanged(newBpm);
+            }
+        }
+
+        public void UpdateBeatsPerBar(int newBeatsPerBar)
+        {
+            this.beatsPerBar = newBeatsPerBar;
+
+            if (waveformDisplay != null)
+            {
+                waveformDisplay.beatsPerBar = newBeatsPerBar;
+                waveformDisplay.OnBeatsPerBarChanged(newBeatsPerBar);
             }
         }
     }
