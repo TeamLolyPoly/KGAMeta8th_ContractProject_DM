@@ -17,12 +17,12 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         new Dictionary<NoteRatings, int>();
 
     //밴드 호응도 딕셔너리
-    public Dictionary<int, Engagement> BandengagementType { get; private set; } =
+    public Dictionary<int, Engagement> bandEngagementType { get; private set; } =
         new Dictionary<int, Engagement>();
     private Engagement currentBandEngagement;
 
     //점수 배율
-    public int Multiplier { get; private set; } = 1;
+    public int multiplier { get; private set; } = 1;
 
     //점수
     public float currentScore { get; private set; } = 0;
@@ -54,7 +54,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             }
             for (int i = 0; i < scoreSetingData.engagementThreshold.Length; i++)
             {
-                BandengagementType.Add(scoreSetingData.engagementThreshold[i], (Engagement)i);
+                bandEngagementType.Add(scoreSetingData.engagementThreshold[i], (Engagement)i);
             }
             for (int i = 0; i < scoreSetingData.multiplierScore.Count; i++)
             {
@@ -73,25 +73,25 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         ratingComboCount[ratings] += 1;
         if (score <= 0 || ratings == NoteRatings.Miss)
         {
-            Multiplier = 1;
+            multiplier = 1;
             combo = 0;
             print($"combo: {combo} \ncurrentScore: {currentScore}");
             return;
         }
-        combo += 1;
+        combo++;
         if (combo > highCombo)
         {
             highCombo = combo;
         }
         SetBandEngagement();
         int ratingScore = GetRatingScore(ratings);
-        Multiplier = SetMultiplier();
+        multiplier = SetMultiplier();
 
-        currentScore += (score * Multiplier) + ratingScore;
+        currentScore += (score * multiplier) + ratingScore;
 
         print($"ratingScore: {ratingScore}");
         print($"currentScore: {currentScore}");
-        print($"Multiplier: {Multiplier}");
+        print($"Multiplier: {multiplier}");
         print($"combo: {combo}");
         print($"combo: {combo} \ncurrentScore: {currentScore}");
     }
@@ -119,7 +119,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     private void SetBandEngagement()
     {
-        Engagement newEngagement = BandengagementType
+        Engagement newEngagement = bandEngagementType
             .Where(pair => combo > pair.Key)
             .OrderByDescending(pair => pair.Key)
             .Select(pair => pair.Value)

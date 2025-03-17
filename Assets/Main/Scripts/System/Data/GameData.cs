@@ -145,7 +145,7 @@ public class TrackData
 [Serializable]
 public class BandAnimationData
 {
-    public Bandtype bandtype;
+    public BandType bandType;
     public AnimationClip[] animationClip;
 }
 
