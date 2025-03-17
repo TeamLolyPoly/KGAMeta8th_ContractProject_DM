@@ -11,9 +11,9 @@ public enum PanelType
     Album,
     Music,
     Difficult,
-    Option,
-    Result,
     ResultDetail,
+    Result,
+    Option,
 }
 
 public class UIManager : Singleton<UIManager>, IInitializable
@@ -52,14 +52,29 @@ public class UIManager : Singleton<UIManager>, IInitializable
 
     public void OpenPanel(PanelType panelType)
     {
-        Panel panel = Panels.Find(p => p.PanelType == panelType);
-        if (panel == null)
+        // 옵션 패널은 다른 패널들을 닫지 않고 열립니다
+        if (panelType == PanelType.Option)
         {
-            panel = Instantiate(PanelPrefabs.Find(p => p.PanelType == panelType));
-            Panels.Add(panel);
+            Panel optionPanel = Panels.Find(p => p.PanelType == panelType);
+            if (optionPanel != null)
+            {
+                optionPanel.Open();
+            }
+            return;
         }
 
-        panel.Open();
+        // 다른 패널들은 기존 방식대로 처리
+        CloseAllPanels();
+
+        Panel panel = Panels.Find(p => p.PanelType == panelType);
+        if (panel != null)
+        {
+            panel.Open();
+        }
+        else
+        {
+            Debug.LogError($"Panel not found: {panelType}");
+        }
     }
 
     public void ClosePanel(PanelType panelType)
@@ -78,6 +93,27 @@ public class UIManager : Singleton<UIManager>, IInitializable
         foreach (var panel in Panels)
         {
             panel.Close();
+        }
+    }
+
+    // 옵션 패널의 토글을 위한 메서드
+    public void ToggleOptionPanel()
+    {
+        Panel optionPanel = Panels.Find(p => p.PanelType == PanelType.Option);
+        if (optionPanel == null)
+        {
+            Debug.LogError("Option panel not found");
+            return;
+        }
+
+        // 옵션 패널이 활성화되어 있으면 닫고, 아니면 엽니다
+        if (optionPanel.gameObject.activeSelf)
+        {
+            optionPanel.Close();
+        }
+        else
+        {
+            optionPanel.Open();
         }
     }
 }

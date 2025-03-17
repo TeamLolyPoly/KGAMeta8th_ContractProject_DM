@@ -10,22 +10,27 @@ public class TitlePanel : Panel
     public override PanelType PanelType => PanelType.Title;
 
     [SerializeField]
-    private PanelButton StartButton;
+    private PanelButton startButton;
 
     [SerializeField]
-    private PanelButton SettingButton;
+    private PanelButton settingButton;
+
+    [SerializeField]
+    private PanelButton quitButton;
 
     public override void Open()
     {
-        StartButton.onClick.AddListener(OnStartButtonClick);
-        SettingButton.onClick.AddListener(OnOptionButtonClick);
+        startButton.onClick.AddListener(OnStartButtonClick);
+        settingButton.onClick.AddListener(OnOptionButtonClick);
+        quitButton.onClick.AddListener(OnQuitButtonClick);
         base.Open();
     }
 
     public override void Close()
     {
-        StartButton.onClick.RemoveListener(OnStartButtonClick);
-        SettingButton.onClick.RemoveListener(OnOptionButtonClick);
+        startButton.onClick.RemoveListener(OnStartButtonClick);
+        settingButton.onClick.RemoveListener(OnOptionButtonClick);
+        quitButton.onClick.RemoveListener(OnQuitButtonClick);
         base.Close();
     }
 
@@ -37,7 +42,11 @@ public class TitlePanel : Panel
 
     private void OnOptionButtonClick()
     {
-        //option 패널 열기
-        UIManager.Instance.OpenPanel(PanelType.Option);
+        UIManager.Instance.ToggleOptionPanel();
+    }
+
+    private void OnQuitButtonClick()
+    {
+        Application.Quit();
     }
 }
