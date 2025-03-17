@@ -23,7 +23,13 @@ namespace NoteEditor
         private List<TrackData> cachedTracks = new List<TrackData>();
 
         public event Action<float> OnBPMChanged;
+        public event Action<int> OnBeatsPerBarChanged;
+        public event Action<float> OnTotalBarsChanged;
+
         private float currentBPM = 120f;
+        private int currentBeatsPerBar = 4;
+        private float totalBars = 0f;
+
         public float CurrentBPM
         {
             get => currentBPM;
@@ -33,6 +39,7 @@ namespace NoteEditor
                 {
                     currentBPM = value;
                     OnBPMChanged?.Invoke(currentBPM);
+                    UpdateTotalBars();
 
                     if (currentTrack != null && AudioDataManager.Instance != null)
                     {
@@ -42,6 +49,22 @@ namespace NoteEditor
                 }
             }
         }
+
+        public int BeatsPerBar
+        {
+            get => currentBeatsPerBar;
+            set
+            {
+                if (currentBeatsPerBar != value)
+                {
+                    currentBeatsPerBar = value;
+                    OnBeatsPerBarChanged?.Invoke(currentBeatsPerBar);
+                    UpdateTotalBars();
+                }
+            }
+        }
+
+        public float TotalBars => totalBars;
 
         private async Task UpdateTrackBPMAsync(string trackName, float bpm)
         {
@@ -219,10 +242,10 @@ namespace NoteEditor
         /// </summary>
         private void SetupInputActions()
         {
-            audioControlActions = Resources.Load<InputActionAsset>("Input/AudioControls");
+            audioControlActions = Resources.Load<InputActionAsset>("Input/EditorControls");
             if (audioControlActions != null)
             {
-                var actionMap = audioControlActions.FindActionMap("AudioPlayer");
+                var actionMap = audioControlActions.FindActionMap("NoteEditor");
                 if (actionMap != null)
                 {
                     playPauseAction = actionMap.FindAction("PlayPause");
@@ -364,14 +387,16 @@ namespace NoteEditor
                 currentTrackIndex = 0;
 
             CurrentBPM = track.bpm;
+            BeatsPerBar = 4; // 기본값 설정
+            UpdateTotalBars();
 
-            var railGenerator = FindObjectOfType<RailGenerator>();
+            var railGenerator = FindObjectOfType<RailController>();
             if (railGenerator != null)
             {
                 Debug.Log(
                     $"SelectTrackInternal - Track: {track.trackName}, BPM: {track.bpm}, Audio Length: {track.TrackAudio.length}s"
                 );
-                railGenerator.UpdateBeatSettings(track.bpm, 4);
+                railGenerator.UpdateBeatSettings(track.bpm, BeatsPerBar);
                 railGenerator.UpdateWaveform(track.TrackAudio);
             }
 
@@ -487,6 +512,23 @@ namespace NoteEditor
         {
             float newVolume = Mathf.Clamp01(currentAudioSource.volume + delta);
             SetVolume(newVolume);
+        }
+
+        private void UpdateTotalBars()
+        {
+            if (currentAudioSource != null && currentAudioSource.clip != null)
+            {
+                float clipDuration = currentAudioSource.clip.length;
+                float secondsPerBeat = 60f / currentBPM;
+                float secondsPerBar = secondsPerBeat * currentBeatsPerBar;
+                float newTotalBars = clipDuration / secondsPerBar;
+
+                if (!Mathf.Approximately(totalBars, newTotalBars))
+                {
+                    totalBars = newTotalBars;
+                    OnTotalBarsChanged?.Invoke(totalBars);
+                }
+            }
         }
 
         protected override void OnDestroy()

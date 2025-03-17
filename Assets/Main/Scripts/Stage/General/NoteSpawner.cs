@@ -8,16 +8,19 @@ public class NoteSpawner : MonoBehaviour
     private float segmentSpawnInterval = 0.1f;
 
     [SerializeField]
-    private float sourceRadius = 5f;
+    private float sourceRadius = 0.5f;
 
     [SerializeField]
-    private float targetRadius = 5f;
+    private float targetRadius = 0.5f;
 
     [SerializeField]
-    private int segmentCount = 36;
+    private int segmentCount = 72;
 
     [SerializeField]
     private Vector3 circleOffset = Vector3.zero;
+
+    public Color leftColor = Color.yellow;
+    public Color rightColor = Color.magenta;
 
     private Vector3 sourceCenter;
     private Vector3 targetCenter;
@@ -29,11 +32,9 @@ public class NoteSpawner : MonoBehaviour
 
     private GridGenerator gridGenerator;
 
-    private Note leftNotePrefab;
-    private Note rightNotePrefab;
+    private Note shortNotePrefab;
     private Note longNotePrefab;
-    private Note segmentPrefab;
-    private ParticleSystem hitFXPrefab;
+    private GameObject hitFXPrefab;
     private NoteMap noteMap;
 
     private bool isInitialized = false;
@@ -50,11 +51,9 @@ public class NoteSpawner : MonoBehaviour
 
     private void SetPrefabs()
     {
-        leftNotePrefab = Resources.Load<Note>("Prefabs/Stage/Note/LeftNote");
-        rightNotePrefab = Resources.Load<Note>("Prefabs/Stage/Note/RightNote");
+        shortNotePrefab = Resources.Load<Note>("Prefabs/Stage/Note/ShortNote");
         longNotePrefab = Resources.Load<Note>("Prefabs/Stage/Note/LongNote");
-        segmentPrefab = Resources.Load<Note>("Prefabs/Stage/Note/Segment");
-        hitFXPrefab = Resources.Load<ParticleSystem>("Prefabs/Stage/Effects/HitFX");
+        hitFXPrefab = Resources.Load<GameObject>("Prefabs/Stage/Effects/HitFX");
     }
 
     private void SetGrids(GridGenerator gridGen, NoteMap noteMap)
@@ -144,11 +143,13 @@ public class NoteSpawner : MonoBehaviour
 
         StartCoroutine(SpawnNotesCoroutine());
 
-        Debug.Log($"=== 노트 생성 시작 ===");
-        Debug.Log($"BPM: {noteMap.bpm}");
-        Debug.Log($"박자: {noteMap.beatsPerBar}/4");
-        Debug.Log($"비트 간격: {60f / noteMap.bpm:F3}초");
-        Debug.Log($"마디 길이: {(60f / noteMap.bpm) * noteMap.beatsPerBar:F3}초");
+        Debug.Log(
+            $"=== 노트 생성 시작 === \n"
+                + $"BPM: {noteMap.bpm}\n"
+                + $"박자: {noteMap.beatsPerBar}/4\n"
+                + $"비트 간격: {60f / noteMap.bpm:F3}초\n"
+                + $"마디 길이: {(60f / noteMap.bpm) * noteMap.beatsPerBar:F3}초"
+        );
     }
 
     public void StopSpawning()
@@ -180,6 +181,7 @@ public class NoteSpawner : MonoBehaviour
         }
 
         noteData.noteSpeed = noteSpeed;
+        noteData.gridGenerator = gridGenerator;
 
         switch (noteData.baseType)
         {
@@ -197,42 +199,27 @@ public class NoteSpawner : MonoBehaviour
 
     private void SpawnShortNote(NoteData noteData)
     {
-        Vector3 startPos = gridGenerator.GetCellPosition(
-            gridGenerator.sourceOrigin,
-            (int)noteData.StartCell.x,
-            (int)noteData.StartCell.y
-        );
-
-        Vector3 targetPos = gridGenerator.GetCellPosition(
-            gridGenerator.targetOrigin,
-            (int)noteData.StartCell.x,
-            (int)noteData.StartCell.y
-        );
-
-        NoteData spawnData = new NoteData
+        if (noteData.TargetCell == Vector2.zero)
         {
-            baseType = noteData.baseType,
-            noteType = noteData.noteType,
-            noteSpeed = noteSpeed,
-            startPosition = startPos,
-            targetPosition = targetPos,
-            direction = noteData.direction,
-            noteAxis = noteData.noteAxis,
-            StartCell = noteData.StartCell,
-            isLeftGrid = noteData.isLeftGrid,
-            bar = noteData.bar,
-            beat = noteData.beat,
-        };
+            noteData.TargetCell = noteData.StartCell;
+        }
 
-        Note note = spawnData.isLeftGrid ? leftNotePrefab : rightNotePrefab;
-        Note noteObj = Instantiate(note, startPos, Quaternion.identity);
+        Note noteObj = Note.CreateNote(noteData, shortNotePrefab, longNotePrefab);
 
-        noteObj.Initialize(spawnData);
+        if (noteObj != null)
+        {
+            noteObj.SetNoteColor(noteData.isLeftGrid ? leftColor : rightColor);
+        }
+
+        if (noteObj != null && hitFXPrefab != null)
+        {
+            noteObj.SetHitFX(hitFXPrefab);
+        }
 
         double spawnTime = AudioSettings.dspTime - startDspTime;
         Debug.Log(
-            $"단노트 생성 - 시간: {spawnTime:F3}, 마디: {spawnData.bar}, 비트: {spawnData.beat}, "
-                + $"위치: {(spawnData.isLeftGrid ? "왼쪽" : "오른쪽")} ({spawnData.StartCell.x}, {spawnData.StartCell.y})"
+            $"단노트 생성 - 시간: {spawnTime:F3}, 마디: {noteData.bar}, 비트: {noteData.beat}, "
+                + $"위치: {(noteData.isLeftGrid ? "왼쪽" : "오른쪽")} ({noteData.StartCell.x}, {noteData.StartCell.y})"
         );
     }
 
@@ -244,14 +231,38 @@ public class NoteSpawner : MonoBehaviour
             return;
         }
 
-        int endIndex = (noteData.startIndex + noteData.arcLength) % segmentCount;
-        StartCoroutine(SpawnSegments(noteData, noteData.startIndex, endIndex, false));
+        int calculatedArcLength = noteData.CalculateArcLength(
+            segmentCount,
+            noteMap.bpm,
+            noteMap.beatsPerBar,
+            segmentSpawnInterval
+        );
+
+        if (calculatedArcLength <= 0)
+        {
+            Debug.LogWarning($"롱노트 길이가 너무 짧습니다. 최소 길이(1)로 설정합니다.");
+            calculatedArcLength = 1;
+        }
+
+        int endIndex = (noteData.startIndex + calculatedArcLength) % segmentCount;
+
+        Debug.Log(
+            $"롱노트 생성 - 마디: {noteData.bar}, 박자: {noteData.beat}, "
+                + $"지속 시간: {noteData.durationBars}마디 {noteData.durationBeats}박자, "
+                + $"계산된 길이: {calculatedArcLength}"
+        );
+
+        StartCoroutine(
+            SpawnSegments(noteData, noteData.startIndex, endIndex, false, calculatedArcLength)
+        );
 
         if (noteData.isSymmetric)
         {
             int symmetricStart = (noteData.startIndex + segmentCount / 2) % segmentCount;
             int symmetricEnd = (endIndex + segmentCount / 2) % segmentCount;
-            StartCoroutine(SpawnSegments(noteData, symmetricStart, symmetricEnd, true));
+            StartCoroutine(
+                SpawnSegments(noteData, symmetricStart, symmetricEnd, true, calculatedArcLength)
+            );
         }
     }
 
@@ -259,13 +270,37 @@ public class NoteSpawner : MonoBehaviour
         NoteData noteData,
         int startIndex,
         int endIndex,
-        bool isSymmetric
+        bool isSymmetric,
+        int arcLength
     )
     {
-        Note prefabToUse = isSymmetric ? segmentPrefab : longNotePrefab;
         int currentIndex = startIndex;
         int maxIterations = segmentCount * 2;
         int iterations = 0;
+
+        // 롱노트의 총 지속 시간 계산
+        float secondsPerBeat = 60f / noteMap.bpm;
+        float totalDurationSeconds =
+            (noteData.durationBars * noteMap.beatsPerBar + noteData.durationBeats) * secondsPerBeat;
+
+        // 지속 시간이 0이면 기본값 설정
+        if (totalDurationSeconds <= 0)
+        {
+            totalDurationSeconds = arcLength * segmentSpawnInterval;
+            Debug.LogWarning("롱노트 지속 시간이 0입니다. 기본값으로 설정합니다.");
+        }
+
+        // 각 세그먼트의 속도 계산 (전체 거리를 총 지속 시간으로 나눔)
+        float segmentSpeed = noteSpeed;
+        if (totalDurationSeconds > 0)
+        {
+            // 원형 경로의 총 거리 계산 (대략적인 계산)
+            float totalDistance = Vector3.Distance(
+                sourcePoints[startIndex],
+                targetPoints[startIndex]
+            );
+            segmentSpeed = totalDistance / totalDurationSeconds;
+        }
 
         do
         {
@@ -284,30 +319,34 @@ public class NoteSpawner : MonoBehaviour
             {
                 baseType = NoteBaseType.Long,
                 noteType = noteData.noteType,
-                noteSpeed = noteSpeed,
-                startPosition = sourcePos,
-                targetPosition = targetPos,
+                noteSpeed = segmentSpeed, // 계산된 속도 사용
                 direction = noteData.direction,
                 noteAxis = noteData.noteAxis,
                 bar = noteData.bar,
                 beat = noteData.beat,
+                durationBars = noteData.durationBars,
+                durationBeats = noteData.durationBeats,
                 isClockwise = noteData.isClockwise,
                 isSymmetric = isSymmetric,
+                gridGenerator = gridGenerator,
             };
 
-            Note segment = Instantiate(prefabToUse, sourcePos, Quaternion.identity);
+            Note segment = Instantiate(longNotePrefab, sourcePos, Quaternion.Euler(90, 0, 0));
 
-            Segment mover = segment.GetComponent<Segment>();
-            if (mover == null)
+            if (isSymmetric)
             {
-                mover = segment.gameObject.AddComponent<Segment>();
+                segment.SetNoteColor(Color.red);
             }
 
-            mover.Initialize(segmentData);
+            if (segment is LongNote longNote)
+            {
+                longNote.Initialize(segmentData);
+                longNote.SetPositions(sourcePos, targetPos);
+            }
 
             if (hitFXPrefab != null)
             {
-                mover.SetHitFX(hitFXPrefab);
+                segment.SetHitFX(hitFXPrefab);
             }
 
             if (currentIndex == endIndex)
