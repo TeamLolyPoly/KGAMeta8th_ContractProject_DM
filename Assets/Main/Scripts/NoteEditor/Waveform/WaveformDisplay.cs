@@ -88,10 +88,6 @@ namespace NoteEditor
             waveformImage.rectTransform.offsetMin = Vector2.zero;
             waveformImage.rectTransform.offsetMax = Vector2.zero;
 
-            AudioManager.Instance.OnBPMChanged += OnBPMChanged;
-            AudioManager.Instance.OnBeatsPerBarChanged += OnBeatsPerBarChanged;
-            AudioManager.Instance.OnTotalBarsChanged += OnTotalBarsChanged;
-
             bpm = AudioManager.Instance.CurrentBPM;
             beatsPerBar = AudioManager.Instance.BeatsPerBar;
 
@@ -106,7 +102,7 @@ namespace NoteEditor
             IsInitialized = true;
         }
 
-        private void OnBPMChanged(float newBPM)
+        public void OnBPMChanged(float newBPM)
         {
             bpm = newBPM;
             if (IsInitialized && currentClip != null)
@@ -115,7 +111,7 @@ namespace NoteEditor
             }
         }
 
-        private void OnBeatsPerBarChanged(int newBeatsPerBar)
+        public void OnBeatsPerBarChanged(int newBeatsPerBar)
         {
             beatsPerBar = newBeatsPerBar;
             if (IsInitialized && currentClip != null)
@@ -124,7 +120,7 @@ namespace NoteEditor
             }
         }
 
-        private void OnTotalBarsChanged(float newTotalBars)
+        public void OnTotalBarsChanged(float newTotalBars)
         {
             if (IsInitialized && currentClip != null)
             {
@@ -136,15 +132,6 @@ namespace NoteEditor
         {
             if (!IsInitialized)
                 return;
-
-            if (
-                AudioManager.Instance.currentTrack != null
-                && AudioManager.Instance.currentTrack.TrackAudio != null
-                && currentClip != AudioManager.Instance.currentTrack.TrackAudio
-            )
-            {
-                UpdateWaveform(AudioManager.Instance.currentTrack.TrackAudio);
-            }
 
             UpdatePlayheadPosition();
         }
@@ -321,13 +308,22 @@ namespace NoteEditor
 
         private void OnDestroy()
         {
-            if (AudioManager.Instance != null)
-            {
-                AudioManager.Instance.OnBPMChanged -= OnBPMChanged;
-                AudioManager.Instance.OnBeatsPerBarChanged -= OnBeatsPerBarChanged;
-                AudioManager.Instance.OnTotalBarsChanged -= OnTotalBarsChanged;
-            }
             ClearBeatMarkers();
+        }
+
+        public void OnTrackChanged(TrackData track)
+        {
+            if (track == null)
+                return;
+
+            Debug.Log($"WaveformDisplay: Track changed to {track.trackName}");
+
+            bpm = track.bpm;
+
+            if (track.TrackAudio != null)
+            {
+                UpdateWaveform(track.TrackAudio);
+            }
         }
     }
 }

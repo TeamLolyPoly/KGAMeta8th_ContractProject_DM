@@ -13,7 +13,7 @@ namespace NoteEditor
     /// <summary
     /// 트랙 데이터를 관리하는 매니저 클래스
     /// </summary>
-    public class AudioDataManager : Singleton<AudioDataManager>, IInitializable
+    public class EditorDataManager : Singleton<EditorDataManager>, IInitializable
     {
         private AudioFileService fileService;
         private List<TrackData> tracks = new List<TrackData>();
@@ -256,7 +256,6 @@ namespace NoteEditor
 
             if (track != null)
             {
-                // 오디오 로드
                 AudioClip audioClip = await fileService.LoadAudioAsync(trackName, progress);
                 track.TrackAudio = audioClip;
 
@@ -284,7 +283,6 @@ namespace NoteEditor
             {
                 track.bpm = bpm;
 
-                // 메타데이터 업데이트
                 await UpdateTrackMetadataAsync();
 
                 OnTrackUpdated?.Invoke(track);
@@ -302,13 +300,10 @@ namespace NoteEditor
             if (string.IsNullOrEmpty(trackName))
                 return null;
 
-            // 캐시된 앨범 아트가 있는지 확인
             TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
             if (track != null && track.AlbumArt != null)
                 return track.AlbumArt;
 
-            // 비동기 로드를 시작하지만 결과를 기다리지 않음
-            // 대신 null을 반환하고 나중에 로드가 완료되면 이벤트를 통해 알림
             StartCoroutine(LoadAlbumArtCoroutine(trackName));
             return null;
         }
@@ -787,7 +782,6 @@ namespace NoteEditor
 
                 if (albumArt != null)
                 {
-                    // 앨범 아트 로드 이벤트 발생
                     OnAlbumArtLoaded?.Invoke(trackName, albumArt);
                     Debug.Log($"앨범 아트 설정: {trackName}");
                 }

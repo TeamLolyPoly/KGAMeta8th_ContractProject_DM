@@ -342,7 +342,6 @@ namespace NoteEditor
 
                         progress?.Report(0.7f);
 
-                        // 앨범 아트를 PersistentDataPath에 저장
                         await SaveAlbumArtAsync(sprite, trackName);
 
                         imageCache[trackName] = sprite;
