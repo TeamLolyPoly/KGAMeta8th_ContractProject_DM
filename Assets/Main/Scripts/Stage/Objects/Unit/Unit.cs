@@ -1,38 +1,31 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
-    private Animator animator;
-    private AnimationSystem unitAnimationManager;
-    public Bandtype bandtype;
+    protected Animator animator;
+    protected AnimationSystem unitAnimationManager;
 
-    private IEnumerator Start()
+    protected virtual IEnumerator Start()
     {
         yield return new WaitUntil(() => GameManager.Instance.IsInitialized);
         unitAnimationManager = GameManager.Instance.UnitAnimationManager;
         Initialize();
     }
-
-    private void Initialize()
+    protected virtual void Initialize()
     {
-        unitAnimationManager.AddUnit(this);
-
         animator = GetComponent<Animator>();
         if (animator == null)
         {
             animator = gameObject.AddComponent<Animator>();
         }
+        unitAnimationManager.AddUnit(this);
 
         unitAnimationManager.AttachAnimation(animator);
     }
 
-    private void OnDisable()
-    {
-        unitAnimationManager.RemoveUnit(this);
-    }
-
-    public void SetAnimationClip(AnimationClip animationClip)
+    public virtual void SetAnimationClip(AnimationClip animationClip)
     {
         AnimatorOverrideController overrideController =
             animator.runtimeAnimatorController as AnimatorOverrideController;
@@ -41,6 +34,12 @@ public class Unit : MonoBehaviour
             overrideController = new AnimatorOverrideController(animator.runtimeAnimatorController);
             animator.runtimeAnimatorController = overrideController;
         }
-        overrideController["Action"] = animationClip;
+        overrideController["Usual"] = animationClip;
     }
+
+    protected void OnDisable()
+    {
+        unitAnimationManager.RemoveUnit(this);
+    }
+
 }

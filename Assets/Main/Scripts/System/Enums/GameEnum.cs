@@ -47,7 +47,7 @@ public enum NoteRatings
 
 #endregion
 
-public enum Bandtype
+public enum BandType
 {
     Drums,
     Saxophone,
