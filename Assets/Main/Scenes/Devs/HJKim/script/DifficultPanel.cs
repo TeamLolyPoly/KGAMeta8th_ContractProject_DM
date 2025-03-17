@@ -37,7 +37,7 @@ public class DifficultPanel : Panel
     private ButtonManager hardButton;
 
     [SerializeField]
-    private BoxButtonManager gameStartButton;
+    private ButtonManager gameStartButton;
 
     private void Start()
     {

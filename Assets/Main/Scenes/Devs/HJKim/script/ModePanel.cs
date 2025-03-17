@@ -46,6 +46,8 @@ public class ModePanel : Panel
 
     private void OnMultiButtonClick()
     {
-        //todo : 멀티모드 구현해야함  기획서 참고!
+        //todo : 멀티모드 구현해야함  기획서 참고! 일단 비활성화 처리
+        multiButton.isInteractable = false;
+        multiButton.UpdateUI();
     }
 }
