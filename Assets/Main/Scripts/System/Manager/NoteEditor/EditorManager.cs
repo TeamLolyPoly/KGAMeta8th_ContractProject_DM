@@ -14,7 +14,6 @@ namespace NoteEditor
         public CellController cellController { get; private set; }
         public NoteEditor noteEditor { get; private set; }
         public NoteEditorPanel editorPanel { get; private set; }
-        public WaveformDisplay waveformDisplay { get; private set; }
 
         private Camera editorCamera;
         private InputActionAsset editorControlActions;
@@ -98,7 +97,6 @@ namespace NoteEditor
 
             Debug.Log("[EditorManager] 컴포넌트 초기화 시작");
 
-            // 먼저 리소스 로드 및 기본 초기화
             if (railController != null && !railController.IsInitialized)
             {
                 railController.Initialize();
@@ -120,12 +118,10 @@ namespace NoteEditor
                 Debug.Log("[EditorManager] NoteEditor 초기화 완료");
             }
 
-            if (editorPanel != null && !editorPanel.IsInitialized)
-            {
-                editorPanel.Initialize();
-                yield return new WaitUntil(() => editorPanel.IsInitialized);
-                Debug.Log("[EditorManager] EditorPanel 초기화 완료");
-            }
+            yield return new WaitUntil(() => UIManager.Instance.IsInitialized);
+            editorPanel = UIManager.Instance.OpenPanel(PanelType.NoteEditor) as NoteEditorPanel;
+            yield return new WaitUntil(() => editorPanel.IsInitialized);
+            Debug.Log("[EditorManager] EditorPanel 초기화 완료");
 
             editorCamera = Camera.main;
 
@@ -138,7 +134,6 @@ namespace NoteEditor
             SetupInputActions();
             RefreshTrackList();
 
-            // 트랙 로드 및 선택
             if (cachedTracks.Count > 0)
             {
                 SelectTrack(cachedTracks[0]);
@@ -161,24 +156,6 @@ namespace NoteEditor
             GameObject noteEditorObj = new GameObject("NoteEditor");
             noteEditorObj.transform.SetParent(transform);
             noteEditor = noteEditorObj.AddComponent<NoteEditor>();
-
-            GameObject waveformObj = new GameObject("WaveformDisplay");
-            waveformObj.transform.SetParent(transform);
-            waveformDisplay = waveformObj.AddComponent<WaveformDisplay>();
-
-            GameObject canvasObj = GameObject.Find("Canvas");
-            if (canvasObj != null)
-            {
-                editorPanel = Instantiate(
-                    Resources.Load<NoteEditorPanel>("Prefabs/NoteEditor/UI_Panel_NoteEditor"),
-                    canvasObj.transform
-                );
-                canvasObj.transform.SetParent(transform);
-            }
-            else
-            {
-                Debug.LogError("Canvas를 찾을 수 없습니다.");
-            }
         }
 
         private void SetupInputActions()

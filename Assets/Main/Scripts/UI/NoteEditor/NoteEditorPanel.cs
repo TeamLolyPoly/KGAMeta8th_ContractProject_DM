@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Michsky.UI.Heat;
+using ProjectDM.UI;
 using SFB;
 using TMPro;
 using UnityEngine;
@@ -8,8 +9,9 @@ using Dropdown = Michsky.UI.Heat.Dropdown;
 
 namespace NoteEditor
 {
-    public class NoteEditorPanel : MonoBehaviour, IInitializable
+    public class NoteEditorPanel : Panel, IInitializable
     {
+        public override PanelType PanelType => PanelType.NoteEditor;
         public BoxButtonManager CurrentTrackInfo;
         public ButtonManager LoadTrackButton;
         public TextMeshProUGUI currentTrackPlaybackTime;
@@ -52,6 +54,12 @@ namespace NoteEditor
 
         private EditorManager editorManager;
 
+        public override void Open()
+        {
+            base.Open();
+            Initialize();
+        }
+
         public void Initialize()
         {
             editorManager = EditorManager.Instance;
@@ -74,9 +82,14 @@ namespace NoteEditor
                 BPMInput.onSubmit.AddListener(() => OnBPMInputSubmit(BPMInput.inputText.text));
             }
 
+            if (BPMInput != null)
+            {
+                BPMInput.inputText.text = "선택된 트랙 없음";
+            }
+
             if (beatsPerBarInput != null)
             {
-                beatsPerBarInput.inputText.text = "4";
+                beatsPerBarInput.inputText.text = "선택된 트랙 없음";
             }
 
             if (saveButton != null)
@@ -128,13 +141,13 @@ namespace NoteEditor
             }
             if (bpm <= 0)
             {
-                Debug.LogWarning("BPM은 0보다 커야 합니다.");
+                UpdateStatusText("<color=red>BPM은 0보다 커야 합니다.</color>");
                 return;
             }
 
             if (trackDataList.Count == 0 || trackDropdown.selectedItemIndex < 0)
             {
-                Debug.LogWarning("선택된 트랙이 없습니다.");
+                UpdateStatusText("<color=red>선택된 트랙이 없습니다.</color>");
                 return;
             }
 
@@ -143,7 +156,7 @@ namespace NoteEditor
             if (editor != null)
             {
                 editor.UpdateBPM(bpm);
-                UpdateStatusText($"BPM 변경됨: {bpm}");
+                UpdateStatusText($"<color=green>BPM 변경됨: {bpm}</color>");
             }
 
             if (editorManager.currentTrack != null)
@@ -435,7 +448,7 @@ namespace NoteEditor
                 trackDropdown.SetDropdownIndex(index);
             }
 
-            UpdateStatusText($"트랙 변경됨: {track.trackName}");
+            UpdateStatusText($"<color=green>트랙 변경됨: {track.trackName}</color>");
         }
 
         public void RefreshTrackList()
@@ -443,6 +456,29 @@ namespace NoteEditor
             trackDataList = editorManager.GetAllTrackInfo();
             InitializeTrackDropdown();
             InitializeAlbumArtButton();
+            InitializeInputFields();
+        }
+
+        private void InitializeInputFields()
+        {
+            if (trackDataList.Count > 0)
+            {
+                TrackData track = trackDataList[trackDropdown.selectedItemIndex];
+                if (BPMInput != null)
+                {
+                    BPMInput.inputText.text = track.bpm.ToString();
+                }
+
+                if (beatsPerBarInput != null && track.noteMap != null)
+                {
+                    beatsPerBarInput.inputText.text = track.noteMap.beatsPerBar.ToString();
+                }
+            }
+            else
+            {
+                BPMInput.inputText.text = "트랙 없음";
+                beatsPerBarInput.inputText.text = "트랙 없음";
+            }
         }
     }
 }

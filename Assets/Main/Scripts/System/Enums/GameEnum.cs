@@ -66,6 +66,20 @@ public enum Engagement
     Seventh,
     Eighth,
     Ninth,
-    Tenth
+    Tenth,
 }
 
+public enum PanelType
+{
+    Title,
+    Mode,
+    Album,
+    Music,
+    Difficult,
+    ResultDetail,
+    Result,
+    Option,
+
+    // 에디터 전용
+    NoteEditor,
+}
