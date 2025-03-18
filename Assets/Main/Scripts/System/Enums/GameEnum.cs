@@ -1,5 +1,5 @@
 #region Note Related
-public enum NoteBaseType
+public enum NoteType
 {
     None,
     Short,
@@ -28,7 +28,7 @@ public enum NoteAxis
     MX,
 }
 
-public enum NoteHitType
+public enum NoteColor
 {
     None,
     Red,
@@ -53,6 +53,16 @@ public enum BandType
     Saxophone,
     Guitar,
     Bass_Guitar,
+}
+
+public enum BeatsPerBar
+{
+    Four,
+    Eight,
+    Six,
+    Twelve,
+    Sixteen,
+    ThirtyTwo,
 }
 
 public enum Engagement
