@@ -54,6 +54,13 @@ public class CustomGrandstandCreator : MonoBehaviour
     public bool optimizeAnimators = true; // 애니메이터 최적화
     public float animationCullingDistance = 40f; // 애니메이션 컬링 거리
 
+    [Range(1, 10)]
+    public int batchSize = 5; // 하나의 배치로 묶을 객체 수
+    public bool useMeshGroups = true; // 메시 그룹화 사용
+
+    [Range(1, 10)]
+    public int meshGroupSize = 5; // 하나의 메시 그룹 크기
+
     private Camera mainCamera;
     private float distanceToCamera;
     private MaterialPropertyBlock propertyBlock;
@@ -68,6 +75,7 @@ public class CustomGrandstandCreator : MonoBehaviour
     private Vector3 centerOffset;
     private Bounds renderBounds;
     private Mesh[] lodMeshes;
+    private Mesh[] groupedMeshes; // 그룹화된 메시
 
     void Start()
     {
@@ -106,8 +114,17 @@ public class CustomGrandstandCreator : MonoBehaviour
         // LOD 메시 캐싱
         CacheLODMeshes();
 
+        // 메시 그룹화
+        if (useMeshGroups)
+        {
+            GroupMeshes();
+        }
+
         // 머티리얼 최적화
         OptimizeMaterials();
+
+        // 첫 프레임에 한 번 렌더링
+        UpdateLODLevel(true);
     }
 
     private void CacheLODMeshes()
@@ -234,25 +251,49 @@ public class CustomGrandstandCreator : MonoBehaviour
 
     private void OptimizeMaterials()
     {
+        // 원본 머티리얼을 저장 (디버깅용)
+        Material[] originalMaterials = new Material[lodMaterials.Length];
         for (int i = 0; i < lodMaterials.Length; i++)
         {
             if (lodMaterials[i] != null)
             {
-                // GPU 인스턴싱 활성화
+                originalMaterials[i] = lodMaterials[i];
+
+                // 새 머티리얼 인스턴스 생성 (수정 가능하도록)
+                lodMaterials[i] = new Material(originalMaterials[i]);
+
+                // GPU 인스턴싱 활성화 (핵심)
                 lodMaterials[i].enableInstancing = true;
 
-                // LOD 레벨에 따라 그림자 설정 최적화
+                // 셰이더 키워드 최소화
+                lodMaterials[i].DisableKeyword("_EMISSION");
+                lodMaterials[i].DisableKeyword("_METALLICGLOSSMAP");
+                lodMaterials[i].DisableKeyword("_DETAIL_MULX2");
+
+                // 그림자 최적화
                 if (useShadowsOnlyForLOD0 && i > 0)
                 {
-                    lodMaterials[i].SetFloat("_CastShadows", 0);
-                    lodMaterials[i].SetFloat("_ReceiveShadows", 0);
+                    // 쉐이더가 이 프로퍼티들을 지원하는지 확인
+                    if (lodMaterials[i].HasProperty("_CastShadows"))
+                        lodMaterials[i].SetFloat("_CastShadows", 0);
+                    if (lodMaterials[i].HasProperty("_ReceiveShadows"))
+                        lodMaterials[i].SetFloat("_ReceiveShadows", 0);
                 }
 
-                // 원거리 LOD는 저해상도 텍스처 사용
+                // 원거리 LOD 최적화
                 if (i > 1)
                 {
-                    // 텍스처 퀄리티 감소
-                    lodMaterials[i].SetFloat("_TextureQuality", 0.5f);
+                    // 텍스처 필터링 모드 변경
+                    Texture mainTex = lodMaterials[i].mainTexture;
+                    if (mainTex != null)
+                    {
+                        mainTex.filterMode = FilterMode.Bilinear;
+                        mainTex.mipMapBias = 1f; // 낮은 해상도 미립맵 사용
+                    }
+
+                    // 품질 관련 설정
+                    if (lodMaterials[i].HasProperty("_TextureQuality"))
+                        lodMaterials[i].SetFloat("_TextureQuality", 0.5f);
                 }
             }
         }
@@ -285,10 +326,15 @@ public class CustomGrandstandCreator : MonoBehaviour
     void Update()
     {
         UpdateDistanceToCamera();
-        UpdateLODLevel();
 
-        // 애니메이터 최적화 (거리에 따라 업데이트 속도 조절)
-        if (optimizeAnimators)
+        // 5프레임마다 한 번씩 LOD 업데이트 (성능 개선)
+        if (Time.frameCount % 5 == 0)
+        {
+            UpdateLODLevel(false);
+        }
+
+        // 10프레임마다 한 번씩 애니메이터 업데이트 (성능 개선)
+        if (optimizeAnimators && Time.frameCount % 10 == 0)
         {
             UpdateAnimators();
         }
@@ -296,13 +342,15 @@ public class CustomGrandstandCreator : MonoBehaviour
 
     private void UpdateDistanceToCamera()
     {
-        distanceToCamera = Vector3.Distance(
-            mainCamera.transform.position,
-            transform.position + centerOffset
+        distanceToCamera = Vector3.SqrMagnitude(
+            mainCamera.transform.position - (transform.position + centerOffset)
         );
+
+        // 제곱 거리를 실제 거리로 변환 (최적화를 위해 필요한 경우에만 제곱근 계산)
+        distanceToCamera = Mathf.Sqrt(distanceToCamera);
     }
 
-    private void UpdateLODLevel()
+    private void UpdateLODLevel(bool forceUpdate = false)
     {
         // 가시성 컬링 - 설정된 거리를 넘어가면 렌더링 안함
         if (distanceToCamera > visibleCullingDistance)
@@ -321,8 +369,8 @@ public class CustomGrandstandCreator : MonoBehaviour
         {
             if (distanceToCamera <= lodDistances[i])
             {
-                // 현재 LOD 레벨이 바뀌는 경우만 새로 렌더링
-                if (currentLODLevel != i)
+                // 현재 LOD 레벨이 바뀌는 경우 또는 강제 업데이트
+                if (currentLODLevel != i || forceUpdate)
                 {
                     currentLODLevel = i;
                     RenderLOD(i);
@@ -353,20 +401,80 @@ public class CustomGrandstandCreator : MonoBehaviour
         propertyBlock.SetBuffer("_SpectatorBuffer", spectatorBuffer);
         propertyBlock.SetFloat("_LODLevel", lodLevel);
 
-        Graphics.DrawMeshInstancedProcedural(
-            lodMeshes[lodLevel],
-            0,
-            lodMaterials[lodLevel],
-            renderBounds,
-            totalInstances,
-            propertyBlock
-        );
+        // 프로시저럴 드로우 최적화
+        if (totalInstances <= 1023) // 한 번에 그릴 수 있는 최대 인스턴스 수
+        {
+            Graphics.DrawMeshInstancedProcedural(
+                lodMeshes[lodLevel],
+                0,
+                lodMaterials[lodLevel],
+                renderBounds,
+                totalInstances,
+                propertyBlock
+            );
+        }
+        else
+        {
+            // 배치 크기에 따라 나누어 그리기
+            int maxBatchSize = 1023;
+            int batchCount = Mathf.CeilToInt((float)totalInstances / maxBatchSize);
+
+            for (int batch = 0; batch < batchCount; batch++)
+            {
+                int startIdx = batch * maxBatchSize;
+                int count = Mathf.Min(maxBatchSize, totalInstances - startIdx);
+
+                if (count <= 0)
+                    continue;
+
+                // 오프셋 설정
+                propertyBlock.SetInt("_InstanceOffset", startIdx);
+
+                Graphics.DrawMeshInstancedProcedural(
+                    lodMeshes[lodLevel],
+                    0,
+                    lodMaterials[lodLevel],
+                    renderBounds,
+                    count,
+                    propertyBlock
+                );
+            }
+        }
     }
 
     private void RenderStandard(int lodLevel)
     {
-        if (lodMeshes[lodLevel] == null)
-            return;
+        Mesh meshToRender;
+        int instanceCount;
+        Matrix4x4[] matricesToUse;
+
+        if (useMeshGroups && groupedMeshes != null && groupedMeshes[lodLevel] != null)
+        {
+            // 그룹화된 메시 사용
+            meshToRender = groupedMeshes[lodLevel];
+            instanceCount = Mathf.CeilToInt((float)totalInstances / meshGroupSize);
+
+            // 그룹화된 인스턴스 매트릭스 생성
+            matricesToUse = new Matrix4x4[instanceCount];
+            for (int i = 0; i < instanceCount; i++)
+            {
+                int baseIndex = i * meshGroupSize;
+                if (baseIndex < instanceMatrices.Length)
+                {
+                    matricesToUse[i] = instanceMatrices[baseIndex];
+                }
+            }
+        }
+        else
+        {
+            // 원본 메시 사용
+            if (lodMeshes[lodLevel] == null || lodMaterials[lodLevel] == null)
+                return;
+
+            meshToRender = lodMeshes[lodLevel];
+            instanceCount = totalInstances;
+            matricesToUse = instanceMatrices;
+        }
 
         propertyBlock.Clear();
         propertyBlock.SetFloat("_LODLevel", lodLevel);
@@ -377,17 +485,34 @@ public class CustomGrandstandCreator : MonoBehaviour
                 ? UnityEngine.Rendering.ShadowCastingMode.Off
                 : UnityEngine.Rendering.ShadowCastingMode.On;
 
-        Graphics.DrawMeshInstanced(
-            lodMeshes[lodLevel],
-            0,
-            lodMaterials[lodLevel],
-            instanceMatrices,
-            totalInstances,
-            propertyBlock,
-            shadowMode,
-            lodLevel == 0, // 원거리 LOD는 그림자 안받음
-            LayerMask.NameToLayer("Default")
-        );
+        // 배치 크기에 따라 인스턴스 그룹화
+        int batchCount = Mathf.CeilToInt((float)instanceCount / batchSize);
+
+        for (int batch = 0; batch < batchCount; batch++)
+        {
+            int startIdx = batch * batchSize;
+            int count = Mathf.Min(batchSize, instanceCount - startIdx);
+
+            if (count <= 0)
+                continue;
+
+            // 현재 배치의 매트릭스 배열 생성
+            Matrix4x4[] batchMatrices = new Matrix4x4[count];
+            System.Array.Copy(matricesToUse, startIdx, batchMatrices, 0, count);
+
+            // 인스턴스 그리기
+            Graphics.DrawMeshInstanced(
+                meshToRender,
+                0,
+                lodMaterials[lodLevel],
+                batchMatrices,
+                count,
+                propertyBlock,
+                shadowMode,
+                lodLevel == 0, // 원거리 LOD는 그림자 안받음
+                LayerMask.NameToLayer("Default")
+            );
+        }
     }
 
     private void UpdateAnimators()
@@ -472,6 +597,77 @@ public class CustomGrandstandCreator : MonoBehaviour
         {
             Gizmos.color = colors[i % colors.Length];
             Gizmos.DrawWireSphere(transform.position, lodDistances[i]);
+        }
+    }
+
+    private void GroupMeshes()
+    {
+        if (lodMeshes == null || lodMeshes.Length == 0)
+            return;
+
+        groupedMeshes = new Mesh[lodMeshes.Length];
+
+        for (int lodLevel = 0; lodLevel < lodMeshes.Length; lodLevel++)
+        {
+            if (lodMeshes[lodLevel] == null)
+                continue;
+
+            // 원본 메시 복사
+            Mesh originalMesh = lodMeshes[lodLevel];
+
+            // 메시 그룹 생성
+            Mesh groupedMesh = new Mesh();
+            groupedMesh.name = originalMesh.name + "_Grouped";
+
+            // 원본 메시의 데이터 가져오기
+            Vector3[] vertices = originalMesh.vertices;
+            Vector3[] normals = originalMesh.normals;
+            Vector2[] uvs = originalMesh.uv;
+            int[] triangles = originalMesh.triangles;
+
+            // 새 그룹 메시 데이터 준비
+            List<Vector3> newVertices = new List<Vector3>();
+            List<Vector3> newNormals = new List<Vector3>();
+            List<Vector2> newUVs = new List<Vector2>();
+            List<int> newTriangles = new List<int>();
+
+            // meshGroupSize개의 메시를 하나로 병합
+            for (int i = 0; i < meshGroupSize; i++)
+            {
+                int vertexOffset = newVertices.Count;
+
+                // 버텍스 오프셋 계산 (간격 유지를 위해)
+                Vector3 posOffset = new Vector3(i * 0.5f, 0, 0);
+
+                // 버텍스, 노말, UV 복사
+                for (int v = 0; v < vertices.Length; v++)
+                {
+                    newVertices.Add(vertices[v] + posOffset);
+                    if (normals.Length > v)
+                        newNormals.Add(normals[v]);
+                    if (uvs.Length > v)
+                        newUVs.Add(uvs[v]);
+                }
+
+                // 삼각형 인덱스 복사 (버텍스 오프셋 적용)
+                for (int t = 0; t < triangles.Length; t++)
+                {
+                    newTriangles.Add(triangles[t] + vertexOffset);
+                }
+            }
+
+            // 새 메시에 데이터 할당
+            groupedMesh.vertices = newVertices.ToArray();
+            groupedMesh.normals = newNormals.ToArray();
+            groupedMesh.uv = newUVs.ToArray();
+            groupedMesh.triangles = newTriangles.ToArray();
+
+            // 메시 최적화
+            groupedMesh.RecalculateBounds();
+            groupedMesh.Optimize();
+
+            // 그룹 메시 저장
+            groupedMeshes[lodLevel] = groupedMesh;
         }
     }
 }
