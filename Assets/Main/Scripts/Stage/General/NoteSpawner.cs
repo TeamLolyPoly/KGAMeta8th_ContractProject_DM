@@ -183,16 +183,16 @@ public class NoteSpawner : MonoBehaviour
         noteData.noteSpeed = noteSpeed;
         noteData.gridGenerator = gridGenerator;
 
-        switch (noteData.baseType)
+        switch (noteData.noteType)
         {
-            case NoteBaseType.Short:
+            case NoteType.Short:
                 SpawnShortNote(noteData);
                 break;
-            case NoteBaseType.Long:
+            case NoteType.Long:
                 SpawnLongNote(noteData);
                 break;
             default:
-                Debug.LogError($"지원하지 않는 노트 타입: {noteData.baseType}");
+                Debug.LogError($"지원하지 않는 노트 타입: {noteData.noteType}");
                 break;
         }
     }
@@ -217,6 +217,7 @@ public class NoteSpawner : MonoBehaviour
         }
 
         double spawnTime = AudioSettings.dspTime - startDspTime;
+
         Debug.Log(
             $"단노트 생성 - 시간: {spawnTime:F3}, 마디: {noteData.bar}, 비트: {noteData.beat}, "
                 + $"위치: {(noteData.isLeftGrid ? "왼쪽" : "오른쪽")} ({noteData.StartCell.x}, {noteData.StartCell.y})"
@@ -225,13 +226,39 @@ public class NoteSpawner : MonoBehaviour
 
     private void SpawnLongNote(NoteData noteData)
     {
+        if (noteData.startIndex <= 0)
+        {
+            int gridX = (int)noteData.StartCell.x;
+            int gridY = (int)noteData.StartCell.y;
+
+            float normX = Mathf.Clamp(
+                (gridX / (float)(gridGenerator.TotalHorizontalCells - 1)) * 2 - 1,
+                -1,
+                1
+            );
+            float normY = Mathf.Clamp(
+                (gridY / (float)(gridGenerator.VerticalCells - 1)) * 2 - 1,
+                -1,
+                1
+            );
+
+            float angle = Mathf.Atan2(normY, normX) * Mathf.Rad2Deg;
+            if (angle < 0)
+                angle += 360f;
+
+            noteData.startIndex = Mathf.RoundToInt(angle / (360f / segmentCount)) % segmentCount;
+        }
+
         if (noteData.startIndex < 0 || noteData.startIndex >= segmentCount)
         {
             Debug.LogError($"잘못된 시작 인덱스: {noteData.startIndex}");
             return;
         }
 
-        int calculatedArcLength = noteData.CalculateArcLength(
+        int endIndex;
+        int calculatedArcLength;
+
+        calculatedArcLength = noteData.CalculateArcLength(
             segmentCount,
             noteMap.bpm,
             noteMap.beatsPerBar,
@@ -244,12 +271,12 @@ public class NoteSpawner : MonoBehaviour
             calculatedArcLength = 1;
         }
 
-        int endIndex = (noteData.startIndex + calculatedArcLength) % segmentCount;
+        endIndex = (noteData.startIndex + calculatedArcLength) % segmentCount;
 
         Debug.Log(
             $"롱노트 생성 - 마디: {noteData.bar}, 박자: {noteData.beat}, "
                 + $"지속 시간: {noteData.durationBars}마디 {noteData.durationBeats}박자, "
-                + $"계산된 길이: {calculatedArcLength}"
+                + $"계산된 인덱스: 시작 {noteData.startIndex}, 끝 {endIndex}, 길이: {calculatedArcLength}"
         );
 
         StartCoroutine(
@@ -278,23 +305,19 @@ public class NoteSpawner : MonoBehaviour
         int maxIterations = segmentCount * 2;
         int iterations = 0;
 
-        // 롱노트의 총 지속 시간 계산
         float secondsPerBeat = 60f / noteMap.bpm;
         float totalDurationSeconds =
             (noteData.durationBars * noteMap.beatsPerBar + noteData.durationBeats) * secondsPerBeat;
 
-        // 지속 시간이 0이면 기본값 설정
         if (totalDurationSeconds <= 0)
         {
             totalDurationSeconds = arcLength * segmentSpawnInterval;
             Debug.LogWarning("롱노트 지속 시간이 0입니다. 기본값으로 설정합니다.");
         }
 
-        // 각 세그먼트의 속도 계산 (전체 거리를 총 지속 시간으로 나눔)
         float segmentSpeed = noteSpeed;
         if (totalDurationSeconds > 0)
         {
-            // 원형 경로의 총 거리 계산 (대략적인 계산)
             float totalDistance = Vector3.Distance(
                 sourcePoints[startIndex],
                 targetPoints[startIndex]
@@ -317,9 +340,9 @@ public class NoteSpawner : MonoBehaviour
 
             NoteData segmentData = new NoteData
             {
-                baseType = NoteBaseType.Long,
-                noteType = noteData.noteType,
-                noteSpeed = segmentSpeed, // 계산된 속도 사용
+                noteType = NoteType.Long,
+                noteColor = noteData.noteColor,
+                noteSpeed = segmentSpeed,
                 direction = noteData.direction,
                 noteAxis = noteData.noteAxis,
                 bar = noteData.bar,

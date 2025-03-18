@@ -1,10 +1,13 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Michsky.UI.Heat;
+using NoteEditor;
 using ProjectDM.UI;
 using SFB;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Dropdown = Michsky.UI.Heat.Dropdown;
 
 namespace NoteEditor
@@ -21,28 +24,32 @@ namespace NoteEditor
         public InputFieldManager BPMInput;
         private NoteEditor editor;
 
-        private CellController cellController;
-
         [SerializeField]
         private ButtonManager saveButton;
 
         [SerializeField]
-        private Dropdown shortNoteTypeDropdown;
+        private Dropdown noteColorDropdown;
 
         [SerializeField]
         private Dropdown noteDirectionDropdown;
 
         [SerializeField]
-        private Dropdown noteHitTypeDropdown;
-
-        [SerializeField]
-        private InputFieldManager beatsPerBarInput;
+        private Dropdown beatsPerBarDropdown;
 
         [SerializeField]
         private TextMeshProUGUI statusText;
 
         [SerializeField]
         private TextMeshProUGUI selectedCellInfoText;
+
+        [SerializeField]
+        private CanvasGroup longNotePanel;
+
+        [SerializeField]
+        private Toggle symmetricToggle;
+
+        [SerializeField]
+        private Toggle clockwiseToggle;
 
         public bool IsInitialized { get; private set; }
         private Sprite defaultAlbumArt;
@@ -65,7 +72,6 @@ namespace NoteEditor
             editorManager = EditorManager.Instance;
             defaultAlbumArt = Resources.Load<Sprite>("Textures/AlbumArt");
             dropdownItemIcon = Resources.Load<Sprite>("Textures/DefaultAudioIcon");
-            cellController = EditorManager.Instance.cellController;
             LoadTrackButton.onClick.AddListener(LoadTrack);
             editor = EditorManager.Instance.noteEditor;
             if (SetAlbumArtButton != null)
@@ -80,16 +86,7 @@ namespace NoteEditor
             if (BPMInput != null)
             {
                 BPMInput.onSubmit.AddListener(() => OnBPMInputSubmit(BPMInput.inputText.text));
-            }
-
-            if (BPMInput != null)
-            {
                 BPMInput.inputText.text = "선택된 트랙 없음";
-            }
-
-            if (beatsPerBarInput != null)
-            {
-                beatsPerBarInput.inputText.text = "선택된 트랙 없음";
             }
 
             if (saveButton != null)
@@ -99,8 +96,112 @@ namespace NoteEditor
 
             InitializeTrackDropdown();
             InitializeAlbumArtButton();
+            InitializeNoteUI();
             IsInitialized = true;
             Debug.Log("[NoteEditorPanel] 초기화 완료");
+
+            // 롱노트 UI 이벤트 리스너 설정
+            if (symmetricToggle != null)
+            {
+                symmetricToggle.onValueChanged.AddListener(OnSymmetricToggleChanged);
+            }
+
+            if (clockwiseToggle != null)
+            {
+                clockwiseToggle.onValueChanged.AddListener(OnClockwiseToggleChanged);
+            }
+        }
+
+        private void InitializeBeatsPerBarDropdown()
+        {
+            beatsPerBarDropdown.items.Clear();
+            foreach (int beatsPerBar in Enum.GetValues(typeof(BeatsPerBar)))
+            {
+                beatsPerBarDropdown.CreateNewItem(beatsPerBar.ToString(), true);
+            }
+
+            beatsPerBarDropdown.onValueChanged.AddListener(OnBeatsPerBarDropdownValueChanged);
+        }
+
+        private void OnBeatsPerBarDropdownValueChanged(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    editor.UpdateBeatsPerBar(4);
+                    break;
+                case 1:
+                    editor.UpdateBeatsPerBar(8);
+                    break;
+                case 2:
+                    editor.UpdateBeatsPerBar(6);
+                    break;
+                case 3:
+                    editor.UpdateBeatsPerBar(12);
+                    break;
+                case 4:
+                    editor.UpdateBeatsPerBar(16);
+                    break;
+                case 5:
+                    editor.UpdateBeatsPerBar(32);
+                    break;
+                default:
+                    editor.UpdateBeatsPerBar(4);
+                    break;
+            }
+        }
+
+        private void InitializeNoteUI()
+        {
+            noteDirectionDropdown.items.Clear();
+            noteColorDropdown.items.Clear();
+            foreach (NoteColor noteColor in Enum.GetValues(typeof(NoteColor)))
+            {
+                noteColorDropdown.CreateNewItem(noteColor.ToString(), true);
+            }
+
+            foreach (NoteDirection noteDirection in Enum.GetValues(typeof(NoteDirection)))
+            {
+                noteDirectionDropdown.CreateNewItem(noteDirection.ToString(), true);
+            }
+
+            if (noteColorDropdown != null)
+            {
+                noteColorDropdown.onValueChanged.AddListener(OnNoteColorDropdownValueChanged);
+            }
+
+            if (noteDirectionDropdown != null)
+            {
+                noteDirectionDropdown.onValueChanged.AddListener(
+                    OnNoteDirectionDropdownValueChanged
+                );
+            }
+
+            ToggleShortNoteUI(false);
+        }
+
+        private void OnNoteColorDropdownValueChanged(int index)
+        {
+            if (!editor.UpdateNoteColor(index))
+            {
+                UpdateStatusText("<color=red>노트 색상 변경 실패</color>");
+            }
+            else
+            {
+                UpdateStatusText("<color=green>노트 색상 변경 완료</color>");
+            }
+        }
+
+        private void OnNoteDirectionDropdownValueChanged(int index)
+        {
+            if (!editor.UpdateNoteDirection(index))
+            {
+                UpdateStatusText("<color=red>노트 방향 변경 실패</color>");
+            }
+            else
+            {
+                UpdateStatusText("<color=green>노트 방향 변경 완료</color>");
+            }
         }
 
         private void OnDestroy()
@@ -116,9 +217,6 @@ namespace NoteEditor
 
             if (BPMInput != null)
                 BPMInput.onSubmit.RemoveAllListeners();
-
-            if (beatsPerBarInput != null)
-                beatsPerBarInput.onSubmit.RemoveAllListeners();
 
             if (saveButton != null)
                 saveButton.onClick.RemoveAllListeners();
@@ -274,11 +372,6 @@ namespace NoteEditor
 
                 currentTrackPlaybackTime.text = $"{currentTimeStr} / {durationStr}";
             }
-
-            if (editor != null && editor.IsInitialized)
-            {
-                UpdateSelectedCellInfo(cellController.SelectedCell);
-            }
         }
 
         private string FormatTime(float timeInSeconds)
@@ -393,7 +486,7 @@ namespace NoteEditor
                 {
                     string noteInfo =
                         cell.noteData != null
-                            ? $"노트 타입: {cell.noteData.baseType}"
+                            ? $"노트 타입: {cell.noteData.noteType}"
                             : "노트 없음";
 
                     selectedCellInfoText.text =
@@ -433,15 +526,6 @@ namespace NoteEditor
                 BPMInput.inputText.text = track.bpm.ToString();
             }
 
-            if (beatsPerBarInput != null && track.noteMap != null)
-            {
-                beatsPerBarInput.inputText.text = track.noteMap.beatsPerBar.ToString();
-            }
-            else if (beatsPerBarInput != null)
-            {
-                beatsPerBarInput.inputText.text = AudioManager.Instance.BeatsPerBar.ToString();
-            }
-
             int index = trackDataList.FindIndex(t => t.trackName == track.trackName);
             if (index >= 0 && trackDropdown != null)
             {
@@ -459,6 +543,12 @@ namespace NoteEditor
             InitializeInputFields();
         }
 
+        public void ToggleShortNoteUI(bool isVisible)
+        {
+            noteDirectionDropdown.gameObject.SetActive(isVisible);
+            noteColorDropdown.gameObject.SetActive(isVisible);
+        }
+
         private void InitializeInputFields()
         {
             if (trackDataList.Count > 0)
@@ -468,16 +558,53 @@ namespace NoteEditor
                 {
                     BPMInput.inputText.text = track.bpm.ToString();
                 }
-
-                if (beatsPerBarInput != null && track.noteMap != null)
-                {
-                    beatsPerBarInput.inputText.text = track.noteMap.beatsPerBar.ToString();
-                }
             }
             else
             {
                 BPMInput.inputText.text = "트랙 없음";
-                beatsPerBarInput.inputText.text = "트랙 없음";
+            }
+        }
+
+        private void OnSymmetricToggleChanged(bool isOn)
+        {
+            if (EditorManager.Instance != null && EditorManager.Instance.noteEditor != null)
+            {
+                EditorManager.Instance.noteEditor.UpdateNoteSymmetric(isOn);
+            }
+        }
+
+        private void OnClockwiseToggleChanged(bool isOn)
+        {
+            if (EditorManager.Instance != null && EditorManager.Instance.noteEditor != null)
+            {
+                EditorManager.Instance.noteEditor.UpdateNoteClockwise(isOn);
+            }
+        }
+
+        public void ToggleLongNoteUI(bool isVisible)
+        {
+            if (longNotePanel != null)
+            {
+                longNotePanel.alpha = isVisible ? 1 : 0;
+                longNotePanel.interactable = isVisible;
+                longNotePanel.blocksRaycasts = isVisible;
+            }
+
+            if (
+                isVisible
+                && EditorManager.Instance.cellController.SelectedCell != null
+                && EditorManager.Instance.cellController.SelectedCell.noteData != null
+            )
+            {
+                var noteData = EditorManager.Instance.cellController.SelectedCell.noteData;
+                if (symmetricToggle != null)
+                {
+                    symmetricToggle.isOn = noteData.isSymmetric;
+                }
+                if (clockwiseToggle != null)
+                {
+                    clockwiseToggle.isOn = noteData.isClockwise;
+                }
             }
         }
     }

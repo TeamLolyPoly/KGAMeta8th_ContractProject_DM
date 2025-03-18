@@ -14,6 +14,7 @@ namespace NoteEditor
         private float cellSpacing = 0.1f;
         private Material cellMaterial;
         private Material selectedCellMaterial;
+        private GameObject cellObjectPrefab;
 
         private float railWidth = 1f;
         private float railSpacing = 0.1f;
@@ -44,8 +45,9 @@ namespace NoteEditor
 
         private void LoadResources()
         {
-            cellMaterial = Resources.Load<Material>("Materials/NoteEditor/Cell");
             selectedCellMaterial = Resources.Load<Material>("Materials/NoteEditor/SelectedCell");
+            cellMaterial = Resources.Load<Material>("Materials/NoteEditor/Cell");
+            cellObjectPrefab = Resources.Load<GameObject>("Prefabs/NoteEditor/Model/CellModel");
         }
 
         public void Setup()
@@ -165,50 +167,53 @@ namespace NoteEditor
             adjustedPosition.y = 1f + position.y;
 
             cellObj.transform.localPosition = adjustedPosition;
+            cellObj.transform.localScale = new Vector3(cellSize, cellSize, cellSize);
 
-            GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            visual.transform.parent = cellObj.transform;
-            visual.transform.localPosition = Vector3.zero;
-            visual.transform.localScale = new Vector3(cellSize, cellSize, cellSize);
+            GameObject cellRenderer = Instantiate(cellObjectPrefab, cellObj.transform);
+            cellRenderer.transform.localPosition = Vector3.zero;
 
-            MeshRenderer renderer = (MeshRenderer)visual.GetComponent<Renderer>();
-            if (cellMaterial != null)
-            {
-                renderer.material = cellMaterial;
-            }
+            SphereCollider collider = cellObj.AddComponent<SphereCollider>();
+            collider.isTrigger = true;
 
             Cell cell = cellObj.AddComponent<Cell>();
             cell.Initialize(bar, beat, new Vector2(lane, y));
 
-            SphereCollider collider = visual.GetComponent<SphereCollider>();
-            if (collider != null)
-            {
-                collider.isTrigger = true;
-            }
+            cell.cellRenderer = cellRenderer;
 
             cells.Add(cellKey, cell);
         }
 
         public void SelectCell(Cell cell)
         {
+            if (cell == null)
+                return;
+
             if (selectedCell != null)
             {
-                MeshRenderer renderer = selectedCell.GetComponentInChildren<MeshRenderer>();
-                if (renderer != null && cellMaterial != null)
-                {
-                    renderer.material = cellMaterial;
-                }
+                selectedCell.cellRenderer.GetComponent<Renderer>().material = cellMaterial;
             }
 
             selectedCell = cell;
 
-            if (selectedCell != null)
+            EditorManager.Instance.editorPanel.UpdateSelectedCellInfo(cell);
+
+            if (cell.noteData != null)
             {
-                MeshRenderer renderer = selectedCell.GetComponentInChildren<MeshRenderer>();
-                if (renderer != null && selectedCellMaterial != null)
+                if (cell.noteData.noteType == NoteType.Short)
                 {
-                    renderer.material = selectedCellMaterial;
+                    EditorManager.Instance.editorPanel.ToggleShortNoteUI(true);
+                    EditorManager.Instance.editorPanel.ToggleLongNoteUI(false);
                 }
+                else if (cell.noteData.noteType == NoteType.Long)
+                {
+                    EditorManager.Instance.editorPanel.ToggleShortNoteUI(false);
+                    EditorManager.Instance.editorPanel.ToggleLongNoteUI(true);
+                }
+            }
+            else
+            {
+                EditorManager.Instance.editorPanel.ToggleShortNoteUI(false);
+                EditorManager.Instance.editorPanel.ToggleLongNoteUI(false);
             }
         }
 

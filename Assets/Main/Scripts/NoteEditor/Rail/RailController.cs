@@ -64,7 +64,7 @@ namespace NoteEditor
             barLineMaterial = Resources.Load<Material>("Materials/NoteEditor/BarLine");
             beatLineMaterial = Resources.Load<Material>("Materials/NoteEditor/BeatLine");
             waveformDisplayPrefab = Resources.Load<GameObject>(
-                "Prefabs/NoteEditor/WaveformDisplay"
+                "Prefabs/NoteEditor/UI/WaveformDisplay"
             );
         }
 

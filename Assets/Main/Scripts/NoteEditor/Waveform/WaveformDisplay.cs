@@ -50,8 +50,10 @@ namespace NoteEditor
 
         public void Initialize()
         {
-            beatMarkerPrefab = Resources.Load<GameObject>("Prefabs/NoteEditor/BeatMarker");
-            downBeatMarkerPrefab = Resources.Load<GameObject>("Prefabs/NoteEditor/DownBeatMarker");
+            beatMarkerPrefab = Resources.Load<GameObject>("Prefabs/NoteEditor/UI/BeatMarker");
+            downBeatMarkerPrefab = Resources.Load<GameObject>(
+                "Prefabs/NoteEditor/UI/DownBeatMarker"
+            );
 
             if (waveformRect == null)
                 waveformRect = GetComponent<RectTransform>();

@@ -22,6 +22,19 @@ public class Note : MonoBehaviour, IInitializable
 
     public void SetNoteColor(Color color)
     {
+        if (color == Color.red)
+        {
+            noteData.noteColor = NoteColor.Red;
+        }
+        else if (color == Color.blue)
+        {
+            noteData.noteColor = NoteColor.Blue;
+        }
+        else if (color == Color.yellow)
+        {
+            noteData.noteColor = NoteColor.Yellow;
+        }
+
         Rim.GetComponent<Renderer>().material.color = color;
     }
 
@@ -44,16 +57,16 @@ public class Note : MonoBehaviour, IInitializable
     {
         Note notePrefab;
 
-        switch (data.baseType)
+        switch (data.noteType)
         {
-            case NoteBaseType.Short:
+            case NoteType.Short:
                 notePrefab = shortNotePrefab;
                 break;
-            case NoteBaseType.Long:
+            case NoteType.Long:
                 notePrefab = longNotePrefab;
                 break;
             default:
-                Debug.LogError($"Unsupported note type: {data.baseType}");
+                Debug.LogError($"Unsupported note type: {data.noteType}");
                 return null;
         }
 
@@ -70,7 +83,7 @@ public class Note : MonoBehaviour, IInitializable
             return;
         if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
         {
-            if (noteInteractor.noteType == noteData.noteType)
+            if (noteInteractor.noteColor == noteData.noteColor)
             {
                 HandleCollision();
             }

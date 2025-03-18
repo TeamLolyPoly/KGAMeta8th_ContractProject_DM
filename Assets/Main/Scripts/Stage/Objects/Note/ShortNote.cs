@@ -179,7 +179,7 @@ public class ShortNote : Note
     {
         if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
         {
-            if (noteInteractor.noteType == noteData.noteType)
+            if (noteInteractor.noteColor == noteData.noteColor)
             {
                 Vector3 hitPoint = other.contacts[0].normal;
                 hitdis = HitPoint(other);
@@ -208,7 +208,7 @@ public class ShortNote : Note
         Debug.DrawRay(transform.position, ExitPoint, Color.red, 0.5f);
         if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
         {
-            if (noteInteractor.noteType == noteData.noteType)
+            if (noteInteractor.noteColor == noteData.noteColor)
             {
                 if (EnterAngle <= directionalRange && ExitAngle <= directionalRange)
                 {
