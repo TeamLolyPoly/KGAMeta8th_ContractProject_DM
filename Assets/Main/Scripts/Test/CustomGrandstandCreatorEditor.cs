@@ -287,7 +287,7 @@ public class CustomGrandstandCreatorEditor : Editor
         ClearSpectators();
 
         // CreateSpectators 메서드 직접 호출
-        creator.CreateSpectators();
+        //creator.CreateSpectators();
 
         EditorUtility.DisplayDialog(
             "완료",

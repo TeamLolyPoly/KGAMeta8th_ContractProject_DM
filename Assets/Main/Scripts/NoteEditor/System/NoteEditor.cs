@@ -26,8 +26,6 @@ namespace NoteEditor
         private ShortNoteModel shortNoteModelPrefab;
         private LongNoteModel longNoteModelPrefab;
 
-        private GridGenerator gridGenerator;
-
         public void Initialize()
         {
             try
@@ -42,14 +40,6 @@ namespace NoteEditor
                 railController = editorManager.railController;
                 cellController = editorManager.cellController;
 
-                gridGenerator = FindObjectOfType<GridGenerator>();
-                if (gridGenerator == null)
-                {
-                    Debug.LogWarning(
-                        "[NoteEditor] GridGenerator를 찾을 수 없습니다. 롱노트의 원형 인덱스 계산에 영향이 있을 수 있습니다."
-                    );
-                }
-
                 noteMap = new NoteMap();
                 noteMap.bpm = 120f;
                 noteMap.beatsPerBar = 4;
@@ -58,7 +48,6 @@ namespace NoteEditor
                 SetActions();
 
                 isInitialized = true;
-                Debug.Log("[NoteEditor] 초기화 완료");
 
                 if (AudioManager.Instance != null && AudioManager.Instance.currentTrack != null)
                 {
@@ -76,8 +65,6 @@ namespace NoteEditor
         {
             if (track == null)
                 return;
-
-            Debug.Log($"[NoteEditor] 트랙 설정: {track.trackName}");
 
             if (
                 AudioManager.Instance.currentTrack != null
@@ -100,14 +87,12 @@ namespace NoteEditor
                 yield break;
             }
 
-            Debug.Log($"[NoteEditor] 노트맵 로드 시작: {trackName}");
             var task = EditorDataManager.Instance.LoadNoteMapAsync(trackName);
             yield return new WaitUntil(() => task.IsCompleted);
 
             if (task.Result != null)
             {
                 noteMap = task.Result;
-                Debug.Log($"[NoteEditor] 노트맵 파일 로드 완료: {trackName}");
 
                 if (
                     AudioManager.Instance.currentTrack != null
@@ -125,7 +110,6 @@ namespace NoteEditor
                     beatsPerBar = AudioManager.Instance.BeatsPerBar,
                     notes = new List<NoteData>(),
                 };
-                Debug.Log($"[NoteEditor] 새 노트맵 생성: {trackName}");
             }
 
             UpdateRailAndCells(AudioManager.Instance.currentTrack);
@@ -143,10 +127,6 @@ namespace NoteEditor
                 return;
             }
 
-            Debug.Log(
-                $"[NoteEditor] 레일 및 셀 업데이트 시작: BPM = {noteMap.bpm}, BeatsPerBar = {noteMap.beatsPerBar}"
-            );
-
             if (railController != null && railController.IsInitialized)
             {
                 railController.SetupRail(noteMap.bpm, noteMap.beatsPerBar, track.TrackAudio);
@@ -156,8 +136,6 @@ namespace NoteEditor
             {
                 cellController.Setup();
             }
-
-            Debug.Log("[NoteEditor] 레일 및 셀 업데이트 완료");
         }
 
         private void SetActions()
@@ -215,18 +193,44 @@ namespace NoteEditor
                 return;
             }
 
-            if (!isCreatingLongNote)
+            Cell selectedCell = cellController.SelectedCell;
+
+            if (
+                selectedCell.cellPosition.x < 2
+                || selectedCell.cellPosition.x > 4
+                || selectedCell.cellPosition.y < 0
+                || selectedCell.cellPosition.y > 2
+            )
             {
-                longNoteStartCell = cellController.SelectedCell;
-                isCreatingLongNote = true;
                 editorManager.editorPanel.UpdateStatusText(
-                    $"롱노트 시작점 설정: 마디 {longNoteStartCell.bar}, 박자 {longNoteStartCell.beat}. 끝점을 선택하세요."
+                    "<color=red>롱노트는 오른쪽 3x3 그리드 내에서만 생성할 수 있습니다 (x: 2-4, y: 0-2)</color>"
                 );
+                return;
             }
-            else
+
+            if (selectedCell.noteData != null && selectedCell.noteData.noteType != NoteType.Long)
             {
-                Cell endCell = cellController.SelectedCell;
-                CreateLongNote(longNoteStartCell, endCell);
+                editorManager.editorPanel.UpdateStatusText(
+                    "<color=red>롱노트는 비어있는 셀 또는 다른 롱노트가 없는 셀에서만 시작할 수 있습니다.</color>"
+                );
+                return;
+            }
+
+            if (isCreatingLongNote)
+            {
+                Cell endCell = selectedCell;
+
+                try
+                {
+                    CreateLongNote(longNoteStartCell, endCell);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(
+                        $"[DEBUG-ACTION] CreateLongNote 메서드 호출 중 예외 발생: {e.Message}"
+                    );
+                    Debug.LogError($"[DEBUG-ACTION] 스택 트레이스: {e.StackTrace}");
+                }
 
                 editorManager.editorPanel.UpdateStatusText(
                     $"롱노트 생성됨: 시작 마디 {longNoteStartCell.bar}, 박자 {longNoteStartCell.beat}, 끝 마디 {endCell.bar}, 박자 {endCell.beat}"
@@ -239,8 +243,15 @@ namespace NoteEditor
                 isCreatingLongNote = false;
                 longNoteStartCell = null;
 
-                // 롱노트 생성 후 대칭 노트 옵션 UI 표시
                 editorManager.editorPanel.ToggleLongNoteUI(true);
+            }
+            else
+            {
+                longNoteStartCell = selectedCell;
+                isCreatingLongNote = true;
+                editorManager.editorPanel.UpdateStatusText(
+                    "<color=yellow>롱노트 시작점이 설정되었습니다. 끝점을 선택해주세요.</color>"
+                );
             }
         }
 
@@ -323,6 +334,15 @@ namespace NoteEditor
                 int durationBars = endCell.bar - startCell.bar;
                 int durationBeats = endCell.beat - startCell.beat;
 
+                if (durationBars == 0 && durationBeats == 0)
+                {
+                    editorManager.editorPanel.UpdateStatusText(
+                        "<color=red>롱노트는 서로 다른 박자 위치에서만 생성할 수 있습니다.</color>"
+                    );
+                    return;
+                }
+
+                bool swapped = false;
                 if (durationBars < 0 || (durationBars == 0 && durationBeats < 0))
                 {
                     editorManager.editorPanel.UpdateStatusText(
@@ -332,9 +352,34 @@ namespace NoteEditor
                     Cell temp = startCell;
                     startCell = endCell;
                     endCell = temp;
+                    swapped = true;
 
                     durationBars = endCell.bar - startCell.bar;
                     durationBeats = endCell.beat - startCell.beat;
+                }
+
+                bool isStartCellInGrid = !(
+                    startCell.cellPosition.x < 2
+                    || startCell.cellPosition.x > 4
+                    || startCell.cellPosition.y < 0
+                    || startCell.cellPosition.y > 2
+                );
+
+                if (!isStartCellInGrid)
+                {
+                    if (swapped)
+                    {
+                        editorManager.editorPanel.UpdateStatusText(
+                            "<color=red>롱노트 시작점이 3x3 그리드 밖에 있습니다. 시작점과 끝점을 바꿨을 때도 시작점이 그리드 안에 있어야 합니다.</color>"
+                        );
+                    }
+                    else
+                    {
+                        editorManager.editorPanel.UpdateStatusText(
+                            "<color=red>롱노트는 오른쪽 3x3 그리드 내에서만 생성할 수 있습니다 (x: 2-4, y: 0-2)</color>"
+                        );
+                    }
+                    return;
                 }
 
                 NoteData noteData = new NoteData
@@ -345,7 +390,7 @@ namespace NoteEditor
                     noteAxis = NoteAxis.None,
                     StartCell = startCell.cellPosition,
                     TargetCell = endCell.cellPosition,
-                    isLeftGrid = startCell.cellPosition.x < 2,
+                    isLeftGrid = false,
                     noteSpeed = 1.0f,
                     bar = startCell.bar,
                     beat = startCell.beat,
@@ -366,24 +411,26 @@ namespace NoteEditor
                         longNoteModelPrefab,
                         startCell.transform
                     );
+
+                    if (longNoteModel.gameObject.activeSelf == false)
+                    {
+                        longNoteModel.gameObject.SetActive(true);
+                    }
+
                     longNoteModel.Initialize(startCell, endCell, noteData);
-
-                    longNoteModel.UpdateEndPoint(endCell);
-
                     startCell.longNoteModel = longNoteModel;
+
+                    startCell.cellRenderer.SetActive(false);
                 }
                 else
                 {
                     Debug.LogWarning("[NoteEditor] LongNoteModel 프리팹을 찾을 수 없습니다.");
                 }
-
-                Debug.Log(
-                    $"롱노트 생성 완료: 시작 마디 {startCell.bar}, 박자 {startCell.beat}, 지속 시간: {durationBars}마디 {durationBeats}박자"
-                );
             }
             catch (Exception e)
             {
                 Debug.LogError($"롱노트 생성 실패: {e.Message}");
+                Debug.LogError($"[DEBUG] 예외 발생 - 스택 트레이스: {e.StackTrace}");
             }
         }
 
@@ -396,7 +443,6 @@ namespace NoteEditor
             {
                 noteMap.notes.Remove(cell.noteData);
 
-                // 노트 모델 삭제
                 if (cell.noteData.noteType == NoteType.Short && cell.noteModel != null)
                 {
                     Destroy(cell.noteModel.gameObject);
@@ -410,8 +456,6 @@ namespace NoteEditor
 
                 cell.noteData = null;
                 cell.cellRenderer.SetActive(true);
-
-                Debug.Log($"노트 삭제 완료: 마디 {cell.bar}, 박자 {cell.beat}");
 
                 SaveNoteMap();
             }
@@ -430,11 +474,22 @@ namespace NoteEditor
                 return false;
 
             NoteColor noteColor = (NoteColor)index;
-            cellController.SelectedCell.noteData.noteColor = noteColor;
 
             if (cellController.SelectedCell.noteData.noteType == NoteType.Short)
             {
-                cellController.SelectedCell.noteModel.SetNoteColor(noteColor);
+                cellController.SelectedCell.noteData.noteColor = noteColor;
+
+                if (cellController.SelectedCell.noteModel != null)
+                {
+                    cellController.SelectedCell.noteModel.SetNoteColor(noteColor);
+                }
+            }
+            else if (cellController.SelectedCell.noteData.noteType == NoteType.Long)
+            {
+                if (cellController.SelectedCell.longNoteModel != null)
+                {
+                    cellController.SelectedCell.longNoteModel.ApplyRodColors();
+                }
             }
 
             SaveNoteMap();
@@ -468,15 +523,12 @@ namespace NoteEditor
 
             cellController.SelectedCell.noteData.isSymmetric = isSymmetric;
 
-            // 시각적 업데이트
             if (cellController.SelectedCell.longNoteModel != null)
             {
                 cellController.SelectedCell.longNoteModel.SetSymmetric(isSymmetric);
             }
 
             SaveNoteMap();
-
-            Debug.Log($"롱노트 대칭 옵션 변경: {isSymmetric}");
             return true;
         }
 
@@ -493,15 +545,12 @@ namespace NoteEditor
 
             cellController.SelectedCell.noteData.isClockwise = isClockwise;
 
-            // 시각적 업데이트
             if (cellController.SelectedCell.longNoteModel != null)
             {
                 cellController.SelectedCell.longNoteModel.SetClockwise(isClockwise);
             }
 
             SaveNoteMap();
-
-            Debug.Log($"롱노트 회전 방향 변경: {(isClockwise ? "시계 방향" : "반시계 방향")}");
             return true;
         }
 
@@ -524,7 +573,6 @@ namespace NoteEditor
                         editorManager.editorPanel.UpdateStatusText(
                             $"노트맵 저장 완료: {trackName}"
                         );
-                        Debug.Log($"노트맵 저장 완료: {trackName}");
                     }
                 }
             }
@@ -562,6 +610,19 @@ namespace NoteEditor
                     }
                     else if (note.noteType == NoteType.Long)
                     {
+                        if (
+                            note.StartCell.x < 2
+                            || note.StartCell.x > 4
+                            || note.StartCell.y < 0
+                            || note.StartCell.y > 2
+                        )
+                        {
+                            Debug.LogWarning(
+                                $"[NoteEditor] 3x3 그리드 외부에 있는 롱노트는 로드하지 않습니다: 마디 {note.bar}, 박자 {note.beat}"
+                            );
+                            continue;
+                        }
+
                         cell.noteData = note;
 
                         int targetLane = (int)note.TargetCell.x;
@@ -587,14 +648,18 @@ namespace NoteEditor
                                     longNoteModelPrefab,
                                     cell.transform
                                 );
+
+                                if (longNoteModel.gameObject.activeSelf == false)
+                                {
+                                    longNoteModel.gameObject.SetActive(true);
+                                }
+
                                 cell.longNoteModel = longNoteModel;
                                 longNoteModel.Initialize(cell, targetCell, note);
 
-                                // UpdateEndPoint를 사용하여 끝점 업데이트
-                                longNoteModel.UpdateEndPoint(targetCell);
-
                                 longNoteModel.SetSymmetric(note.isSymmetric);
                                 longNoteModel.SetClockwise(note.isClockwise);
+
                                 cell.cellRenderer.SetActive(false);
                             }
                         }
@@ -607,8 +672,6 @@ namespace NoteEditor
                     }
                 }
             }
-
-            Debug.Log($"[NoteEditor] 노트 적용 완료: {noteMap.notes.Count}개의 노트");
         }
 
         public void UpdateBPM(float newBpm)
@@ -663,8 +726,6 @@ namespace NoteEditor
         {
             if (track == null)
                 return;
-
-            Debug.Log($"NoteEditor: Track removed: {track.trackName}");
 
             if (
                 AudioManager.Instance.currentTrack == null
