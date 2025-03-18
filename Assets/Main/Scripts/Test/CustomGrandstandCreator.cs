@@ -6,7 +6,6 @@ public class CustomGeometry
 {
     public GameObject seat;
     public List<GameObject> spectator = new List<GameObject>();
-    public GameObject lowPolySpectator;
 }
 
 [System.Serializable]
@@ -14,14 +13,13 @@ public class CustomGrandstandCreator : MonoBehaviour
 {
     public CustomGeometry geometry;
 
-    [Header("Grid Settings")]
+    [Header("그리드 설정")]
     [Range(0, 32)]
     public int rows = 10;
 
     [Range(0, 50)]
     public int columns = 10;
 
-    [Header("Grid Spacing")]
     [Range(0.5f, 2.0f)]
     public float horizontalSpacing = 1.0f;
 
@@ -31,152 +29,110 @@ public class CustomGrandstandCreator : MonoBehaviour
     [Range(0.1f, 2.0f)]
     public float heightOffset = 1.0f;
 
-    [Header("Spectator Position")]
+    [Header("관중 위치 설정")]
     [Range(-1f, 1f)]
     public float spectatorHeight = -0.2f;
 
     [Range(-1f, 1f)]
     public float spectatorForward = 0.3f;
 
-    [Header("VR Performance Settings")]
-    public bool useVR = true;
-    public float vrNearDistance = 10f; // VR에서는 더 가까운 거리
-    public float vrMidDistance = 20f;
-    public float vrFarDistance = 30f;
-    public float vrCullingDistance = 40f;
-    public bool useAsyncCompute = true; // 비동기 컴퓨트 사용
-    public bool useMultiView = true; // 멀티뷰 렌더링 사용
+    [Header("에디터 설정")]
+    public bool autoGenerateInEditor = false; // 에디터에서 자동 생성 여부
 
-    [Header("Performance Settings")]
-    public float nearDistance = 15f;
-    public float midDistance = 30f;
-    public float farDistance = 45f;
-    public float cullingDistance = 60f;
+    [Header("LOD 설정")]
+    public float[] lodDistances = new float[] { 15f, 30f, 45f }; // 3단계 LOD
+    public GameObject[] lodPrefabs; // 각 LOD 레벨별 메시
 
-    [Header("Material Settings")]
-    public Material highQualityMaterial;
-    public Material lowQualityMaterial;
+    [Header("최적화 설정")]
+    public bool enableLOD = true; // LOD 시스템 사용
+    public bool enableInstancing = true; // GPU 인스턴싱 사용
+    public bool disableShadowsForDistant = true; // 원거리 그림자 비활성화
+    public int cullingDistance = 60; // 컬링 거리
 
-    [Header("Animation Settings")]
-    public float nearAnimationInterval = 0.033f;
-    public float midAnimationInterval = 0.066f;
-    public float farAnimationInterval = 0.1f;
-
+    // 내부 변수
     private Camera mainCamera;
     private float distanceToCamera;
+    private Matrix4x4[] matrices;
     private MaterialPropertyBlock propertyBlock;
-    private SkinnedMeshRenderer[] spectatorRenderers;
-    private Matrix4x4[] instanceMatrices;
+    private Material[] instancedMaterials;
+    private Mesh[] meshes;
+    private int currentLODLevel = 0;
     private int totalInstances;
-    private float nextAnimationUpdate = 0f;
-    private float currentAnimationInterval;
-    private Mesh cachedBakedMesh;
-    private Dictionary<int, Material> materialCache;
-    private ComputeBuffer spectatorBuffer;
-    private bool isVRInitialized = false;
 
     void Start()
     {
         mainCamera = Camera.main;
-        propertyBlock = new MaterialPropertyBlock();
-        materialCache = new Dictionary<int, Material>();
-
-        if (useVR)
+        if (mainCamera == null)
         {
-            InitializeVROptimizations();
+            Debug.LogWarning("메인 카메라를 찾을 수 없습니다.");
+            return;
         }
 
-        InitializeOptimizedRendering();
-        PrepareMaterials();
-    }
-
-    private void InitializeVROptimizations()
-    {
-        // VR 특화 초기화
-        isVRInitialized = true;
-
-        // VR 성능 설정
-        if (useAsyncCompute)
-        {
-            // 비동기 컴퓨트 초기화
-            InitializeAsyncCompute();
-        }
-
-        if (useMultiView)
-        {
-            // 멀티뷰 렌더링 초기화
-            InitializeMultiView();
-        }
-    }
-
-    private void InitializeAsyncCompute()
-    {
-        // 컴퓨트 버퍼 초기화
-        totalInstances = rows * columns;
-        spectatorBuffer = new ComputeBuffer(totalInstances, sizeof(float) * 8);
-
-        // 초기 데이터 설정
-        SpectatorData[] initialData = new SpectatorData[totalInstances];
-        int index = 0;
-
-        for (int i = 0; i < columns; i++)
-        {
-            for (int j = 0; j < rows; j++)
-            {
-                float xPos = i * horizontalSpacing;
-                float yPos = j * heightOffset;
-                float zPos = j * verticalSpacing;
-
-                initialData[index].position = new Vector3(
-                    xPos,
-                    yPos + spectatorHeight,
-                    zPos + spectatorForward
-                );
-                initialData[index].rotation = Quaternion.Euler(0, 180, 0);
-                initialData[index].animationTime = Random.Range(0f, 2f * Mathf.PI);
-
-                index++;
-            }
-        }
-
-        spectatorBuffer.SetData(initialData);
-    }
-
-    private void InitializeMultiView()
-    {
-        // VR 멀티뷰 렌더링 설정
-        foreach (var material in materialCache.Values)
-        {
-            if (material != null)
-            {
-                material.EnableKeyword("MULTIVIEW");
-            }
-        }
-    }
-
-    private void InitializeOptimizedRendering()
-    {
+        // 관중 프리팹 설정 확인
         if (geometry.spectator.Count == 0)
+        {
+            Debug.LogWarning(
+                "관중 프리팹이 설정되지 않았습니다. 관중이 표시되지 않을 수 있습니다."
+            );
+            return;
+        }
+
+        // LOD 프리팹 설정
+        if (lodPrefabs == null || lodPrefabs.Length == 0)
+        {
+            lodPrefabs = new GameObject[1];
+            lodPrefabs[0] = geometry.spectator[0];
+            Debug.Log("LOD 프리팹이 설정되지 않아 관중 프리팹을 사용합니다.");
+        }
+
+        // 행렬 및 리소스 초기화
+        InitializeResources();
+    }
+
+    void Update()
+    {
+        if (!enableLOD || mainCamera == null)
             return;
 
-        spectatorRenderers = geometry.spectator[0].GetComponentsInChildren<SkinnedMeshRenderer>();
-        totalInstances = rows * columns;
-        instanceMatrices = new Matrix4x4[totalInstances];
-        PreCalculateMatrices();
+        // 카메라와 거리 계산
+        CalculateDistanceToCamera();
+
+        // LOD 레벨 업데이트 및 렌더링
+        UpdateLODLevel();
     }
 
-    private void PreCalculateMatrices()
+    // 리소스 초기화 및 준비
+    private void InitializeResources()
     {
+        totalInstances = rows * columns;
+
+        // 행렬 계산
+        CalculateMatrices();
+
+        // 메시와 머티리얼 준비
+        PrepareResources();
+
+        // 프로퍼티 블록 초기화
+        propertyBlock = new MaterialPropertyBlock();
+    }
+
+    // 행렬 계산
+    private void CalculateMatrices()
+    {
+        matrices = new Matrix4x4[totalInstances];
         int index = 0;
+
         for (int i = 0; i < columns; i++)
         {
             for (int j = 0; j < rows; j++)
             {
+                // 위치 계산
                 float xPos = i * horizontalSpacing;
                 float yPos = j * heightOffset;
                 float zPos = j * verticalSpacing;
 
-                instanceMatrices[index++] = Matrix4x4.TRS(
+                // 행렬 생성
+                matrices[index++] = Matrix4x4.TRS(
                     new Vector3(xPos, yPos + spectatorHeight, zPos + spectatorForward),
                     Quaternion.Euler(0, 180, 0),
                     Vector3.one
@@ -185,50 +141,70 @@ public class CustomGrandstandCreator : MonoBehaviour
         }
     }
 
-    private void PrepareMaterials()
+    // 리소스 준비
+    private void PrepareResources()
     {
-        if (spectatorRenderers == null || spectatorRenderers.Length == 0)
-            return;
+        // 배열 초기화
+        meshes = new Mesh[lodPrefabs.Length];
+        instancedMaterials = new Material[lodPrefabs.Length];
 
-        foreach (var renderer in spectatorRenderers)
+        for (int i = 0; i < lodPrefabs.Length; i++)
         {
-            if (renderer == null)
+            if (lodPrefabs[i] == null)
                 continue;
 
-            for (int i = 0; i < renderer.sharedMaterials.Length; i++)
+            // 메시 가져오기
+            MeshFilter meshFilter = lodPrefabs[i].GetComponent<MeshFilter>();
+            if (meshFilter != null && meshFilter.sharedMesh != null)
             {
-                var originalMaterial = renderer.sharedMaterials[i];
-                if (originalMaterial == null)
-                    continue;
-
-                if (!materialCache.ContainsKey(i))
+                meshes[i] = meshFilter.sharedMesh;
+            }
+            else
+            {
+                // 스킨드 메시 렌더러 체크
+                SkinnedMeshRenderer skinnedMeshRenderer = lodPrefabs[i]
+                    .GetComponentInChildren<SkinnedMeshRenderer>();
+                if (skinnedMeshRenderer != null && skinnedMeshRenderer.sharedMesh != null)
                 {
-                    Material instancedMaterial = new Material(originalMaterial);
-                    instancedMaterial.enableInstancing = true;
-                    materialCache[i] = instancedMaterial;
+                    meshes[i] = skinnedMeshRenderer.sharedMesh;
                 }
             }
-        }
 
-        if (spectatorRenderers[0] != null)
-        {
-            cachedBakedMesh = new Mesh();
-            spectatorRenderers[0].BakeMesh(cachedBakedMesh);
+            // 머티리얼 가져오기
+            Material sourceMaterial = null;
+
+            // MeshRenderer 체크
+            MeshRenderer renderer = lodPrefabs[i].GetComponent<MeshRenderer>();
+            if (renderer != null && renderer.sharedMaterial != null)
+            {
+                sourceMaterial = renderer.sharedMaterial;
+            }
+            else
+            {
+                // 스킨드 메시 렌더러에서 머티리얼 찾기
+                SkinnedMeshRenderer skinnedRenderer = lodPrefabs[i]
+                    .GetComponentInChildren<SkinnedMeshRenderer>();
+                if (skinnedRenderer != null && skinnedRenderer.sharedMaterial != null)
+                {
+                    sourceMaterial = skinnedRenderer.sharedMaterial;
+                }
+            }
+
+            if (sourceMaterial != null)
+            {
+                // 인스턴싱 가능한 머티리얼 생성
+                instancedMaterials[i] = new Material(sourceMaterial);
+                instancedMaterials[i].enableInstancing = enableInstancing;
+            }
+            else
+            {
+                Debug.LogWarning($"LOD{i}: 머티리얼을 찾을 수 없습니다 - {lodPrefabs[i].name}");
+            }
         }
     }
 
-    void Update()
-    {
-        UpdateDistanceToCamera();
-
-        if (Time.time > nextAnimationUpdate)
-        {
-            UpdateBasedOnDistance();
-            nextAnimationUpdate = Time.time + currentAnimationInterval;
-        }
-    }
-
-    private void UpdateDistanceToCamera()
+    // 카메라와 거리 계산
+    private void CalculateDistanceToCamera()
     {
         Vector3 centerPoint =
             transform.position
@@ -237,236 +213,180 @@ public class CustomGrandstandCreator : MonoBehaviour
                 rows * heightOffset * 0.5f,
                 rows * verticalSpacing * 0.5f
             );
+
         distanceToCamera = Vector3.Distance(mainCamera.transform.position, centerPoint);
     }
 
-    private void UpdateBasedOnDistance()
+    // LOD 레벨 업데이트 및 렌더링
+    private void UpdateLODLevel()
     {
-        if (distanceToCamera > (useVR ? vrCullingDistance : cullingDistance))
+        // 컬링 거리를 벗어난 경우
+        if (distanceToCamera > cullingDistance)
             return;
 
-        if (distanceToCamera <= (useVR ? vrNearDistance : nearDistance))
+        // LOD 레벨 결정
+        for (int i = 0; i < lodDistances.Length; i++)
         {
-            RenderHighQuality();
-            currentAnimationInterval = nearAnimationInterval;
+            if (distanceToCamera <= lodDistances[i])
+            {
+                // 현재 LOD 레벨이 바뀌는 경우만 새로 렌더링
+                if (currentLODLevel != i)
+                {
+                    currentLODLevel = i;
+                }
+                break;
+            }
         }
-        else if (distanceToCamera <= (useVR ? vrMidDistance : midDistance))
-        {
-            RenderMediumQuality();
-            currentAnimationInterval = midAnimationInterval;
-        }
-        else
-        {
-            RenderLowQuality();
-            currentAnimationInterval = farAnimationInterval;
-        }
+
+        // 현재 LOD 레벨로 렌더링
+        RenderCurrentLOD();
     }
 
-    private void RenderHighQuality()
+    // 관중 렌더링
+    private void RenderCurrentLOD()
     {
-        if (spectatorRenderers == null || spectatorRenderers.Length == 0)
+        int lodLevel = currentLODLevel;
+
+        // 메시나 머티리얼이 없으면 렌더링 불가
+        if (meshes[lodLevel] == null || instancedMaterials[lodLevel] == null)
             return;
 
-        var mainRenderer = spectatorRenderers[0];
-        if (mainRenderer == null)
-            return;
-
-        if (useVR && useAsyncCompute)
-        {
-            // VR 비동기 컴퓨트 렌더링
-            RenderVROptimized();
-        }
-        else
-        {
-            // 기존 렌더링 방식
-            mainRenderer.BakeMesh(cachedBakedMesh);
-            RenderInstanced();
-        }
-    }
-
-    private void RenderVROptimized()
-    {
-        if (!isVRInitialized || spectatorBuffer == null)
-            return;
-
-        // VR 특화 렌더링
+        // 프로퍼티 블록 초기화
         propertyBlock.Clear();
-        propertyBlock.SetBuffer("_SpectatorBuffer", spectatorBuffer);
-        propertyBlock.SetFloat("_VRMode", 1.0f);
 
-        if (useMultiView)
-        {
-            // VR 멀티뷰 렌더링
-            Graphics.DrawMeshInstancedProcedural(
-                cachedBakedMesh,
-                0,
-                materialCache[0],
-                new Bounds(transform.position, Vector3.one * 100f),
-                totalInstances,
-                propertyBlock
-            );
-        }
-        else
-        {
-            // 일반 VR 렌더링
-            Graphics.DrawMeshInstancedProcedural(
-                cachedBakedMesh,
-                0,
-                materialCache[0],
-                new Bounds(transform.position, Vector3.one * 100f),
-                totalInstances,
-                propertyBlock
-            );
-        }
-    }
+        // 그림자 설정
+        bool receiveShadows = !(disableShadowsForDistant && lodLevel > 0);
+        UnityEngine.Rendering.ShadowCastingMode shadowMode =
+            (disableShadowsForDistant && lodLevel > 0)
+                ? UnityEngine.Rendering.ShadowCastingMode.Off
+                : UnityEngine.Rendering.ShadowCastingMode.On;
 
-    private void RenderInstanced()
-    {
-        for (int i = 0; i < cachedBakedMesh.subMeshCount; i++)
-        {
-            if (!materialCache.ContainsKey(i))
-                continue;
-
-            propertyBlock.Clear();
-            propertyBlock.SetFloat("_LODLevel", 1.0f);
-
-            Graphics.DrawMeshInstanced(
-                cachedBakedMesh,
-                i,
-                materialCache[i],
-                instanceMatrices,
-                totalInstances,
-                propertyBlock,
-                UnityEngine.Rendering.ShadowCastingMode.On,
-                true,
-                LayerMask.NameToLayer("Default")
-            );
-        }
-    }
-
-    private void RenderMediumQuality()
-    {
-        if (spectatorRenderers == null || spectatorRenderers.Length == 0)
-            return;
-
-        var mainRenderer = spectatorRenderers[0];
-        if (mainRenderer == null)
-            return;
-
-        if (Time.frameCount % 2 == 0)
-        {
-            mainRenderer.BakeMesh(cachedBakedMesh);
-        }
-
-        for (int i = 0; i < mainRenderer.sharedMesh.subMeshCount; i++)
-        {
-            if (!materialCache.ContainsKey(i))
-                continue;
-
-            propertyBlock.Clear();
-            propertyBlock.SetFloat("_LODLevel", 0.5f);
-
-            Graphics.DrawMeshInstanced(
-                cachedBakedMesh,
-                i,
-                materialCache[i],
-                instanceMatrices,
-                totalInstances,
-                propertyBlock,
-                UnityEngine.Rendering.ShadowCastingMode.Off,
-                false,
-                LayerMask.NameToLayer("Default")
-            );
-        }
-    }
-
-    private void RenderLowQuality()
-    {
-        if (geometry.lowPolySpectator == null)
-            return;
-
-        var lowPolyRenderer = geometry.lowPolySpectator.GetComponent<MeshRenderer>();
-        var meshFilter = geometry.lowPolySpectator.GetComponent<MeshFilter>();
-
-        if (lowPolyRenderer == null || meshFilter == null)
-            return;
-
-        propertyBlock.Clear();
-        propertyBlock.SetFloat("_LODLevel", 0.0f);
-
-        var material = lowPolyRenderer.sharedMaterial;
-        if (!material.enableInstancing)
-        {
-            material = new Material(material);
-            material.enableInstancing = true;
-        }
-
+        // 모든 관중 그리기 (밀도 = 1)
         Graphics.DrawMeshInstanced(
-            meshFilter.sharedMesh,
+            meshes[lodLevel],
             0,
-            material,
-            instanceMatrices,
-            totalInstances,
+            instancedMaterials[lodLevel],
+            matrices,
+            matrices.Length,
             propertyBlock,
-            UnityEngine.Rendering.ShadowCastingMode.Off,
-            false,
-            LayerMask.NameToLayer("Default")
+            shadowMode,
+            receiveShadows,
+            gameObject.layer
         );
     }
 
-    private void OnDestroy()
-    {
-        if (cachedBakedMesh != null)
-            Destroy(cachedBakedMesh);
-
-        foreach (var material in materialCache.Values)
-        {
-            if (material != null)
-                Destroy(material);
-        }
-
-        if (spectatorBuffer != null)
-        {
-            spectatorBuffer.Release();
-            spectatorBuffer.Dispose();
-        }
-    }
-
+    // 디버그용 기즈모
     private void OnDrawGizmosSelected()
     {
-        if (!Application.isPlaying)
+        if (!enableLOD || lodDistances == null || lodDistances.Length == 0)
             return;
 
-        if (useVR)
+        // LOD 거리 표시
+        Color[] colors = new Color[]
         {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(transform.position, vrNearDistance);
+            Color.green,
+            Color.yellow,
+            Color.red,
+            Color.magenta,
+            Color.cyan,
+        };
 
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, vrMidDistance);
-
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, vrFarDistance);
+        for (int i = 0; i < lodDistances.Length; i++)
+        {
+            Gizmos.color = colors[i % colors.Length];
+            Gizmos.DrawWireSphere(transform.position, lodDistances[i]);
         }
-        else
+
+        // 컬링 거리 표시
+        Gizmos.color = Color.gray;
+        Gizmos.DrawWireSphere(transform.position, cullingDistance);
+    }
+
+#if UNITY_EDITOR
+    // 에디터에서 인스펙터 값이 변경될 때 호출됨
+    private void OnValidate()
+    {
+        if (!Application.isPlaying)
         {
-            // 기존 디버그 시각화
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(transform.position, nearDistance);
+            // 자동 생성 옵션이 활성화된 경우에만 실행
+            if (autoGenerateInEditor)
+            {
+                // DelayCall을 사용하여 실행 큐에 작업 추가
+                UnityEditor.EditorApplication.delayCall += () =>
+                {
+                    if (this == null)
+                        return; // 객체가 파괴된 경우 처리
 
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, midDistance);
+                    // 관중이 있는지 확인하고 자동 업데이트
+                    if (geometry.spectator.Count > 0)
+                    {
+                        // 자식 오브젝트를 모두 삭제
+                        while (transform.childCount > 0)
+                        {
+                            DestroyImmediate(transform.GetChild(0).gameObject);
+                        }
 
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, farDistance);
+                        // 관중 생성
+                        CreateSpectators();
+                    }
+                };
+            }
         }
     }
-}
 
-// VR 특화 데이터 구조
-public struct SpectatorData
-{
-    public Vector3 position;
-    public Quaternion rotation;
-    public float animationTime;
+    // 에디터에서 실제로 게임 오브젝트를 생성하는 함수
+    public void CreateSpectators()
+    {
+        if (geometry.spectator.Count == 0)
+            return;
+
+        GameObject spectatorPrefab = geometry.spectator[0];
+        int spectatorIndex = 0;
+
+        for (int i = 0; i < columns; i++)
+        {
+            for (int j = 0; j < rows; j++)
+            {
+                // 위치 계산
+                float xPos = i * horizontalSpacing;
+                float yPos = j * heightOffset;
+                float zPos = j * verticalSpacing;
+                Vector3 pos = new Vector3(xPos, yPos + spectatorHeight, zPos + spectatorForward);
+
+                // 약간의 랜덤성 추가
+                pos += new Vector3(
+                    Random.Range(-0.05f, 0.05f),
+                    Random.Range(-0.05f, 0.05f),
+                    Random.Range(-0.05f, 0.05f)
+                );
+
+                // 순환하면서 다양한 관중 사용
+                if (geometry.spectator.Count > 1)
+                {
+                    spectatorIndex = (spectatorIndex + 1) % geometry.spectator.Count;
+                    spectatorPrefab = geometry.spectator[spectatorIndex];
+                }
+
+                // 관중 생성
+                GameObject spectator = Instantiate(spectatorPrefab, transform);
+                spectator.transform.localPosition = pos;
+                spectator.transform.localRotation = Quaternion.Euler(0, 180, 0);
+                spectator.transform.localScale = Vector3.one;
+                spectator.name = "Spectator_" + i + "_" + j;
+
+                // 의자 생성
+                if (geometry.seat != null)
+                {
+                    GameObject seat = Instantiate(geometry.seat, transform);
+                    seat.transform.localPosition = new Vector3(xPos, yPos, zPos);
+                    seat.transform.localRotation = Quaternion.identity;
+                    seat.transform.localScale = Vector3.one;
+                    seat.name = "Seat_" + i + "_" + j;
+                }
+            }
+        }
+
+        Debug.Log($"관중 생성 완료: {rows * columns} 명");
+    }
+#endif
 }
