@@ -1711,7 +1711,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1118408174}
   - component: {fileID: 1118408173}
-  - component: {fileID: 1118408172}
   m_Layer: 0
   m_Name: Bruno (2)
   m_TagString: Untagged
@@ -1719,24 +1718,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1118408172
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1118408171}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 798dde1e4fae6b94e9e3b1d09d41e901, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  points:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  agent: {fileID: 0}
 --- !u!195 &1118408173
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -2556,10 +2537,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1640753968}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
+  m_Script: {fileID: 11500000, guid: ccd6a9d66daa1f24b9061e4849814aac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bandtype: 0
 --- !u!1183024399 &1640753971
 LookAtConstraint:
   m_ObjectHideFlags: 0

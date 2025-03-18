@@ -12,5 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83d8593d9462b744bb02b0e3757b29b6, type: 3}
   m_Name: BandAnimData
   m_EditorClassIdentifier: 
-  bandAnimator: {fileID: 0}
-  bandAnimationDatas: []
+  UnitAnimator: {fileID: 9100000, guid: c53a78ecbafa58d4988d610ef1214d5c, type: 2}
+  bandAnimationDatas:
+  - bandType: 0
+    animationClip:
+    - {fileID: 7400006, guid: c8008b75e73dced409c4cd0e4bb2fba4, type: 3}
+    - {fileID: 7400006, guid: c8008b75e73dced409c4cd0e4bb2fba4, type: 3}
+    - {fileID: 7400006, guid: c8008b75e73dced409c4cd0e4bb2fba4, type: 3}
+    - {fileID: 7400000, guid: caf03347a27d25b4b82295cad432e31d, type: 2}
+    - {fileID: 7400000, guid: c8008b75e73dced409c4cd0e4bb2fba4, type: 3}
+    - {fileID: 7400000, guid: c8008b75e73dced409c4cd0e4bb2fba4, type: 3}
+    - {fileID: 7400000, guid: c8008b75e73dced409c4cd0e4bb2fba4, type: 3}
+  - bandType: 1
+    animationClip: []
+  - bandType: 2
+    animationClip: []
+  - bandType: 3
+    animationClip: []
+  spectatorAnimationClip:
+  - {fileID: 7400004, guid: c8008b75e73dced409c4cd0e4bb2fba4, type: 3}
+  - {fileID: 7400000, guid: c8008b75e73dced409c4cd0e4bb2fba4, type: 3}
+  - {fileID: 7400006, guid: c8008b75e73dced409c4cd0e4bb2fba4, type: 3}
