@@ -429,7 +429,6 @@ namespace NoteEditor
                     track.noteMap = noteMap;
                 }
 
-                Debug.Log($"노트맵 저장 완료: {noteMapPath}");
                 return true;
             }
             catch (Exception ex)

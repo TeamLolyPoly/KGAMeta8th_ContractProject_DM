@@ -41,9 +41,6 @@ namespace NoteEditor
             "앨범 아트는 트랙 정보와 함께 저장됩니다.",
         };
 
-        /// <summary>
-        /// 현재 선택된 트랙을 반환합니다.
-        /// </summary>
         public TrackData currentTrack
         {
             get
@@ -505,18 +502,14 @@ namespace NoteEditor
             pendingAudioFilePath = null;
             isLoadingTrack = false;
 
-            // 트랙 정보 저장
             string trackName = newTrack.trackName;
 
-            // 씬 전환 후 트랙 선택을 위해 콜백 사용
             LoadingManager.Instance.LoadScene(
                 currentSceneName,
                 () =>
                 {
-                    // 씬 전환 후 트랙 목록 갱신 및 선택
                     RefreshTrackList();
 
-                    // 새로 추가된 트랙 찾기
                     TrackData trackToSelect = cachedTracks.FirstOrDefault(t =>
                         t.trackName == trackName
                     );
@@ -525,7 +518,6 @@ namespace NoteEditor
                         SelectTrack(trackToSelect);
                     }
 
-                    // UI 업데이트
                     if (editorPanel != null && editorPanel.IsInitialized)
                     {
                         editorPanel.RefreshTrackList();
