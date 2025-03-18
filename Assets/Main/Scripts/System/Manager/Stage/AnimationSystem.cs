@@ -29,6 +29,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         }
 
         GameManager.Instance.ScoreSystem.onBandEngagementChange += BandAnimationClipChange;
+        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange += SpectatorAnimationClipChange;
 
         isInitialized = true;
     }
@@ -80,14 +81,14 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         }
     }
 
-    public void SpectatorAnimationClipChange(int engagement)
+    public void SpectatorAnimationClipChange(Engagement engagement)
     {
         foreach (Spectator spectator in spectators)
         {
-            if (engagement >= AnimData.spectatorAnimationClip.Count)
+            if ((int)engagement >= AnimData.spectatorAnimationClip.Count)
                 continue;
 
-            AnimationClip animationClip = AnimData?.spectatorAnimationClip[engagement];
+            AnimationClip animationClip = AnimData?.spectatorAnimationClip[(int)engagement];
 
             if (animationClip == null)
                 continue;
