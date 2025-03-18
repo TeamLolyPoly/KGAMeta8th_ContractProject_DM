@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class ScoreSystem : MonoBehaviour, IInitializable
 {
-    private ScoreSettingData scoreSetingData;
+    private ScoreSettingData scoreSettingData;
 
     //정확도 기록 딕셔너리
     public Dictionary<NoteRatings, int> ratingCount { get; private set; } =
@@ -35,7 +35,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     public int highCombo { get; private set; } = 0;
 
     //Miss제외한 노트 Hit 총 횟수
-    public int NoteHitCount { get; private set; } = 0;
+    public int noteHitCount { get; private set; } = 0;
 
     //밴드 호응도 이벤트
     public event Action<Engagement> onBandEngagementChange;
@@ -59,30 +59,30 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     }
     public void Initialize()
     {
-        scoreSetingData = Resources.Load<ScoreSettingData>("SO/ScoreSettingData");
+        scoreSettingData = Resources.Load<ScoreSettingData>("SO/ScoreSettingData");
 
         ratingCount.Clear();
 
-        if (scoreSetingData != null)
+        if (scoreSettingData != null)
         {
             foreach (NoteRatings rating in Enum.GetValues(typeof(NoteRatings)))
             {
                 ratingCount.Add(rating, 0);
             }
-            for (int i = 0; i < scoreSetingData.engagementThreshold.Length; i++)
+            for (int i = 0; i < scoreSettingData.engagementThreshold.Length; i++)
             {
-                bandEngagementType.Add(scoreSetingData.engagementThreshold[i], (Engagement)i);
+                bandEngagementType.Add(scoreSettingData.engagementThreshold[i], (Engagement)i);
             }
-            for (int i = 0; i < scoreSetingData.multiplierScore.Count; i++)
+            for (int i = 0; i < scoreSettingData.multiplierScore.Count; i++)
             {
                 multiplierScore.Add(
-                    scoreSetingData.multiplierScore[i].ratings,
-                    scoreSetingData.multiplierScore[i].ratingScore
+                    scoreSettingData.multiplierScore[i].ratings,
+                    scoreSettingData.multiplierScore[i].ratingScore
                 );
             }
         }
 
-        onBandEngagementChange?.Invoke(currentBandEngagement = Engagement.First);
+        SetBandEngagement();
         onSpectatorEngagementChange?.Invoke(currentSpectatorEngagement = Engagement.First);
     }
 
@@ -97,7 +97,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         else
         {
             combo = 0 <= combo ? combo + 1 : 1;
-            NoteHitCount++;
+            noteHitCount++;
             if (combo > highCombo)
             {
                 highCombo = combo;
@@ -115,19 +115,19 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         print($"Multiplier: {multiplier}");
         print($"combo: {combo}");
         print($"higtcombo: {highCombo}");
-        print($"NoteHitCount: {NoteHitCount}");
+        print($"NoteHitCount: {noteHitCount}");
     }
 
     private int SetMultiplier()
     {
-        for (int i = 0; i < scoreSetingData.comboMultiplier.Length; i++)
+        for (int i = 0; i < scoreSettingData.comboMultiplier.Length; i++)
         {
-            if (combo < scoreSetingData.comboMultiplier[i])
+            if (combo < scoreSettingData.comboMultiplier[i])
             {
                 return i;
             }
         }
-        return scoreSetingData.comboMultiplier.Length;
+        return scoreSettingData.comboMultiplier.Length;
     }
 
     private int GetRatingScore(NoteRatings ratings)
@@ -138,32 +138,39 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         }
         return 0;
     }
-    //TODO: 콤보가 작아지면 디폴트 나가는현상 수정해야함
+
     private void SetSpectatorEngagement()
     {
         int totalNoteCount = 10;//GameManager.Instance.NoteMap.TotalNoteCount;
-        SpectatorEventThreshold newThreshold = scoreSetingData.sectatorEventThreshold
-        .LastOrDefault(Threshold =>
-        NoteHitCount >= totalNoteCount * Threshold.noteThreshold &&
-        combo >= Threshold.comboThreshold)
-        ?? scoreSetingData.sectatorEventThreshold.First();
+        SpectatorEventThreshold newThreshold = scoreSettingData.sectatorEventThreshold
+        .LastOrDefault(threshold => CheckEngagement(threshold, totalNoteCount))
+        ?? scoreSettingData.sectatorEventThreshold.First();
+        print($"combo: {combo}\n NoteHitCount: {noteHitCount}\n newThreshold: {newThreshold.comboThreshold} , {newThreshold.noteThreshold} \n totalNoteCount: {totalNoteCount * newThreshold.noteThreshold}");
 
         if (currentSpectatorEngagement != newThreshold.engagement)
+
         {
             print($"관객 이벤트 발생: {newThreshold.engagement}");
             currentSpectatorEngagement = newThreshold.engagement;
             onSpectatorEngagementChange?.Invoke(currentSpectatorEngagement);
         }
-
+    }
+    private bool CheckEngagement(SpectatorEventThreshold threshold, int totalNoteCount)
+    {
+        bool isOverCount = noteHitCount >= totalNoteCount * threshold.noteThreshold;
+        bool isOverCombo = combo >= threshold.comboThreshold || threshold.comboThreshold <= 0;
+        return isOverCount && isOverCombo;
     }
 
     private void SetBandEngagement()
     {
-        Engagement newEngagement = bandEngagementType
-            .Where(pair => combo >= pair.Key)
-            .OrderByDescending(pair => pair.Key)
+        var selectedEngagement = bandEngagementType.Where(pair => IsCombo(pair.Key));
+
+        var sortedEngagement = selectedEngagement.OrderByDescending(pair => Math.Abs(pair.Key));
+
+        Engagement newEngagement = sortedEngagement
             .Select(pair => pair.Value)
-            .DefaultIfEmpty(Engagement.First)
+            .DefaultIfEmpty(bandEngagementType[0])
             .First();
 
         if (currentBandEngagement != newEngagement)
@@ -172,5 +179,14 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             currentBandEngagement = newEngagement;
             onBandEngagementChange.Invoke(currentBandEngagement);
         }
+    }
+
+    private bool IsPlus(int num) => num >= 0;
+    private bool IsCombo(int num)
+    {
+        if (IsPlus(num))
+            return combo >= num;
+        else
+            return combo <= num;
     }
 }

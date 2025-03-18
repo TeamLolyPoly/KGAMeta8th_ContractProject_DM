@@ -42,6 +42,7 @@ public class ScoreSettingData : ScriptableObject
         {
             sectatorEventThreshold.Remove(sectatorEventThreshold.Last());
         }
+
         for (int i = 0; i < NoteRatingCount.Length; i++)
         {
             multiplierScore[i].ratings = (NoteRatings)i;
@@ -51,4 +52,26 @@ public class ScoreSettingData : ScriptableObject
             sectatorEventThreshold[i].engagement = (Engagement)i;
         }
     }
+
+    // 어렵다
+    // private void SyncListWithEnum<T, TEnum>(List<T> list, Func<TEnum, T> createElement)
+    //  where T : class
+    //  where TEnum : Enum
+    // {
+    //     var enumValues = Enum.GetValues(typeof(TEnum));
+
+    //     // 리스트 초기화
+    //     list.Clear();
+
+    //     // enum 값들로 리스트 채우기
+    //     foreach (TEnum enumValue in enumValues)
+    //     {
+    //         list.Add(createElement(enumValue));
+    //     }
+
+    //     while (list.Count > enumValues.Length)
+    //     {
+    //         list.RemoveAt(list.Count - 1);
+    //     }
+    // }
 }

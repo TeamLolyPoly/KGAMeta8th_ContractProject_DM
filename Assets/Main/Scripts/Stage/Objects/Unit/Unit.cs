@@ -6,6 +6,10 @@ public class Unit : MonoBehaviour
 {
     protected Animator animator;
     protected AnimationSystem unitAnimationManager;
+    protected Coroutine animChangeCoroutine;
+    protected bool isAnimating = false;
+
+    protected Queue<AnimationClip> animationQueue = new Queue<AnimationClip>();
 
     protected virtual IEnumerator Start()
     {
@@ -25,7 +29,7 @@ public class Unit : MonoBehaviour
         unitAnimationManager.AttachAnimation(animator);
     }
 
-    public virtual void SetAnimationClip(AnimationClip animationClip)
+    public virtual void SetAnimationClip(AnimationClip clip)
     {
         AnimatorOverrideController overrideController =
             animator.runtimeAnimatorController as AnimatorOverrideController;
@@ -34,7 +38,32 @@ public class Unit : MonoBehaviour
             overrideController = new AnimatorOverrideController(animator.runtimeAnimatorController);
             animator.runtimeAnimatorController = overrideController;
         }
-        overrideController["Usual"] = animationClip;
+        animationQueue.Enqueue(clip);
+
+        if (animChangeCoroutine != null)
+        {
+            StopCoroutine(animChangeCoroutine);
+            animChangeCoroutine = null;
+        }
+        animChangeCoroutine = StartCoroutine(AnimChangeRoutine(overrideController));
+    }
+
+    private IEnumerator AnimChangeRoutine(AnimatorOverrideController overrideController)
+    {
+        while (animationQueue.Count > 0)
+        {
+            print("애니메이션 클립체인지 기다리는중");
+            yield return new WaitUntil(() => isAnimating == false);
+            overrideController["Usual"] = animationQueue.Dequeue();
+            animator.Play("Usual");
+            print("애니메이션 클립체인지 성공");
+        }
+        animChangeCoroutine = null;
+    }
+    public void OnAnimation()
+    {
+        isAnimating = !isAnimating;
+        print($"isAnimating: {isAnimating}");
     }
 
     protected void OnDisable()
