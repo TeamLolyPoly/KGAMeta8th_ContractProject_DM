@@ -148,6 +148,15 @@ public class BandAnimationData
     public BandType bandType;
     public AnimationClip[] animationClip;
 }
+[Serializable]
+public class SpectatorEventThreshold
+{
+    public Engagement engagement;
+    [Range(0f, 1f), Header("노트 퍼센트")]
+    public float noteThreshold;
+    [Header("기준 콤보 횟수")]
+    public int comboThreshold;
+}
 
 [Serializable]
 public class MultiplierScore

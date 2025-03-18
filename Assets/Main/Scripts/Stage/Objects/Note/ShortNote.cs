@@ -55,7 +55,7 @@ public class ShortNote : Note
             {
                 if (GameManager.Instance != null)
                 {
-                    scoreSystem.SetScore(0, NoteRatings.Miss);
+                    Miss();
                 }
                 Destroy(gameObject);
             }

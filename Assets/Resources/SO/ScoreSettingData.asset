@@ -12,16 +12,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63ff4dd55cf14414c853d21b8e6f9a01, type: 3}
   m_Name: ScoreSettingData
   m_EditorClassIdentifier: 
-  comboMultiplier: 0000000000000000
-  engagementThreshold: 000000000a000000140000001e000000
+  comboMultiplier: 0000000064000000c80000002c01000090010000f4010000
+  engagementThreshold: e2ffffffecfffffff6ffffff000000000a000000140000001e000000
+  sectatorEventThreshold:
+  - engagement: 0
+    noteThreshold: 0
+    comboThreshold: 0
+  - engagement: 1
+    noteThreshold: 0.33
+    comboThreshold: 0
+  - engagement: 2
+    noteThreshold: 0.5
+    comboThreshold: 20
   multiplierScore:
   - ratings: 0
     ratingScore: 0
   - ratings: 1
-    ratingScore: 0
+    ratingScore: 20
   - ratings: 2
-    ratingScore: 0
+    ratingScore: 15
   - ratings: 3
-    ratingScore: 0
+    ratingScore: 10
   - ratings: 4
     ratingScore: 0
