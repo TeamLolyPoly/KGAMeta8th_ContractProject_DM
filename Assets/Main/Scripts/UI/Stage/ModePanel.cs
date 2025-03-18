@@ -1,9 +1,6 @@
 using Michsky.UI.Heat;
-using ProjectDM;
 using ProjectDM.UI;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.UIElements;
 
 public class ModePanel : Panel
 {
@@ -36,11 +33,13 @@ public class ModePanel : Panel
 
     private void OnBackButtonClick()
     {
+        UIManager.Instance.ClosePanel(PanelType.Mode);
         UIManager.Instance.OpenPanel(PanelType.Title);
     }
 
     private void OnSingleButtonClick()
     {
+        UIManager.Instance.ClosePanel(PanelType.Mode);
         UIManager.Instance.OpenPanel(PanelType.Album);
     }
 

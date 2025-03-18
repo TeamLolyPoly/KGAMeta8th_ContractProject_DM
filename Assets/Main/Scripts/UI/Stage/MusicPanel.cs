@@ -38,6 +38,7 @@ public class MusicPanel : Panel
     private void OnBackButtonClick()
     {
         UIManager.Instance.OpenPanel(PanelType.Album);
+        UIManager.Instance.ClosePanel(PanelType.Music);
     }
 
     private void OnAlbumButtonClick()
@@ -48,5 +49,6 @@ public class MusicPanel : Panel
     private void OnSampleButtonClick()
     {
         UIManager.Instance.OpenPanel(PanelType.Difficult);
+        UIManager.Instance.ClosePanel(PanelType.Music);
     }
 }
