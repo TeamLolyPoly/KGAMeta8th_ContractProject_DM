@@ -20,22 +20,38 @@ public class Note : MonoBehaviour, IInitializable
         isInitialized = true;
     }
 
-    public void SetNoteColor(Color color)
+    public void SetNoteColor(NoteColor color)
     {
-        if (color == Color.red)
+        noteData.noteColor = color;
+
+        if (Rim == null)
         {
-            noteData.noteColor = NoteColor.Red;
-        }
-        else if (color == Color.blue)
-        {
-            noteData.noteColor = NoteColor.Blue;
-        }
-        else if (color == Color.yellow)
-        {
-            noteData.noteColor = NoteColor.Yellow;
+            Debug.LogWarning($"노트의 Rim이 null입니다. 노트 타입: {noteData?.noteType}");
+            return;
         }
 
-        Rim.GetComponent<Renderer>().material.color = color;
+        Renderer rimRenderer = Rim.GetComponent<Renderer>();
+        if (rimRenderer == null)
+        {
+            Debug.LogWarning("Rim에 Renderer 컴포넌트가 없습니다.");
+            return;
+        }
+
+        switch (color)
+        {
+            case NoteColor.Red:
+                rimRenderer.material.color = Color.red;
+                break;
+            case NoteColor.Blue:
+                rimRenderer.material.color = Color.blue;
+                break;
+            case NoteColor.Yellow:
+                rimRenderer.material.color = Color.yellow;
+                break;
+            default:
+                rimRenderer.material.color = Color.white;
+                break;
+        }
     }
 
     public virtual void Initialize(NoteData data)
