@@ -2,5 +2,5 @@ using UnityEngine;
 
 public class NoteInteractor : MonoBehaviour
 {
-    public NoteHitType noteType;
+    public NoteColor noteColor;
 }

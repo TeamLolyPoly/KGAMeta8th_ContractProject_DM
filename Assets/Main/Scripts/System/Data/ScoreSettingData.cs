@@ -10,9 +10,11 @@ public class ScoreSettingData : ScriptableObject
     [SerializeField]
     public int[] comboMultiplier;
 
-    [Header("호응도 콤보 기준")]
+    [Header("밴드 호응도 콤보 기준")]
     [SerializeField]
     public int[] engagementThreshold;
+    [SerializeField, Header("관객 이벤트 활성화 조건")]
+    public List<SpectatorEventThreshold> sectatorEventThreshold = new List<SpectatorEventThreshold>();
 
     [Header("노트 정확도 추가점수")]
     [SerializeField]
@@ -20,24 +22,33 @@ public class ScoreSettingData : ScriptableObject
 
     private void OnValidate()
     {
-        Array dataCount = Enum.GetValues(typeof(NoteRatings));
+        Array NoteRatingCount = Enum.GetValues(typeof(NoteRatings));
+        Array EngagementCount = Enum.GetValues(typeof(Engagement));
 
-        if (multiplierScore.Count < dataCount.Length)
+        if (multiplierScore.Count < NoteRatingCount.Length)
         {
-            foreach (NoteRatings type in dataCount)
+            foreach (NoteRatings type in NoteRatingCount)
             {
                 MultiplierScore data = new MultiplierScore();
                 data.ratings = type;
                 multiplierScore.Add(data);
             }
         }
-        for (int i = 0; i < dataCount.Length; i++)
+        while (multiplierScore.Count > NoteRatingCount.Length)
+        {
+            multiplierScore.Remove(multiplierScore.Last());
+        }
+        while (sectatorEventThreshold.Count > EngagementCount.Length)
+        {
+            sectatorEventThreshold.Remove(sectatorEventThreshold.Last());
+        }
+        for (int i = 0; i < NoteRatingCount.Length; i++)
         {
             multiplierScore[i].ratings = (NoteRatings)i;
         }
-        while (multiplierScore.Count > dataCount.Length)
+        for (int i = 0; i < sectatorEventThreshold.Count; i++)
         {
-            multiplierScore.Remove(multiplierScore.Last());
+            sectatorEventThreshold[i].engagement = (Engagement)i;
         }
     }
 }
