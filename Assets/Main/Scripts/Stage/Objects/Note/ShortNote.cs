@@ -40,25 +40,28 @@ public class ShortNote : Note
         print($"Down: {noteDownDirection} Up: {noteUpDirection}");
     }
 
-    protected virtual void Update()
+    private void Update()
     {
-        if (isMoving && isInitialized)
+        if (!isInitialized)
+            return;
+
+        // 경과 시간 계산 (음악 시작 기준)
+        double elapsedTime = AudioSettings.dspTime - spawnDspTime;
+
+        // 이동 거리 계산
+        float totalDistance = Vector3.Distance(startPosition, targetPosition);
+        float currentDistance = noteData.noteSpeed * (float)elapsedTime;
+
+        // 진행률 계산 (0~1 사이)
+        float progress = Mathf.Clamp01(currentDistance / totalDistance);
+
+        // 노트 위치 업데이트
+        transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
+
+        // 목표 위치에 도달했을 때 Miss 처리
+        if (progress >= 1.0f && !isHit)
         {
-            double elapsedTime = AudioSettings.dspTime - spawnDspTime;
-            float totalDistance = Vector3.Distance(startPosition, targetPosition);
-            float currentDistance = noteData.noteSpeed * (float)elapsedTime;
-            float progress = Mathf.Clamp01(currentDistance / totalDistance);
-
-            transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
-
-            if (progress >= 1f)
-            {
-                if (GameManager.Instance != null)
-                {
-                    Miss();
-                }
-                Destroy(gameObject);
-            }
+            Miss();
         }
     }
 
@@ -148,17 +151,14 @@ public class ShortNote : Note
         int Score = noteScore;
         if (noteDistance * accuracyPoint[0] >= hitdis)
         {
-            print($"Perfect noteDis :{noteDistance * accuracyPoint[0]} , Hitdis: {hitdis}");
             ratings = NoteRatings.Perfect;
         }
         else if (noteDistance * accuracyPoint[1] > hitdis)
         {
-            print($"Great noteDis :{noteDistance * accuracyPoint[1]} , Hitdis: {hitdis}");
             ratings = NoteRatings.Great;
         }
         else
         {
-            print($"Good noteDis :{noteDistance} , Hitdis: {hitdis}");
             ratings = NoteRatings.Good;
         }
         scoreSystem.SetScore(Score, ratings);
@@ -168,11 +168,9 @@ public class ShortNote : Note
     private void SetNoteDisTance()
     {
         float sizeY = noteCollider.bounds.size.y;
-        print($"Y: {sizeY}");
         Vector3 dis = transform.position;
         dis.y += sizeY / 2;
         noteDistance = Vector3.Distance(transform.position, dis);
-        print($"노트 길이: {noteDistance}");
     }
 
     protected override void OnCollisionEnter(Collision other)
@@ -201,10 +199,6 @@ public class ShortNote : Note
         Vector3 ExitPoint = (transform.position - other.transform.position).normalized;
         ExitAngle = Vector3.Angle(ExitPoint, noteUpDirection);
 
-        print($"Exit 법선벡터 X: {ExitPoint.x} Y : {ExitPoint.y} Z : {ExitPoint.z}");
-        print(
-            $"Exit 내 벡터 X:{noteUpDirection.x} Y : {noteUpDirection.y} Z : {noteUpDirection.z} ExitAngle: {ExitAngle}"
-        );
         Debug.DrawRay(transform.position, ExitPoint, Color.red, 0.5f);
         if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
         {
