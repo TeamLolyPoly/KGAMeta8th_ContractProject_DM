@@ -13,7 +13,7 @@ public class ModePanel : Panel
     private BoxButtonManager multiButton;
 
     [SerializeField]
-    private PanelButton backButton;
+    private BoxButtonManager backButton;
 
     public override void Open()
     {

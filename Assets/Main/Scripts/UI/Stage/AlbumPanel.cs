@@ -35,7 +35,7 @@ public class AlbumPanel : Panel
     }
 
     [SerializeField]
-    private PanelButton backButton;
+    private BoxButtonManager backButton;
 
     [SerializeField]
     private PanelButton laftTogle;

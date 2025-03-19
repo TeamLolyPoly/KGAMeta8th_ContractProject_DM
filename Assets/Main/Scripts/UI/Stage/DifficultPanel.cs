@@ -24,7 +24,7 @@ public class DifficultPanel : Panel
     }
 
     [SerializeField]
-    private PanelButton backButton;
+    private BoxButtonManager backButton;
 
     //todo:랭킹 스크롤 작업 해야함
 

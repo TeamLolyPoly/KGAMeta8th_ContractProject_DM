@@ -9,7 +9,7 @@ public class MusicPanel : Panel
     public override PanelType PanelType => PanelType.Music;
 
     [SerializeField]
-    private PanelButton backButton;
+    private BoxButtonManager backButton;
 
     [SerializeField]
     private BoxButtonManager albumButton;

@@ -37,6 +37,7 @@ public class TitlePanel : Panel
     private void OnStartButtonClick()
     {
         UIManager.Instance.OpenPanel(PanelType.Mode);
+        Close();
     }
 
     private void OnOptionButtonClick()
