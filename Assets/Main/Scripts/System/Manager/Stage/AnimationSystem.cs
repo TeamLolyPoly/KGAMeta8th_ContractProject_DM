@@ -31,8 +31,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         }
 
         GameManager.Instance.ScoreSystem.onBandEngagementChange += BandAnimationClipChange;
-        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange +=
-            SpectatorAnimationClipChange;
+        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange += SpectatorAnimationClipChange;
 
         isInitialized = true;
     }

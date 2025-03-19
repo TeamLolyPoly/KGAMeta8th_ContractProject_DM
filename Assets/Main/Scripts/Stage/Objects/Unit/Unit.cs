@@ -13,7 +13,7 @@ public class Unit : MonoBehaviour
 
     protected virtual IEnumerator Start()
     {
-        yield return new WaitUntil(() => GameManager.Instance.IsInitialized);
+        yield return new WaitUntil(() => GameManager.Instance.UnitAnimationSystem != null);
         unitAnimationSystem = GameManager.Instance.UnitAnimationSystem;
         Initialize();
     }
