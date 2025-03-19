@@ -14,6 +14,7 @@ namespace NoteEditor
         private float cellSpacing = 0.1f;
         private Material cellMaterial;
         private Material selectedCellMaterial;
+        private GameObject cellObjectPrefab;
 
         private float railWidth = 1f;
         private float railSpacing = 0.1f;
@@ -29,37 +30,51 @@ namespace NoteEditor
 
         public void Initialize()
         {
-            GetResources();
-            railController = EditorManager.Instance.railController;
-
-            if (railController != null)
-            {
-                railWidth = 1f;
-                railSpacing = 0.1f;
-            }
-
-            if (isInitialized)
-            {
-                CleanupCells();
-            }
-
             try
             {
-                CreateCellContainer();
-                GenerateCells();
+                LoadResources();
                 isInitialized = true;
+                Debug.Log("[CellController] 초기화 완료 - 리소스 로드됨");
             }
             catch (Exception e)
             {
-                Debug.LogError($"셀 생성 실패: {e.Message}");
-                CleanupCells();
+                Debug.LogError($"[CellController] 초기화 실패: {e.Message}");
+                isInitialized = false;
             }
         }
 
-        private void GetResources()
+        private void LoadResources()
         {
-            cellMaterial = Resources.Load<Material>("Materials/NoteEditor/Cell");
             selectedCellMaterial = Resources.Load<Material>("Materials/NoteEditor/SelectedCell");
+            cellMaterial = Resources.Load<Material>("Materials/NoteEditor/Cell");
+            cellObjectPrefab = Resources.Load<GameObject>("Prefabs/NoteEditor/Model/CellModel");
+        }
+
+        public void Setup()
+        {
+            railController = EditorManager.Instance.railController;
+            if (railController == null || !railController.IsInitialized)
+            {
+                Debug.LogWarning("[CellController] RailController가 초기화되지 않았습니다.");
+                return;
+            }
+
+            railWidth = railController.RailWidth;
+            railSpacing = railController.RailSpacing;
+
+            if (railController.TotalBars <= 0)
+            {
+                Debug.LogWarning(
+                    "[CellController] RailController의 TotalBars가 유효하지 않습니다."
+                );
+                return;
+            }
+
+            CleanupCells();
+            CreateCellContainer();
+            GenerateCells();
+
+            Debug.Log("[CellController] 셀 설정 완료");
         }
 
         private void CreateCellContainer()
@@ -74,13 +89,28 @@ namespace NoteEditor
             cellContainer.transform.localPosition = Vector3.zero;
         }
 
-        private void GenerateCells()
+        public void GenerateCells()
         {
+            if (railController == null || railController.TotalBars <= 0)
+            {
+                Debug.LogWarning(
+                    "[CellController] RailController가 초기화되지 않았거나 TotalBars 값이 유효하지 않습니다. 셀 생성을 건너뜁니다."
+                );
+                return;
+            }
+
             cells.Clear();
             selectedCell = null;
 
             float totalBars = railController.TotalBars;
             float unitsPerBar = railController.UnitsPerBar;
+
+            if (totalBars <= 0 || unitsPerBar <= 0)
+            {
+                Debug.LogError($"Invalid values: TotalBars={totalBars}, UnitsPerBar={unitsPerBar}");
+                return;
+            }
+
             float railLength = totalBars * unitsPerBar;
 
             float totalWidth = (laneCount * railWidth) + ((laneCount - 1) * railSpacing);
@@ -90,8 +120,7 @@ namespace NoteEditor
             {
                 float barStartPos = (bar / totalBars) * railLength;
 
-                int beatsPerBar =
-                    AudioManager.Instance != null ? AudioManager.Instance.BeatsPerBar : 4;
+                int beatsPerBar = railController.BeatsPerBar;
 
                 for (int beat = 0; beat < beatsPerBar; beat++)
                 {
@@ -123,6 +152,8 @@ namespace NoteEditor
                     }
                 }
             }
+
+            Debug.Log($"[CellController] 셀 생성 완료: 총 {cells.Count}개의 셀 생성됨");
         }
 
         private void CreateCell(int bar, int beat, int lane, int y, Vector3 position)
@@ -136,50 +167,54 @@ namespace NoteEditor
             adjustedPosition.y = 1f + position.y;
 
             cellObj.transform.localPosition = adjustedPosition;
+            cellObj.transform.localScale = new Vector3(cellSize, cellSize, cellSize);
 
-            GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            visual.transform.parent = cellObj.transform;
-            visual.transform.localPosition = Vector3.zero;
-            visual.transform.localScale = new Vector3(cellSize, cellSize, cellSize);
+            GameObject cellRenderer = Instantiate(cellObjectPrefab, cellObj.transform);
+            cellRenderer.transform.localPosition = Vector3.zero;
 
-            MeshRenderer renderer = (MeshRenderer)visual.GetComponent<Renderer>();
-            if (cellMaterial != null)
-            {
-                renderer.material = cellMaterial;
-            }
+            SphereCollider collider = cellObj.AddComponent<SphereCollider>();
+            collider.isTrigger = true;
 
             Cell cell = cellObj.AddComponent<Cell>();
             cell.Initialize(bar, beat, new Vector2(lane, y));
 
-            SphereCollider collider = visual.GetComponent<SphereCollider>();
-            if (collider != null)
-            {
-                collider.isTrigger = true;
-            }
+            cell.cellRenderer = cellRenderer;
 
             cells.Add(cellKey, cell);
         }
 
         public void SelectCell(Cell cell)
         {
+            if (cell == null)
+                return;
+
             if (selectedCell != null)
             {
-                MeshRenderer renderer = selectedCell.GetComponentInChildren<MeshRenderer>();
-                if (renderer != null && cellMaterial != null)
-                {
-                    renderer.material = cellMaterial;
-                }
+                selectedCell.cellRenderer.GetComponent<Renderer>().material = cellMaterial;
             }
 
             selectedCell = cell;
 
-            if (selectedCell != null)
+            EditorManager.Instance.editorPanel.UpdateSelectedCellInfo(cell);
+
+            if (cell.noteData != null)
             {
-                MeshRenderer renderer = selectedCell.GetComponentInChildren<MeshRenderer>();
-                if (renderer != null && selectedCellMaterial != null)
+                if (cell.noteData.noteType == NoteType.Short)
                 {
-                    renderer.material = selectedCellMaterial;
+                    EditorManager.Instance.editorPanel.ToggleShortNoteUI(true);
+                    EditorManager.Instance.editorPanel.ToggleLongNoteUI(false);
                 }
+                else if (cell.noteData.noteType == NoteType.Long)
+                {
+                    EditorManager.Instance.editorPanel.ToggleShortNoteUI(false);
+                    EditorManager.Instance.editorPanel.ToggleLongNoteUI(true);
+                }
+            }
+            else
+            {
+                selectedCell.cellRenderer.GetComponent<Renderer>().material = selectedCellMaterial;
+                EditorManager.Instance.editorPanel.ToggleShortNoteUI(false);
+                EditorManager.Instance.editorPanel.ToggleLongNoteUI(false);
             }
         }
 
@@ -203,13 +238,23 @@ namespace NoteEditor
                 Destroy(cellContainer);
                 cellContainer = null;
             }
-
-            isInitialized = false;
         }
 
         private void OnDisable()
         {
             CleanupCells();
+        }
+
+        public void Cleanup()
+        {
+            cells.Clear();
+            selectedCell = null;
+
+            if (cellContainer != null)
+            {
+                Destroy(cellContainer);
+                cellContainer = null;
+            }
         }
     }
 }

@@ -9,6 +9,9 @@ namespace NoteEditor
         public Vector2 cellPosition;
         public int bar;
         public int beat;
+        public ShortNoteModel noteModel;
+        public LongNoteModel longNoteModel;
+        public GameObject cellRenderer;
 
         private CellController cellController;
         private Camera mainCamera;
@@ -19,7 +22,7 @@ namespace NoteEditor
             cellController = GetComponentInParent<CellController>();
             mainCamera = Camera.main;
 
-            cellCollider = GetComponentInChildren<SphereCollider>();
+            cellCollider = GetComponent<SphereCollider>();
             if (cellCollider == null)
             {
                 Debug.LogWarning("셀의 자식 오브젝트에서 SphereCollider를 찾을 수 없습니다.");

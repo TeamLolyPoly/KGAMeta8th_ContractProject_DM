@@ -8,8 +8,8 @@ using UnityEngine;
 [Serializable]
 public class NoteData
 {
-    public NoteBaseType baseType = NoteBaseType.None;
-    public NoteHitType noteType;
+    public NoteType noteType = NoteType.None;
+    public NoteColor noteColor;
     public NoteDirection direction;
     public NoteAxis noteAxis = NoteAxis.PZ;
 
@@ -48,8 +48,12 @@ public class NoteData
     public int bar;
     public int beat;
     public int startIndex;
+    public int endIndex;
     public bool isSymmetric;
     public bool isClockwise;
+
+    [JsonIgnore]
+    public bool isSegment;
 
     public int durationBars;
     public int durationBeats;
@@ -83,7 +87,7 @@ public class NoteData
 
     public int CalculateArcLength(int segmentCount, float bpm, int beatsPerBar, float spawnInterval)
     {
-        if (baseType != NoteBaseType.Long)
+        if (noteType != NoteType.Long)
             return 0;
 
         float secondsPerBeat = 60f / bpm;
@@ -104,6 +108,7 @@ public class NoteMap
     public List<NoteData> notes = new List<NoteData>();
     public float bpm = 120f;
     public int beatsPerBar = 4;
+    public int TotalNoteCount => notes.Count;
 }
 #endregion
 
@@ -144,8 +149,20 @@ public class TrackData
 [Serializable]
 public class BandAnimationData
 {
-    public Bandtype bandtype;
+    public BandType bandType;
     public AnimationClip[] animationClip;
+}
+
+[Serializable]
+public class SpectatorEventThreshold
+{
+    public Engagement engagement;
+
+    [Range(0f, 1f), Header("노트 퍼센트")]
+    public float noteThreshold;
+
+    [Header("기준 콤보 횟수")]
+    public int comboThreshold;
 }
 
 [Serializable]

@@ -44,23 +44,16 @@ GITHUB_USER_MAPPING = {
         "slack_id": "U08EEEYNAF6",
         "position": "pm"
     },
-    "APTX9946": {
-        "name": "김성연",
-        "role": "head_designer",
-        "branch_suffix": "SYKIM",
-        "slack_id": "U08EEEZ0ZTN",
-        "position": "head_designer"
-    },
     "yoonsung9999": {
         "name": "김윤성",
-        "role": "designer",
+        "role": "기획자",
         "branch_suffix": "YSKIM",
         "slack_id": "U08EBL995D1",
         "position": "designer"
     },
     "rkaQu": {
         "name": "최민석",
-        "role": "designer",
+        "role": "기획자",
         "branch_suffix": "MSCHOI",
         "slack_id": "U08E92L7KCM",
         "position": "designer"

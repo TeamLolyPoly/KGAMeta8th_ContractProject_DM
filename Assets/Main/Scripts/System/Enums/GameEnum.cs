@@ -1,5 +1,5 @@
 #region Note Related
-public enum NoteBaseType
+public enum NoteType
 {
     None,
     Short,
@@ -28,7 +28,7 @@ public enum NoteAxis
     MX,
 }
 
-public enum NoteHitType
+public enum NoteColor
 {
     None,
     Red,
@@ -47,12 +47,22 @@ public enum NoteRatings
 
 #endregion
 
-public enum Bandtype
+public enum BandType
 {
     Drums,
     Saxophone,
     Guitar,
     Bass_Guitar,
+}
+
+public enum BeatsPerBar
+{
+    Four,
+    Eight,
+    Six,
+    Twelve,
+    Sixteen,
+    ThirtyTwo,
 }
 
 public enum Engagement
@@ -66,6 +76,20 @@ public enum Engagement
     Seventh,
     Eighth,
     Ninth,
-    Tenth
+    Tenth,
 }
 
+public enum PanelType
+{
+    Title,
+    Mode,
+    Album,
+    Music,
+    Difficult,
+    ResultDetail,
+    Result,
+    Option,
+
+    // 에디터 전용
+    NoteEditor,
+}

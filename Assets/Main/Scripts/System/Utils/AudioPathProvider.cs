@@ -8,7 +8,7 @@ namespace NoteEditor
     /// </summary>
     public static class AudioPathProvider
     {
-        private static string _basePath = Path.Combine(Application.persistentDataPath, "Tracks");
+        private static string _basePath = Application.persistentDataPath;
 
         public static string BasePath => _basePath;
 
@@ -17,6 +17,8 @@ namespace NoteEditor
         public static string TrackDataPath => Path.Combine(BasePath, "Data");
 
         public static string NoteMapPath => Path.Combine(BasePath, "NoteMaps");
+
+        public static string AudioPath => Path.Combine(BasePath, "Audio");
 
         /// <summary>
         /// 기본 경로를 설정합니다.
@@ -35,7 +37,7 @@ namespace NoteEditor
         /// <returns>오디오 파일 경로</returns>
         public static string GetAudioFilePath(string trackName)
         {
-            return Path.Combine(BasePath, $"{trackName}.wav");
+            return Path.Combine(AudioPath, $"{trackName}.wav");
         }
 
         /// <summary>
