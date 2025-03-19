@@ -19,8 +19,8 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     //밴드 호응도 딕셔너리
     public Dictionary<int, Engagement> bandEngagementType { get; private set; } =
         new Dictionary<int, Engagement>();
-    private Engagement currentBandEngagement;
-    private Engagement currentSpectatorEngagement;
+    public Engagement currentBandEngagement { get; private set; }
+    public Engagement currentSpectatorEngagement { get; private set; }
 
     //점수 배율
     public int multiplier { get; private set; } = 1;
@@ -47,17 +47,18 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     public bool IsInitialized => isInitialized;
 
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            SetScore(100, NoteRatings.Perfect);
-        }
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            SetScore(0, NoteRatings.Miss);
-        }
-    }
+    //테스트용 코드
+    // void Update()
+    // {
+    //     if (Input.GetKeyDown(KeyCode.Q))
+    //     {
+    //         SetScore(100, NoteRatings.Perfect);
+    //     }
+    //     if (Input.GetKeyDown(KeyCode.W))
+    //     {
+    //         SetScore(0, NoteRatings.Miss);
+    //     }
+    // }
 
     public void Initialize()
     {
@@ -85,6 +86,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         }
 
         SetBandEngagement();
+
         onSpectatorEngagementChange?.Invoke(currentSpectatorEngagement = Engagement.First);
     }
 
