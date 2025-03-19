@@ -39,6 +39,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     //밴드 호응도 이벤트
     public event Action<Engagement> onBandEngagementChange;
+
     //관객 호응도 이벤트
     public event Action<Engagement> onSpectatorEngagementChange;
 
@@ -57,6 +58,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             SetScore(0, NoteRatings.Miss);
         }
     }
+
     public void Initialize()
     {
         scoreSetingData = Resources.Load<ScoreSettingData>("SO/ScoreSettingData");
@@ -110,12 +112,6 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         }
         SetBandEngagement();
         SetSpectatorEngagement();
-
-        print($"currentScore: {currentScore}");
-        print($"Multiplier: {multiplier}");
-        print($"combo: {combo}");
-        print($"higtcombo: {highCombo}");
-        print($"NoteHitCount: {NoteHitCount}");
     }
 
     private int SetMultiplier()
@@ -138,15 +134,16 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         }
         return 0;
     }
+
     //TODO: 콤보가 작아지면 디폴트 나가는현상 수정해야함
     private void SetSpectatorEngagement()
     {
-        int totalNoteCount = 10;//GameManager.Instance.NoteMap.TotalNoteCount;
-        SpectatorEventThreshold newThreshold = scoreSetingData.sectatorEventThreshold
-        .LastOrDefault(Threshold =>
-        NoteHitCount >= totalNoteCount * Threshold.noteThreshold &&
-        combo >= Threshold.comboThreshold)
-        ?? scoreSetingData.sectatorEventThreshold.First();
+        int totalNoteCount = 10; //GameManager.Instance.NoteMap.TotalNoteCount;
+        SpectatorEventThreshold newThreshold =
+            scoreSetingData.sectatorEventThreshold.LastOrDefault(Threshold =>
+                NoteHitCount >= totalNoteCount * Threshold.noteThreshold
+                && combo >= Threshold.comboThreshold
+            ) ?? scoreSetingData.sectatorEventThreshold.First();
 
         if (currentSpectatorEngagement != newThreshold.engagement)
         {
@@ -154,7 +151,6 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             currentSpectatorEngagement = newThreshold.engagement;
             onSpectatorEngagementChange?.Invoke(currentSpectatorEngagement);
         }
-
     }
 
     private void SetBandEngagement()
@@ -168,7 +164,6 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
         if (currentBandEngagement != newEngagement)
         {
-            print($"밴드 이벤트 발생: {newEngagement}");
             currentBandEngagement = newEngagement;
             onBandEngagementChange.Invoke(currentBandEngagement);
         }

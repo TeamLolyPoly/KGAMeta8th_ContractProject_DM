@@ -14,37 +14,35 @@ public class NoteData
     public NoteAxis noteAxis = NoteAxis.PZ;
 
     [JsonIgnore]
-    public Vector2 StartCell;
+    public Vector2Int StartCell;
 
     [JsonIgnore]
-    public Vector2 TargetCell;
+    public Vector2Int TargetCell;
 
-    public float StartCellX
+    public int StartCellX
     {
         get { return StartCell.x; }
-        set { StartCell = new Vector2(value, StartCell.y); }
+        set { StartCell = new Vector2Int(value, StartCell.y); }
     }
 
-    public float StartCellY
+    public int StartCellY
     {
         get { return StartCell.y; }
-        set { StartCell = new Vector2(StartCell.x, value); }
+        set { StartCell = new Vector2Int(StartCell.x, value); }
     }
 
-    public float TargetCellX
+    public int TargetCellX
     {
         get { return TargetCell.x; }
-        set { TargetCell = new Vector2(value, TargetCell.y); }
+        set { TargetCell = new Vector2Int(value, TargetCell.y); }
     }
 
-    public float TargetCellY
+    public int TargetCellY
     {
         get { return TargetCell.y; }
-        set { TargetCell = new Vector2(TargetCell.x, value); }
+        set { TargetCell = new Vector2Int(TargetCell.x, value); }
     }
 
-    public bool isLeftGrid;
-    public float noteSpeed;
     public int bar;
     public int beat;
     public int startIndex;
@@ -52,11 +50,11 @@ public class NoteData
     public bool isSymmetric;
     public bool isClockwise;
 
-    [JsonIgnore]
-    public bool isSegment;
-
     public int durationBars;
     public int durationBeats;
+
+    [JsonIgnore]
+    public float noteSpeed;
 
     [JsonIgnore]
     public GridGenerator gridGenerator;

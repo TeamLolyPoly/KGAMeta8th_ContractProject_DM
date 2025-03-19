@@ -176,7 +176,7 @@ namespace NoteEditor
             collider.isTrigger = true;
 
             Cell cell = cellObj.AddComponent<Cell>();
-            cell.Initialize(bar, beat, new Vector2(lane, y));
+            cell.Initialize(bar, beat, new Vector2Int(lane, y));
 
             cell.cellRenderer = cellRenderer;
 

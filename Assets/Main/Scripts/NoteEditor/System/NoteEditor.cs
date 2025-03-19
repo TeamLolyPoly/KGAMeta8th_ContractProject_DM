@@ -305,11 +305,8 @@ namespace NoteEditor
                     noteAxis = NoteAxis.None,
                     StartCell = cell.cellPosition,
                     TargetCell = cell.cellPosition,
-                    isLeftGrid = cell.cellPosition.x < 2,
-                    noteSpeed = 1.0f,
                     bar = cell.bar,
                     beat = cell.beat,
-                    startIndex = noteMap.notes.Count,
                     isSymmetric = false,
                     isClockwise = false,
                 };
@@ -382,6 +379,10 @@ namespace NoteEditor
                     return;
                 }
 
+                // Calculate startIndex and endIndex from cell positions
+                int startIndex = CalculateCellIndex(startCell.cellPosition);
+                int endIndex = CalculateCellIndex(endCell.cellPosition);
+
                 NoteData noteData = new NoteData
                 {
                     noteType = NoteType.Long,
@@ -390,12 +391,10 @@ namespace NoteEditor
                     noteAxis = NoteAxis.None,
                     StartCell = startCell.cellPosition,
                     TargetCell = endCell.cellPosition,
-                    isLeftGrid = false,
-                    noteSpeed = 1.0f,
                     bar = startCell.bar,
                     beat = startCell.beat,
-                    startIndex = 0,
-                    endIndex = 0,
+                    startIndex = startIndex,
+                    endIndex = endIndex,
                     isSymmetric = false,
                     isClockwise = true,
                     durationBars = durationBars,
@@ -432,6 +431,30 @@ namespace NoteEditor
                 Debug.LogError($"롱노트 생성 실패: {e.Message}");
                 Debug.LogError($"[DEBUG] 예외 발생 - 스택 트레이스: {e.StackTrace}");
             }
+        }
+
+        // 셀 위치를 원형 인덱스로 변환하는 메서드
+        private int CalculateCellIndex(Vector2Int cellPosition)
+        {
+            int gridX = cellPosition.x;
+            int gridY = cellPosition.y;
+
+            // 셀 그리드 내에서의 정규화된 좌표 (-1 ~ 1 범위)
+            float normX = Mathf.Clamp((gridX / (float)(5 - 1)) * 2 - 1, -1, 1);
+            float normY = Mathf.Clamp((gridY / (float)(3 - 1)) * 2 - 1, -1, 1);
+
+            // 각도 계산 (라디안)
+            float angle = Mathf.Atan2(normY, normX) * Mathf.Rad2Deg;
+            if (angle < 0)
+                angle += 360f;
+
+            // 기본 세그먼트 수를 72로 가정 (NoteSpawner와 일치시켜야 함)
+            int segmentCount = 72;
+
+            // 각도를 인덱스로 변환
+            int index = Mathf.RoundToInt(angle / (360f / segmentCount)) % segmentCount;
+
+            return index;
         }
 
         public void DeleteNote(Cell cell)

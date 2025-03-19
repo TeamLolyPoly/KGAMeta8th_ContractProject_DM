@@ -6,7 +6,7 @@ namespace NoteEditor
     public class Cell : MonoBehaviour
     {
         public NoteData noteData;
-        public Vector2 cellPosition;
+        public Vector2Int cellPosition;
         public int bar;
         public int beat;
         public ShortNoteModel noteModel;
@@ -29,7 +29,7 @@ namespace NoteEditor
             }
         }
 
-        public void Initialize(int bar, int beat, Vector2 cellPosition)
+        public void Initialize(int bar, int beat, Vector2Int cellPosition)
         {
             this.bar = bar;
             this.beat = beat;
