@@ -212,6 +212,7 @@ namespace NoteEditor
             }
             else
             {
+                selectedCell.cellRenderer.GetComponent<Renderer>().material = selectedCellMaterial;
                 EditorManager.Instance.editorPanel.ToggleShortNoteUI(false);
                 EditorManager.Instance.editorPanel.ToggleLongNoteUI(false);
             }
