@@ -5,7 +5,7 @@ using UnityEngine;
 public class Unit : MonoBehaviour
 {
     protected Animator animator;
-    protected AnimationSystem unitAnimationManager;
+    protected AnimationSystem unitAnimationSystem;
     protected Coroutine animChangeCoroutine;
     protected bool isAnimating = false;
 
@@ -14,7 +14,7 @@ public class Unit : MonoBehaviour
     protected virtual IEnumerator Start()
     {
         yield return new WaitUntil(() => GameManager.Instance.IsInitialized);
-        unitAnimationManager = GameManager.Instance.UnitAnimationManager;
+        unitAnimationSystem = GameManager.Instance.UnitAnimationManager;
         Initialize();
     }
     protected virtual void Initialize()
@@ -24,9 +24,9 @@ public class Unit : MonoBehaviour
         {
             animator = gameObject.AddComponent<Animator>();
         }
-        unitAnimationManager.AddUnit(this);
+        unitAnimationSystem.AddUnit(this);
 
-        unitAnimationManager.AttachAnimation(animator);
+        unitAnimationSystem.AttachAnimation(animator);
     }
 
     public virtual void SetAnimationClip(AnimationClip clip, string targetClipName)
@@ -69,7 +69,7 @@ public class Unit : MonoBehaviour
 
     protected void OnDisable()
     {
-        unitAnimationManager.RemoveUnit(this);
+        unitAnimationSystem.RemoveUnit(this);
     }
 
 }

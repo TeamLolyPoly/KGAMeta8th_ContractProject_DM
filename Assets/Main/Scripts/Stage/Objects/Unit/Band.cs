@@ -9,6 +9,6 @@ public class Band : Unit
     {
         base.Initialize();
 
-        unitAnimationManager.BandWalkAnimationChange(bandType, SetAnimationClip);
+        unitAnimationSystem.BandDefaultAnimationChange(this, SetAnimationClip);
     }
 }
