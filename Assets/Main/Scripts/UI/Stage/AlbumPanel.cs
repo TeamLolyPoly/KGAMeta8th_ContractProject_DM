@@ -1,6 +1,7 @@
 using Michsky.UI.Heat;
 using ProjectDM.UI;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class AlbumPanel : Panel
 {
@@ -38,10 +39,10 @@ public class AlbumPanel : Panel
     private BoxButtonManager backButton;
 
     [SerializeField]
-    private PanelButton laftTogle;
+    private Button laftTogle;
 
     [SerializeField]
-    private PanelButton rightTogle;
+    private Button rightTogle;
 
     [SerializeField]
     private BoxButtonManager selectAlbum;

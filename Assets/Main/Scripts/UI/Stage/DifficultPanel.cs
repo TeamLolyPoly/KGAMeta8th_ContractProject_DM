@@ -3,6 +3,7 @@ using ProjectDM;
 using ProjectDM.UI;
 using UnityEditor.ShaderGraph.Serialization;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DifficultPanel : Panel
 {
@@ -29,16 +30,16 @@ public class DifficultPanel : Panel
     //todo:랭킹 스크롤 작업 해야함
 
     [SerializeField]
-    private ButtonManager easyButton;
+    private Button easyButton;
 
     [SerializeField]
-    private ButtonManager normalButton;
+    private Button normalButton;
 
     [SerializeField]
-    private ButtonManager hardButton;
+    private Button hardButton;
 
     [SerializeField]
-    private ButtonManager gameStartButton;
+    private Button gameStartButton;
 
     public Difficulty userDifficulty = Difficulty.None;
 
@@ -46,7 +47,7 @@ public class DifficultPanel : Panel
 
     private void Start()
     {
-        gameStartButton.isInteractable = false;
+        gameStartButton.interactable = false;
         backButton.onClick.AddListener(OnBackButtonClick);
         easyButton.onClick.AddListener(OnEasyButtonClick);
         normalButton.onClick.AddListener(OnNormalButtonClick);
@@ -57,7 +58,6 @@ public class DifficultPanel : Panel
     private void OnEasyButtonClick()
     {
         SetDifficulty(Difficulty.Easy);
-        // TODO: 난이도 설정
     }
 
     private void OnNormalButtonClick()
@@ -85,11 +85,9 @@ public class DifficultPanel : Panel
         UIManager.Instance.ClosePanel(PanelType.Difficult);
     }
 
-    //todo: 난입도 버튼을 누른 상태여야 게임 스타트 버튼이 눌릴수있게 구현해야함.
-
     private void SetDifficulty(Difficulty difficulty)
     {
-        gameStartButton.isInteractable = true;
+        gameStartButton.interactable = true;
         userDifficulty = difficulty;
     }
 }
