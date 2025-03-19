@@ -236,9 +236,6 @@ namespace NoteEditor
             }
         }
 
-        /// <summary>
-        /// 트랙 목록을 새로고침합니다.
-        /// </summary>
         public void RefreshTrackList()
         {
             if (EditorDataManager.Instance != null)
@@ -247,20 +244,12 @@ namespace NoteEditor
             }
         }
 
-        /// <summary>
-        /// 모든 트랙 정보를 가져옵니다.
-        /// </summary>
-        /// <returns>트랙 데이터 목록</returns>
         public List<TrackData> GetAllTrackInfo()
         {
             RefreshTrackList();
             return cachedTracks;
         }
 
-        /// <summary>
-        /// 트랙을 선택합니다.
-        /// </summary>
-        /// <param name="track">선택할 트랙</param>
         public void SelectTrack(TrackData track)
         {
             if (track == null)
@@ -310,9 +299,6 @@ namespace NoteEditor
             );
         }
 
-        /// <summary>
-        /// 트랙 오디오를 로드하고 선택하는 코루틴
-        /// </summary>
         private IEnumerator LoadTrackAndSelect(string trackName)
         {
             var loadTask = EditorDataManager.Instance.LoadTrackAudioAsync(trackName);
@@ -332,9 +318,6 @@ namespace NoteEditor
             }
         }
 
-        /// <summary>
-        /// 다음 트랙으로 이동합니다.
-        /// </summary>
         public void NextTrack()
         {
             if (cachedTracks.Count > 0)
@@ -346,9 +329,6 @@ namespace NoteEditor
             }
         }
 
-        /// <summary>
-        /// 이전 트랙으로 이동합니다.
-        /// </summary>
         public void PreviousTrack()
         {
             if (cachedTracks.Count > 0)
@@ -361,10 +341,6 @@ namespace NoteEditor
             }
         }
 
-        /// <summary>
-        /// 트랙을 삭제합니다.
-        /// </summary>
-        /// <param name="track">삭제할 트랙</param>
         public async void RemoveTrack(TrackData track)
         {
             RefreshTrackList();
@@ -390,17 +366,12 @@ namespace NoteEditor
                 }
             }
 
-            // UI 업데이트
             if (editorPanel != null && editorPanel.IsInitialized)
             {
                 editorPanel.RefreshTrackList();
             }
         }
 
-        /// <summary>
-        /// 오디오 파일을 로드하는 메서드
-        /// </summary>
-        /// <param name="filePath">로드할 오디오 파일 경로</param>
         public void LoadAudioFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath) || isLoadingTrack)
@@ -416,11 +387,6 @@ namespace NoteEditor
             );
         }
 
-        /// <summary>
-        /// 앨범 아트를 설정하는 메서드
-        /// </summary>
-        /// <param name="filePath">로드할 이미지 파일 경로</param>
-        /// <param name="trackIndex">트랙 인덱스</param>
         public void SetAlbumArt(string filePath, int trackIndex)
         {
             if (string.IsNullOrEmpty(filePath))
@@ -435,9 +401,6 @@ namespace NoteEditor
             );
         }
 
-        /// <summary>
-        /// 오디오 파일 로드 프로세스
-        /// </summary>
         private IEnumerator LoadAudioFileProcess()
         {
             if (string.IsNullOrEmpty(pendingAudioFilePath))
@@ -526,9 +489,6 @@ namespace NoteEditor
             );
         }
 
-        /// <summary>
-        /// 앨범 아트 로드 프로세스
-        /// </summary>
         private IEnumerator LoadAlbumArtProcess(int trackIndex)
         {
             if (string.IsNullOrEmpty(pendingAlbumArtFilePath))
@@ -602,20 +562,16 @@ namespace NoteEditor
             updateProgress(1.0f);
             pendingAlbumArtFilePath = null;
 
-            // 씬 전환 후 UI 업데이트를 위해 콜백 사용
             LoadingManager.Instance.LoadScene(
                 currentSceneName,
                 () =>
                 {
-                    // 트랙 목록 갱신
                     RefreshTrackList();
 
-                    // UI 업데이트
                     if (editorPanel != null && editorPanel.IsInitialized)
                     {
                         editorPanel.RefreshTrackList();
 
-                        // 현재 선택된 트랙이 업데이트된 트랙이라면 UI 갱신
                         TrackData currentSelectedTrack = cachedTracks.FirstOrDefault(t =>
                             t.trackName == trackName
                         );
@@ -632,9 +588,6 @@ namespace NoteEditor
             );
         }
 
-        /// <summary>
-        /// 랜덤 팁을 설정합니다.
-        /// </summary>
         private void SetRandomTip(LoadingUI loadingUI, string[] tips)
         {
             if (tips.Length > 0)
@@ -644,24 +597,17 @@ namespace NoteEditor
             }
         }
 
-        /// <summary>
-        /// 트랙의 BPM을 설정합니다.
-        /// </summary>
-        /// <param name="trackName">트랙 이름</param>
-        /// <param name="bpm">설정할 BPM 값</param>
         public async Task SetBPMAsync(string trackName, float bpm)
         {
             if (EditorDataManager.Instance != null)
             {
                 await EditorDataManager.Instance.SetBPMAsync(trackName, bpm);
 
-                // 현재 선택된 트랙의 BPM이 변경되었다면 노트 에디터에 알림
                 if (currentTrack != null && currentTrack.trackName == trackName)
                 {
                     noteEditor.UpdateBPM(bpm);
                 }
 
-                // 트랙 목록 갱신
                 RefreshTrackList();
             }
         }

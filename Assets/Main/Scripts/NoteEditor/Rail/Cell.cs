@@ -12,6 +12,7 @@ namespace NoteEditor
         public ShortNoteModel noteModel;
         public LongNoteModel longNoteModel;
         public GameObject cellRenderer;
+        public bool isOccupied = false;
 
         private CellController cellController;
         private Camera mainCamera;

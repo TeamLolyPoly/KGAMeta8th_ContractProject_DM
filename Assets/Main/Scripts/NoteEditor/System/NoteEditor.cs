@@ -157,7 +157,11 @@ namespace NoteEditor
 
         private void CreateShortNoteAction()
         {
-            if (cellController != null && cellController.SelectedCell != null)
+            if (
+                cellController != null
+                && cellController.SelectedCell != null
+                && cellController.SelectedCell.isOccupied == false
+            )
             {
                 CreateShortNote(cellController.SelectedCell);
 
@@ -178,6 +182,12 @@ namespace NoteEditor
                 SaveNoteMap();
 
                 editorManager.editorPanel.ToggleShortNoteUI(true);
+            }
+            else if (cellController.SelectedCell.isOccupied)
+            {
+                editorManager.editorPanel.UpdateStatusText(
+                    "<color=red>이미 노트가 있는 셀입니다.</color>"
+                );
             }
             else
             {
@@ -208,10 +218,10 @@ namespace NoteEditor
                 return;
             }
 
-            if (selectedCell.noteData != null && selectedCell.noteData.noteType != NoteType.Long)
+            if (selectedCell.isOccupied)
             {
                 editorManager.editorPanel.UpdateStatusText(
-                    "<color=red>롱노트는 비어있는 셀 또는 다른 롱노트가 없는 셀에서만 시작할 수 있습니다.</color>"
+                    "<color=red>비어있지 않은 셀입니다</color>"
                 );
                 return;
             }
@@ -255,10 +265,6 @@ namespace NoteEditor
                 if (cellController.SelectedCell.noteData != null)
                 {
                     DeleteNote(cellController.SelectedCell);
-
-                    editorManager.editorPanel.UpdateStatusText(
-                        $"<color=yellow>노트 삭제됨: 마디 {cellController.SelectedCell.bar}, 박자 {cellController.SelectedCell.beat}</color>"
-                    );
 
                     editorManager.editorPanel.UpdateSelectedCellInfo(cellController.SelectedCell);
 
@@ -304,6 +310,7 @@ namespace NoteEditor
                 noteMap.notes.Add(noteData);
 
                 cell.noteData = noteData;
+                cell.isOccupied = true;
             }
             catch (Exception e)
             {
@@ -406,6 +413,8 @@ namespace NoteEditor
                     }
 
                     longNoteModel.Initialize(startCell, endCell, noteData);
+                    startCell.isOccupied = true;
+                    endCell.isOccupied = true;
                     startCell.longNoteModel = longNoteModel;
 
                     startCell.cellRenderer.SetActive(false);
@@ -462,11 +471,19 @@ namespace NoteEditor
                 {
                     Destroy(cell.noteModel.gameObject);
                     cell.noteModel = null;
+
+                    editorManager.editorPanel.UpdateStatusText(
+                        $"<color=yellow>노트 삭제됨: 마디 {cell.bar}, 박자 {cell.beat}</color>"
+                    );
                 }
                 else if (cell.noteData.noteType == NoteType.Long && cell.longNoteModel != null)
                 {
                     Destroy(cell.longNoteModel.gameObject);
                     cell.longNoteModel = null;
+
+                    editorManager.editorPanel.UpdateStatusText(
+                        $"<color=yellow>롱노트 삭제됨: 마디 {cell.bar}, 박자 {cell.beat}, 길이</color>"
+                    );
                 }
 
                 cell.noteData = null;
