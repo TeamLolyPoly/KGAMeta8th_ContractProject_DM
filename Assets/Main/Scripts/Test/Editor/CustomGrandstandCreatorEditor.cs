@@ -159,11 +159,12 @@ public class CustomGrandstandCreatorEditor : Editor
 
         // 총 관중 수 표시
         EditorGUILayout.Space();
+        int spectatorCount = CountSpectators(creator.transform);
         EditorGUILayout.HelpBox(
             $"총 관중 수: {creator.rows * creator.columns}명\n"
                 + (
-                    creator.transform.childCount > 0
-                        ? $"현재 생성된 관중: {creator.transform.childCount}명"
+                    spectatorCount > 0
+                        ? $"현재 생성된 관중: {spectatorCount}명"
                         : "현재 생성된 관중 없음"
                 ),
             MessageType.Info
@@ -287,7 +288,7 @@ public class CustomGrandstandCreatorEditor : Editor
         ClearSpectators();
 
         // CreateSpectators 메서드 직접 호출
-        //creator.CreateSpectators();
+        creator.CreateSpectators();
 
         EditorUtility.DisplayDialog(
             "완료",
@@ -309,5 +310,26 @@ public class CustomGrandstandCreatorEditor : Editor
         {
             Undo.DestroyObjectImmediate(child);
         }
+    }
+
+    // 총 관중 수 표시
+    private int CountSpectators(Transform parent)
+    {
+        Transform spectatorsContainer = parent.Find("Spectators");
+        if (spectatorsContainer != null)
+        {
+            return spectatorsContainer.childCount;
+        }
+
+        // 이전 버전 호환성을 위해 이름으로 검색
+        int count = 0;
+        foreach (Transform child in parent)
+        {
+            if (child.name.StartsWith("Spectator_"))
+            {
+                count++;
+            }
+        }
+        return count;
     }
 }

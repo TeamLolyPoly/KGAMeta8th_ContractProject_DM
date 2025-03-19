@@ -49,6 +49,10 @@ public class CustomGrandstandCreator : MonoBehaviour
     public bool disableShadowsForDistant = true; // 원거리 그림자 비활성화
     public int cullingDistance = 60; // 컬링 거리
 
+    [Header("개발 설정")]
+    [Tooltip("이 값이 true이면 에디터에서 생성된 관중만 사용하고 인스턴싱을 사용하지 않습니다.")]
+    public bool useOnlyEditorSpectators = true; // 기본값은 true로 설정
+
     // 내부 변수
     private Camera mainCamera;
     private float distanceToCamera;
@@ -59,8 +63,78 @@ public class CustomGrandstandCreator : MonoBehaviour
     private int currentLODLevel = 0;
     private int totalInstances;
 
+    // 초기 검사를 위한 Awake 함수 추가
+    void Awake()
+    {
+        // 에디터에서 생성된 관중만 사용하도록 강제 설정된 경우
+        if (useOnlyEditorSpectators)
+        {
+            Debug.Log(
+                "[관중시스템] 에디터에서 생성된 관중만 사용하도록 설정되었습니다. 인스턴싱을 비활성화합니다."
+            );
+            enableLOD = false;
+            enabled = false;
+            return;
+        }
+
+        // 그 외에는 기존 관중 검사 수행
+        CheckForExistingSpectators();
+    }
+
+    // 기존 관중 검사 함수
+    private bool CheckForExistingSpectators()
+    {
+        // 에디터에서 생성된 관중이 있는지 검사
+        Transform spectatorsContainer = transform.Find("Spectators");
+
+        // 컨테이너가 있고 그 안에 관중이 있는 경우
+        if (spectatorsContainer != null && spectatorsContainer.childCount > 0)
+        {
+            Debug.Log(
+                $"[관중시스템] 기존 관중 {spectatorsContainer.childCount}명이 발견되었습니다. 인스턴싱을 비활성화합니다."
+            );
+            enableLOD = false;
+            enabled = false; // 스크립트 자체를 비활성화
+            return true;
+        }
+
+        // 이전 버전 호환성을 위해 직접 자식들을 검사
+        int spectatorCount = 0;
+        foreach (Transform child in transform)
+        {
+            if (child.name.StartsWith("Spectator_"))
+            {
+                spectatorCount++;
+            }
+        }
+
+        if (spectatorCount > 0)
+        {
+            Debug.Log(
+                $"[관중시스템] 이전 버전으로 생성된 관중 {spectatorCount}명이 발견되었습니다. 인스턴싱을 비활성화합니다."
+            );
+            enableLOD = false;
+            enabled = false; // 스크립트 자체를 비활성화
+            return true;
+        }
+
+        return false;
+    }
+
     void Start()
     {
+        // 이미 Awake에서 기존 관중이 발견되었다면 중단
+        if (!enabled || !enableLOD)
+        {
+            return;
+        }
+
+        // 다시 한번 검사 (안전 장치)
+        if (CheckForExistingSpectators())
+        {
+            return;
+        }
+
         mainCamera = Camera.main;
         if (mainCamera == null)
         {
@@ -87,10 +161,12 @@ public class CustomGrandstandCreator : MonoBehaviour
 
         // 행렬 및 리소스 초기화
         InitializeResources();
+        Debug.Log("[관중시스템] 인스턴싱 방식으로 관중을 렌더링합니다.");
     }
 
     void Update()
     {
+        // 이미 생성된 관중 오브젝트가 있거나 LOD가 비활성화되었거나 카메라가 없는 경우 건너뜀
         if (!enableLOD || mainCamera == null)
             return;
 
@@ -122,6 +198,18 @@ public class CustomGrandstandCreator : MonoBehaviour
         matrices = new Matrix4x4[totalInstances];
         int index = 0;
 
+        // 부모 오브젝트의 위치와 회전을 고려
+        Vector3 parentPosition = transform.position;
+        Quaternion parentRotation = transform.rotation;
+
+        // 디버그 정보
+        if (Debug.isDebugBuild)
+        {
+            Debug.Log(
+                $"인스턴싱 행렬 계산 - 부모 위치: {parentPosition}, 총 관중 수: {totalInstances}"
+            );
+        }
+
         for (int i = 0; i < columns; i++)
         {
             for (int j = 0; j < rows; j++)
@@ -131,12 +219,30 @@ public class CustomGrandstandCreator : MonoBehaviour
                 float yPos = j * heightOffset;
                 float zPos = j * verticalSpacing;
 
-                // 행렬 생성
+                // 로컬 좌표 계산
+                Vector3 localPosition = new Vector3(
+                    xPos,
+                    yPos + spectatorHeight,
+                    zPos + spectatorForward
+                );
+
+                // 월드 좌표로 변환 (부모 위치와 회전 적용)
+                Vector3 worldPosition = parentPosition + parentRotation * localPosition;
+
+                // 행렬 생성 (월드 좌표 기준)
                 matrices[index++] = Matrix4x4.TRS(
-                    new Vector3(xPos, yPos + spectatorHeight, zPos + spectatorForward),
-                    Quaternion.Euler(0, 180, 0),
+                    worldPosition,
+                    parentRotation * Quaternion.Euler(0, 180, 0),
                     Vector3.one
                 );
+
+                // 10행 10열마다 위치 정보 기록 (디버그용)
+                if (Debug.isDebugBuild && i % 10 == 0 && j % 10 == 0)
+                {
+                    Debug.Log(
+                        $"관중 위치 계산 [{i},{j}] - 로컬: {localPosition}, 월드: {worldPosition}"
+                    );
+                }
             }
         }
     }
@@ -206,15 +312,18 @@ public class CustomGrandstandCreator : MonoBehaviour
     // 카메라와 거리 계산
     private void CalculateDistanceToCamera()
     {
-        Vector3 centerPoint =
-            transform.position
-            + new Vector3(
-                columns * horizontalSpacing * 0.5f,
-                rows * heightOffset * 0.5f,
-                rows * verticalSpacing * 0.5f
-            );
+        // 관중석의 중심점 계산 (월드 좌표)
+        Vector3 localCenterPoint = new Vector3(
+            columns * horizontalSpacing * 0.5f,
+            rows * heightOffset * 0.5f,
+            rows * verticalSpacing * 0.5f
+        );
 
-        distanceToCamera = Vector3.Distance(mainCamera.transform.position, centerPoint);
+        // 로컬에서 월드 좌표로 변환
+        Vector3 worldCenterPoint = transform.TransformPoint(localCenterPoint);
+
+        // 카메라와의 거리 계산
+        distanceToCamera = Vector3.Distance(mainCamera.transform.position, worldCenterPoint);
     }
 
     // LOD 레벨 업데이트 및 렌더링
@@ -247,9 +356,27 @@ public class CustomGrandstandCreator : MonoBehaviour
     {
         int lodLevel = currentLODLevel;
 
+        // 디버그: 인스턴싱 정보 확인
+        if (Debug.isDebugBuild && Time.frameCount % 300 == 0)
+        {
+            Debug.Log(
+                $"관중 인스턴싱 렌더링 - LOD 레벨: {lodLevel}, 총 인스턴스: {matrices.Length}"
+            );
+        }
+
         // 메시나 머티리얼이 없으면 렌더링 불가
-        if (meshes[lodLevel] == null || instancedMaterials[lodLevel] == null)
+        if (
+            meshes == null
+            || meshes.Length <= lodLevel
+            || meshes[lodLevel] == null
+            || instancedMaterials == null
+            || instancedMaterials.Length <= lodLevel
+            || instancedMaterials[lodLevel] == null
+        )
+        {
+            Debug.LogWarning($"LOD{lodLevel}에 필요한 메시 또는 머티리얼이 없습니다.");
             return;
+        }
 
         // 프로퍼티 블록 초기화
         propertyBlock.Clear();
@@ -261,18 +388,35 @@ public class CustomGrandstandCreator : MonoBehaviour
                 ? UnityEngine.Rendering.ShadowCastingMode.Off
                 : UnityEngine.Rendering.ShadowCastingMode.On;
 
-        // 모든 관중 그리기 (밀도 = 1)
-        Graphics.DrawMeshInstanced(
-            meshes[lodLevel],
-            0,
-            instancedMaterials[lodLevel],
-            matrices,
-            matrices.Length,
-            propertyBlock,
-            shadowMode,
-            receiveShadows,
-            gameObject.layer
-        );
+        // 메시 인스턴싱 성능 최적화 - 배치 크기 조정
+        int batchSize = 1023; // 최대 배치 크기 (Unity에서 권장하는 최대값)
+
+        try
+        {
+            for (int i = 0; i < matrices.Length; i += batchSize)
+            {
+                int count = Mathf.Min(batchSize, matrices.Length - i);
+                Matrix4x4[] batchMatrices = new Matrix4x4[count];
+                System.Array.Copy(matrices, i, batchMatrices, 0, count);
+
+                // 관중 그리기 (배치 단위로)
+                Graphics.DrawMeshInstanced(
+                    meshes[lodLevel],
+                    0,
+                    instancedMaterials[lodLevel],
+                    batchMatrices,
+                    count,
+                    propertyBlock,
+                    shadowMode,
+                    receiveShadows,
+                    gameObject.layer
+                );
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"관중 인스턴싱 렌더링 중 오류 발생: {e.Message}");
+        }
     }
 
     // 디버그용 기즈모
@@ -342,12 +486,28 @@ public class CustomGrandstandCreator : MonoBehaviour
 
         GameObject spectatorPrefab = geometry.spectator[0];
         int spectatorIndex = 0;
+        int createdSpectators = 0;
+        int createdSeats = 0;
+
+        // 관중을 담을 빈 컨테이너 생성
+        GameObject spectatorsContainer = new GameObject("Spectators");
+        spectatorsContainer.transform.SetParent(transform);
+        spectatorsContainer.transform.localPosition = Vector3.zero;
+
+        // 의자를 담을 빈 컨테이너 생성 (의자가 있는 경우에만)
+        GameObject seatsContainer = null;
+        if (geometry.seat != null)
+        {
+            seatsContainer = new GameObject("Seats");
+            seatsContainer.transform.SetParent(transform);
+            seatsContainer.transform.localPosition = Vector3.zero;
+        }
 
         for (int i = 0; i < columns; i++)
         {
             for (int j = 0; j < rows; j++)
             {
-                // 위치 계산
+                // 위치 계산 - CalculateMatrices()와 동일한 방식으로 계산
                 float xPos = i * horizontalSpacing;
                 float yPos = j * heightOffset;
                 float zPos = j * verticalSpacing;
@@ -368,25 +528,43 @@ public class CustomGrandstandCreator : MonoBehaviour
                 }
 
                 // 관중 생성
-                GameObject spectator = Instantiate(spectatorPrefab, transform);
+                GameObject spectator = Instantiate(spectatorPrefab, spectatorsContainer.transform);
                 spectator.transform.localPosition = pos;
                 spectator.transform.localRotation = Quaternion.Euler(0, 180, 0);
                 spectator.transform.localScale = Vector3.one;
                 spectator.name = "Spectator_" + i + "_" + j;
+                createdSpectators++;
 
                 // 의자 생성
-                if (geometry.seat != null)
+                if (geometry.seat != null && seatsContainer != null)
                 {
-                    GameObject seat = Instantiate(geometry.seat, transform);
+                    GameObject seat = Instantiate(geometry.seat, seatsContainer.transform);
                     seat.transform.localPosition = new Vector3(xPos, yPos, zPos);
                     seat.transform.localRotation = Quaternion.identity;
                     seat.transform.localScale = Vector3.one;
                     seat.name = "Seat_" + i + "_" + j;
+                    createdSeats++;
                 }
             }
         }
 
-        Debug.Log($"관중 생성 완료: {rows * columns} 명");
+        Debug.Log($"관중 생성 완료: {createdSpectators}명, 의자: {createdSeats}개");
     }
 #endif
+
+    void OnDisable()
+    {
+        // 메시와 머티리얼 리소스 정리
+        if (instancedMaterials != null)
+        {
+            for (int i = 0; i < instancedMaterials.Length; i++)
+            {
+                if (instancedMaterials[i] != null)
+                {
+                    if (Application.isPlaying)
+                        Destroy(instancedMaterials[i]);
+                }
+            }
+        }
+    }
 }
