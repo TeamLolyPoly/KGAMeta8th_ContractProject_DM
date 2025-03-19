@@ -39,6 +39,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     //밴드 호응도 이벤트
     public event Action<Engagement> onBandEngagementChange;
+
     //관객 호응도 이벤트
     public event Action<Engagement> onSpectatorEngagementChange;
 
@@ -57,6 +58,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             SetScore(0, NoteRatings.Miss);
         }
     }
+
     public void Initialize()
     {
         scoreSettingData = Resources.Load<ScoreSettingData>("SO/ScoreSettingData");
@@ -89,7 +91,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     public void SetScore(float score, NoteRatings ratings)
     {
         ratingCount[ratings] += 1;
-        if (score <= 0 || ratings == NoteRatings.Miss)
+        if (ratings == NoteRatings.Miss)
         {
             combo = 0 < combo ? 0 : combo - 1;
             multiplier = 1;
@@ -111,11 +113,15 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         SetBandEngagement();
         SetSpectatorEngagement();
 
-        print($"currentScore: {currentScore}");
-        print($"Multiplier: {multiplier}");
-        print($"combo: {combo}");
-        print($"higtcombo: {highCombo}");
-        print($"NoteHitCount: {noteHitCount}");
+        print(
+            $"=============노트 타격===============\n"
+                + $"현재총점수: {currentScore}"
+                + $"\n랭크: {ratings}"
+                + $"\n노트점수: {score}"
+                + $"\n최고 콤보: {highCombo}"
+                + $"\n현재 콤보: {combo}"
+                + $"\n노트파괴수: {noteHitCount}"
+        );
     }
 
     private int SetMultiplier()
@@ -141,20 +147,20 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     private void SetSpectatorEngagement()
     {
-        int totalNoteCount = 10;//GameManager.Instance.NoteMap.TotalNoteCount;
-        SpectatorEventThreshold newThreshold = scoreSettingData.sectatorEventThreshold
-        .LastOrDefault(threshold => CheckEngagement(threshold, totalNoteCount))
-        ?? scoreSettingData.sectatorEventThreshold.First();
-        print($"combo: {combo}\n NoteHitCount: {noteHitCount}\n newThreshold: {newThreshold.comboThreshold} , {newThreshold.noteThreshold} \n totalNoteCount: {totalNoteCount * newThreshold.noteThreshold}");
+        int totalNoteCount = 10; //GameManager.Instance.NoteMap.TotalNoteCount;
+        SpectatorEventThreshold newThreshold =
+            scoreSettingData.sectatorEventThreshold.LastOrDefault(threshold =>
+                CheckEngagement(threshold, totalNoteCount)
+            ) ?? scoreSettingData.sectatorEventThreshold.First();
 
         if (currentSpectatorEngagement != newThreshold.engagement)
-
         {
             print($"관객 이벤트 발생: {newThreshold.engagement}");
             currentSpectatorEngagement = newThreshold.engagement;
             onSpectatorEngagementChange?.Invoke(currentSpectatorEngagement);
         }
     }
+
     private bool CheckEngagement(SpectatorEventThreshold threshold, int totalNoteCount)
     {
         bool isOverCount = noteHitCount >= totalNoteCount * threshold.noteThreshold;
@@ -182,6 +188,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     }
 
     private bool IsPlus(int num) => num >= 0;
+
     private bool IsCombo(int num)
     {
         if (IsPlus(num))

@@ -14,9 +14,10 @@ public class Unit : MonoBehaviour
     protected virtual IEnumerator Start()
     {
         yield return new WaitUntil(() => GameManager.Instance.IsInitialized);
-        unitAnimationSystem = GameManager.Instance.UnitAnimationManager;
+        unitAnimationSystem = GameManager.Instance.UnitAnimationSystem;
         Initialize();
     }
+
     protected virtual void Initialize()
     {
         animator = GetComponent<Animator>();
@@ -39,6 +40,7 @@ public class Unit : MonoBehaviour
             animator.runtimeAnimatorController = overrideController;
         }
         overrideController[targetClipName] = clip;
+        animator.Play(targetClipName);
         // animationQueue.Enqueue(clip);
 
         // if (animChangeCoroutine != null)
@@ -61,6 +63,7 @@ public class Unit : MonoBehaviour
         }
         animChangeCoroutine = null;
     }
+
     public void OnAnimation()
     {
         isAnimating = !isAnimating;
@@ -71,5 +74,4 @@ public class Unit : MonoBehaviour
     {
         unitAnimationSystem.RemoveUnit(this);
     }
-
 }

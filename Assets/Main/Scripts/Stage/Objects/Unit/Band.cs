@@ -10,5 +10,6 @@ public class Band : Unit
         base.Initialize();
 
         unitAnimationSystem.BandDefaultAnimationChange(this, SetAnimationClip);
+        unitAnimationSystem.BandAnimationClipChange(Engagement.Fourth);
     }
 }

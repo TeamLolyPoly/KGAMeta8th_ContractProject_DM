@@ -23,7 +23,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
     private ScoreSystem scoreSystem;
     public ScoreSystem ScoreSystem => scoreSystem;
     private AnimationSystem unitAnimationManager;
-    public AnimationSystem UnitAnimationManager => unitAnimationManager;
+    public AnimationSystem UnitAnimationSystem => unitAnimationManager;
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
     private bool isPlaying = false;

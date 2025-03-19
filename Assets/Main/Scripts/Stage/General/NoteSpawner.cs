@@ -205,14 +205,6 @@ public class NoteSpawner : MonoBehaviour
             // 노트 생성
             SpawnNote(note);
 
-            // 디버그 로그
-            Debug.Log(
-                $"노트 생성: 마디={note.bar}, 비트={note.beat}, "
-                    + $"도착 시간={targetHitTime:F3}초, "
-                    + $"절대 시간={absoluteHitTime - startDspTime:F3}초, "
-                    + $"현재 시간={AudioSettings.dspTime - startDspTime:F3}초"
-            );
-
             // 짧은 대기 시간 추가 (노트 생성 간 간격)
             yield return new WaitForSecondsRealtime(0.01f);
         }
@@ -263,13 +255,6 @@ public class NoteSpawner : MonoBehaviour
         {
             noteObj.SetHitFX(hitFXPrefab);
         }
-
-        double spawnTime = AudioSettings.dspTime - startDspTime;
-
-        Debug.Log(
-            $"단노트 생성 - 시간: {spawnTime:F3}, 마디: {noteData.bar}, 비트: {noteData.beat}, "
-                + $"위치:  ({noteData.StartCell.x}, {noteData.StartCell.y})"
-        );
     }
 
     private void SpawnLongNote(NoteData noteData)

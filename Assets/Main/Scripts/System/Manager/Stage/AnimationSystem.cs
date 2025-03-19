@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -30,7 +31,8 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         }
 
         GameManager.Instance.ScoreSystem.onBandEngagementChange += BandAnimationClipChange;
-        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange += SpectatorAnimationClipChange;
+        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange +=
+            SpectatorAnimationClipChange;
 
         isInitialized = true;
     }
@@ -46,6 +48,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             spectators.Add(spectator);
         }
     }
+
     public void RemoveUnit(Unit unit)
     {
         if (unit is Band band)
@@ -76,6 +79,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             }
         }
     }
+
     public void SpectatorDefaultAnimationChange(Action<AnimationClip, string> action)
     {
         int index = Random.Range(0, AnimData.spectatorAnimationData.RandomAnima.Count);
@@ -111,7 +115,9 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             if ((int)engagement >= AnimData.spectatorAnimationData.engagementClip.Count)
                 continue;
 
-            AnimationClip animationClip = AnimData?.spectatorAnimationData.engagementClip[(int)engagement];
+            AnimationClip animationClip = AnimData
+                ?.spectatorAnimationData
+                .engagementClip[(int)engagement];
 
             if (animationClip == null)
                 continue;
