@@ -79,7 +79,7 @@ namespace NoteEditor
                     startCell.bar,
                     startCell.beat,
                     3,
-                    3
+                    1
                 );
 
                 if (centralCell != null)
