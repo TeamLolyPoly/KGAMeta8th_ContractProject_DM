@@ -352,6 +352,12 @@ namespace NoteEditor
                     durationBeats = endCell.beat - startCell.beat;
                 }
 
+                if (durationBeats < 0)
+                {
+                    durationBars--;
+                    durationBeats += railController.BeatsPerBar;
+                }
+
                 bool isStartCellInGrid = !(
                     startCell.cellPosition.x < 2
                     || startCell.cellPosition.x > 4
@@ -471,7 +477,7 @@ namespace NoteEditor
                 {
                     Destroy(cell.noteModel.gameObject);
                     cell.noteModel = null;
-
+                    cell.isOccupied = false;
                     editorManager.editorPanel.UpdateStatusText(
                         $"<color=yellow>노트 삭제됨: 마디 {cell.bar}, 박자 {cell.beat}</color>"
                     );
@@ -480,6 +486,7 @@ namespace NoteEditor
                 {
                     Destroy(cell.longNoteModel.gameObject);
                     cell.longNoteModel = null;
+                    cell.isOccupied = false;
 
                     editorManager.editorPanel.UpdateStatusText(
                         $"<color=yellow>롱노트 삭제됨: 마디 {cell.bar}, 박자 {cell.beat}, 길이</color>"
@@ -514,13 +521,6 @@ namespace NoteEditor
                 if (cellController.SelectedCell.noteModel != null)
                 {
                     cellController.SelectedCell.noteModel.SetNoteColor(noteColor);
-                }
-            }
-            else if (cellController.SelectedCell.noteData.noteType == NoteType.Long)
-            {
-                if (cellController.SelectedCell.longNoteModel != null)
-                {
-                    cellController.SelectedCell.longNoteModel.ApplyRodColors();
                 }
             }
 
@@ -558,10 +558,143 @@ namespace NoteEditor
             if (cellController.SelectedCell.longNoteModel != null)
             {
                 cellController.SelectedCell.longNoteModel.SetSymmetric(isSymmetric);
+                LongNoteModel longNoteModel = cellController.SelectedCell.longNoteModel;
+
+                UpdateSymmetricNote(
+                    longNoteModel.startCell,
+                    longNoteModel.endCell,
+                    cellController.SelectedCell.noteData,
+                    isSymmetric
+                );
             }
 
             SaveNoteMap();
             return true;
+        }
+
+        public void UpdateSymmetricNote(
+            Cell originalStart,
+            Cell orignialTarget,
+            NoteData noteData,
+            bool createSymmetric
+        )
+        {
+            if (originalStart == null || orignialTarget == null || noteData == null)
+                return;
+
+            string symmetricVisualName = $"SymmetricNote_{originalStart.GetInstanceID()}";
+            GameObject existingSymmetricVisual = GameObject.Find(symmetricVisualName);
+            if (existingSymmetricVisual != null)
+            {
+                Destroy(existingSymmetricVisual);
+            }
+
+            if (createSymmetric)
+            {
+                int segmentCount = 72;
+                int symmetricStartIndex = (noteData.startIndex + segmentCount / 2) % segmentCount;
+                int symmetricEndIndex = (noteData.endIndex + segmentCount / 2) % segmentCount;
+
+                if (longNoteModelPrefab != null)
+                {
+                    Vector2Int centerGrid = new Vector2Int(3, 1);
+
+                    Vector2Int symStartPos = new Vector2Int(
+                        2 * centerGrid.x - originalStart.cellPosition.x,
+                        2 * centerGrid.y - originalStart.cellPosition.y
+                    );
+
+                    Vector2Int symEndPos = new Vector2Int(
+                        2 * centerGrid.x - orignialTarget.cellPosition.x,
+                        2 * centerGrid.y - orignialTarget.cellPosition.y
+                    );
+
+                    Cell symmetricStartCell = GetCellByPosition(symStartPos);
+                    Cell symmetricEndCell = GetCellByPosition(symEndPos);
+
+                    if (symmetricStartCell == null || symmetricEndCell == null)
+                    {
+                        Debug.LogWarning(
+                            $"대칭 노트를 위한 셀을 찾을 수 없습니다. "
+                                + $"시작점: ({symStartPos.x}, {symStartPos.y}), "
+                                + $"끝점: ({symEndPos.x}, {symEndPos.y})"
+                        );
+                        return;
+                    }
+
+                    int durationBars = noteData.durationBars;
+                    int durationBeats = noteData.durationBeats;
+
+                    int endBar = symmetricStartCell.bar + durationBars;
+                    int endBeat = symmetricStartCell.beat + durationBeats;
+
+                    if (endBeat >= railController.BeatsPerBar)
+                    {
+                        endBar += endBeat / railController.BeatsPerBar;
+                        endBeat = endBeat % railController.BeatsPerBar;
+                    }
+
+                    symmetricEndCell = cellController.GetCell(
+                        endBar,
+                        endBeat,
+                        symEndPos.x,
+                        symEndPos.y
+                    );
+
+                    if (symmetricEndCell == null)
+                    {
+                        Debug.LogWarning(
+                            $"대칭 노트의 끝점 셀을 찾을 수 없습니다: 마디 {endBar}, 박자 {endBeat}, 위치 ({symEndPos.x}, {symEndPos.y})"
+                        );
+                        return;
+                    }
+
+                    LongNoteModel symmetricNoteModel = Instantiate(
+                        longNoteModelPrefab,
+                        symmetricStartCell.transform
+                    );
+
+                    symmetricNoteModel.gameObject.name = symmetricVisualName;
+
+                    NoteData symmetricNoteData = new NoteData
+                    {
+                        noteType = NoteType.Long,
+                        noteColor = NoteColor.Red,
+                        direction = noteData.direction,
+                        noteAxis = noteData.noteAxis,
+                        StartCell = symmetricStartCell.cellPosition,
+                        TargetCell = symmetricEndCell.cellPosition,
+                        bar = symmetricStartCell.bar,
+                        beat = symmetricStartCell.beat,
+                        startIndex = symmetricStartIndex,
+                        endIndex = symmetricEndIndex,
+                        isSymmetric = true,
+                        isClockwise = !noteData.isClockwise,
+                        durationBars = durationBars,
+                        durationBeats = durationBeats,
+                    };
+
+                    symmetricNoteModel.Initialize(
+                        symmetricStartCell,
+                        symmetricEndCell,
+                        symmetricNoteData
+                    );
+                }
+                else
+                {
+                    Debug.LogWarning("롱노트 모델 프리팹이 없어 대칭 노트를 생성할 수 없습니다.");
+                }
+            }
+        }
+
+        private Cell GetCellByPosition(Vector2Int position)
+        {
+            foreach (var cell in cellController.Cells.Values)
+            {
+                if (cell.cellPosition == position)
+                    return cell;
+            }
+            return null;
         }
 
         public bool UpdateNoteClockwise(bool isClockwise)

@@ -8,19 +8,19 @@ namespace NoteEditor
         private GameObject rod;
 
         [SerializeField]
-        private GameObject startPoint;
+        private GameObject redPoint;
 
         [SerializeField]
-        private GameObject endPoint;
+        private GameObject bluePoint;
 
-        private Cell startCell;
-        private Cell endCell;
-        private NoteData noteData;
-        private bool isInitialized = false;
+        public Cell startCell;
+        public Cell endCell;
+        public NoteData noteData;
+        public bool isInitialized = false;
 
         private void Awake()
         {
-            if (rod == null || startPoint == null || endPoint == null)
+            if (rod == null || redPoint == null || bluePoint == null)
             {
                 Debug.LogError(
                     "[LongNoteModel] 롱노트 모델에 필요한 컴포넌트가 할당되지 않았습니다."
@@ -29,10 +29,10 @@ namespace NoteEditor
 
             if (rod != null)
                 rod.SetActive(true);
-            if (startPoint != null)
-                startPoint.SetActive(true);
-            if (endPoint != null)
-                endPoint.SetActive(true);
+            if (redPoint != null)
+                redPoint.SetActive(true);
+            if (bluePoint != null)
+                bluePoint.SetActive(true);
         }
 
         private void OnEnable()
@@ -43,11 +43,19 @@ namespace NoteEditor
             }
         }
 
-        public void Initialize(Cell start, Cell end, NoteData data)
+        public void Initialize(Cell start, Cell end, NoteData data = null)
         {
-            if (start == null || end == null || data == null)
+            if (start == null || end == null)
             {
                 Debug.LogError("[LongNoteModel] 롱노트 초기화에 필요한 데이터가 누락되었습니다.");
+                return;
+            }
+            if (data == null)
+            {
+                startCell = start;
+                endCell = end;
+                UpdateVisual();
+                isInitialized = true;
                 return;
             }
 
@@ -56,7 +64,6 @@ namespace NoteEditor
             noteData = data;
             isInitialized = true;
 
-            ApplyRodColors();
             UpdateVisual();
 
             Debug.Log(
@@ -72,16 +79,14 @@ namespace NoteEditor
             Vector3 startPos = startCell.transform.position;
             Vector3 endPos = endCell.transform.position;
 
-            if (rod == null || startPoint == null || endPoint == null)
+            if (rod == null || redPoint == null || bluePoint == null)
             {
                 Debug.LogError("[LongNoteModel] 롱노트 시각화에 필요한 컴포넌트가 없습니다.");
                 return;
             }
 
-            // 롱노트 모델을 시작점과 끝점 사이의 중앙에 배치
             transform.position = (startPos + endPos) / 2f;
 
-            // 시작점과 끝점 사이의 거리 계산
             float distance = Vector3.Distance(startPos, endPos);
             if (distance <= 0.001f)
             {
@@ -99,31 +104,8 @@ namespace NoteEditor
                     Quaternion.LookRotation(direction) * Quaternion.Euler(90, 0, 0);
             }
 
-            startPoint.transform.position = startPos;
-            endPoint.transform.position = endPos;
-        }
-
-        public void ApplyRodColors()
-        {
-            Color startColor = Color.red;
-            Color endColor = Color.blue;
-            Color rodColor = Color.gray;
-
-            ApplyColorToRenderer(startPoint, startColor);
-            ApplyColorToRenderer(endPoint, endColor);
-            ApplyColorToRenderer(rod, rodColor);
-        }
-
-        private void ApplyColorToRenderer(GameObject targetObject, Color color)
-        {
-            if (targetObject == null)
-                return;
-
-            Renderer renderer = targetObject.GetComponent<Renderer>();
-            if (renderer != null && renderer.material != null)
-            {
-                renderer.material.color = color;
-            }
+            redPoint.transform.position = startPos;
+            bluePoint.transform.position = endPos;
         }
 
         public void UpdateEndPoint(Cell newEndCell)
@@ -147,6 +129,20 @@ namespace NoteEditor
             {
                 noteData.isClockwise = isClockwise;
                 Debug.Log($"롱노트 회전 방향 설정: {isClockwise}");
+
+                if (
+                    noteData.isSymmetric
+                    && EditorManager.Instance != null
+                    && EditorManager.Instance.noteEditor != null
+                )
+                {
+                    EditorManager.Instance.noteEditor.UpdateSymmetricNote(
+                        startCell,
+                        endCell,
+                        noteData,
+                        true
+                    );
+                }
             }
         }
     }
