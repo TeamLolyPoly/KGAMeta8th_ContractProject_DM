@@ -200,16 +200,8 @@ namespace NoteEditor
             if (cell.noteData != null)
             {
                 selectedCell.cellRenderer.GetComponent<Renderer>().material = selectedCellMaterial;
-                if (cell.noteData.noteType == NoteType.Short)
-                {
-                    EditorManager.Instance.editorPanel.ToggleShortNoteUI(true);
-                    EditorManager.Instance.editorPanel.ToggleLongNoteUI(false);
-                }
-                else if (cell.noteData.noteType == NoteType.Long)
-                {
-                    EditorManager.Instance.editorPanel.ToggleShortNoteUI(false);
-                    EditorManager.Instance.editorPanel.ToggleLongNoteUI(true);
-                }
+
+                EditorManager.Instance.editorPanel.UpdateNoteInfo(cell);
             }
             else
             {

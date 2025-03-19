@@ -98,7 +98,6 @@ namespace NoteEditor
             IsInitialized = true;
             Debug.Log("[NoteEditorPanel] 초기화 완료");
 
-            // 롱노트 UI 이벤트 리스너 설정
             if (symmetricToggle != null)
             {
                 SwitchManager switchManager =
