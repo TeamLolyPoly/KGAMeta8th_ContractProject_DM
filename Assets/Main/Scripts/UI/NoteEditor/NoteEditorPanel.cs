@@ -499,6 +499,30 @@ namespace NoteEditor
             }
         }
 
+        public void UpdateNoteInfo(Cell cell)
+        {
+            if (cell.noteData != null)
+            {
+                if (cell.noteData.noteType == NoteType.Short)
+                {
+                    EditorManager.Instance.editorPanel.ToggleShortNoteUI(true);
+                    noteDirectionDropdown.SetDropdownIndex((int)cell.noteData.direction);
+                    noteColorDropdown.SetDropdownIndex((int)cell.noteData.noteColor);
+                    EditorManager.Instance.editorPanel.ToggleLongNoteUI(false);
+                }
+                else if (cell.noteData.noteType == NoteType.Long)
+                {
+                    EditorManager.Instance.editorPanel.ToggleShortNoteUI(false);
+                    EditorManager.Instance.editorPanel.ToggleLongNoteUI(true);
+                }
+            }
+            else
+            {
+                EditorManager.Instance.editorPanel.ToggleShortNoteUI(false);
+                EditorManager.Instance.editorPanel.ToggleLongNoteUI(false);
+            }
+        }
+
         public void ChangeTrack(TrackData track)
         {
             if (track == null)

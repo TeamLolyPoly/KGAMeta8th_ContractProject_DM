@@ -199,6 +199,7 @@ namespace NoteEditor
 
             if (cell.noteData != null)
             {
+                selectedCell.cellRenderer.GetComponent<Renderer>().material = selectedCellMaterial;
                 if (cell.noteData.noteType == NoteType.Short)
                 {
                     EditorManager.Instance.editorPanel.ToggleShortNoteUI(true);

@@ -89,12 +89,29 @@ public class NoteData
             return 0;
 
         float secondsPerBeat = 60f / bpm;
+
+        // 롱노트의 지속 시간을 초 단위로 계산
         float totalDurationSeconds = (durationBars * beatsPerBar + durationBeats) * secondsPerBeat;
 
+        // 지속 시간이 잘못 설정된 경우에 대한 보호
+        if (totalDurationSeconds <= 0)
+        {
+            Debug.LogWarning(
+                $"롱노트 지속 시간이 0 또는 음수입니다: {durationBars}마디 {durationBeats}비트"
+            );
+            return 1; // 최소 길이
+        }
+
+        // 총 지속 시간을 세그먼트 간격으로 나누어 필요한 세그먼트 수 계산
         int calculatedArcLength = Mathf.RoundToInt(totalDurationSeconds / spawnInterval);
 
-        calculatedArcLength = Mathf.Max(1, calculatedArcLength);
-        calculatedArcLength = Mathf.Min(calculatedArcLength, segmentCount - 1);
+        // 최소 및 최대 값 제한
+        calculatedArcLength = Mathf.Max(1, calculatedArcLength); // 최소 1개
+        calculatedArcLength = Mathf.Min(calculatedArcLength, segmentCount - 1); // 최대 segmentCount-1개
+
+        Debug.Log(
+            $"롱노트 길이 계산: 지속 시간 {totalDurationSeconds:F3}초 ({durationBars}마디 {durationBeats}비트) = {calculatedArcLength}개 세그먼트 (간격: {spawnInterval:F3}초)"
+        );
 
         return calculatedArcLength;
     }

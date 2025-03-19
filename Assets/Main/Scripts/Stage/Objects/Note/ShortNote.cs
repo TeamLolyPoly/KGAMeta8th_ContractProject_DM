@@ -45,20 +45,15 @@ public class ShortNote : Note
         if (!isInitialized)
             return;
 
-        // 경과 시간 계산 (음악 시작 기준)
         double elapsedTime = AudioSettings.dspTime - spawnDspTime;
 
-        // 이동 거리 계산
         float totalDistance = Vector3.Distance(startPosition, targetPosition);
         float currentDistance = noteData.noteSpeed * (float)elapsedTime;
 
-        // 진행률 계산 (0~1 사이)
         float progress = Mathf.Clamp01(currentDistance / totalDistance);
 
-        // 노트 위치 업데이트
         transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
 
-        // 목표 위치에 도달했을 때 Miss 처리
         if (progress >= 1.0f && !isHit)
         {
             Miss();

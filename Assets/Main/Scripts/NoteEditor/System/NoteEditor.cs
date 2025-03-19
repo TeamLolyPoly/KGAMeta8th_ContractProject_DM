@@ -220,17 +220,7 @@ namespace NoteEditor
             {
                 Cell endCell = selectedCell;
 
-                try
-                {
-                    CreateLongNote(longNoteStartCell, endCell);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError(
-                        $"[DEBUG-ACTION] CreateLongNote 메서드 호출 중 예외 발생: {e.Message}"
-                    );
-                    Debug.LogError($"[DEBUG-ACTION] 스택 트레이스: {e.StackTrace}");
-                }
+                CreateLongNote(longNoteStartCell, endCell);
 
                 editorManager.editorPanel.UpdateStatusText(
                     $"롱노트 생성됨: 시작 마디 {longNoteStartCell.bar}, 박자 {longNoteStartCell.beat}, 끝 마디 {endCell.bar}, 박자 {endCell.beat}"
@@ -379,7 +369,6 @@ namespace NoteEditor
                     return;
                 }
 
-                // Calculate startIndex and endIndex from cell positions
                 int startIndex = CalculateCellIndex(startCell.cellPosition);
                 int endIndex = CalculateCellIndex(endCell.cellPosition);
 
@@ -425,6 +414,14 @@ namespace NoteEditor
                 {
                     Debug.LogWarning("[NoteEditor] LongNoteModel 프리팹을 찾을 수 없습니다.");
                 }
+
+                print(
+                    $"=========롱노트 생성됨=======\n"
+                        + $"시작 마디 {startCell.bar}, 박자 {startCell.beat}\n"
+                        + $"끝 마디 {endCell.bar}, 박자 {endCell.beat}\n"
+                        + $"롱노트 길이: {durationBars}마디 {durationBeats}박자\n"
+                        + $"롱노트 시작 인덱스: {startIndex}, 끝 인덱스: {endIndex}\n"
+                );
             }
             catch (Exception e)
             {
@@ -433,25 +430,20 @@ namespace NoteEditor
             }
         }
 
-        // 셀 위치를 원형 인덱스로 변환하는 메서드
         private int CalculateCellIndex(Vector2Int cellPosition)
         {
             int gridX = cellPosition.x;
             int gridY = cellPosition.y;
 
-            // 셀 그리드 내에서의 정규화된 좌표 (-1 ~ 1 범위)
             float normX = Mathf.Clamp((gridX / (float)(5 - 1)) * 2 - 1, -1, 1);
             float normY = Mathf.Clamp((gridY / (float)(3 - 1)) * 2 - 1, -1, 1);
 
-            // 각도 계산 (라디안)
             float angle = Mathf.Atan2(normY, normX) * Mathf.Rad2Deg;
             if (angle < 0)
                 angle += 360f;
 
-            // 기본 세그먼트 수를 72로 가정 (NoteSpawner와 일치시켜야 함)
             int segmentCount = 72;
 
-            // 각도를 인덱스로 변환
             int index = Mathf.RoundToInt(angle / (360f / segmentCount)) % segmentCount;
 
             return index;
