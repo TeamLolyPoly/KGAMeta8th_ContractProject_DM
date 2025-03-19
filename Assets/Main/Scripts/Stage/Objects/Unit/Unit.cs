@@ -29,7 +29,7 @@ public class Unit : MonoBehaviour
         unitAnimationManager.AttachAnimation(animator);
     }
 
-    public virtual void SetAnimationClip(AnimationClip clip)
+    public virtual void SetAnimationClip(AnimationClip clip, string targetClipName)
     {
         AnimatorOverrideController overrideController =
             animator.runtimeAnimatorController as AnimatorOverrideController;
@@ -38,14 +38,15 @@ public class Unit : MonoBehaviour
             overrideController = new AnimatorOverrideController(animator.runtimeAnimatorController);
             animator.runtimeAnimatorController = overrideController;
         }
-        animationQueue.Enqueue(clip);
+        overrideController[targetClipName] = clip;
+        // animationQueue.Enqueue(clip);
 
-        if (animChangeCoroutine != null)
-        {
-            StopCoroutine(animChangeCoroutine);
-            animChangeCoroutine = null;
-        }
-        animChangeCoroutine = StartCoroutine(AnimChangeRoutine(overrideController));
+        // if (animChangeCoroutine != null)
+        // {
+        //     StopCoroutine(animChangeCoroutine);
+        //     animChangeCoroutine = null;
+        // }
+        // animChangeCoroutine = StartCoroutine(AnimChangeRoutine(overrideController));
     }
 
     private IEnumerator AnimChangeRoutine(AnimatorOverrideController overrideController)

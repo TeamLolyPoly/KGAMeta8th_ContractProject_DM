@@ -64,6 +64,18 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         );
     }
 
+    public void BandWalkAnimationChange(BandType bandType, Action<AnimationClip, string> action)
+    {
+        if (bandAnimators.TryGetValue(bandType, out BandAnimationData AnimationData))
+        {
+            AnimationClip moveClip = AnimationData?.MoveClip;
+            if (moveClip != null)
+            {
+                action(moveClip, "Walk");
+            }
+        }
+    }
+
     public void BandAnimationClipChange(Engagement engagement)
     {
         foreach (Band band in Bands)
@@ -76,7 +88,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
 
                 if (animationClip == null)
                     continue;
-                band.SetAnimationClip(animationClip);
+                band.SetAnimationClip(animationClip, "Usual");
             }
         }
     }
@@ -92,7 +104,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
 
             if (animationClip == null)
                 continue;
-            spectator.SetAnimationClip(animationClip);
+            spectator.SetAnimationClip(animationClip, "Usual");
         }
     }
 }

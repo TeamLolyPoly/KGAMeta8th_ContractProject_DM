@@ -150,6 +150,7 @@ public class TrackData
 public class BandAnimationData
 {
     public BandType bandType;
+    public AnimationClip MoveClip;
     public AnimationClip[] animationClip;
 }
 
