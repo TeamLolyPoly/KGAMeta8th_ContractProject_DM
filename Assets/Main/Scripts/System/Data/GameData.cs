@@ -165,7 +165,20 @@ public class TrackData
 public class BandAnimationData
 {
     public BandType bandType;
+    [Header("밴드 walk 애니메이션")]
+    public AnimationClip MoveClip;
     public AnimationClip[] animationClip;
+}
+[Serializable]
+public class SpectatorAnimData
+{
+    [Header("관객 디폴트 애니메이션")]
+    public List<AnimationClip> RandomAnima =
+    new List<AnimationClip>();
+
+    [Header("관객 호응도 애니메이션")]
+    public List<AnimationClip> engagementClip =
+        new List<AnimationClip>();
 }
 
 [Serializable]

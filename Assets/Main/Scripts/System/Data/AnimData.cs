@@ -10,7 +10,7 @@ public class AnimData : ScriptableObject
     public RuntimeAnimatorController UnitAnimator;
     [SerializeField]
     public List<BandAnimationData> bandAnimationDatas = new List<BandAnimationData>();
-    public List<AnimationClip> spectatorAnimationClip = new List<AnimationClip>();
+    public SpectatorAnimData spectatorAnimationData;
     private void OnValidate()
     {
         Array dataCount = Enum.GetValues(typeof(BandType));

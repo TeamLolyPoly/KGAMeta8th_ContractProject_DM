@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class AnimationSystem : MonoBehaviour, IInitializable
 {
@@ -29,7 +31,8 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         }
 
         GameManager.Instance.ScoreSystem.onBandEngagementChange += BandAnimationClipChange;
-        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange += SpectatorAnimationClipChange;
+        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange +=
+            SpectatorAnimationClipChange;
 
         isInitialized = true;
     }
@@ -45,6 +48,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             spectators.Add(spectator);
         }
     }
+
     public void RemoveUnit(Unit unit)
     {
         if (unit is Band band)
@@ -64,6 +68,29 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         );
     }
 
+    public void BandDefaultAnimationChange(Band band, Action<AnimationClip, string> action)
+    {
+        if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData AnimationData))
+        {
+            AnimationClip defaultClip = AnimationData?.MoveClip;
+            if (defaultClip != null)
+            {
+                action(defaultClip, "default");
+            }
+        }
+    }
+
+    public void SpectatorDefaultAnimationChange(Action<AnimationClip, string> action)
+    {
+        int index = Random.Range(0, AnimData.spectatorAnimationData.RandomAnima.Count);
+
+        AnimationClip defaultClip = AnimData.spectatorAnimationData.RandomAnima[index];
+        if (defaultClip != null)
+        {
+            action(defaultClip, "default");
+        }
+    }
+
     public void BandAnimationClipChange(Engagement engagement)
     {
         foreach (Band band in Bands)
@@ -76,7 +103,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
 
                 if (animationClip == null)
                     continue;
-                band.SetAnimationClip(animationClip);
+                band.SetAnimationClip(animationClip, "Usual");
             }
         }
     }
@@ -85,14 +112,16 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     {
         foreach (Spectator spectator in spectators)
         {
-            if ((int)engagement >= AnimData.spectatorAnimationClip.Count)
+            if ((int)engagement >= AnimData.spectatorAnimationData.engagementClip.Count)
                 continue;
 
-            AnimationClip animationClip = AnimData?.spectatorAnimationClip[(int)engagement];
+            AnimationClip animationClip = AnimData
+                ?.spectatorAnimationData
+                .engagementClip[(int)engagement];
 
             if (animationClip == null)
                 continue;
-            spectator.SetAnimationClip(animationClip);
+            spectator.SetAnimationClip(animationClip, "Usual");
         }
     }
 }

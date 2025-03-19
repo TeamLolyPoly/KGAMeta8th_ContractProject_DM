@@ -10,7 +10,6 @@ public class ShortNote : Note
 
     [SerializeField, Header("노트 플레이어 방향 기울기")]
     protected float noteLookAtAngle = 40f;
-    protected Transform noteTrans;
     protected Vector3 noteDownDirection;
     protected Vector3 noteUpDirection;
     protected float noteDistance;
@@ -25,7 +24,6 @@ public class ShortNote : Note
     {
         base.Initialize(data);
 
-        noteTrans = transform;
         noteCollider = GetComponent<Collider>();
 
         if (noteCollider != null)
@@ -37,7 +35,6 @@ public class ShortNote : Note
         NoteHitDirectionChange();
         noteDownDirection = -transform.up;
         noteUpDirection = transform.up;
-        print($"Down: {noteDownDirection} Up: {noteUpDirection}");
     }
 
     private void Update()
@@ -54,7 +51,8 @@ public class ShortNote : Note
 
         transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
 
-        if (progress >= 1.0f && !isHit)
+        // 목표 위치에 도달했을 때 Miss 처리
+        if (progress >= 1f && !isHit)
         {
             Miss();
         }
@@ -108,11 +106,8 @@ public class ShortNote : Note
                 rotationX = -noteLookAtAngle;
                 break;
         }
-        noteTrans.rotation = Quaternion.Euler(
-            noteTrans.rotation.eulerAngles.x + rotationX,
-            noteTrans.rotation.eulerAngles.y + rotationY,
-            noteTrans.rotation.eulerAngles.z + rotationZ
-        );
+
+        transform.rotation = Quaternion.Euler(rotationX, rotationY, rotationZ);
     }
 
     protected void NoteHitDirectionChange()
@@ -133,17 +128,17 @@ public class ShortNote : Note
                 rotationY = -90f;
                 break;
         }
-        noteTrans.rotation = Quaternion.Euler(
-            noteTrans.rotation.eulerAngles.x,
-            noteTrans.rotation.eulerAngles.y + rotationY,
-            noteTrans.rotation.eulerAngles.z
+        transform.rotation = Quaternion.Euler(
+            transform.rotation.eulerAngles.x,
+            transform.rotation.eulerAngles.y + rotationY,
+            transform.rotation.eulerAngles.z
         );
     }
 
     protected void HitScore(float hitdis)
     {
         NoteRatings ratings;
-        int Score = noteScore;
+        int score = noteScore;
         if (noteDistance * accuracyPoint[0] >= hitdis)
         {
             ratings = NoteRatings.Perfect;
@@ -156,7 +151,7 @@ public class ShortNote : Note
         {
             ratings = NoteRatings.Good;
         }
-        scoreSystem.SetScore(Score, ratings);
+        scoreSystem.SetScore(score, ratings);
         Destroy(gameObject);
     }
 
@@ -180,41 +175,36 @@ public class ShortNote : Note
                 Debug.DrawRay(transform.position, hitPoint, Color.blue, 0.5f);
 
                 Instantiate(hitFX, transform.position, Quaternion.identity);
-
-                print($"Enter 법선벡터 X: {hitPoint.x} Y : {hitPoint.y} Z : {hitPoint.z}");
-                print(
-                    $"Enter 내 벡터 X: {noteDownDirection.x} Y : {noteDownDirection.y} Z : {noteDownDirection.z} EnterAngle: {EnterAngle}"
-                );
             }
         }
     }
 
     private void OnCollisionExit(Collision other)
     {
-        Vector3 ExitPoint = (transform.position - other.transform.position).normalized;
-        ExitAngle = Vector3.Angle(ExitPoint, noteUpDirection);
-
-        Debug.DrawRay(transform.position, ExitPoint, Color.red, 0.5f);
         if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
         {
             if (noteInteractor.noteColor == noteData.noteColor)
             {
+                Vector3 ExitPoint = (transform.position - other.transform.position).normalized;
+                ExitAngle = Vector3.Angle(ExitPoint, noteUpDirection);
+
+                Debug.DrawRay(transform.position, ExitPoint, Color.red, 0.5f);
+
                 if (EnterAngle <= directionalRange && ExitAngle <= directionalRange)
                 {
                     HitScore(hitdis);
                 }
                 else
                 {
-                    Miss();
                     print("이상한 방향을 타격함");
+                    Miss();
                 }
             }
             else
             {
-                Miss();
                 print("HitObject 타입이 다름");
+                Miss();
             }
-            Miss();
         }
     }
 
@@ -222,7 +212,6 @@ public class ShortNote : Note
     {
         Vector3 hitPoint = other.GetContact(0).point;
         Vector3 notePos = transform.position - (-transform.up * noteDistance);
-        print($"notepos {notePos} hitPoint{hitPoint}");
         return Vector3.Distance(hitPoint, notePos);
     }
 }

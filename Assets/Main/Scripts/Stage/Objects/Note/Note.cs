@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class Note : MonoBehaviour, IInitializable
 {
-    protected int noteScore = 0;
+    [SerializeField, Header("노트 점수")]
+    protected int noteScore = 100;
     protected NoteData noteData;
     protected double spawnDspTime;
     protected GameObject hitFX;
