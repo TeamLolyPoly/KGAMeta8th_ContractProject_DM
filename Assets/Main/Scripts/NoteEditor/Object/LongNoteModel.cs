@@ -8,10 +8,12 @@ namespace NoteEditor
         private GameObject rod;
 
         [SerializeField]
-        private GameObject redPoint;
+        private GameObject startPoint;
 
         [SerializeField]
-        private GameObject bluePoint;
+        private GameObject endPoint;
+
+        public GameObject symmetricObject { get; set; }
 
         public Cell startCell;
         public Cell endCell;
@@ -20,7 +22,7 @@ namespace NoteEditor
 
         private void Awake()
         {
-            if (rod == null || redPoint == null || bluePoint == null)
+            if (rod == null || startPoint == null || endPoint == null)
             {
                 Debug.LogError(
                     "[LongNoteModel] 롱노트 모델에 필요한 컴포넌트가 할당되지 않았습니다."
@@ -29,10 +31,10 @@ namespace NoteEditor
 
             if (rod != null)
                 rod.SetActive(true);
-            if (redPoint != null)
-                redPoint.SetActive(true);
-            if (bluePoint != null)
-                bluePoint.SetActive(true);
+            if (startPoint != null)
+                startPoint.SetActive(true);
+            if (endPoint != null)
+                endPoint.SetActive(true);
         }
 
         private void OnEnable()
@@ -79,7 +81,7 @@ namespace NoteEditor
             Vector3 startPos = startCell.transform.position;
             Vector3 endPos = endCell.transform.position;
 
-            if (rod == null || redPoint == null || bluePoint == null)
+            if (rod == null || startPoint == null || endPoint == null)
             {
                 Debug.LogError("[LongNoteModel] 롱노트 시각화에 필요한 컴포넌트가 없습니다.");
                 return;
@@ -104,8 +106,8 @@ namespace NoteEditor
                     Quaternion.LookRotation(direction) * Quaternion.Euler(90, 0, 0);
             }
 
-            redPoint.transform.position = startPos;
-            bluePoint.transform.position = endPos;
+            startPoint.transform.position = startPos;
+            endPoint.transform.position = endPos;
         }
 
         public void UpdateEndPoint(Cell newEndCell)
