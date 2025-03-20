@@ -113,17 +113,6 @@ namespace NoteEditor
             }
         }
 
-        private void InitializeBeatsPerBarDropdown()
-        {
-            beatsPerBarDropdown.items.Clear();
-            foreach (int beatsPerBar in Enum.GetValues(typeof(BeatsPerBar)))
-            {
-                beatsPerBarDropdown.CreateNewItem(beatsPerBar.ToString(), true);
-            }
-
-            beatsPerBarDropdown.onValueChanged.AddListener(OnBeatsPerBarDropdownValueChanged);
-        }
-
         private void OnBeatsPerBarDropdownValueChanged(int index)
         {
             switch (index)
@@ -299,6 +288,19 @@ namespace NoteEditor
                                 trackDropdown.selectedItemIndex = index;
                             }
                         }
+                    }
+                    if (beatsPerBarDropdown != null)
+                    {
+                        beatsPerBarDropdown.items.Clear();
+                        foreach (BeatsPerBar beatsPerBar in Enum.GetValues(typeof(BeatsPerBar)))
+                        {
+                            beatsPerBarDropdown.CreateNewItem(beatsPerBar.ToString(), true);
+                        }
+
+                        beatsPerBarDropdown.onValueChanged.AddListener(
+                            OnBeatsPerBarDropdownValueChanged
+                        );
+                        beatsPerBarDropdown.SetDropdownIndex(0);
                     }
                     else
                     {
