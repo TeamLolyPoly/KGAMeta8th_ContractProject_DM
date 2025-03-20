@@ -176,7 +176,7 @@ namespace NoteEditor
             collider.isTrigger = true;
 
             Cell cell = cellObj.AddComponent<Cell>();
-            cell.Initialize(bar, beat, new Vector2(lane, y));
+            cell.Initialize(bar, beat, new Vector2Int(lane, y));
 
             cell.cellRenderer = cellRenderer;
 
@@ -199,16 +199,9 @@ namespace NoteEditor
 
             if (cell.noteData != null)
             {
-                if (cell.noteData.noteType == NoteType.Short)
-                {
-                    EditorManager.Instance.editorPanel.ToggleShortNoteUI(true);
-                    EditorManager.Instance.editorPanel.ToggleLongNoteUI(false);
-                }
-                else if (cell.noteData.noteType == NoteType.Long)
-                {
-                    EditorManager.Instance.editorPanel.ToggleShortNoteUI(false);
-                    EditorManager.Instance.editorPanel.ToggleLongNoteUI(true);
-                }
+                selectedCell.cellRenderer.GetComponent<Renderer>().material = selectedCellMaterial;
+
+                EditorManager.Instance.editorPanel.UpdateNoteInfo(cell);
             }
             else
             {

@@ -157,7 +157,11 @@ namespace NoteEditor
 
         private void CreateShortNoteAction()
         {
-            if (cellController != null && cellController.SelectedCell != null)
+            if (
+                cellController != null
+                && cellController.SelectedCell != null
+                && cellController.SelectedCell.isOccupied == false
+            )
             {
                 CreateShortNote(cellController.SelectedCell);
 
@@ -178,6 +182,12 @@ namespace NoteEditor
                 SaveNoteMap();
 
                 editorManager.editorPanel.ToggleShortNoteUI(true);
+            }
+            else if (cellController.SelectedCell.isOccupied)
+            {
+                editorManager.editorPanel.UpdateStatusText(
+                    "<color=red>이미 노트가 있는 셀입니다.</color>"
+                );
             }
             else
             {
@@ -208,10 +218,10 @@ namespace NoteEditor
                 return;
             }
 
-            if (selectedCell.noteData != null && selectedCell.noteData.noteType != NoteType.Long)
+            if (selectedCell.isOccupied)
             {
                 editorManager.editorPanel.UpdateStatusText(
-                    "<color=red>롱노트는 비어있는 셀 또는 다른 롱노트가 없는 셀에서만 시작할 수 있습니다.</color>"
+                    "<color=red>비어있지 않은 셀입니다</color>"
                 );
                 return;
             }
@@ -220,17 +230,7 @@ namespace NoteEditor
             {
                 Cell endCell = selectedCell;
 
-                try
-                {
-                    CreateLongNote(longNoteStartCell, endCell);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError(
-                        $"[DEBUG-ACTION] CreateLongNote 메서드 호출 중 예외 발생: {e.Message}"
-                    );
-                    Debug.LogError($"[DEBUG-ACTION] 스택 트레이스: {e.StackTrace}");
-                }
+                CreateLongNote(longNoteStartCell, endCell);
 
                 editorManager.editorPanel.UpdateStatusText(
                     $"롱노트 생성됨: 시작 마디 {longNoteStartCell.bar}, 박자 {longNoteStartCell.beat}, 끝 마디 {endCell.bar}, 박자 {endCell.beat}"
@@ -266,10 +266,6 @@ namespace NoteEditor
                 {
                     DeleteNote(cellController.SelectedCell);
 
-                    editorManager.editorPanel.UpdateStatusText(
-                        $"<color=yellow>노트 삭제됨: 마디 {cellController.SelectedCell.bar}, 박자 {cellController.SelectedCell.beat}</color>"
-                    );
-
                     editorManager.editorPanel.UpdateSelectedCellInfo(cellController.SelectedCell);
 
                     editorManager.editorPanel.ToggleShortNoteUI(false);
@@ -302,14 +298,11 @@ namespace NoteEditor
                     noteType = NoteType.Short,
                     noteColor = NoteColor.None,
                     direction = NoteDirection.None,
-                    noteAxis = NoteAxis.None,
+                    noteAxis = NoteAxis.PZ,
                     StartCell = cell.cellPosition,
                     TargetCell = cell.cellPosition,
-                    isLeftGrid = cell.cellPosition.x < 2,
-                    noteSpeed = 1.0f,
                     bar = cell.bar,
                     beat = cell.beat,
-                    startIndex = noteMap.notes.Count,
                     isSymmetric = false,
                     isClockwise = false,
                 };
@@ -317,6 +310,7 @@ namespace NoteEditor
                 noteMap.notes.Add(noteData);
 
                 cell.noteData = noteData;
+                cell.isOccupied = true;
             }
             catch (Exception e)
             {
@@ -358,6 +352,12 @@ namespace NoteEditor
                     durationBeats = endCell.beat - startCell.beat;
                 }
 
+                if (durationBeats < 0)
+                {
+                    durationBars--;
+                    durationBeats += railController.BeatsPerBar;
+                }
+
                 bool isStartCellInGrid = !(
                     startCell.cellPosition.x < 2
                     || startCell.cellPosition.x > 4
@@ -382,20 +382,21 @@ namespace NoteEditor
                     return;
                 }
 
+                int startIndex = CalculateCellIndex(startCell.cellPosition);
+                int endIndex = CalculateCellIndex(endCell.cellPosition);
+
                 NoteData noteData = new NoteData
                 {
                     noteType = NoteType.Long,
                     noteColor = NoteColor.None,
                     direction = NoteDirection.None,
-                    noteAxis = NoteAxis.None,
+                    noteAxis = NoteAxis.PZ,
                     StartCell = startCell.cellPosition,
                     TargetCell = endCell.cellPosition,
-                    isLeftGrid = false,
-                    noteSpeed = 1.0f,
                     bar = startCell.bar,
                     beat = startCell.beat,
-                    startIndex = 0,
-                    endIndex = 0,
+                    startIndex = startIndex,
+                    endIndex = endIndex,
                     isSymmetric = false,
                     isClockwise = true,
                     durationBars = durationBars,
@@ -418,6 +419,8 @@ namespace NoteEditor
                     }
 
                     longNoteModel.Initialize(startCell, endCell, noteData);
+                    startCell.isOccupied = true;
+                    endCell.isOccupied = true;
                     startCell.longNoteModel = longNoteModel;
 
                     startCell.cellRenderer.SetActive(false);
@@ -426,12 +429,39 @@ namespace NoteEditor
                 {
                     Debug.LogWarning("[NoteEditor] LongNoteModel 프리팹을 찾을 수 없습니다.");
                 }
+
+                print(
+                    $"=========롱노트 생성됨=======\n"
+                        + $"시작 마디 {startCell.bar}, 박자 {startCell.beat}\n"
+                        + $"끝 마디 {endCell.bar}, 박자 {endCell.beat}\n"
+                        + $"롱노트 길이: {durationBars}마디 {durationBeats}박자\n"
+                        + $"롱노트 시작 인덱스: {startIndex}, 끝 인덱스: {endIndex}\n"
+                );
             }
             catch (Exception e)
             {
                 Debug.LogError($"롱노트 생성 실패: {e.Message}");
                 Debug.LogError($"[DEBUG] 예외 발생 - 스택 트레이스: {e.StackTrace}");
             }
+        }
+
+        private int CalculateCellIndex(Vector2Int cellPosition)
+        {
+            int gridX = cellPosition.x;
+            int gridY = cellPosition.y;
+
+            float normX = Mathf.Clamp((gridX / (float)(5 - 1)) * 2 - 1, -1, 1);
+            float normY = Mathf.Clamp((gridY / (float)(3 - 1)) * 2 - 1, -1, 1);
+
+            float angle = Mathf.Atan2(normY, normX) * Mathf.Rad2Deg;
+            if (angle < 0)
+                angle += 360f;
+
+            int segmentCount = 72;
+
+            int index = Mathf.RoundToInt(angle / (360f / segmentCount)) % segmentCount;
+
+            return index;
         }
 
         public void DeleteNote(Cell cell)
@@ -447,11 +477,20 @@ namespace NoteEditor
                 {
                     Destroy(cell.noteModel.gameObject);
                     cell.noteModel = null;
+                    cell.isOccupied = false;
+                    editorManager.editorPanel.UpdateStatusText(
+                        $"<color=yellow>노트 삭제됨: 마디 {cell.bar}, 박자 {cell.beat}</color>"
+                    );
                 }
                 else if (cell.noteData.noteType == NoteType.Long && cell.longNoteModel != null)
                 {
                     Destroy(cell.longNoteModel.gameObject);
                     cell.longNoteModel = null;
+                    cell.isOccupied = false;
+
+                    editorManager.editorPanel.UpdateStatusText(
+                        $"<color=yellow>롱노트 삭제됨: 마디 {cell.bar}, 박자 {cell.beat}, 길이</color>"
+                    );
                 }
 
                 cell.noteData = null;
@@ -482,13 +521,6 @@ namespace NoteEditor
                 if (cellController.SelectedCell.noteModel != null)
                 {
                     cellController.SelectedCell.noteModel.SetNoteColor(noteColor);
-                }
-            }
-            else if (cellController.SelectedCell.noteData.noteType == NoteType.Long)
-            {
-                if (cellController.SelectedCell.longNoteModel != null)
-                {
-                    cellController.SelectedCell.longNoteModel.ApplyRodColors();
                 }
             }
 
@@ -526,10 +558,143 @@ namespace NoteEditor
             if (cellController.SelectedCell.longNoteModel != null)
             {
                 cellController.SelectedCell.longNoteModel.SetSymmetric(isSymmetric);
+                LongNoteModel longNoteModel = cellController.SelectedCell.longNoteModel;
+
+                UpdateSymmetricNote(
+                    longNoteModel.startCell,
+                    longNoteModel.endCell,
+                    cellController.SelectedCell.noteData,
+                    isSymmetric
+                );
             }
 
             SaveNoteMap();
             return true;
+        }
+
+        public void UpdateSymmetricNote(
+            Cell originalStart,
+            Cell orignialTarget,
+            NoteData noteData,
+            bool createSymmetric
+        )
+        {
+            if (originalStart == null || orignialTarget == null || noteData == null)
+                return;
+
+            string symmetricVisualName = $"SymmetricNote_{originalStart.GetInstanceID()}";
+            GameObject existingSymmetricVisual = GameObject.Find(symmetricVisualName);
+            if (existingSymmetricVisual != null)
+            {
+                Destroy(existingSymmetricVisual);
+            }
+
+            if (createSymmetric)
+            {
+                int segmentCount = 72;
+                int symmetricStartIndex = (noteData.startIndex + segmentCount / 2) % segmentCount;
+                int symmetricEndIndex = (noteData.endIndex + segmentCount / 2) % segmentCount;
+
+                if (longNoteModelPrefab != null)
+                {
+                    Vector2Int centerGrid = new Vector2Int(3, 1);
+
+                    Vector2Int symStartPos = new Vector2Int(
+                        2 * centerGrid.x - originalStart.cellPosition.x,
+                        2 * centerGrid.y - originalStart.cellPosition.y
+                    );
+
+                    Vector2Int symEndPos = new Vector2Int(
+                        2 * centerGrid.x - orignialTarget.cellPosition.x,
+                        2 * centerGrid.y - orignialTarget.cellPosition.y
+                    );
+
+                    Cell symmetricStartCell = GetCellByPosition(symStartPos);
+                    Cell symmetricEndCell = GetCellByPosition(symEndPos);
+
+                    if (symmetricStartCell == null || symmetricEndCell == null)
+                    {
+                        Debug.LogWarning(
+                            $"대칭 노트를 위한 셀을 찾을 수 없습니다. "
+                                + $"시작점: ({symStartPos.x}, {symStartPos.y}), "
+                                + $"끝점: ({symEndPos.x}, {symEndPos.y})"
+                        );
+                        return;
+                    }
+
+                    int durationBars = noteData.durationBars;
+                    int durationBeats = noteData.durationBeats;
+
+                    int endBar = symmetricStartCell.bar + durationBars;
+                    int endBeat = symmetricStartCell.beat + durationBeats;
+
+                    if (endBeat >= railController.BeatsPerBar)
+                    {
+                        endBar += endBeat / railController.BeatsPerBar;
+                        endBeat = endBeat % railController.BeatsPerBar;
+                    }
+
+                    symmetricEndCell = cellController.GetCell(
+                        endBar,
+                        endBeat,
+                        symEndPos.x,
+                        symEndPos.y
+                    );
+
+                    if (symmetricEndCell == null)
+                    {
+                        Debug.LogWarning(
+                            $"대칭 노트의 끝점 셀을 찾을 수 없습니다: 마디 {endBar}, 박자 {endBeat}, 위치 ({symEndPos.x}, {symEndPos.y})"
+                        );
+                        return;
+                    }
+
+                    LongNoteModel symmetricNoteModel = Instantiate(
+                        longNoteModelPrefab,
+                        symmetricStartCell.transform
+                    );
+
+                    symmetricNoteModel.gameObject.name = symmetricVisualName;
+
+                    NoteData symmetricNoteData = new NoteData
+                    {
+                        noteType = NoteType.Long,
+                        noteColor = NoteColor.Red,
+                        direction = noteData.direction,
+                        noteAxis = noteData.noteAxis,
+                        StartCell = symmetricStartCell.cellPosition,
+                        TargetCell = symmetricEndCell.cellPosition,
+                        bar = symmetricStartCell.bar,
+                        beat = symmetricStartCell.beat,
+                        startIndex = symmetricStartIndex,
+                        endIndex = symmetricEndIndex,
+                        isSymmetric = true,
+                        isClockwise = !noteData.isClockwise,
+                        durationBars = durationBars,
+                        durationBeats = durationBeats,
+                    };
+
+                    symmetricNoteModel.Initialize(
+                        symmetricStartCell,
+                        symmetricEndCell,
+                        symmetricNoteData
+                    );
+                }
+                else
+                {
+                    Debug.LogWarning("롱노트 모델 프리팹이 없어 대칭 노트를 생성할 수 없습니다.");
+                }
+            }
+        }
+
+        private Cell GetCellByPosition(Vector2Int position)
+        {
+            foreach (var cell in cellController.Cells.Values)
+            {
+                if (cell.cellPosition == position)
+                    return cell;
+            }
+            return null;
         }
 
         public bool UpdateNoteClockwise(bool isClockwise)

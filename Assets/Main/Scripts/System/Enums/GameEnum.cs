@@ -21,7 +21,6 @@ public enum NoteDirection
 
 public enum NoteAxis
 {
-    None,
     PZ,
     MZ,
     PX,

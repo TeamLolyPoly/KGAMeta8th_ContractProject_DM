@@ -6,12 +6,13 @@ namespace NoteEditor
     public class Cell : MonoBehaviour
     {
         public NoteData noteData;
-        public Vector2 cellPosition;
+        public Vector2Int cellPosition;
         public int bar;
         public int beat;
         public ShortNoteModel noteModel;
         public LongNoteModel longNoteModel;
         public GameObject cellRenderer;
+        public bool isOccupied = false;
 
         private CellController cellController;
         private Camera mainCamera;
@@ -29,7 +30,7 @@ namespace NoteEditor
             }
         }
 
-        public void Initialize(int bar, int beat, Vector2 cellPosition)
+        public void Initialize(int bar, int beat, Vector2Int cellPosition)
         {
             this.bar = bar;
             this.beat = beat;

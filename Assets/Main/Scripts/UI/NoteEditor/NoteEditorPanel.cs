@@ -1,8 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Michsky.UI.Heat;
-using NoteEditor;
 using ProjectDM.UI;
 using SFB;
 using TMPro;
@@ -43,13 +41,13 @@ namespace NoteEditor
         private TextMeshProUGUI selectedCellInfoText;
 
         [SerializeField]
-        private CanvasGroup longNotePanel;
+        private CanvasGroup longNoteGroup;
 
         [SerializeField]
-        private Toggle symmetricToggle;
+        private SettingsElement symmetricToggle;
 
         [SerializeField]
-        private Toggle clockwiseToggle;
+        private SettingsElement clockwiseToggle;
 
         public bool IsInitialized { get; private set; }
         private Sprite defaultAlbumArt;
@@ -100,15 +98,18 @@ namespace NoteEditor
             IsInitialized = true;
             Debug.Log("[NoteEditorPanel] 초기화 완료");
 
-            // 롱노트 UI 이벤트 리스너 설정
             if (symmetricToggle != null)
             {
-                symmetricToggle.onValueChanged.AddListener(OnSymmetricToggleChanged);
+                SwitchManager switchManager =
+                    symmetricToggle.GetComponentInChildren<SwitchManager>();
+                switchManager.onValueChanged.AddListener(OnSymmetricToggleChanged);
             }
 
             if (clockwiseToggle != null)
             {
-                clockwiseToggle.onValueChanged.AddListener(OnClockwiseToggleChanged);
+                SwitchManager switchManager =
+                    clockwiseToggle.GetComponentInChildren<SwitchManager>();
+                switchManager.onValueChanged.AddListener(OnClockwiseToggleChanged);
             }
         }
 
@@ -499,6 +500,30 @@ namespace NoteEditor
             }
         }
 
+        public void UpdateNoteInfo(Cell cell)
+        {
+            if (cell.noteData != null)
+            {
+                if (cell.noteData.noteType == NoteType.Short)
+                {
+                    EditorManager.Instance.editorPanel.ToggleShortNoteUI(true);
+                    noteDirectionDropdown.SetDropdownIndex((int)cell.noteData.direction);
+                    noteColorDropdown.SetDropdownIndex((int)cell.noteData.noteColor);
+                    EditorManager.Instance.editorPanel.ToggleLongNoteUI(false);
+                }
+                else if (cell.noteData.noteType == NoteType.Long)
+                {
+                    EditorManager.Instance.editorPanel.ToggleShortNoteUI(false);
+                    EditorManager.Instance.editorPanel.ToggleLongNoteUI(true);
+                }
+            }
+            else
+            {
+                EditorManager.Instance.editorPanel.ToggleShortNoteUI(false);
+                EditorManager.Instance.editorPanel.ToggleLongNoteUI(false);
+            }
+        }
+
         public void ChangeTrack(TrackData track)
         {
             if (track == null)
@@ -583,11 +608,11 @@ namespace NoteEditor
 
         public void ToggleLongNoteUI(bool isVisible)
         {
-            if (longNotePanel != null)
+            if (longNoteGroup != null)
             {
-                longNotePanel.alpha = isVisible ? 1 : 0;
-                longNotePanel.interactable = isVisible;
-                longNotePanel.blocksRaycasts = isVisible;
+                longNoteGroup.alpha = isVisible ? 1 : 0;
+                longNoteGroup.interactable = isVisible;
+                longNoteGroup.blocksRaycasts = isVisible;
             }
 
             if (
@@ -599,11 +624,21 @@ namespace NoteEditor
                 var noteData = EditorManager.Instance.cellController.SelectedCell.noteData;
                 if (symmetricToggle != null)
                 {
-                    symmetricToggle.isOn = noteData.isSymmetric;
+                    SwitchManager switchManager =
+                        symmetricToggle.GetComponentInChildren<SwitchManager>();
+                    if (noteData.isSymmetric)
+                        switchManager.SetOn();
+                    else
+                        switchManager.SetOff();
                 }
                 if (clockwiseToggle != null)
                 {
-                    clockwiseToggle.isOn = noteData.isClockwise;
+                    SwitchManager switchManager =
+                        clockwiseToggle.GetComponentInChildren<SwitchManager>();
+                    if (noteData.isClockwise)
+                        switchManager.SetOn();
+                    else
+                        switchManager.SetOff();
                 }
             }
         }

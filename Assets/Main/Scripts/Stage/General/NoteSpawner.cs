@@ -19,21 +19,17 @@ public class NoteSpawner : MonoBehaviour
     [SerializeField]
     private Vector3 circleOffset = Vector3.zero;
 
-    public Color leftColor = Color.yellow;
-    public Color rightColor = Color.magenta;
-
     private Vector3 sourceCenter;
     private Vector3 targetCenter;
     private List<Vector3> sourcePoints = new List<Vector3>();
     private List<Vector3> targetPoints = new List<Vector3>();
     private float noteSpeed;
     private double startDspTime;
-    private double nextSpawnTime;
 
     private GridGenerator gridGenerator;
 
     private Note shortNotePrefab;
-    private Note longNotePrefab;
+    private LongNote longNotePrefab;
     private GameObject hitFXPrefab;
     private NoteMap noteMap;
 
@@ -52,7 +48,7 @@ public class NoteSpawner : MonoBehaviour
     private void SetPrefabs()
     {
         shortNotePrefab = Resources.Load<Note>("Prefabs/Stage/Note/ShortNote");
-        longNotePrefab = Resources.Load<Note>("Prefabs/Stage/Note/LongNote");
+        longNotePrefab = Resources.Load<LongNote>("Prefabs/Stage/Note/LongNote");
         hitFXPrefab = Resources.Load<GameObject>("Prefabs/Stage/Effects/HitFX");
     }
 
@@ -118,38 +114,19 @@ public class NoteSpawner : MonoBehaviour
         float secondsPerBeat = 60f / noteMap.bpm;
         float targetHitTime = secondsPerBeat * noteMap.beatsPerBar;
         noteSpeed = distance / targetHitTime;
-
-        Debug.Log(
-            $"=== 노트 속도 계산 ===\n"
-                + $"BPM: {noteMap.bpm}\n"
-                + $"박자: {noteMap.beatsPerBar}/4\n"
-                + $"비트당 시간: {secondsPerBeat:F3}초\n"
-                + $"이동 거리: {distance:F2} 유닛\n"
-                + $"목표 도달 시간: {targetHitTime:F2}초\n"
-                + $"계산된 노트 속도: {noteSpeed:F2} 유닛/초"
-        );
     }
 
-    public void StartSpawn(double startTime)
+    public void StartSpawn(double startTime, float preRollTime)
     {
-        if (noteMap == null || noteMap.notes.Count == 0)
+        if (noteMap == null || noteMap.notes == null || noteMap.notes.Count == 0)
         {
-            Debug.LogError("노트 패턴이 없습니다!");
+            Debug.LogError("노트 맵이 비어있습니다!");
             return;
         }
 
         startDspTime = startTime;
-        nextSpawnTime = startDspTime;
 
-        StartCoroutine(SpawnNotesCoroutine());
-
-        Debug.Log(
-            $"=== 노트 생성 시작 === \n"
-                + $"BPM: {noteMap.bpm}\n"
-                + $"박자: {noteMap.beatsPerBar}/4\n"
-                + $"비트 간격: {60f / noteMap.bpm:F3}초\n"
-                + $"마디 길이: {(60f / noteMap.bpm) * noteMap.beatsPerBar:F3}초"
-        );
+        StartCoroutine(SpawnNotesCoroutine(preRollTime));
     }
 
     public void StopSpawning()
@@ -157,18 +134,47 @@ public class NoteSpawner : MonoBehaviour
         StopAllCoroutines();
     }
 
-    private IEnumerator SpawnNotesCoroutine()
+    private IEnumerator SpawnNotesCoroutine(float preRollTime)
     {
-        float secondsPerBeat = 60f / noteMap.bpm;
-
-        foreach (var noteData in noteMap.notes)
+        if (noteMap == null || noteMap.notes.Count == 0)
         {
-            double waitTime = nextSpawnTime - AudioSettings.dspTime;
-            if (waitTime > 0)
-                yield return new WaitForSeconds((float)waitTime);
+            Debug.LogError("노트맵이 비어있습니다!");
+            yield break;
+        }
 
-            SpawnNote(noteData);
-            nextSpawnTime += secondsPerBeat;
+        List<NoteData> sortedNotes = new List<NoteData>(noteMap.notes);
+        sortedNotes.Sort(
+            (a, b) =>
+            {
+                if (a.bar != b.bar)
+                    return a.bar.CompareTo(b.bar);
+                return a.beat.CompareTo(b.beat);
+            }
+        );
+
+        float secondsPerBeat = 60f / noteMap.bpm;
+        float noteTravelTime = gridGenerator.GridDistance / noteSpeed;
+
+        double musicStartTime = startDspTime + preRollTime;
+
+        foreach (NoteData note in sortedNotes)
+        {
+            float targetHitTime = (note.bar * noteMap.beatsPerBar + note.beat) * secondsPerBeat;
+
+            double absoluteHitTime = musicStartTime + targetHitTime;
+
+            double spawnTime = absoluteHitTime - noteTravelTime;
+
+            double waitTime = spawnTime - AudioSettings.dspTime;
+
+            if (waitTime > 0)
+            {
+                yield return new WaitForSecondsRealtime((float)waitTime);
+            }
+
+            SpawnNote(note);
+
+            yield return new WaitForSecondsRealtime(0.01f);
         }
     }
 
@@ -208,87 +214,72 @@ public class NoteSpawner : MonoBehaviour
 
         if (noteObj != null)
         {
-            noteObj.SetNoteColor(noteData.isLeftGrid ? leftColor : rightColor);
+            noteObj.SetNoteColor(noteData.noteColor);
         }
 
         if (noteObj != null && hitFXPrefab != null)
         {
             noteObj.SetHitFX(hitFXPrefab);
         }
-
-        double spawnTime = AudioSettings.dspTime - startDspTime;
-
-        Debug.Log(
-            $"단노트 생성 - 시간: {spawnTime:F3}, 마디: {noteData.bar}, 비트: {noteData.beat}, "
-                + $"위치: {(noteData.isLeftGrid ? "왼쪽" : "오른쪽")} ({noteData.StartCell.x}, {noteData.StartCell.y})"
-        );
     }
 
     private void SpawnLongNote(NoteData noteData)
     {
-        if (noteData.startIndex <= 0)
+        if (noteData.noteType != NoteType.Long)
         {
-            int gridX = (int)noteData.StartCell.x;
-            int gridY = (int)noteData.StartCell.y;
-
-            float normX = Mathf.Clamp(
-                (gridX / (float)(gridGenerator.TotalHorizontalCells - 1)) * 2 - 1,
-                -1,
-                1
-            );
-            float normY = Mathf.Clamp(
-                (gridY / (float)(gridGenerator.VerticalCells - 1)) * 2 - 1,
-                -1,
-                1
-            );
-
-            float angle = Mathf.Atan2(normY, normX) * Mathf.Rad2Deg;
-            if (angle < 0)
-                angle += 360f;
-
-            noteData.startIndex = Mathf.RoundToInt(angle / (360f / segmentCount)) % segmentCount;
-        }
-
-        if (noteData.startIndex < 0 || noteData.startIndex >= segmentCount)
-        {
-            Debug.LogError($"잘못된 시작 인덱스: {noteData.startIndex}");
+            Debug.LogError("롱노트가 아닌 데이터로 롱노트 생성 시도");
             return;
         }
 
-        int endIndex;
-        int calculatedArcLength;
+        if (sourcePoints.Count == 0 || targetPoints.Count == 0)
+        {
+            GenerateCirclePoints();
+        }
 
-        calculatedArcLength = noteData.CalculateArcLength(
+        int startIndex = noteData.startIndex;
+        int endIndex = noteData.endIndex;
+
+        int arcLength = noteData.CalculateArcLength(
             segmentCount,
             noteMap.bpm,
             noteMap.beatsPerBar,
             segmentSpawnInterval
         );
 
-        if (calculatedArcLength <= 0)
+        float secondsPerBeat = 60f / noteMap.bpm;
+        float totalDurationSeconds =
+            (noteData.durationBars * noteMap.beatsPerBar + noteData.durationBeats) * secondsPerBeat;
+
+        if (endIndex < 0 || endIndex >= segmentCount)
         {
-            Debug.LogWarning($"롱노트 길이가 너무 짧습니다. 최소 길이(1)로 설정합니다.");
-            calculatedArcLength = 1;
+            if (noteData.isClockwise)
+            {
+                endIndex = (startIndex + arcLength) % segmentCount;
+            }
+            else
+            {
+                endIndex = (startIndex - arcLength + segmentCount) % segmentCount;
+            }
         }
 
-        endIndex = (noteData.startIndex + calculatedArcLength) % segmentCount;
-
-        Debug.Log(
-            $"롱노트 생성 - 마디: {noteData.bar}, 박자: {noteData.beat}, "
-                + $"지속 시간: {noteData.durationBars}마디 {noteData.durationBeats}박자, "
-                + $"계산된 인덱스: 시작 {noteData.startIndex}, 끝 {endIndex}, 길이: {calculatedArcLength}"
-        );
-
         StartCoroutine(
-            SpawnSegments(noteData, noteData.startIndex, endIndex, false, calculatedArcLength)
+            SpawnSegments(noteData, startIndex, endIndex, false, arcLength, totalDurationSeconds)
         );
 
         if (noteData.isSymmetric)
         {
-            int symmetricStart = (noteData.startIndex + segmentCount / 2) % segmentCount;
-            int symmetricEnd = (endIndex + segmentCount / 2) % segmentCount;
+            int symmetricStartIndex = (startIndex + segmentCount / 2) % segmentCount;
+            int symmetricEndIndex = (endIndex + segmentCount / 2) % segmentCount;
+
             StartCoroutine(
-                SpawnSegments(noteData, symmetricStart, symmetricEnd, true, calculatedArcLength)
+                SpawnSegments(
+                    noteData,
+                    symmetricStartIndex,
+                    symmetricEndIndex,
+                    true,
+                    arcLength,
+                    totalDurationSeconds
+                )
             );
         }
     }
@@ -298,53 +289,66 @@ public class NoteSpawner : MonoBehaviour
         int startIndex,
         int endIndex,
         bool isSymmetric,
-        int arcLength
+        int arcLength,
+        float totalDurationSeconds
     )
     {
+        if (arcLength <= 0)
+        {
+            Debug.LogError($"유효하지 않은 경로 길이: {arcLength}");
+            yield break;
+        }
+
+        float segmentInterval = totalDurationSeconds / arcLength;
+
+        segmentInterval = Mathf.Max(segmentInterval, 0.05f);
+
+        NoteColor segmentColor = isSymmetric ? NoteColor.Red : noteData.noteColor;
+        if (segmentColor == NoteColor.None)
+        {
+            segmentColor = NoteColor.Blue;
+        }
+
+        List<int> pathIndices = new List<int>();
         int currentIndex = startIndex;
-        int maxIterations = segmentCount * 2;
-        int iterations = 0;
+        int direction = noteData.isClockwise ? 1 : -1;
 
-        float secondsPerBeat = 60f / noteMap.bpm;
-        float totalDurationSeconds =
-            (noteData.durationBars * noteMap.beatsPerBar + noteData.durationBeats) * secondsPerBeat;
+        pathIndices.Add(currentIndex);
 
-        if (totalDurationSeconds <= 0)
+        for (int i = 0; i < segmentCount && pathIndices.Count < arcLength; i++)
         {
-            totalDurationSeconds = arcLength * segmentSpawnInterval;
-            Debug.LogWarning("롱노트 지속 시간이 0입니다. 기본값으로 설정합니다.");
+            currentIndex = (currentIndex + direction + segmentCount) % segmentCount;
+            pathIndices.Add(currentIndex);
+
+            if (currentIndex == endIndex)
+                break;
         }
 
-        float segmentSpeed = noteSpeed;
-        if (totalDurationSeconds > 0)
+        if (pathIndices.Count < arcLength)
         {
-            float totalDistance = Vector3.Distance(
-                sourcePoints[startIndex],
-                targetPoints[startIndex]
-            );
-            segmentSpeed = totalDistance / totalDurationSeconds;
-        }
+            int remaining = arcLength - pathIndices.Count;
 
-        do
-        {
-            if (iterations++ > maxIterations)
+            for (int i = 0; i < remaining; i++)
             {
-                Debug.LogError(
-                    $"롱노트 생성 중단: 최대 반복 횟수({maxIterations})를 초과했습니다."
-                );
-                yield break;
+                pathIndices.Add(endIndex);
             }
+        }
+        else if (pathIndices.Count > arcLength)
+        {
+            pathIndices = pathIndices.GetRange(0, arcLength);
+        }
 
-            Vector3 sourcePos = sourcePoints[currentIndex];
-            Vector3 targetPos = targetPoints[currentIndex];
+        for (int i = 0; i < pathIndices.Count; i++)
+        {
+            int index = pathIndices[i];
+            Vector3 sourcePos = sourcePoints[index];
+            Vector3 targetPos = targetPoints[index];
 
             NoteData segmentData = new NoteData
             {
                 noteType = NoteType.Long,
-                noteColor = noteData.noteColor,
-                noteSpeed = segmentSpeed,
-                direction = noteData.direction,
-                noteAxis = noteData.noteAxis,
+                noteColor = segmentColor,
+                noteSpeed = noteSpeed,
                 bar = noteData.bar,
                 beat = noteData.beat,
                 durationBars = noteData.durationBars,
@@ -352,35 +356,40 @@ public class NoteSpawner : MonoBehaviour
                 isClockwise = noteData.isClockwise,
                 isSymmetric = isSymmetric,
                 gridGenerator = gridGenerator,
+                startIndex = index,
             };
 
-            Note segment = Instantiate(longNotePrefab, sourcePos, Quaternion.Euler(90, 0, 0));
-
-            if (isSymmetric)
+            try
             {
-                segment.SetNoteColor(Color.red);
+                LongNote segment = Instantiate(
+                    longNotePrefab,
+                    sourcePos,
+                    Quaternion.Euler(90, 0, 0)
+                );
+
+                if (segment != null)
+                {
+                    segment.Initialize(segmentData);
+                    segment.SetPositions(sourcePos, targetPos);
+                    segment.SetNoteColor(segmentColor);
+
+                    if (hitFXPrefab != null)
+                    {
+                        segment.SetHitFX(hitFXPrefab);
+                    }
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"세그먼트 생성 중 오류 발생: {e.Message}");
             }
 
-            if (segment is LongNote longNote)
-            {
-                longNote.Initialize(segmentData);
-                longNote.SetPositions(sourcePos, targetPos);
-            }
+            yield return new WaitForSeconds(segmentInterval);
+        }
 
-            if (hitFXPrefab != null)
-            {
-                segment.SetHitFX(hitFXPrefab);
-            }
-
-            if (currentIndex == endIndex)
-                break;
-
-            currentIndex = noteData.isClockwise
-                ? (currentIndex + 1) % segmentCount
-                : (currentIndex - 1 + segmentCount) % segmentCount;
-
-            yield return new WaitForSeconds(segmentSpawnInterval);
-        } while (true);
+        Debug.Log(
+            $"세그먼트 생성 완료: 총 {pathIndices.Count}개, 대칭={isSymmetric}, 색상={segmentColor}"
+        );
     }
 
     private void OnDrawGizmos()
