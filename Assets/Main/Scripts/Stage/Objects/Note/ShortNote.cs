@@ -10,6 +10,7 @@ public class ShortNote : Note
 
     [SerializeField, Header("노트 플레이어 방향 기울기")]
     protected float noteLookAtAngle = 40f;
+    public Renderer topRenderer;
     protected Vector3 noteDownDirection;
     protected Vector3 noteUpDirection;
     protected float noteDistance;
@@ -37,6 +38,44 @@ public class ShortNote : Note
         noteUpDirection = transform.up;
     }
 
+    public override void SetNoteColor(NoteColor color)
+    {
+        noteData.noteColor = color;
+
+        if (Rim == null)
+        {
+            Debug.LogWarning($"노트의 Rim이 null입니다. 노트 타입: {noteData?.noteType}");
+            return;
+        }
+
+        Renderer rimRenderer = Rim.GetComponent<Renderer>();
+        if (rimRenderer == null)
+        {
+            Debug.LogWarning("Rim에 Renderer 컴포넌트가 없습니다.");
+            return;
+        }
+
+        switch (color)
+        {
+            case NoteColor.Red:
+                rimRenderer.material.color = Color.red;
+                topRenderer.material.color = Color.red;
+                break;
+            case NoteColor.Blue:
+                rimRenderer.material.color = Color.blue;
+                topRenderer.material.color = Color.blue;
+                break;
+            case NoteColor.Yellow:
+                rimRenderer.material.color = Color.yellow;
+                topRenderer.material.color = Color.yellow;
+                break;
+            default:
+                rimRenderer.material.color = Color.white;
+                topRenderer.material.color = Color.white;
+                break;
+        }
+    }
+
     private void Update()
     {
         if (!isInitialized)
@@ -51,7 +90,6 @@ public class ShortNote : Note
 
         transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
 
-        // 목표 위치에 도달했을 때 Miss 처리
         if (progress >= 1f && !isHit)
         {
             Miss();

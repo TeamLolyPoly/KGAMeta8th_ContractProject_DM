@@ -21,7 +21,7 @@ public class Note : MonoBehaviour, IInitializable
         isInitialized = true;
     }
 
-    public void SetNoteColor(NoteColor color)
+    public virtual void SetNoteColor(NoteColor color)
     {
         noteData.noteColor = color;
 
