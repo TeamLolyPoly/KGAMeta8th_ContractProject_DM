@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class LoadingUI : MonoBehaviour
+public class LoadingPanel : MonoBehaviour
 {
     [Header("참조")]
     [SerializeField]

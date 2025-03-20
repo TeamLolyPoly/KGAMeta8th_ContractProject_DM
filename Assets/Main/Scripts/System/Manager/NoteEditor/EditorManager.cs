@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace NoteEditor
 {
@@ -122,14 +123,9 @@ namespace NoteEditor
 
             editorCamera = Camera.main;
 
-            if (editorCamera != null)
-            {
-                editorCamera.transform.position = new Vector3(0, 5, -5);
-                editorCamera.transform.rotation = Quaternion.Euler(30, 0, 0);
-            }
-
             SetupInputActions();
             RefreshTrackList();
+            InitializeEditorCamera();
 
             if (cachedTracks.Count > 0)
             {
@@ -138,6 +134,23 @@ namespace NoteEditor
 
             isInitialized = true;
             Debug.Log("[EditorManager] 초기화 완료");
+        }
+
+        public void InitializeEditorCamera()
+        {
+            SceneManager.sceneLoaded += (scene, mode) =>
+            {
+                if (scene.name == "NoteEditor")
+                {
+                    editorCamera = Camera.main;
+
+                    if (editorCamera != null)
+                    {
+                        editorCamera.transform.position = new Vector3(0, 5, -5);
+                        editorCamera.transform.rotation = Quaternion.Euler(30, 0, 0);
+                    }
+                }
+            };
         }
 
         public void GetResources()
@@ -209,30 +222,6 @@ namespace NoteEditor
                 Debug.LogWarning(
                     "editorControlActions이 할당되지 않았습니다. Resources/Input/EditorControls를 확인하세요."
                 );
-            }
-        }
-
-        private void OnEnable()
-        {
-            if (editorControlActions != null)
-            {
-                var actionMap = editorControlActions.FindActionMap("NoteEditor");
-                if (actionMap != null)
-                {
-                    actionMap.Enable();
-                }
-            }
-        }
-
-        private void OnDisable()
-        {
-            if (editorControlActions != null)
-            {
-                var actionMap = editorControlActions.FindActionMap("NoteEditor");
-                if (actionMap != null)
-                {
-                    actionMap.Disable();
-                }
             }
         }
 
@@ -410,7 +399,7 @@ namespace NoteEditor
                 yield break;
             }
 
-            LoadingUI loadingUI = FindObjectOfType<LoadingUI>();
+            LoadingPanel loadingUI = FindObjectOfType<LoadingPanel>();
             Action<float> updateProgress = LoadingManager.Instance.UpdateProgress;
 
             updateProgress(0.1f);
@@ -497,7 +486,7 @@ namespace NoteEditor
                 yield break;
             }
 
-            LoadingUI loadingUI = FindObjectOfType<LoadingUI>();
+            LoadingPanel loadingUI = FindObjectOfType<LoadingPanel>();
             Action<float> updateProgress = LoadingManager.Instance.UpdateProgress;
 
             updateProgress(0.2f);
@@ -588,7 +577,7 @@ namespace NoteEditor
             );
         }
 
-        private void SetRandomTip(LoadingUI loadingUI, string[] tips)
+        private void SetRandomTip(LoadingPanel loadingUI, string[] tips)
         {
             if (tips.Length > 0)
             {
