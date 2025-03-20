@@ -14,37 +14,35 @@ public class NoteData
     public NoteAxis noteAxis = NoteAxis.PZ;
 
     [JsonIgnore]
-    public Vector2 StartCell;
+    public Vector2Int StartCell;
 
     [JsonIgnore]
-    public Vector2 TargetCell;
+    public Vector2Int TargetCell;
 
-    public float StartCellX
+    public int StartCellX
     {
         get { return StartCell.x; }
-        set { StartCell = new Vector2(value, StartCell.y); }
+        set { StartCell = new Vector2Int(value, StartCell.y); }
     }
 
-    public float StartCellY
+    public int StartCellY
     {
         get { return StartCell.y; }
-        set { StartCell = new Vector2(StartCell.x, value); }
+        set { StartCell = new Vector2Int(StartCell.x, value); }
     }
 
-    public float TargetCellX
+    public int TargetCellX
     {
         get { return TargetCell.x; }
-        set { TargetCell = new Vector2(value, TargetCell.y); }
+        set { TargetCell = new Vector2Int(value, TargetCell.y); }
     }
 
-    public float TargetCellY
+    public int TargetCellY
     {
         get { return TargetCell.y; }
-        set { TargetCell = new Vector2(TargetCell.x, value); }
+        set { TargetCell = new Vector2Int(TargetCell.x, value); }
     }
 
-    public bool isLeftGrid;
-    public float noteSpeed;
     public int bar;
     public int beat;
     public int startIndex;
@@ -52,11 +50,11 @@ public class NoteData
     public bool isSymmetric;
     public bool isClockwise;
 
-    [JsonIgnore]
-    public bool isSegment;
-
     public int durationBars;
     public int durationBeats;
+
+    [JsonIgnore]
+    public float noteSpeed;
 
     [JsonIgnore]
     public GridGenerator gridGenerator;
@@ -91,12 +89,29 @@ public class NoteData
             return 0;
 
         float secondsPerBeat = 60f / bpm;
+
+        // 롱노트의 지속 시간을 초 단위로 계산
         float totalDurationSeconds = (durationBars * beatsPerBar + durationBeats) * secondsPerBeat;
 
+        // 지속 시간이 잘못 설정된 경우에 대한 보호
+        if (totalDurationSeconds <= 0)
+        {
+            Debug.LogWarning(
+                $"롱노트 지속 시간이 0 또는 음수입니다: {durationBars}마디 {durationBeats}비트"
+            );
+            return 1; // 최소 길이
+        }
+
+        // 총 지속 시간을 세그먼트 간격으로 나누어 필요한 세그먼트 수 계산
         int calculatedArcLength = Mathf.RoundToInt(totalDurationSeconds / spawnInterval);
 
-        calculatedArcLength = Mathf.Max(1, calculatedArcLength);
-        calculatedArcLength = Mathf.Min(calculatedArcLength, segmentCount - 1);
+        // 최소 및 최대 값 제한
+        calculatedArcLength = Mathf.Max(1, calculatedArcLength); // 최소 1개
+        calculatedArcLength = Mathf.Min(calculatedArcLength, segmentCount - 1); // 최대 segmentCount-1개
+
+        Debug.Log(
+            $"롱노트 길이 계산: 지속 시간 {totalDurationSeconds:F3}초 ({durationBars}마디 {durationBeats}비트) = {calculatedArcLength}개 세그먼트 (간격: {spawnInterval:F3}초)"
+        );
 
         return calculatedArcLength;
     }
@@ -150,8 +165,20 @@ public class TrackData
 public class BandAnimationData
 {
     public BandType bandType;
+    [Header("밴드 walk 애니메이션")]
     public AnimationClip MoveClip;
     public AnimationClip[] animationClip;
+}
+[Serializable]
+public class SpectatorAnimData
+{
+    [Header("관객 디폴트 애니메이션")]
+    public List<AnimationClip> RandomAnima =
+    new List<AnimationClip>();
+
+    [Header("관객 호응도 애니메이션")]
+    public List<AnimationClip> engagementClip =
+        new List<AnimationClip>();
 }
 
 [Serializable]

@@ -13,6 +13,8 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     public event Action<bool> OnGameStateChanged;
     public event Action<int, int> OnBeatChanged;
+
+    [SerializeField]
     private AudioSource musicSource;
     private NoteMap noteMap;
     public NoteMap NoteMap => noteMap;
@@ -21,7 +23,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
     private ScoreSystem scoreSystem;
     public ScoreSystem ScoreSystem => scoreSystem;
     private AnimationSystem unitAnimationManager;
-    public AnimationSystem UnitAnimationManager => unitAnimationManager;
+    public AnimationSystem UnitAnimationSystem => unitAnimationManager;
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
     private bool isPlaying = false;
@@ -46,7 +48,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
     {
         string TestNoteMap = Resources.Load<TextAsset>("JSON/TestMap").text;
         NoteMap noteMap = JsonConvert.DeserializeObject<NoteMap>(TestNoteMap);
-        print(noteMap);
         LoadNoteMap(noteMap);
         StartGame();
     }
@@ -68,15 +69,17 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
 
-        unitAnimationManager = new GameObject("unitAnimationManager").AddComponent<AnimationSystem>();
+        unitAnimationManager = new GameObject(
+            "unitAnimationManager"
+        ).AddComponent<AnimationSystem>();
 
-        //Initialize순서 중요
         unitAnimationManager.Initialize();
 
         scoreSystem.Initialize();
 
         noteSpawner.Initialize(gridGenerator, noteMap);
     }
+
     public void LoadNoteMap(NoteMap noteMap)
     {
         this.noteMap = noteMap;
@@ -133,15 +136,37 @@ public class GameManager : Singleton<GameManager>, IInitializable
         startDspTime = AudioSettings.dspTime;
         isPlaying = true;
 
-        noteSpawner.StartSpawn(startDspTime);
+        float secondsPerBeat = 60f / noteMap.bpm;
+        float distance = gridGenerator.GridDistance;
+        float targetHitTime = secondsPerBeat * noteMap.beatsPerBar;
+        float noteSpeed = distance / targetHitTime;
+        float noteTravelTime = distance / noteSpeed;
+
+        Debug.Log(
+            $"노트 속도 계산: BPM={noteMap.bpm}, 거리={distance:F2}, 이동 시간={noteTravelTime:F3}초"
+        );
+
+        float preRollTime = noteTravelTime;
+
+        double musicStartTime = startDspTime + preRollTime;
+
+        Debug.Log($"노트 스폰 시작: DSP 시간={startDspTime:F3}, 프리롤={preRollTime:F3}초");
+        noteSpawner.StartSpawn(startDspTime, preRollTime);
 
         if (musicSource != null && musicSource.clip != null)
         {
-            musicSource.Play();
+            musicSource.PlayScheduled(musicStartTime);
+            Debug.Log(
+                $"음악 시작 예약: DSP 시간 {musicStartTime:F3}, 현재 시간: {AudioSettings.dspTime:F3}, 간격: {musicStartTime - AudioSettings.dspTime:F3}초"
+            );
+            Debug.Log($"비트당 시간: {secondsPerBeat:F3}초 (BPM {noteMap.bpm})");
+        }
+        else
+        {
+            Debug.LogWarning("음악 소스나 클립이 설정되지 않았습니다. 노트만 생성됩니다.");
         }
 
         OnGameStateChanged?.Invoke(true);
-
         Debug.Log("게임 시작!");
     }
 

@@ -5,7 +5,7 @@ using UnityEngine;
 public class Unit : MonoBehaviour
 {
     protected Animator animator;
-    protected AnimationSystem unitAnimationManager;
+    protected AnimationSystem unitAnimationSystem;
     protected Coroutine animChangeCoroutine;
     protected bool isAnimating = false;
 
@@ -13,10 +13,11 @@ public class Unit : MonoBehaviour
 
     protected virtual IEnumerator Start()
     {
-        yield return new WaitUntil(() => GameManager.Instance.IsInitialized);
-        unitAnimationManager = GameManager.Instance.UnitAnimationManager;
+        yield return new WaitUntil(() => GameManager.Instance.UnitAnimationSystem != null);
+        unitAnimationSystem = GameManager.Instance.UnitAnimationSystem;
         Initialize();
     }
+
     protected virtual void Initialize()
     {
         animator = GetComponent<Animator>();
@@ -24,9 +25,9 @@ public class Unit : MonoBehaviour
         {
             animator = gameObject.AddComponent<Animator>();
         }
-        unitAnimationManager.AddUnit(this);
+        unitAnimationSystem.AddUnit(this);
 
-        unitAnimationManager.AttachAnimation(animator);
+        unitAnimationSystem.AttachAnimation(animator);
     }
 
     public virtual void SetAnimationClip(AnimationClip clip, string targetClipName)
@@ -39,6 +40,7 @@ public class Unit : MonoBehaviour
             animator.runtimeAnimatorController = overrideController;
         }
         overrideController[targetClipName] = clip;
+        animator.Play(targetClipName);
         // animationQueue.Enqueue(clip);
 
         // if (animChangeCoroutine != null)
@@ -61,6 +63,7 @@ public class Unit : MonoBehaviour
         }
         animChangeCoroutine = null;
     }
+
     public void OnAnimation()
     {
         isAnimating = !isAnimating;
@@ -69,7 +72,6 @@ public class Unit : MonoBehaviour
 
     protected void OnDisable()
     {
-        unitAnimationManager.RemoveUnit(this);
+        unitAnimationSystem.RemoveUnit(this);
     }
-
 }
