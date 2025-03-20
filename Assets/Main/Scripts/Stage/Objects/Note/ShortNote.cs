@@ -60,18 +60,22 @@ public class ShortNote : Note
             case NoteColor.Red:
                 rimRenderer.material.color = Color.red;
                 topRenderer.material.color = Color.red;
+
                 break;
             case NoteColor.Blue:
                 rimRenderer.material.color = Color.blue;
                 topRenderer.material.color = Color.blue;
+
                 break;
             case NoteColor.Yellow:
                 rimRenderer.material.color = Color.yellow;
                 topRenderer.material.color = Color.yellow;
+
                 break;
             default:
                 rimRenderer.material.color = Color.white;
                 topRenderer.material.color = Color.white;
+
                 break;
         }
     }
