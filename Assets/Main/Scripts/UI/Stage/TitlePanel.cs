@@ -36,13 +36,13 @@ public class TitlePanel : Panel
 
     private void OnStartButtonClick()
     {
-        //mode 패널 열기
         UIManager.Instance.OpenPanel(PanelType.Mode);
+        Close();
     }
 
     private void OnOptionButtonClick()
     {
-        UIManager.Instance.ToggleOptionPanel();
+        UIManager.Instance.OpenPanel(PanelType.Option);
     }
 
     private void OnQuitButtonClick()

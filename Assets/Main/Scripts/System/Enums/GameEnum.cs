@@ -92,3 +92,11 @@ public enum PanelType
     // 에디터 전용
     NoteEditor,
 }
+
+public enum Difficulty
+{
+    None,
+    Easy,
+    Normal,
+    Hard,
+}

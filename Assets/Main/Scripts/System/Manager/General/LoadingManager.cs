@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 
 public class LoadingManager : Singleton<LoadingManager>
 {
-    public string loadingSceneName = "LoadingScene";
+    public const string LOADING_SCENE_NAME = "Loading";
     public float minimumLoadingTime = 0.5f;
 
     private LoadingPanel loadingUI;
@@ -38,7 +38,7 @@ public class LoadingManager : Singleton<LoadingManager>
     {
         string currentSceneName = SceneManager.GetActiveScene().name;
 
-        AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(loadingSceneName);
+        AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
         while (!loadLoadingScene.isDone)
         {
             yield return null;
@@ -93,7 +93,7 @@ public class LoadingManager : Singleton<LoadingManager>
     {
         string currentSceneName = SceneManager.GetActiveScene().name;
 
-        AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(loadingSceneName);
+        AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
         while (!loadLoadingScene.isDone)
         {
             yield return null;
@@ -179,7 +179,7 @@ public class LoadingManager : Singleton<LoadingManager>
     {
         string currentSceneName = SceneManager.GetActiveScene().name;
 
-        AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(loadingSceneName);
+        AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
         while (!loadLoadingScene.isDone)
         {
             yield return null;

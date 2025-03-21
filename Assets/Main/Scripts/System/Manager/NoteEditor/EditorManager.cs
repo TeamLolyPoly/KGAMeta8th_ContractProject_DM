@@ -121,7 +121,15 @@ namespace NoteEditor
             yield return new WaitUntil(() => editorPanel.IsInitialized);
             Debug.Log("[EditorManager] EditorPanel 초기화 완료");
 
-            editorCamera = Camera.main;
+            InitializeCamera();
+
+            SceneManager.sceneLoaded += (scene, mode) =>
+            {
+                if (scene.name == "NoteEditor")
+                {
+                    InitializeCamera();
+                }
+            };
 
             SetupInputActions();
             RefreshTrackList();
@@ -136,21 +144,14 @@ namespace NoteEditor
             Debug.Log("[EditorManager] 초기화 완료");
         }
 
-        public void InitializeEditorCamera()
+        private void InitializeCamera()
         {
-            SceneManager.sceneLoaded += (scene, mode) =>
+            editorCamera = Camera.main;
+            if (editorCamera != null)
             {
-                if (scene.name == "NoteEditor")
-                {
-                    editorCamera = Camera.main;
-
-                    if (editorCamera != null)
-                    {
-                        editorCamera.transform.position = new Vector3(0, 5, -5);
-                        editorCamera.transform.rotation = Quaternion.Euler(30, 0, 0);
-                    }
-                }
-            };
+                editorCamera.transform.position = new Vector3(0, 5, -5);
+                editorCamera.transform.rotation = Quaternion.Euler(30, 0, 0);
+            }
         }
 
         public void GetResources()
@@ -278,11 +279,6 @@ namespace NoteEditor
 
             noteEditor.SetTrack(track);
 
-            if (editorPanel != null && editorPanel.IsInitialized)
-            {
-                editorPanel.ChangeTrack(track);
-            }
-
             Debug.Log(
                 $"트랙 선택됨: {track.trackName}, BPM: {track.bpm}, 길이: {track.TrackAudio.length}초"
             );
@@ -367,11 +363,11 @@ namespace NoteEditor
                 return;
 
             pendingAudioFilePath = filePath;
-            currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            currentSceneName = SceneManager.GetActiveScene().name;
             isLoadingTrack = true;
 
             LoadingManager.Instance.LoadScene(
-                LoadingManager.Instance.loadingSceneName,
+                LoadingManager.LOADING_SCENE_NAME,
                 () => StartCoroutine(LoadAudioFileProcess())
             );
         }
@@ -382,10 +378,10 @@ namespace NoteEditor
                 return;
 
             pendingAlbumArtFilePath = filePath;
-            currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            currentSceneName = SceneManager.GetActiveScene().name;
 
             LoadingManager.Instance.LoadScene(
-                LoadingManager.Instance.loadingSceneName,
+                LoadingManager.LOADING_SCENE_NAME,
                 () => StartCoroutine(LoadAlbumArtProcess(trackIndex))
             );
         }

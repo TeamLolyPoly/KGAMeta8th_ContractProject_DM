@@ -35,6 +35,7 @@ public abstract class Singleton<T> : MonoBehaviour
         {
             instance = this as T;
             DontDestroyOnLoad(gameObject);
+            instance.name = typeof(T).Name;
         }
         else if (instance != this)
         {

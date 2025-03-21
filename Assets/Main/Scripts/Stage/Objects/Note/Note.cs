@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 
 public class Note : MonoBehaviour, IInitializable
 {
@@ -11,6 +12,8 @@ public class Note : MonoBehaviour, IInitializable
     protected Vector3 startPosition;
     protected Vector3 targetPosition;
     public GameObject Rim;
+    public XRBaseController leftController;
+    public XRBaseController rightController;
 
     protected bool isInitialized = false;
     protected bool isHit = false;
@@ -21,7 +24,7 @@ public class Note : MonoBehaviour, IInitializable
         isInitialized = true;
     }
 
-    public void SetNoteColor(NoteColor color)
+    public virtual void SetNoteColor(NoteColor color)
     {
         noteData.noteColor = color;
 
@@ -103,6 +106,7 @@ public class Note : MonoBehaviour, IInitializable
             if (noteInteractor.noteColor == noteData.noteColor)
             {
                 HandleCollision();
+                noteInteractor.SendImpulse();
             }
             else
             {

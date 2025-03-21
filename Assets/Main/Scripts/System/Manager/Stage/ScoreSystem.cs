@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -121,6 +120,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
                 + $"\n랭크: {ratings}"
                 + $"\n노트점수: {score}"
                 + $"\n최고 콤보: {highCombo}"
+                + $"\n점수 배율{multiplier}"
                 + $"\n현재 콤보: {combo}"
                 + $"\n노트파괴수: {noteHitCount}"
         );
