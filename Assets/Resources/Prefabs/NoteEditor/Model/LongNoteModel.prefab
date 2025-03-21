@@ -128,8 +128,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rod: {fileID: 308883443893022675}
-  redPoint: {fileID: 8640777762970019566}
-  bluePoint: {fileID: 8640777762365196829}
+  startPoint: {fileID: 8640777762970019566}
+  endPoint: {fileID: 8640777762365196829}
+  startCell: {fileID: 0}
+  endCell: {fileID: 0}
+  noteData:
+    noteType: 0
+    noteColor: 0
+    direction: 0
+    noteAxis: 0
+    StartCell: {x: 0, y: 0}
+    TargetCell: {x: 0, y: 0}
+    bar: 0
+    beat: 0
+    startIndex: 0
+    endIndex: 0
+    isSymmetric: 0
+    isClockwise: 0
+    durationBars: 0
+    durationBeats: 0
+    noteSpeed: 0
+    gridGenerator: {fileID: 0}
+  isInitialized: 0
 --- !u!1 &8640777762365196829
 GameObject:
   m_ObjectHideFlags: 0
