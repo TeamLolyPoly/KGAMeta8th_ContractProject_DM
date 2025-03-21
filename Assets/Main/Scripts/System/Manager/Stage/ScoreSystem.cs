@@ -149,7 +149,8 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     private void SetSpectatorEngagement()
     {
-        int totalNoteCount = 10; //GameManager.Instance.NoteMap.TotalNoteCount;
+        int totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
+        print($"totalNoteCount: {totalNoteCount}");
         SpectatorEventThreshold newThreshold =
             scoreSettingData.sectatorEventThreshold.LastOrDefault(threshold =>
                 CheckEngagement(threshold, totalNoteCount)
