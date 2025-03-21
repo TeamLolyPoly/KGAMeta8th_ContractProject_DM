@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace NoteEditor
 {
@@ -120,16 +121,19 @@ namespace NoteEditor
             yield return new WaitUntil(() => editorPanel.IsInitialized);
             Debug.Log("[EditorManager] EditorPanel 초기화 완료");
 
-            editorCamera = Camera.main;
+            InitializeCamera();
 
-            if (editorCamera != null)
+            SceneManager.sceneLoaded += (scene, mode) =>
             {
-                editorCamera.transform.position = new Vector3(0, 5, -5);
-                editorCamera.transform.rotation = Quaternion.Euler(30, 0, 0);
-            }
+                if (scene.name == "NoteEditor")
+                {
+                    InitializeCamera();
+                }
+            };
 
             SetupInputActions();
             RefreshTrackList();
+            InitializeEditorCamera();
 
             if (cachedTracks.Count > 0)
             {
@@ -138,6 +142,16 @@ namespace NoteEditor
 
             isInitialized = true;
             Debug.Log("[EditorManager] 초기화 완료");
+        }
+
+        private void InitializeCamera()
+        {
+            editorCamera = Camera.main;
+            if (editorCamera != null)
+            {
+                editorCamera.transform.position = new Vector3(0, 5, -5);
+                editorCamera.transform.rotation = Quaternion.Euler(30, 0, 0);
+            }
         }
 
         public void GetResources()
@@ -212,30 +226,6 @@ namespace NoteEditor
             }
         }
 
-        private void OnEnable()
-        {
-            if (editorControlActions != null)
-            {
-                var actionMap = editorControlActions.FindActionMap("NoteEditor");
-                if (actionMap != null)
-                {
-                    actionMap.Enable();
-                }
-            }
-        }
-
-        private void OnDisable()
-        {
-            if (editorControlActions != null)
-            {
-                var actionMap = editorControlActions.FindActionMap("NoteEditor");
-                if (actionMap != null)
-                {
-                    actionMap.Disable();
-                }
-            }
-        }
-
         public void RefreshTrackList()
         {
             if (EditorDataManager.Instance != null)
@@ -288,11 +278,6 @@ namespace NoteEditor
             AudioManager.Instance.SetTrack(track, track.TrackAudio);
 
             noteEditor.SetTrack(track);
-
-            if (editorPanel != null && editorPanel.IsInitialized)
-            {
-                editorPanel.ChangeTrack(track);
-            }
 
             Debug.Log(
                 $"트랙 선택됨: {track.trackName}, BPM: {track.bpm}, 길이: {track.TrackAudio.length}초"
@@ -378,11 +363,11 @@ namespace NoteEditor
                 return;
 
             pendingAudioFilePath = filePath;
-            currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            currentSceneName = SceneManager.GetActiveScene().name;
             isLoadingTrack = true;
 
             LoadingManager.Instance.LoadScene(
-                LoadingManager.Instance.loadingSceneName,
+                LoadingManager.LOADING_SCENE_NAME,
                 () => StartCoroutine(LoadAudioFileProcess())
             );
         }
@@ -393,10 +378,10 @@ namespace NoteEditor
                 return;
 
             pendingAlbumArtFilePath = filePath;
-            currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            currentSceneName = SceneManager.GetActiveScene().name;
 
             LoadingManager.Instance.LoadScene(
-                LoadingManager.Instance.loadingSceneName,
+                LoadingManager.LOADING_SCENE_NAME,
                 () => StartCoroutine(LoadAlbumArtProcess(trackIndex))
             );
         }
@@ -410,7 +395,7 @@ namespace NoteEditor
                 yield break;
             }
 
-            LoadingUI loadingUI = FindObjectOfType<LoadingUI>();
+            LoadingPanel loadingUI = FindObjectOfType<LoadingPanel>();
             Action<float> updateProgress = LoadingManager.Instance.UpdateProgress;
 
             updateProgress(0.1f);
@@ -497,7 +482,7 @@ namespace NoteEditor
                 yield break;
             }
 
-            LoadingUI loadingUI = FindObjectOfType<LoadingUI>();
+            LoadingPanel loadingUI = FindObjectOfType<LoadingPanel>();
             Action<float> updateProgress = LoadingManager.Instance.UpdateProgress;
 
             updateProgress(0.2f);
@@ -588,7 +573,7 @@ namespace NoteEditor
             );
         }
 
-        private void SetRandomTip(LoadingUI loadingUI, string[] tips)
+        private void SetRandomTip(LoadingPanel loadingUI, string[] tips)
         {
             if (tips.Length > 0)
             {
