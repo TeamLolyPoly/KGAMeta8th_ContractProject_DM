@@ -13,8 +13,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
     public bool IsInitialized => isInitialized;
 
     public List<Panel> PanelPrefabs = new List<Panel>();
-
-    private List<Panel> Panels = new List<Panel>();
+    public List<Panel> Panels = new List<Panel>();
 
     private void Start()
     {
@@ -43,28 +42,28 @@ public class UIManager : Singleton<UIManager>, IInitializable
 
     private void InitializeComponents()
     {
-        if (FindObjectOfType<EventSystem>() == null)
+        if (GetComponentInChildren<EventSystem>() == null)
         {
             GameObject eventSystem = Instantiate(
                 Resources.Load<GameObject>("Prefabs/Utils/EventSystem")
             );
             eventSystem.transform.SetParent(transform);
         }
-
-        Canvas cv = gameObject.AddComponent<Canvas>();
-        cv.renderMode = RenderMode.ScreenSpaceOverlay;
-        GraphicRaycaster gr = gameObject.AddComponent<GraphicRaycaster>();
-        gr.enabled = true;
-        gr.ignoreReversedGraphics = true;
-        gr.blockingObjects = GraphicRaycaster.BlockingObjects.None;
-        gr.blockingMask = -1;
-        CanvasScaler cs = gameObject.AddComponent<CanvasScaler>();
-        cs.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        cs.referenceResolution = new Vector2(1920, 1080);
-        cs.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-        cs.matchWidthOrHeight = 0.5f;
-        cs.referencePixelsPerUnit = 100;
-        gameObject.AddComponent<CanvasManager>();
+        if (GetComponentInChildren<Canvas>() == null)
+        {
+            Canvas canvas = gameObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        }
+        if (GetComponentInChildren<CanvasScaler>() == null)
+        {
+            CanvasScaler canvasScaler = gameObject.AddComponent<CanvasScaler>();
+            canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            canvasScaler.referenceResolution = new Vector2(1920, 1080);
+        }
+        if (GetComponentInChildren<GraphicRaycaster>() == null)
+        {
+            gameObject.AddComponent<GraphicRaycaster>();
+        }
     }
 
     private void LoadResources()
@@ -90,6 +89,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
             if (prefab != null)
             {
                 Panel instance = Instantiate(prefab, transform);
+                instance.name = prefab.name;
                 Panels.Add(instance);
                 instance.Open();
                 return instance;
@@ -117,25 +117,6 @@ public class UIManager : Singleton<UIManager>, IInitializable
         foreach (var panel in Panels)
         {
             panel.Close();
-        }
-    }
-
-    public void ToggleOptionPanel()
-    {
-        Panel optionPanel = Panels.Find(p => p.PanelType == PanelType.Option);
-        if (optionPanel == null)
-        {
-            Debug.LogError("Option panel not found");
-            return;
-        }
-
-        if (optionPanel.gameObject.activeSelf)
-        {
-            optionPanel.Close();
-        }
-        else
-        {
-            optionPanel.Open();
         }
     }
 }

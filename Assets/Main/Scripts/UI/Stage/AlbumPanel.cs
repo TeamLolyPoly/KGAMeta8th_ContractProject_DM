@@ -1,9 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using Michsky.UI.Heat;
-using ProjectDM;
 using ProjectDM.UI;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class AlbumPanel : Panel
 {
@@ -11,13 +9,19 @@ public class AlbumPanel : Panel
 
     public override void Open()
     {
+        base.Open();
+        Initialize();
+    }
+
+    //addListener 할 때 함수로 빼고 난 뒤에 open함수 호출하는 방식으로 변경해야함.
+    public void Initialize()
+    {
         backButton.onClick.AddListener(OnBackButtonClick);
         laftTogle.onClick.AddListener(OnLeftToggleClick);
         rightTogle.onClick.AddListener(OnRightToggleClick);
         selectAlbum.onClick.AddListener(OnSelectAlbumClick);
         leftAlbum.onClick.AddListener(OnLeftAlbumClick);
         rightAlbum.onClick.AddListener(OnRightAlbumClick);
-        base.Open();
     }
 
     public override void Close()
@@ -32,13 +36,13 @@ public class AlbumPanel : Panel
     }
 
     [SerializeField]
-    private PanelButton backButton;
+    private BoxButtonManager backButton;
 
     [SerializeField]
-    private PanelButton laftTogle;
+    private Button laftTogle;
 
     [SerializeField]
-    private PanelButton rightTogle;
+    private Button rightTogle;
 
     [SerializeField]
     private BoxButtonManager selectAlbum;
@@ -54,6 +58,7 @@ public class AlbumPanel : Panel
     private void OnBackButtonClick()
     {
         UIManager.Instance.OpenPanel(PanelType.Mode);
+        UIManager.Instance.ClosePanel(PanelType.Album);
     }
 
     private void OnLeftToggleClick()
@@ -69,6 +74,7 @@ public class AlbumPanel : Panel
     private void OnSelectAlbumClick()
     {
         UIManager.Instance.OpenPanel(PanelType.Music);
+        UIManager.Instance.ClosePanel(PanelType.Album);
     }
 
     private void OnLeftAlbumClick()
