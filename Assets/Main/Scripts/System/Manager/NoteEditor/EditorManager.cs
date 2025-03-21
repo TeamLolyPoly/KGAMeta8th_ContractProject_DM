@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace NoteEditor
 {
@@ -120,13 +121,15 @@ namespace NoteEditor
             yield return new WaitUntil(() => editorPanel.IsInitialized);
             Debug.Log("[EditorManager] EditorPanel 초기화 완료");
 
-            editorCamera = Camera.main;
+            InitializeCamera();
 
-            if (editorCamera != null)
+            SceneManager.sceneLoaded += (scene, mode) =>
             {
-                editorCamera.transform.position = new Vector3(0, 5, -5);
-                editorCamera.transform.rotation = Quaternion.Euler(30, 0, 0);
-            }
+                if (scene.name == "NoteEditor")
+                {
+                    InitializeCamera();
+                }
+            };
 
             SetupInputActions();
             RefreshTrackList();
@@ -138,6 +141,16 @@ namespace NoteEditor
 
             isInitialized = true;
             Debug.Log("[EditorManager] 초기화 완료");
+        }
+
+        private void InitializeCamera()
+        {
+            editorCamera = Camera.main;
+            if (editorCamera != null)
+            {
+                editorCamera.transform.position = new Vector3(0, 5, -5);
+                editorCamera.transform.rotation = Quaternion.Euler(30, 0, 0);
+            }
         }
 
         public void GetResources()
@@ -289,11 +302,6 @@ namespace NoteEditor
 
             noteEditor.SetTrack(track);
 
-            if (editorPanel != null && editorPanel.IsInitialized)
-            {
-                editorPanel.ChangeTrack(track);
-            }
-
             Debug.Log(
                 $"트랙 선택됨: {track.trackName}, BPM: {track.bpm}, 길이: {track.TrackAudio.length}초"
             );
@@ -378,7 +386,7 @@ namespace NoteEditor
                 return;
 
             pendingAudioFilePath = filePath;
-            currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            currentSceneName = SceneManager.GetActiveScene().name;
             isLoadingTrack = true;
 
             LoadingManager.Instance.LoadScene(

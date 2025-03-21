@@ -42,12 +42,27 @@ public class UIManager : Singleton<UIManager>, IInitializable
 
     private void InitializeComponents()
     {
-        if (FindObjectOfType<EventSystem>() == null)
+        if (GetComponentInChildren<EventSystem>() == null)
         {
             GameObject eventSystem = Instantiate(
                 Resources.Load<GameObject>("Prefabs/Utils/EventSystem")
             );
             eventSystem.transform.SetParent(transform);
+        }
+        if (GetComponentInChildren<Canvas>() == null)
+        {
+            Canvas canvas = gameObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        }
+        if (GetComponentInChildren<CanvasScaler>() == null)
+        {
+            CanvasScaler canvasScaler = gameObject.AddComponent<CanvasScaler>();
+            canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            canvasScaler.referenceResolution = new Vector2(1920, 1080);
+        }
+        if (GetComponentInChildren<GraphicRaycaster>() == null)
+        {
+            gameObject.AddComponent<GraphicRaycaster>();
         }
     }
 

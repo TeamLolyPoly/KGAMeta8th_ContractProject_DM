@@ -347,8 +347,8 @@ namespace NoteEditor
                 return;
             else
             {
-                trackDropdown.SetDropdownIndex(index);
                 editorManager.SelectTrack(selectedTrack);
+                ChangeTrack(selectedTrack);
             }
         }
 
