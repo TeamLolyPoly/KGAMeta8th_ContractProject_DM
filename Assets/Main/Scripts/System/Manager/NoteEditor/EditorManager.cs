@@ -133,7 +133,6 @@ namespace NoteEditor
 
             SetupInputActions();
             RefreshTrackList();
-            InitializeEditorCamera();
 
             if (cachedTracks.Count > 0)
             {
