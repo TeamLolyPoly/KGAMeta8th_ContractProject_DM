@@ -5,7 +5,6 @@ using ProjectDM.UI;
 using SFB;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using Dropdown = Michsky.UI.Heat.Dropdown;
 
 namespace NoteEditor

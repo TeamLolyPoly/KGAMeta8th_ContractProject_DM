@@ -1,10 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using Michsky.UI.Heat;
 using ProjectDM.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class UIManager : Singleton<UIManager>, IInitializable
@@ -23,20 +21,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
     public void Initialize()
     {
         LoadResources();
-
-        if (SceneManager.GetActiveScene().name != "NoteEditor")
-        {
-            CloseAllPanels();
-            Debug.Log("모든 패널 닫기 완료");
-
-            OpenPanel(PanelType.Title);
-            Debug.Log("Title 패널 열기 완료");
-        }
-        else
-        {
-            InitializeComponents();
-        }
-
+        InitializeComponents();
         isInitialized = true;
     }
 
