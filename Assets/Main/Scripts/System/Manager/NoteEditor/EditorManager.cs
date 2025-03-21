@@ -225,30 +225,6 @@ namespace NoteEditor
             }
         }
 
-        private void OnEnable()
-        {
-            if (editorControlActions != null)
-            {
-                var actionMap = editorControlActions.FindActionMap("NoteEditor");
-                if (actionMap != null)
-                {
-                    actionMap.Enable();
-                }
-            }
-        }
-
-        private void OnDisable()
-        {
-            if (editorControlActions != null)
-            {
-                var actionMap = editorControlActions.FindActionMap("NoteEditor");
-                if (actionMap != null)
-                {
-                    actionMap.Disable();
-                }
-            }
-        }
-
         public void RefreshTrackList()
         {
             if (EditorDataManager.Instance != null)
@@ -418,7 +394,7 @@ namespace NoteEditor
                 yield break;
             }
 
-            LoadingUI loadingUI = FindObjectOfType<LoadingUI>();
+            LoadingPanel loadingUI = FindObjectOfType<LoadingPanel>();
             Action<float> updateProgress = LoadingManager.Instance.UpdateProgress;
 
             updateProgress(0.1f);
@@ -505,7 +481,7 @@ namespace NoteEditor
                 yield break;
             }
 
-            LoadingUI loadingUI = FindObjectOfType<LoadingUI>();
+            LoadingPanel loadingUI = FindObjectOfType<LoadingPanel>();
             Action<float> updateProgress = LoadingManager.Instance.UpdateProgress;
 
             updateProgress(0.2f);
@@ -596,7 +572,7 @@ namespace NoteEditor
             );
         }
 
-        private void SetRandomTip(LoadingUI loadingUI, string[] tips)
+        private void SetRandomTip(LoadingPanel loadingUI, string[] tips)
         {
             if (tips.Length > 0)
             {

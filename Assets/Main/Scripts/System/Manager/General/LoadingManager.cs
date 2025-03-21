@@ -10,7 +10,7 @@ public class LoadingManager : Singleton<LoadingManager>
     public const string LOADING_SCENE_NAME = "Loading";
     public float minimumLoadingTime = 0.5f;
 
-    private LoadingUI loadingUI;
+    private LoadingPanel loadingUI;
     private ProgressBar progressBar;
 
     private bool isLoading = false;
@@ -44,7 +44,7 @@ public class LoadingManager : Singleton<LoadingManager>
             yield return null;
         }
 
-        loadingUI = FindObjectOfType<LoadingUI>();
+        loadingUI = FindObjectOfType<LoadingPanel>();
         progressBar = FindObjectOfType<ProgressBar>();
 
         AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneName);
@@ -99,7 +99,7 @@ public class LoadingManager : Singleton<LoadingManager>
             yield return null;
         }
 
-        loadingUI = FindObjectOfType<LoadingUI>();
+        loadingUI = FindObjectOfType<LoadingPanel>();
         progressBar = FindObjectOfType<ProgressBar>();
 
         float startTime = Time.time;
@@ -185,7 +185,7 @@ public class LoadingManager : Singleton<LoadingManager>
             yield return null;
         }
 
-        loadingUI = FindObjectOfType<LoadingUI>();
+        loadingUI = FindObjectOfType<LoadingPanel>();
         progressBar = FindObjectOfType<ProgressBar>();
 
         if (loadingUI != null)
