@@ -390,7 +390,7 @@ namespace NoteEditor
             isLoadingTrack = true;
 
             LoadingManager.Instance.LoadScene(
-                LoadingManager.Instance.loadingSceneName,
+                LoadingManager.LOADING_SCENE_NAME,
                 () => StartCoroutine(LoadAudioFileProcess())
             );
         }
@@ -401,10 +401,10 @@ namespace NoteEditor
                 return;
 
             pendingAlbumArtFilePath = filePath;
-            currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            currentSceneName = SceneManager.GetActiveScene().name;
 
             LoadingManager.Instance.LoadScene(
-                LoadingManager.Instance.loadingSceneName,
+                LoadingManager.LOADING_SCENE_NAME,
                 () => StartCoroutine(LoadAlbumArtProcess(trackIndex))
             );
         }
