@@ -1,10 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using Michsky.UI.Heat;
 using ProjectDM.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class UIManager : Singleton<UIManager>, IInitializable
@@ -23,31 +21,33 @@ public class UIManager : Singleton<UIManager>, IInitializable
     public void Initialize()
     {
         LoadResources();
-
-        if (SceneManager.GetActiveScene().name != "NoteEditor")
-        {
-            CloseAllPanels();
-            Debug.Log("모든 패널 닫기 완료");
-
-            OpenPanel(PanelType.Title);
-            Debug.Log("Title 패널 열기 완료");
-        }
-        else
-        {
-            InitializeComponents();
-        }
-
+        InitializeComponents();
         isInitialized = true;
     }
 
     private void InitializeComponents()
     {
-        if (FindObjectOfType<EventSystem>() == null)
+        if (GetComponentInChildren<EventSystem>() == null)
         {
             GameObject eventSystem = Instantiate(
                 Resources.Load<GameObject>("Prefabs/Utils/EventSystem")
             );
             eventSystem.transform.SetParent(transform);
+        }
+        if (GetComponentInChildren<Canvas>() == null)
+        {
+            Canvas canvas = gameObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        }
+        if (GetComponentInChildren<CanvasScaler>() == null)
+        {
+            CanvasScaler canvasScaler = gameObject.AddComponent<CanvasScaler>();
+            canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            canvasScaler.referenceResolution = new Vector2(1920, 1080);
+        }
+        if (GetComponentInChildren<GraphicRaycaster>() == null)
+        {
+            gameObject.AddComponent<GraphicRaycaster>();
         }
     }
 
