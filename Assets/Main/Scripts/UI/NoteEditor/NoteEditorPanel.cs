@@ -94,6 +94,7 @@ namespace NoteEditor
             InitializeTrackDropdown();
             InitializeAlbumArtButton();
             InitializeNoteUI();
+            InitializeBeatsPerBarDropdown();
             IsInitialized = true;
             Debug.Log("[NoteEditorPanel] 초기화 완료");
 
@@ -114,8 +115,11 @@ namespace NoteEditor
 
         private void InitializeBeatsPerBarDropdown()
         {
+            if (beatsPerBarDropdown == null)
+                return;
+
             beatsPerBarDropdown.items.Clear();
-            foreach (int beatsPerBar in Enum.GetValues(typeof(BeatsPerBar)))
+            foreach (BeatsPerBar beatsPerBar in Enum.GetValues(typeof(BeatsPerBar)))
             {
                 beatsPerBarDropdown.CreateNewItem(beatsPerBar.ToString(), true);
             }
