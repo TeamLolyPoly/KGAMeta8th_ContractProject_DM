@@ -13,10 +13,10 @@ public enum NoteDirection
     West,
     South,
     North,
-    Northeast,
-    Northwest,
-    Southeast,
-    Southwest,
+    NorthEast,
+    NorthWest,
+    SouthEast,
+    SouthWest,
 }
 
 public enum NoteAxis
