@@ -6,11 +6,6 @@ using UnityEngine;
 public class ScoreSystem : MonoBehaviour, IInitializable
 {
     private ScoreSettingData scoreSettingData;
-
-    //정확도 기록 딕셔너리
-    public Dictionary<NoteRatings, int> ratingCount { get; private set; } =
-        new Dictionary<NoteRatings, int>();
-
     //정확도별 추가점수
     public Dictionary<NoteRatings, int> multiplierScore { get; private set; } =
         new Dictionary<NoteRatings, int>();
@@ -18,11 +13,16 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     //밴드 호응도 딕셔너리
     public Dictionary<int, Engagement> bandEngagementType { get; private set; } =
         new Dictionary<int, Engagement>();
+    //현재 밴드 호응도
     public Engagement currentBandEngagement { get; private set; }
+    //현재 관객 호응도
     public Engagement currentSpectatorEngagement { get; private set; }
 
     //점수 배율
     public int multiplier { get; private set; } = 1;
+    //정확도 기록 딕셔너리
+    public Dictionary<NoteRatings, int> ratingCount { get; private set; } =
+        new Dictionary<NoteRatings, int>();
 
     //점수
     public float currentScore { get; private set; } = 0;
@@ -47,17 +47,29 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     public bool IsInitialized => isInitialized;
 
     //테스트용 코드
-    // void Update()
-    // {
-    //     if (Input.GetKeyDown(KeyCode.Q))
-    //     {
-    //         SetScore(100, NoteRatings.Perfect);
-    //     }
-    //     if (Input.GetKeyDown(KeyCode.W))
-    //     {
-    //         SetScore(0, NoteRatings.Miss);
-    //     }
-    // }
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            SetScore(100, NoteRatings.Perfect);
+        }
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            SetScore(100, NoteRatings.Good);
+        }
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            SetScore(0, NoteRatings.Miss);
+        }
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            print(
+                $"\nGood: {ratingCount[NoteRatings.Good]}"
+            + $"\nMiss: {ratingCount[NoteRatings.Miss]}"
+                    + $"\n게임랭크: {GetGameRank()}"
+            );
+        }
+    }
 
     public void Initialize()
     {
@@ -92,6 +104,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     public void SetScore(float score, NoteRatings ratings)
     {
         ratingCount[ratings] += 1;
+
         if (ratings == NoteRatings.Miss)
         {
             combo = 0 < combo ? 0 : combo - 1;
@@ -150,6 +163,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     private void SetSpectatorEngagement()
     {
         int totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
+
         print($"totalNoteCount: {totalNoteCount}");
         SpectatorEventThreshold newThreshold =
             scoreSettingData.sectatorEventThreshold.LastOrDefault(threshold =>
@@ -188,6 +202,26 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             currentBandEngagement = newEngagement;
             onBandEngagementChange.Invoke(currentBandEngagement);
         }
+    }
+    public string GetGameRank()
+    {
+        int totalNoteCount = 20; //GameManager.Instance.NoteMap.TotalNoteCount;
+
+        ratingCount.TryGetValue(NoteRatings.Miss, out int missValue);
+
+        ratingCount.TryGetValue(NoteRatings.Good, out int goodValue);
+
+        (int miss, int good) rating = (missValue, goodValue);
+
+        return rating switch
+        {
+            var (miss, good) when miss == 0 && good == 0 => "S+",
+            var (miss, good) when miss == 0 && good > 0 => "S",
+            var (miss, good) when miss < totalNoteCount * 0.05 && good >= 0 => "A",
+            var (miss, good) when miss <= totalNoteCount * 0.5 && good >= 0 => "B",
+            var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => "C",
+            _ => "C"
+        };
     }
 
     private bool IsPlus(int num) => num >= 0;
