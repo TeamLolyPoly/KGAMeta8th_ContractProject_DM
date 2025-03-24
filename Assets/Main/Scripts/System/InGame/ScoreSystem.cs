@@ -47,29 +47,29 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     public bool IsInitialized => isInitialized;
 
     //테스트용 코드
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            SetScore(100, NoteRatings.Perfect);
-        }
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            SetScore(100, NoteRatings.Good);
-        }
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            SetScore(0, NoteRatings.Miss);
-        }
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            print(
-                $"\nGood: {ratingCount[NoteRatings.Good]}"
-            + $"\nMiss: {ratingCount[NoteRatings.Miss]}"
-                    + $"\n게임랭크: {GetGameRank()}"
-            );
-        }
-    }
+    // void Update()
+    // {
+    //     if (Input.GetKeyDown(KeyCode.Q))
+    //     {
+    //         SetScore(100, NoteRatings.Perfect);
+    //     }
+    //     if (Input.GetKeyDown(KeyCode.W))
+    //     {
+    //         SetScore(100, NoteRatings.Good);
+    //     }
+    //     if (Input.GetKeyDown(KeyCode.E))
+    //     {
+    //         SetScore(0, NoteRatings.Miss);
+    //     }
+    //     if (Input.GetKeyDown(KeyCode.R))
+    //     {
+    //         print(
+    //             $"\nGood: {ratingCount[NoteRatings.Good]}"
+    //         + $"\nMiss: {ratingCount[NoteRatings.Miss]}"
+    //                 + $"\n게임랭크: {GetGameRank()}"
+    //         );
+    //     }
+    // }
 
     public void Initialize()
     {
@@ -205,7 +205,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     }
     public string GetGameRank()
     {
-        int totalNoteCount = 20; //GameManager.Instance.NoteMap.TotalNoteCount;
+        int totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
 
         ratingCount.TryGetValue(NoteRatings.Miss, out int missValue);
 
