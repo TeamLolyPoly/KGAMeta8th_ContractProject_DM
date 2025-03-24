@@ -8,7 +8,7 @@ public class ShortNote : Note
     [SerializeField, Header("타격 정확도 허용범위")]
     protected float[] accuracyPoint = { 0.34f, 0.67f };
 
-    [SerializeField, Header("노트 플레이어 방향 기울기")]
+    [SerializeField, Range(0, 50), Header("노트 플레이어 방향 기울기")]
     protected float noteLookAtAngle = 40f;
     public Renderer topRenderer;
     protected Vector3 noteDownDirection;
@@ -133,19 +133,23 @@ public class ShortNote : Note
                 break;
             case NoteDirection.NorthEast:
                 rotationZ = 135f;
-                rotationX = noteLookAtAngle;
+                rotationX = noteLookAtAngle / 2;
+                rotationY = -noteLookAtAngle / 2;
                 break;
             case NoteDirection.NorthWest:
                 rotationZ = -135f;
-                rotationX = noteLookAtAngle;
+                rotationX = noteLookAtAngle / 2;
+                rotationY = noteLookAtAngle / 2;
                 break;
             case NoteDirection.SouthEast:
                 rotationZ = 45f;
-                rotationX = -noteLookAtAngle;
+                rotationX = -noteLookAtAngle / 2;
+                rotationY = -noteLookAtAngle / 2;
                 break;
             case NoteDirection.SouthWest:
                 rotationZ = -45f;
-                rotationX = noteLookAtAngle;
+                rotationX = -noteLookAtAngle / 2;
+                rotationY = noteLookAtAngle / 2;
                 break;
         }
 

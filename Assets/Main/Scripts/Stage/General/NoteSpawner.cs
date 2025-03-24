@@ -8,10 +8,10 @@ public class NoteSpawner : MonoBehaviour
     private float segmentSpawnInterval = 0.1f;
 
     [SerializeField]
-    private float sourceRadius = 0.5f;
+    private float sourceRadius = 0.3f;
 
     [SerializeField]
-    private float targetRadius = 0.5f;
+    private float targetRadius = 0.3f;
 
     [SerializeField]
     private int segmentCount = 72;

@@ -276,6 +276,8 @@ namespace NoteEditor
                     trackDropdown.items.Clear();
                     trackDropdown.selectedItemIndex = 0;
 
+                    trackDropdown.onValueChanged.RemoveAllListeners();
+
                     trackDataList = editorManager.GetAllTrackInfo();
 
                     if (trackDataList.Count > 0)
@@ -320,7 +322,11 @@ namespace NoteEditor
         {
             if (SetAlbumArtButton != null)
             {
-                if (trackDataList.Count == 0)
+                if (
+                    trackDataList.Count == 0
+                    || trackDropdown.selectedItemIndex < 0
+                    || trackDropdown.selectedItemIndex >= trackDataList.Count
+                )
                 {
                     SetAlbumArtButton.buttonIcon = defaultAlbumArt;
                     SetAlbumArtButton.buttonDescription = "앨범 아트 선택";
@@ -395,6 +401,8 @@ namespace NoteEditor
             {
                 new ExtensionFilter("오디오 파일", "mp3", "wav", "ogg"),
             };
+
+            print("[Loading] LoadTrack 호출됨");
 
             StandaloneFileBrowser.OpenFilePanelAsync(
                 "오디오 파일 선택",
@@ -565,10 +573,30 @@ namespace NoteEditor
 
         public void RefreshTrackList()
         {
+            // Store the current track name if there is one
+            string currentTrackName = null;
+            if (editorManager.currentTrack != null)
+            {
+                currentTrackName = editorManager.currentTrack.trackName;
+            }
+
+            // Refresh the track data
             trackDataList = editorManager.GetAllTrackInfo();
+
+            // Update UI elements
             InitializeTrackDropdown();
             InitializeAlbumArtButton();
             InitializeInputFields();
+
+            // If we had a selected track, try to reselect it
+            if (!string.IsNullOrEmpty(currentTrackName) && trackDataList.Count > 0)
+            {
+                int index = trackDataList.FindIndex(t => t.trackName == currentTrackName);
+                if (index >= 0 && trackDropdown != null)
+                {
+                    trackDropdown.SetDropdownIndex(index);
+                }
+            }
         }
 
         public void ToggleShortNoteUI(bool isVisible)
@@ -579,17 +607,24 @@ namespace NoteEditor
 
         private void InitializeInputFields()
         {
-            if (trackDataList.Count > 0)
+            if (
+                trackDataList.Count > 0
+                && trackDropdown.selectedItemIndex >= 0
+                && trackDropdown.selectedItemIndex < trackDataList.Count
+            )
             {
                 TrackData track = trackDataList[trackDropdown.selectedItemIndex];
-                if (BPMInput != null)
+                if (BPMInput != null && track != null)
                 {
                     BPMInput.inputText.text = track.bpm.ToString();
                 }
             }
             else
             {
-                BPMInput.inputText.text = "트랙 없음";
+                if (BPMInput != null)
+                {
+                    BPMInput.inputText.text = "트랙 없음";
+                }
             }
         }
 

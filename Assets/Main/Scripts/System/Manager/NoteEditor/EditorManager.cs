@@ -125,7 +125,7 @@ namespace NoteEditor
 
             SceneManager.sceneLoaded += (scene, mode) =>
             {
-                if (scene.name == "NoteEditor")
+                if (scene.name == "Editor")
                 {
                     InitializeCamera();
                 }
@@ -274,6 +274,8 @@ namespace NoteEditor
             if (currentTrackIndex < 0)
                 currentTrackIndex = 0;
 
+            editorPanel.trackDropdown.selectedItemIndex = currentTrackIndex;
+
             AudioManager.Instance.SetTrack(track, track.TrackAudio);
 
             noteEditor.SetTrack(track);
@@ -336,17 +338,28 @@ namespace NoteEditor
                 noteEditor.RemoveTrack(track);
             }
 
+            RefreshTrackList();
+
             if (AudioManager.Instance.currentTrack == track)
             {
                 if (cachedTracks.Count > 0)
                 {
+                    currentTrackIndex = 0;
                     SelectTrack(cachedTracks[0]);
                 }
                 else
                 {
+                    currentTrackIndex = -1;
                     AudioManager.Instance.currentTrack = null;
                     AudioManager.Instance.currentAudioSource.clip = null;
                     AudioManager.Instance.Stop();
+                }
+            }
+            else
+            {
+                if (currentTrackIndex >= cachedTracks.Count)
+                {
+                    currentTrackIndex = cachedTracks.Count > 0 ? 0 : -1;
                 }
             }
 
@@ -455,19 +468,36 @@ namespace NoteEditor
                 currentSceneName,
                 () =>
                 {
+                    // 1. First refresh our cached tracks list
                     RefreshTrackList();
 
+                    // 2. Find the track in our updated list
                     TrackData trackToSelect = cachedTracks.FirstOrDefault(t =>
                         t.trackName == trackName
                     );
+                    int newTrackIndex = cachedTracks.FindIndex(t => t.trackName == trackName);
+
+                    if (newTrackIndex >= 0)
+                    {
+                        currentTrackIndex = newTrackIndex;
+                    }
+
+                    // 3. Update the UI panel elements
+                    if (editorPanel != null && editorPanel.IsInitialized)
+                    {
+                        // Refresh all panels track-related UI
+                        editorPanel.RefreshTrackList();
+
+                        // Explicitly set the dropdown index
+                        if (newTrackIndex >= 0)
+                        {
+                            editorPanel.trackDropdown.SetDropdownIndex(newTrackIndex);
+                        }
+                    }
+
                     if (trackToSelect != null)
                     {
                         SelectTrack(trackToSelect);
-                    }
-
-                    if (editorPanel != null && editorPanel.IsInitialized)
-                    {
-                        editorPanel.RefreshTrackList();
                     }
                 }
             );
@@ -550,19 +580,32 @@ namespace NoteEditor
                 currentSceneName,
                 () =>
                 {
+                    // 1. First refresh our cached tracks list
                     RefreshTrackList();
 
+                    // 2. Find the track in our updated list
+                    TrackData currentSelectedTrack = cachedTracks.FirstOrDefault(t =>
+                        t.trackName == trackName
+                    );
+                    int trackIndex = cachedTracks.FindIndex(t => t.trackName == trackName);
+
+                    // 3. Update UI panel
                     if (editorPanel != null && editorPanel.IsInitialized)
                     {
+                        // Refresh the track list display
                         editorPanel.RefreshTrackList();
 
-                        TrackData currentSelectedTrack = cachedTracks.FirstOrDefault(t =>
-                            t.trackName == trackName
-                        );
+                        // Make sure the dropdown shows the current track
+                        if (trackIndex >= 0)
+                        {
+                            editorPanel.trackDropdown.SetDropdownIndex(trackIndex);
+                        }
+
+                        // 4. Update track display if needed
                         if (
-                            currentTrack != null
+                            currentSelectedTrack != null
+                            && currentTrack != null
                             && currentTrack.trackName == trackName
-                            && currentSelectedTrack != null
                         )
                         {
                             editorPanel.ChangeTrack(currentSelectedTrack);
