@@ -131,21 +131,21 @@ public class ShortNote : Note
                 rotationZ = 180f;
                 rotationX = noteLookAtAngle;
                 break;
-            case NoteDirection.Northeast:
+            case NoteDirection.NorthEast:
                 rotationZ = 135f;
                 rotationX = noteLookAtAngle;
                 break;
-            case NoteDirection.Northwest:
+            case NoteDirection.NorthWest:
                 rotationZ = -135f;
                 rotationX = noteLookAtAngle;
                 break;
-            case NoteDirection.Southeast:
+            case NoteDirection.SouthEast:
                 rotationZ = 45f;
                 rotationX = -noteLookAtAngle;
                 break;
-            case NoteDirection.Southwest:
+            case NoteDirection.SouthWest:
                 rotationZ = -45f;
-                rotationX = -noteLookAtAngle;
+                rotationX = noteLookAtAngle;
                 break;
         }
 
