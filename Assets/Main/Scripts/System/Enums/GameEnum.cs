@@ -91,6 +91,9 @@ public enum PanelType
 
     // 에디터 전용
     NoteEditor,
+    EditorStart,
+    NewTrack,
+    LoadTrack,
 }
 
 public enum Difficulty
