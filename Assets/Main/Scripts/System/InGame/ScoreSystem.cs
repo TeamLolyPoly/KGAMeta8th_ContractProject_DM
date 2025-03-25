@@ -23,19 +23,16 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     //정확도 기록 딕셔너리
     public Dictionary<NoteRatings, int> ratingCount { get; private set; } =
         new Dictionary<NoteRatings, int>();
-
     //점수
     public float currentScore { get; private set; } = 0;
-
     //콤보
     public int combo { get; private set; } = 0;
-
     //최고 콤보
     public int highCombo { get; private set; } = 0;
-
     //Miss제외한 노트 Hit 총 횟수
     public int noteHitCount { get; private set; } = 0;
-
+    //노래 총 노트개수
+    public int totalNoteCount { get; private set; } = 0;
     //밴드 호응도 이벤트
     public event Action<Engagement> onBandEngagementChange;
 
@@ -47,33 +44,35 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     public bool IsInitialized => isInitialized;
 
     //테스트용 코드
-    // void Update()
-    // {
-    //     if (Input.GetKeyDown(KeyCode.Q))
-    //     {
-    //         SetScore(100, NoteRatings.Perfect);
-    //     }
-    //     if (Input.GetKeyDown(KeyCode.W))
-    //     {
-    //         SetScore(100, NoteRatings.Good);
-    //     }
-    //     if (Input.GetKeyDown(KeyCode.E))
-    //     {
-    //         SetScore(0, NoteRatings.Miss);
-    //     }
-    //     if (Input.GetKeyDown(KeyCode.R))
-    //     {
-    //         print(
-    //             $"\nGood: {ratingCount[NoteRatings.Good]}"
-    //         + $"\nMiss: {ratingCount[NoteRatings.Miss]}"
-    //                 + $"\n게임랭크: {GetGameRank()}"
-    //         );
-    //     }
-    // }
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            SetScore(100, NoteRatings.Perfect);
+        }
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            SetScore(100, NoteRatings.Good);
+        }
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            SetScore(0, NoteRatings.Miss);
+        }
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            print(
+                $"\nGood: {ratingCount[NoteRatings.Good]}"
+            + $"\nMiss: {ratingCount[NoteRatings.Miss]}"
+                    + $"\n게임랭크: {GetGameRank()}"
+            );
+        }
+    }
 
     public void Initialize()
     {
         scoreSettingData = Resources.Load<ScoreSettingData>("SO/ScoreSettingData");
+
+        totalNoteCount = 10;//GameManager.Instance.NoteMap.TotalNoteCount;
 
         ratingCount.Clear();
 
@@ -83,7 +82,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             {
                 ratingCount.Add(rating, 0);
             }
-            for (int i = 0; i < scoreSettingData.engagementThreshold.Length; i++)
+            for (int i = 0; i < scoreSettingData.engagementThreshold.Count; i++)
             {
                 bandEngagementType.Add(scoreSettingData.engagementThreshold[i], (Engagement)i);
             }
@@ -162,8 +161,6 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     private void SetSpectatorEngagement()
     {
-        int totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
-
         print($"totalNoteCount: {totalNoteCount}");
         SpectatorEventThreshold newThreshold =
             scoreSettingData.sectatorEventThreshold.LastOrDefault(threshold =>
@@ -205,8 +202,6 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     }
     public string GetGameRank()
     {
-        int totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
-
         ratingCount.TryGetValue(NoteRatings.Miss, out int missValue);
 
         ratingCount.TryGetValue(NoteRatings.Good, out int goodValue);
@@ -215,8 +210,8 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
         return rating switch
         {
-            var (miss, good) when miss == 0 && good == 0 => "S+",
-            var (miss, good) when miss == 0 && good > 0 => "S",
+            var (miss, good) when miss == 0 && good == 0 && noteHitCount == totalNoteCount => "S+",
+            var (miss, good) when miss == 0 && good > 0 && noteHitCount == totalNoteCount => "S",
             var (miss, good) when miss < totalNoteCount * 0.05 && good >= 0 => "A",
             var (miss, good) when miss <= totalNoteCount * 0.5 && good >= 0 => "B",
             var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => "C",

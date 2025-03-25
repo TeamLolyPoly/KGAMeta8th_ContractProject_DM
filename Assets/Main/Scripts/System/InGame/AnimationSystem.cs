@@ -73,7 +73,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             AnimationClip defaultClip = AnimationData?.MoveClip;
             if (defaultClip != null)
             {
-                action(defaultClip, "default");
+                action(defaultClip, "Default");
             }
         }
     }
@@ -85,7 +85,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         AnimationClip defaultClip = AnimData.spectatorAnimationData.RandomAnima[index];
         if (defaultClip != null)
         {
-            action(defaultClip, "default");
+            action(defaultClip, "Default");
         }
     }
 
