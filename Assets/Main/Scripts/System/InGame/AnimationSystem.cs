@@ -9,7 +9,6 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     private Dictionary<BandType, BandAnimationData> bandAnimators =
         new Dictionary<BandType, BandAnimationData>();
 
-    //Unit을 상속받지만 불필요한 연산을 막기위해 타입캐스팅을 미리하여서 관리
     private List<Band> Bands = new List<Band>();
     private List<Spectator> spectators = new List<Spectator>();
     private bool isInitialized = false;
@@ -88,24 +87,8 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             action(defaultClip, "Default");
         }
     }
-    public void BandAnimationClipChange(Engagement engagement)
-    {
-        foreach (Band band in Bands)
-        {
-            if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData AnimationData))
-            {
-                if ((int)engagement >= AnimationData.animationClip.Length)
-                    continue;
-                AnimationClip animationClip = AnimationData?.animationClip[(int)engagement];
 
-                if (animationClip == null)
-                    continue;
-                band.SetAnimationClip(animationClip, "Usual");
-            }
-        }
-    }
-
-    public void BandAnimationClipChange(Engagement engagement, int BandMember)
+    public void BandAnimationClipChange(Engagement engagement, int bandMemberCount = 0)
     {
         foreach (Band band in Bands)
         {
