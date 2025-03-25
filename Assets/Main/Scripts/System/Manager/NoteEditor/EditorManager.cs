@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace NoteEditor
 {
@@ -120,13 +121,15 @@ namespace NoteEditor
             yield return new WaitUntil(() => editorPanel.IsInitialized);
             Debug.Log("[EditorManager] EditorPanel 초기화 완료");
 
-            editorCamera = Camera.main;
+            InitializeCamera();
 
-            if (editorCamera != null)
+            SceneManager.sceneLoaded += (scene, mode) =>
             {
-                editorCamera.transform.position = new Vector3(0, 5, -5);
-                editorCamera.transform.rotation = Quaternion.Euler(30, 0, 0);
-            }
+                if (scene.name == "Editor")
+                {
+                    InitializeCamera();
+                }
+            };
 
             SetupInputActions();
             RefreshTrackList();
@@ -138,6 +141,16 @@ namespace NoteEditor
 
             isInitialized = true;
             Debug.Log("[EditorManager] 초기화 완료");
+        }
+
+        private void InitializeCamera()
+        {
+            editorCamera = Camera.main;
+            if (editorCamera != null)
+            {
+                editorCamera.transform.position = new Vector3(0, 5, -5);
+                editorCamera.transform.rotation = Quaternion.Euler(30, 0, 0);
+            }
         }
 
         public void GetResources()
@@ -212,30 +225,6 @@ namespace NoteEditor
             }
         }
 
-        private void OnEnable()
-        {
-            if (editorControlActions != null)
-            {
-                var actionMap = editorControlActions.FindActionMap("NoteEditor");
-                if (actionMap != null)
-                {
-                    actionMap.Enable();
-                }
-            }
-        }
-
-        private void OnDisable()
-        {
-            if (editorControlActions != null)
-            {
-                var actionMap = editorControlActions.FindActionMap("NoteEditor");
-                if (actionMap != null)
-                {
-                    actionMap.Disable();
-                }
-            }
-        }
-
         public void RefreshTrackList()
         {
             if (EditorDataManager.Instance != null)
@@ -285,14 +274,11 @@ namespace NoteEditor
             if (currentTrackIndex < 0)
                 currentTrackIndex = 0;
 
+            editorPanel.trackDropdown.selectedItemIndex = currentTrackIndex;
+
             AudioManager.Instance.SetTrack(track, track.TrackAudio);
 
             noteEditor.SetTrack(track);
-
-            if (editorPanel != null && editorPanel.IsInitialized)
-            {
-                editorPanel.ChangeTrack(track);
-            }
 
             Debug.Log(
                 $"트랙 선택됨: {track.trackName}, BPM: {track.bpm}, 길이: {track.TrackAudio.length}초"
@@ -352,17 +338,28 @@ namespace NoteEditor
                 noteEditor.RemoveTrack(track);
             }
 
+            RefreshTrackList();
+
             if (AudioManager.Instance.currentTrack == track)
             {
                 if (cachedTracks.Count > 0)
                 {
+                    currentTrackIndex = 0;
                     SelectTrack(cachedTracks[0]);
                 }
                 else
                 {
+                    currentTrackIndex = -1;
                     AudioManager.Instance.currentTrack = null;
                     AudioManager.Instance.currentAudioSource.clip = null;
                     AudioManager.Instance.Stop();
+                }
+            }
+            else
+            {
+                if (currentTrackIndex >= cachedTracks.Count)
+                {
+                    currentTrackIndex = cachedTracks.Count > 0 ? 0 : -1;
                 }
             }
 
@@ -378,11 +375,11 @@ namespace NoteEditor
                 return;
 
             pendingAudioFilePath = filePath;
-            currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            currentSceneName = SceneManager.GetActiveScene().name;
             isLoadingTrack = true;
 
             LoadingManager.Instance.LoadScene(
-                LoadingManager.Instance.loadingSceneName,
+                LoadingManager.LOADING_SCENE_NAME,
                 () => StartCoroutine(LoadAudioFileProcess())
             );
         }
@@ -393,10 +390,10 @@ namespace NoteEditor
                 return;
 
             pendingAlbumArtFilePath = filePath;
-            currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            currentSceneName = SceneManager.GetActiveScene().name;
 
             LoadingManager.Instance.LoadScene(
-                LoadingManager.Instance.loadingSceneName,
+                LoadingManager.LOADING_SCENE_NAME,
                 () => StartCoroutine(LoadAlbumArtProcess(trackIndex))
             );
         }
@@ -410,7 +407,7 @@ namespace NoteEditor
                 yield break;
             }
 
-            LoadingUI loadingUI = FindObjectOfType<LoadingUI>();
+            LoadingPanel loadingUI = FindObjectOfType<LoadingPanel>();
             Action<float> updateProgress = LoadingManager.Instance.UpdateProgress;
 
             updateProgress(0.1f);
@@ -471,19 +468,36 @@ namespace NoteEditor
                 currentSceneName,
                 () =>
                 {
+                    // 1. First refresh our cached tracks list
                     RefreshTrackList();
 
+                    // 2. Find the track in our updated list
                     TrackData trackToSelect = cachedTracks.FirstOrDefault(t =>
                         t.trackName == trackName
                     );
+                    int newTrackIndex = cachedTracks.FindIndex(t => t.trackName == trackName);
+
+                    if (newTrackIndex >= 0)
+                    {
+                        currentTrackIndex = newTrackIndex;
+                    }
+
+                    // 3. Update the UI panel elements
+                    if (editorPanel != null && editorPanel.IsInitialized)
+                    {
+                        // Refresh all panels track-related UI
+                        editorPanel.RefreshTrackList();
+
+                        // Explicitly set the dropdown index
+                        if (newTrackIndex >= 0)
+                        {
+                            editorPanel.trackDropdown.SetDropdownIndex(newTrackIndex);
+                        }
+                    }
+
                     if (trackToSelect != null)
                     {
                         SelectTrack(trackToSelect);
-                    }
-
-                    if (editorPanel != null && editorPanel.IsInitialized)
-                    {
-                        editorPanel.RefreshTrackList();
                     }
                 }
             );
@@ -497,7 +511,7 @@ namespace NoteEditor
                 yield break;
             }
 
-            LoadingUI loadingUI = FindObjectOfType<LoadingUI>();
+            LoadingPanel loadingUI = FindObjectOfType<LoadingPanel>();
             Action<float> updateProgress = LoadingManager.Instance.UpdateProgress;
 
             updateProgress(0.2f);
@@ -566,19 +580,32 @@ namespace NoteEditor
                 currentSceneName,
                 () =>
                 {
+                    // 1. First refresh our cached tracks list
                     RefreshTrackList();
 
+                    // 2. Find the track in our updated list
+                    TrackData currentSelectedTrack = cachedTracks.FirstOrDefault(t =>
+                        t.trackName == trackName
+                    );
+                    int trackIndex = cachedTracks.FindIndex(t => t.trackName == trackName);
+
+                    // 3. Update UI panel
                     if (editorPanel != null && editorPanel.IsInitialized)
                     {
+                        // Refresh the track list display
                         editorPanel.RefreshTrackList();
 
-                        TrackData currentSelectedTrack = cachedTracks.FirstOrDefault(t =>
-                            t.trackName == trackName
-                        );
+                        // Make sure the dropdown shows the current track
+                        if (trackIndex >= 0)
+                        {
+                            editorPanel.trackDropdown.SetDropdownIndex(trackIndex);
+                        }
+
+                        // 4. Update track display if needed
                         if (
-                            currentTrack != null
+                            currentSelectedTrack != null
+                            && currentTrack != null
                             && currentTrack.trackName == trackName
-                            && currentSelectedTrack != null
                         )
                         {
                             editorPanel.ChangeTrack(currentSelectedTrack);
@@ -588,7 +615,7 @@ namespace NoteEditor
             );
         }
 
-        private void SetRandomTip(LoadingUI loadingUI, string[] tips)
+        private void SetRandomTip(LoadingPanel loadingUI, string[] tips)
         {
             if (tips.Length > 0)
             {

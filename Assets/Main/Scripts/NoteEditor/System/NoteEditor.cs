@@ -255,37 +255,6 @@ namespace NoteEditor
             }
         }
 
-        private void DeleteNoteAction()
-        {
-            if (cellController == null || cellController.SelectedCell == null)
-                return;
-
-            if (cellController != null && cellController.SelectedCell != null)
-            {
-                if (cellController.SelectedCell.noteData != null)
-                {
-                    DeleteNote(cellController.SelectedCell);
-
-                    editorManager.editorPanel.UpdateSelectedCellInfo(cellController.SelectedCell);
-
-                    editorManager.editorPanel.ToggleShortNoteUI(false);
-                    editorManager.editorPanel.ToggleLongNoteUI(false);
-                }
-                else
-                {
-                    editorManager.editorPanel.UpdateStatusText(
-                        "<color=red>선택한 셀에 노트가 없습니다</color>"
-                    );
-                }
-            }
-            else
-            {
-                editorManager.editorPanel.UpdateStatusText(
-                    "<color=yellow>삭제할 노트가 있는 셀을 선택하세요</color>"
-                );
-            }
-        }
-
         public void CreateShortNote(Cell cell)
         {
             if (cell == null || noteMap == null)
@@ -413,16 +382,12 @@ namespace NoteEditor
                         startCell.transform
                     );
 
-                    if (longNoteModel.gameObject.activeSelf == false)
-                    {
-                        longNoteModel.gameObject.SetActive(true);
-                    }
-
                     longNoteModel.Initialize(startCell, endCell, noteData);
                     startCell.isOccupied = true;
                     endCell.isOccupied = true;
-                    startCell.longNoteModel = longNoteModel;
 
+                    startCell.longNoteModel = longNoteModel;
+                    endCell.longNoteModel = longNoteModel;
                     startCell.cellRenderer.SetActive(false);
                 }
                 else
@@ -464,6 +429,37 @@ namespace NoteEditor
             return index;
         }
 
+        private void DeleteNoteAction()
+        {
+            if (cellController == null || cellController.SelectedCell == null)
+                return;
+
+            if (cellController != null && cellController.SelectedCell != null)
+            {
+                if (cellController.SelectedCell.noteData != null)
+                {
+                    DeleteNote(cellController.SelectedCell);
+
+                    editorManager.editorPanel.UpdateSelectedCellInfo(cellController.SelectedCell);
+
+                    editorManager.editorPanel.ToggleShortNoteUI(false);
+                    editorManager.editorPanel.ToggleLongNoteUI(false);
+                }
+                else
+                {
+                    editorManager.editorPanel.UpdateStatusText(
+                        "<color=red>선택한 셀에 노트가 없습니다</color>"
+                    );
+                }
+            }
+            else
+            {
+                editorManager.editorPanel.UpdateStatusText(
+                    "<color=yellow>삭제할 노트가 있는 셀을 선택하세요</color>"
+                );
+            }
+        }
+
         public void DeleteNote(Cell cell)
         {
             if (cell == null || cell.noteData == null || noteMap == null)
@@ -475,22 +471,11 @@ namespace NoteEditor
 
                 if (cell.noteData.noteType == NoteType.Short && cell.noteModel != null)
                 {
-                    Destroy(cell.noteModel.gameObject);
-                    cell.noteModel = null;
-                    cell.isOccupied = false;
-                    editorManager.editorPanel.UpdateStatusText(
-                        $"<color=yellow>노트 삭제됨: 마디 {cell.bar}, 박자 {cell.beat}</color>"
-                    );
+                    DeleteShortNote(cell);
                 }
                 else if (cell.noteData.noteType == NoteType.Long && cell.longNoteModel != null)
                 {
-                    Destroy(cell.longNoteModel.gameObject);
-                    cell.longNoteModel = null;
-                    cell.isOccupied = false;
-
-                    editorManager.editorPanel.UpdateStatusText(
-                        $"<color=yellow>롱노트 삭제됨: 마디 {cell.bar}, 박자 {cell.beat}, 길이</color>"
-                    );
+                    DeleteLongNote(cell);
                 }
 
                 cell.noteData = null;
@@ -502,6 +487,46 @@ namespace NoteEditor
             {
                 Debug.LogError($"노트 삭제 실패: {e.Message}");
             }
+        }
+
+        private void DeleteLongNote(Cell cell)
+        {
+            Cell endCell = cell.longNoteModel.endCell;
+            bool isSymmetric = cell.noteData.isSymmetric;
+            GameObject symmetricObject = null;
+
+            if (isSymmetric && cell.longNoteModel.symmetricObject != null)
+            {
+                symmetricObject = cell.longNoteModel.symmetricObject;
+            }
+
+            UpdateSymmetricNote(
+                cell.longNoteModel.startCell,
+                cell.longNoteModel.endCell,
+                cell.noteData,
+                false
+            );
+
+            Destroy(cell.longNoteModel.gameObject);
+            cell.longNoteModel = null;
+            cell.isOccupied = false;
+
+            if (endCell != null)
+            {
+                endCell.isOccupied = false;
+            }
+
+            print($"isSymmetric: {isSymmetric}, symmetricObject: {symmetricObject}");
+        }
+
+        private void DeleteShortNote(Cell cell)
+        {
+            Destroy(cell.noteModel.gameObject);
+            cell.noteModel = null;
+            cell.isOccupied = false;
+            editorManager.editorPanel.UpdateStatusText(
+                $"<color=yellow>노트 삭제됨: 마디 {cell.bar}, 박자 {cell.beat}</color>"
+            );
         }
 
         public bool UpdateNoteColor(int index)
@@ -560,17 +585,15 @@ namespace NoteEditor
                 cellController.SelectedCell.longNoteModel.SetSymmetric(isSymmetric);
                 LongNoteModel longNoteModel = cellController.SelectedCell.longNoteModel;
 
-                GameObject symmetricNote = UpdateSymmetricNote(
+                longNoteModel.startCell.noteData.isSymmetric = isSymmetric;
+
+                GameObject symmetricModel = UpdateSymmetricNote(
                     longNoteModel.startCell,
                     longNoteModel.endCell,
                     cellController.SelectedCell.noteData,
                     isSymmetric
                 );
-
-                if (symmetricNote != null)
-                {
-                    longNoteModel.symmetricObject = symmetricNote;
-                }
+                longNoteModel.symmetricObject = symmetricModel;
             }
 
             SaveNoteMap();

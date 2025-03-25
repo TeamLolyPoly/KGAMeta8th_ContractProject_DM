@@ -9,7 +9,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
     public int currentBeat { get; private set; } = 0;
     private float startDelay = 1f;
     private double startDspTime;
-
     public event Action<bool> OnGameStateChanged;
     public event Action<int, int> OnBeatChanged;
 

@@ -187,15 +187,15 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6017870327105076726}
-  m_LocalRotation: {x: 0.81915206, y: 0, z: 0, w: 0.57357645}
-  m_LocalPosition: {x: -0, y: 0, z: 0}
-  m_LocalScale: {x: 100, y: 100, z: 100}
+  m_LocalRotation: {x: 0.76604444, y: 0, z: 0, w: 0.64278764}
+  m_LocalPosition: {x: -0, y: 0, z: 1}
+  m_LocalScale: {x: 100, y: 100, z: 65}
   m_Children:
   - {fileID: 2989633059062546252}
   - {fileID: 3962795392775747333}
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 110, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 100, y: 0, z: 0}
 --- !u!33 &8027611448048445673
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -306,8 +306,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 0.1, y: 0.1, z: 0.8}
-  m_Center: {x: 0, y: 0, z: -0.2}
+  m_Size: {x: 0.1, y: 0.1, z: 0.6}
+  m_Center: {x: 0, y: 0, z: -0.08}
 --- !u!114 &8421852338641219026
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -321,6 +321,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   noteColor: 1
+  controller: {fileID: 0}
 --- !u!1 &7169179654755701392
 GameObject:
   m_ObjectHideFlags: 0
@@ -382,8 +383,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 0.1, y: 0.1, z: 0.8}
-  m_Center: {x: 0, y: 0, z: 0.2}
+  m_Size: {x: 0.1, y: 0.1, z: 0.6}
+  m_Center: {x: 0, y: 0, z: 0.08}
 --- !u!114 &2496097757939288446
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -397,3 +398,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   noteColor: 2
+  controller: {fileID: 0}
