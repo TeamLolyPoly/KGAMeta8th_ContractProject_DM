@@ -33,9 +33,9 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     public void Initialize()
     {
-        InitializeSystem();
-
         ResetGameState();
+
+        InitializeSystem();
 
         Test();
 
@@ -74,7 +74,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         unitAnimationManager.Initialize();
 
         scoreSystem.Initialize();
-
         noteSpawner.Initialize(gridGenerator, noteMap);
     }
 

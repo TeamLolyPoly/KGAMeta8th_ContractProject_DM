@@ -6,6 +6,7 @@ using UnityEngine;
 public class ScoreSystem : MonoBehaviour, IInitializable
 {
     private ScoreSettingData scoreSettingData;
+
     //정확도별 추가점수
     public Dictionary<NoteRatings, int> multiplierScore { get; private set; } =
         new Dictionary<NoteRatings, int>();
@@ -13,13 +14,16 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     //밴드 호응도 딕셔너리
     public Dictionary<int, Engagement> bandEngagementType { get; private set; } =
         new Dictionary<int, Engagement>();
+
     //현재 밴드 호응도
     public Engagement currentBandEngagement { get; private set; }
+
     //현재 관객 호응도
     public Engagement currentSpectatorEngagement { get; private set; }
 
     //점수 배율
     public int multiplier { get; private set; } = 1;
+
     //정확도 기록 딕셔너리
     public Dictionary<NoteRatings, int> ratingCount { get; private set; } =
         new Dictionary<NoteRatings, int>();
@@ -41,6 +45,8 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     //관객 호응도 이벤트
     public event Action<Engagement> onSpectatorEngagementChange;
+
+    public int totalNoteCount { get; private set; } = 0;
 
     private bool isInitialized = false;
 
@@ -203,6 +209,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             onBandEngagementChange.Invoke(currentBandEngagement);
         }
     }
+
     public string GetGameRank()
     {
         int totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
@@ -220,7 +227,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             var (miss, good) when miss < totalNoteCount * 0.05 && good >= 0 => "A",
             var (miss, good) when miss <= totalNoteCount * 0.5 && good >= 0 => "B",
             var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => "C",
-            _ => "C"
+            _ => "C",
         };
     }
 

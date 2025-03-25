@@ -9,7 +9,7 @@ using Dropdown = Michsky.UI.Heat.Dropdown;
 
 namespace NoteEditor
 {
-    public class NoteEditorPanel : Panel, IInitializable
+    public class EditorPanel : Panel, IInitializable
     {
         public override PanelType PanelType => PanelType.NoteEditor;
         public BoxButtonManager CurrentTrackInfo;
