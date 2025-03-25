@@ -9,10 +9,12 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     //정확도별 추가점수
     public Dictionary<NoteRatings, int> multiplierScore { get; private set; } =
         new Dictionary<NoteRatings, int>();
-
     //밴드 호응도 딕셔너리
     public Dictionary<int, Engagement> bandEngagementType { get; private set; } =
         new Dictionary<int, Engagement>();
+    //밴드 호응도 변경 인원
+    public Dictionary<Engagement, int> bandActiveMember { get; private set; } =
+        new Dictionary<Engagement, int>();
     //현재 밴드 호응도
     public Engagement currentBandEngagement { get; private set; }
     //현재 관객 호응도
@@ -34,7 +36,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     //노래 총 노트개수
     public int totalNoteCount { get; private set; } = 0;
     //밴드 호응도 이벤트
-    public event Action<Engagement> onBandEngagementChange;
+    public event Action<Engagement, int> onBandEngagementChange;
 
     //관객 호응도 이벤트
     public event Action<Engagement> onSpectatorEngagementChange;
@@ -72,7 +74,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     {
         scoreSettingData = Resources.Load<ScoreSettingData>("SO/ScoreSettingData");
 
-        totalNoteCount = 10;//GameManager.Instance.NoteMap.TotalNoteCount;
+        totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
 
         ratingCount.Clear();
 
@@ -85,6 +87,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             for (int i = 0; i < scoreSettingData.engagementThreshold.Count; i++)
             {
                 bandEngagementType.Add(scoreSettingData.engagementThreshold[i], (Engagement)i);
+                bandActiveMember.Add((Engagement)i, scoreSettingData.bandActiveMembers[i]);
             }
             for (int i = 0; i < scoreSettingData.multiplierScore.Count; i++)
             {
@@ -197,7 +200,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         {
             print($"밴드 이벤트 발생: {newEngagement}");
             currentBandEngagement = newEngagement;
-            onBandEngagementChange.Invoke(currentBandEngagement);
+            onBandEngagementChange.Invoke(currentBandEngagement, bandActiveMember[currentBandEngagement]);
         }
     }
     public string GetGameRank()
