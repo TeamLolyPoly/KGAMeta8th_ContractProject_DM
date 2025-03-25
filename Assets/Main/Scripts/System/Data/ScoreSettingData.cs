@@ -12,7 +12,9 @@ public class ScoreSettingData : ScriptableObject
 
     [Header("밴드 호응도 콤보 기준")]
     [SerializeField]
-    public int[] engagementThreshold;
+    public List<int> engagementThreshold = new List<int>();
+    [Header("호응도 변경 인원")]
+    public List<int> bandActiveMembers = new List<int>();
     [SerializeField, Header("관객 이벤트 활성화 조건")]
     public List<SpectatorEventThreshold> sectatorEventThreshold = new List<SpectatorEventThreshold>();
 
@@ -22,56 +24,46 @@ public class ScoreSettingData : ScriptableObject
 
     private void OnValidate()
     {
-        Array NoteRatingCount = Enum.GetValues(typeof(NoteRatings));
-        Array EngagementCount = Enum.GetValues(typeof(Engagement));
+        int engagementLength = Enum.GetValues(typeof(Engagement)).Length;
 
-        if (multiplierScore.Count < NoteRatingCount.Length)
+        LimitMaxSize(sectatorEventThreshold, engagementLength);
+        LimitMaxSize(engagementThreshold, engagementLength);
+
+        SyncListSize<MultiplierScore, NoteRatings>(multiplierScore, () => new MultiplierScore());
+        SyncListSize(bandActiveMembers, engagementThreshold.Count, () => 0);
+
+        SetEnumValues(multiplierScore, i => multiplierScore[i].ratings = (NoteRatings)i);
+        SetEnumValues(sectatorEventThreshold, i => sectatorEventThreshold[i].engagement = (Engagement)i);
+    }
+    private void SyncListSize<T, TEnum>(List<T> values, Func<T> createDefault) where TEnum : Enum
+    {
+        int Length = Enum.GetValues(typeof(TEnum)).Length;
+        SyncListSize(values, Length, createDefault);
+    }
+    private void SyncListSize<T>(List<T> values, int targetCount, Func<T> createDefault)
+    {
+        while (values.Count < targetCount)
         {
-            foreach (NoteRatings type in NoteRatingCount)
-            {
-                MultiplierScore data = new MultiplierScore();
-                data.ratings = type;
-                multiplierScore.Add(data);
-            }
-        }
-        while (multiplierScore.Count > NoteRatingCount.Length)
-        {
-            multiplierScore.Remove(multiplierScore.Last());
-        }
-        while (sectatorEventThreshold.Count > EngagementCount.Length)
-        {
-            sectatorEventThreshold.Remove(sectatorEventThreshold.Last());
+            values.Add(createDefault());
         }
 
-        for (int i = 0; i < NoteRatingCount.Length; i++)
+        while (values.Count > targetCount)
         {
-            multiplierScore[i].ratings = (NoteRatings)i;
-        }
-        for (int i = 0; i < sectatorEventThreshold.Count; i++)
-        {
-            sectatorEventThreshold[i].engagement = (Engagement)i;
+            values.RemoveAt(values.Count - 1);
         }
     }
-
-    // 어렵다
-    // private void SyncListWithEnum<T, TEnum>(List<T> list, Func<TEnum, T> createElement)
-    //  where T : class
-    //  where TEnum : Enum
-    // {
-    //     var enumValues = Enum.GetValues(typeof(TEnum));
-
-    //     // 리스트 초기화
-    //     list.Clear();
-
-    //     // enum 값들로 리스트 채우기
-    //     foreach (TEnum enumValue in enumValues)
-    //     {
-    //         list.Add(createElement(enumValue));
-    //     }
-
-    //     while (list.Count > enumValues.Length)
-    //     {
-    //         list.RemoveAt(list.Count - 1);
-    //     }
-    // }
+    private void LimitMaxSize<T>(List<T> values, int maxCount)
+    {
+        while (values.Count > maxCount)
+        {
+            values.RemoveAt(values.Count - 1);
+        }
+    }
+    private void SetEnumValues<T>(List<T> values, Action<int> action)
+    {
+        for (int i = 0; i < values.Count; i++)
+        {
+            action(i);
+        }
+    }
 }
