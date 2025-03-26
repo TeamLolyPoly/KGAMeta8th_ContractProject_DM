@@ -54,12 +54,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     public void InitializeSystem()
     {
-        // UIManager 생성
-        if (UIManager.Instance == null)
-        {
-            GameObject uiManagerObj = new GameObject("UIManager");
-            uiManagerObj.AddComponent<UIManager>();
-        }
         noteSpawner = new GameObject("NoteSpawner").AddComponent<NoteSpawner>();
 
         gridGenerator = new GameObject("GridGenerator").AddComponent<GridGenerator>();

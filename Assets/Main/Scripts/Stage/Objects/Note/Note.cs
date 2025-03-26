@@ -129,10 +129,20 @@ public class Note : MonoBehaviour, IInitializable
         Destroy(gameObject);
     }
 
-    protected void Miss()
+    protected virtual void Miss()
     {
-        scoreSystem.SetScore(0, NoteRatings.Miss);
-        Destroy(gameObject);
+        if (!isHit)
+        {
+            isHit = true;
+            if (scoreSystem == null)
+            {
+                scoreSystem = GameManager.Instance.ScoreSystem;
+            }
+            if (scoreSystem != null)
+            {
+                scoreSystem.SetScore(0, NoteRatings.Miss);
+            }
+        }
     }
 
     public void SetHitFX(GameObject effect)
