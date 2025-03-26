@@ -20,7 +20,7 @@ public class ScoreboardPanel : Panel
     private ScoreSystem scoreSystem;
     private float lastScore;
     private int lastCombo;
-    private float lastRate;
+    private NoteRatings lastRating;
 
     private void Start()
     {
@@ -39,16 +39,18 @@ public class ScoreboardPanel : Panel
             if (scoreText != null)
             {
                 scoreText.text = lastScore.ToString("N0");
+                Debug.Log($"점수 업데이트: {lastScore:N0}");
             }
         }
 
-        float currentRate = CalculateAccuracy();
-        if (lastRate != currentRate)
+        NoteRatings currentRating = GetCurrentRating();
+        if (lastRating != currentRating)
         {
-            lastRate = currentRate;
+            lastRating = currentRating;
             if (rateText != null)
             {
-                rateText.text = $"{lastRate:F1}%";
+                rateText.text = lastRating.ToString();
+                Debug.Log($"정확도 업데이트: {lastRating}");
             }
         }
 
@@ -58,20 +60,37 @@ public class ScoreboardPanel : Panel
             if (comboText != null)
             {
                 comboText.text = lastCombo.ToString();
+                Debug.Log($"콤보 업데이트: {lastCombo}");
             }
         }
     }
 
-    private float CalculateAccuracy()
+    private NoteRatings GetCurrentRating()
     {
         if (scoreSystem == null)
-            return 0f;
+            return NoteRatings.Miss;
+
+        // Miss가 아닌 노트의 수를 계산
+        int hitNotes =
+            scoreSystem.ratingCount[NoteRatings.Perfect]
+            + scoreSystem.ratingCount[NoteRatings.Great]
+            + scoreSystem.ratingCount[NoteRatings.Good]
+            + scoreSystem.ratingCount[NoteRatings.Success];
 
         int totalNotes = scoreSystem.totalNoteCount;
         if (totalNotes == 0)
-            return 0f;
+            return NoteRatings.Miss;
 
-        int hitNotes = scoreSystem.noteHitCount;
-        return (float)hitNotes / totalNotes * 100f;
+        // 가장 높은 등급의 판정을 반환
+        if (scoreSystem.ratingCount[NoteRatings.Perfect] > 0)
+            return NoteRatings.Perfect;
+        else if (scoreSystem.ratingCount[NoteRatings.Great] > 0)
+            return NoteRatings.Great;
+        else if (scoreSystem.ratingCount[NoteRatings.Good] > 0)
+            return NoteRatings.Good;
+        else if (scoreSystem.ratingCount[NoteRatings.Success] > 0)
+            return NoteRatings.Success;
+        else
+            return NoteRatings.Miss;
     }
 }
