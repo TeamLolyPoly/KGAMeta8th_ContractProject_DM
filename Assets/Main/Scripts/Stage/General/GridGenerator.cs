@@ -12,10 +12,10 @@ public class GridGenerator : MonoBehaviour, IInitializable
     private int leftGridSize = 3;
 
     [SerializeField]
-    private float cellSize = 0.3f;
+    private float cellSize = 0.35f;
 
     [SerializeField]
-    private float cellSpacing = 0.03f;
+    private float cellSpacing = 0.05f;
 
     [SerializeField]
     private float gridDistance = 30f;
