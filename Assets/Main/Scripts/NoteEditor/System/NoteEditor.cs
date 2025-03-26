@@ -898,34 +898,5 @@ namespace NoteEditor
 
             return true;
         }
-
-        public void RemoveTrack(TrackData track)
-        {
-            if (track == null)
-                return;
-
-            if (
-                AudioManager.Instance.currentTrack == null
-                || AudioManager.Instance.currentTrack.trackName == track.trackName
-            )
-            {
-                noteMap = new NoteMap
-                {
-                    bpm = 120f,
-                    beatsPerBar = 4,
-                    notes = new List<NoteData>(),
-                };
-
-                if (cellController != null)
-                {
-                    cellController.Cleanup();
-                }
-
-                if (railController != null)
-                {
-                    railController.Cleanup();
-                }
-            }
-        }
     }
 }

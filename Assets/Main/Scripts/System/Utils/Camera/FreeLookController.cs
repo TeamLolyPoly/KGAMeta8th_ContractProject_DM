@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class RuntimeCameraController : MonoBehaviour
+public class FreeLookController : MonoBehaviour
 {
     [Header("이동 설정")]
     [SerializeField]
