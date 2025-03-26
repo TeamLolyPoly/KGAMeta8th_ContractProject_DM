@@ -25,6 +25,25 @@ public class ScoreboardPanel : Panel
     private void Start()
     {
         scoreSystem = GameManager.Instance.ScoreSystem;
+
+        // 초기값 설정
+        lastScore = 0;
+        lastCombo = 0;
+        lastRating = scoreSystem.LastRating;
+
+        // UI 업데이트
+        if (scoreText != null)
+        {
+            scoreText.text = "0";
+        }
+        if (comboText != null)
+        {
+            comboText.text = "0";
+        }
+        if (rateText != null)
+        {
+            rateText.text = lastRating.ToString();
+        }
     }
 
     private void Update()
@@ -43,13 +62,19 @@ public class ScoreboardPanel : Panel
             }
         }
 
-        NoteRatings currentRating = GetCurrentRating();
-        if (lastRating != currentRating)
+        if (lastRating != scoreSystem.LastRating)
         {
-            lastRating = currentRating;
+            lastRating = scoreSystem.LastRating;
             if (rateText != null)
             {
-                rateText.text = lastRating.ToString();
+                if (lastRating == NoteRatings.Success)
+                {
+                    rateText.text = "Perfect";
+                }
+                else
+                {
+                    rateText.text = lastRating.ToString();
+                }
                 Debug.Log($"정확도 업데이트: {lastRating}");
             }
         }
@@ -59,17 +84,16 @@ public class ScoreboardPanel : Panel
             lastCombo = scoreSystem.combo;
             if (comboText != null)
             {
-                comboText.text = lastCombo.ToString();
+                if (lastCombo > 0)
+                {
+                    comboText.text = lastCombo.ToString();
+                }
+                else
+                {
+                    comboText.text = "0";
+                }
                 Debug.Log($"콤보 업데이트: {lastCombo}");
             }
         }
-    }
-
-    private NoteRatings GetCurrentRating()
-    {
-        if (scoreSystem == null)
-            return NoteRatings.Miss;
-
-        return scoreSystem.LastRating;
     }
 }

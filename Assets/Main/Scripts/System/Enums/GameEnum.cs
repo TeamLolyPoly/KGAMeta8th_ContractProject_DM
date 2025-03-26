@@ -37,6 +37,7 @@ public enum NoteColor
 
 public enum NoteRatings
 {
+    None,
     Miss,
     Perfect,
     Great,
