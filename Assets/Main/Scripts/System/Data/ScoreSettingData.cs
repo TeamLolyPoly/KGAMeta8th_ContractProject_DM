@@ -13,8 +13,8 @@ public class ScoreSettingData : ScriptableObject
     [Header("밴드 호응도 콤보 기준")]
     [SerializeField]
     public List<int> engagementThreshold = new List<int>();
-    [Header("호응도 변경 인원")]
-    public List<int> bandActiveMembers = new List<int>();
+    [Header("밴드 호응도 변경 인원")]
+    public List<int> engagementMemberThreshold = new List<int>();
     [SerializeField, Header("관객 이벤트 활성화 조건")]
     public List<SpectatorEventThreshold> sectatorEventThreshold = new List<SpectatorEventThreshold>();
 
@@ -30,7 +30,7 @@ public class ScoreSettingData : ScriptableObject
         LimitMaxSize(engagementThreshold, engagementLength);
 
         SyncListSize<MultiplierScore, NoteRatings>(multiplierScore, () => new MultiplierScore());
-        SyncListSize(bandActiveMembers, engagementThreshold.Count, () => 0);
+        SyncListSize(engagementMemberThreshold, engagementThreshold.Count, () => 0);
 
         SetEnumValues(multiplierScore, i => multiplierScore[i].ratings = (NoteRatings)i);
         SetEnumValues(sectatorEventThreshold, i => sectatorEventThreshold[i].engagement = (Engagement)i);

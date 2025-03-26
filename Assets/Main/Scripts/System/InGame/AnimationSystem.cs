@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -9,8 +10,12 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     private Dictionary<BandType, BandAnimationData> bandAnimators =
         new Dictionary<BandType, BandAnimationData>();
 
+    //씬위에 올라와있는 밴드와 관객
     private List<Band> Bands = new List<Band>();
     private List<Spectator> spectators = new List<Spectator>();
+
+    //이전에 클립이 변경된 밴드
+    private HashSet<Band> changeBands = new HashSet<Band>();
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
 
@@ -88,19 +93,23 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         }
     }
 
-    public void BandAnimationClipChange(Engagement engagement, int bandMemberCount = 0)
+    public void BandAnimationClipChange(Engagement engagement, int numberOfUnits = 0)
     {
         foreach (Band band in Bands)
         {
-            if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData AnimationData))
+            if (changeBands.Contains(band))
+                continue;
+
+            if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData animationData))
             {
-                if ((int)engagement >= AnimationData.animationClip.Length)
+                if ((int)engagement >= animationData.animationClip.Length)
                     continue;
-                AnimationClip animationClip = AnimationData?.animationClip[(int)engagement];
+                AnimationClip animationClip = animationData.animationClip[(int)engagement];
 
                 if (animationClip == null)
                     continue;
                 band.SetAnimationClip(animationClip, "Usual");
+                changeBands.Add(band);
             }
         }
     }
