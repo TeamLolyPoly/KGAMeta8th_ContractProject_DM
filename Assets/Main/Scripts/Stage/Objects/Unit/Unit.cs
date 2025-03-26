@@ -40,34 +40,10 @@ public class Unit : MonoBehaviour
             animator.runtimeAnimatorController = overrideController;
         }
         overrideController[targetClipName] = clip;
-        animator.Play(targetClipName);
-        // animationQueue.Enqueue(clip);
-
-        // if (animChangeCoroutine != null)
-        // {
-        //     StopCoroutine(animChangeCoroutine);
-        //     animChangeCoroutine = null;
-        // }
-        // animChangeCoroutine = StartCoroutine(AnimChangeRoutine(overrideController));
     }
-
-    private IEnumerator AnimChangeRoutine(AnimatorOverrideController overrideController)
+    public void OnAnimationComplete()
     {
-        while (animationQueue.Count > 0)
-        {
-            print("애니메이션 클립체인지 기다리는중");
-            yield return new WaitUntil(() => isAnimating == false);
-            overrideController["Usual"] = animationQueue.Dequeue();
-            animator.Play("Usual");
-            print("애니메이션 클립체인지 성공");
-        }
-        animChangeCoroutine = null;
-    }
-
-    public void OnAnimation()
-    {
-        isAnimating = !isAnimating;
-        print($"isAnimating: {isAnimating}");
+        isAnimating = true;
     }
 
     protected void OnDisable()
