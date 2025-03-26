@@ -25,6 +25,12 @@ namespace NoteEditor
         private Dropdown noteDirectionDropdown;
 
         [SerializeField]
+        private Animator noteColorAnimator;
+
+        [SerializeField]
+        private Animator noteDirectionAnimator;
+
+        [SerializeField]
         private Dropdown beatsPerBarDropdown;
 
         [SerializeField]
@@ -34,7 +40,7 @@ namespace NoteEditor
         private TextMeshProUGUI selectedCellInfoText;
 
         [SerializeField]
-        private CanvasGroup longNoteGroup;
+        private Animator longNoteGroupAnimator;
 
         [SerializeField]
         private SettingsElement symmetricToggle;
@@ -367,8 +373,8 @@ namespace NoteEditor
 
         public void ToggleShortNoteUI(bool isVisible)
         {
-            noteDirectionDropdown.gameObject.SetActive(isVisible);
-            noteColorDropdown.gameObject.SetActive(isVisible);
+            noteDirectionAnimator.SetBool("isOpen", isVisible);
+            noteColorAnimator.SetBool("isOpen", isVisible);
         }
 
         private void InitializeInputFields()
@@ -394,12 +400,7 @@ namespace NoteEditor
 
         public void ToggleLongNoteUI(bool isVisible)
         {
-            if (longNoteGroup != null)
-            {
-                longNoteGroup.alpha = isVisible ? 1 : 0;
-                longNoteGroup.interactable = isVisible;
-                longNoteGroup.blocksRaycasts = isVisible;
-            }
+            longNoteGroupAnimator.SetBool("isOpen", isVisible);
 
             if (
                 isVisible

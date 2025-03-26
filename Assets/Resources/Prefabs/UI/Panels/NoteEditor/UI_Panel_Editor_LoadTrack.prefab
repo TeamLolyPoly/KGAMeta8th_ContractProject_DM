@@ -1758,7 +1758,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2306499222991717779}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -1766,8 +1766,8 @@ RectTransform:
   - {fileID: 2306499224151594893}
   - {fileID: 2306499222723586497}
   - {fileID: 2306499223336721615}
-  m_Father: {fileID: 2306499224104589132}
-  m_RootOrder: 1
+  m_Father: {fileID: 2306499223445690209}
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -2627,6 +2627,7 @@ RectTransform:
   m_Children:
   - {fileID: 2306499224072302685}
   - {fileID: 2306499222562390490}
+  - {fileID: 2306499222991717776}
   m_Father: {fileID: 2306499224104589132}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -3448,7 +3449,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 2306499223445690209}
-  - {fileID: 2306499222991717776}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -3485,6 +3485,7 @@ MonoBehaviour:
   contentParent: {fileID: 2306499222414784789}
   trackButtonPrefab: {fileID: 2113533376307314989, guid: 1519c54ac92cf0f458d06e110de371f6, type: 3}
   backButton: {fileID: 2306499222991717777}
+  trackButtons: []
 --- !u!95 &2306499224104589133
 Animator:
   serializedVersion: 3
