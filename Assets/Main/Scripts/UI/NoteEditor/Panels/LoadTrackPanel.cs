@@ -12,6 +12,13 @@ namespace NoteEditor
         public TrackButton trackButtonPrefab;
         public ButtonManager backButton;
 
+        private IEnumerator Start()
+        {
+            yield return new WaitUntil(() => EditorDataManager.Instance.IsInitialized);
+            animator.SetBool("isOpen", true);
+            Initialize();
+        }
+
         public override void Open()
         {
             base.Open();
