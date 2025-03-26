@@ -36,8 +36,6 @@ public class LoadingManager : Singleton<LoadingManager>
 
     private IEnumerator LoadSceneWithLoadingScene(string sceneName, Action onComplete)
     {
-        string currentSceneName = SceneManager.GetActiveScene().name;
-
         AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
         while (!loadLoadingScene.isDone)
         {

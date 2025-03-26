@@ -33,10 +33,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     public void Initialize()
     {
-        ResetGameState();
-
-        InitializeSystem();
-
         Test();
 
         isInitialized = true;
@@ -46,8 +42,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
     {
         string TestNoteMap = Resources.Load<TextAsset>("JSON/TestMap").text;
         NoteMap noteMap = JsonConvert.DeserializeObject<NoteMap>(TestNoteMap);
-        LoadNoteMap(noteMap);
-        StartGame();
+        StartGame(noteMap);
     }
 
     private void ResetGameState()
@@ -74,12 +69,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         unitAnimationManager.Initialize();
 
         scoreSystem.Initialize();
-        noteSpawner.Initialize(gridGenerator, noteMap);
-    }
-
-    public void LoadNoteMap(NoteMap noteMap)
-    {
-        this.noteMap = noteMap;
 
         noteSpawner.Initialize(gridGenerator, noteMap);
     }
@@ -113,11 +102,41 @@ public class GameManager : Singleton<GameManager>, IInitializable
         }
     }
 
-    public void StartGame()
+    public void StartGame(NoteMap map)
     {
+        noteMap = map;
+
         if (noteMap == null)
         {
             Debug.LogError("노트맵이 설정되지 않았습니다!");
+            return;
+        }
+        ResetGameState();
+        GameObject RenderCanvas = GameObject.Find("RenderCanvas");
+        if (RenderCanvas == null)
+        {
+            Debug.LogError("RenderCanvas 찾을 수 없습니다!");
+            return;
+        }
+        Transform rendererObject = RenderCanvas.transform.Find("Renderer");
+        if (rendererObject == null)
+        {
+            Debug.LogError("Renderer 찾을 수 없습니다!");
+            return;
+        }
+
+        InitializeSystem();
+        GameObject scoreboard = Resources.Load<GameObject>(
+            "Prefabs/UI/Panels/Stage/UI_Panel_ScorePanel"
+        );
+        if (scoreboard != null)
+        {
+            GameObject scoreboardInstance = Instantiate(scoreboard, rendererObject);
+            Debug.Log("ScoreboardPanel이 성공적으로 생성되었습니다.");
+        }
+        else
+        {
+            Debug.LogError("ScoreboardPanel 프리팹을 찾을 수 없습니다!");
             return;
         }
 

@@ -277,4 +277,10 @@ public class ShortNote : Note
         Vector3 notePos = transform.position - (-transform.up * noteDistance);
         return Vector3.Distance(hitPoint, notePos);
     }
+
+    protected override void Miss()
+    {
+        base.Miss();
+        Destroy(gameObject);
+    }
 }

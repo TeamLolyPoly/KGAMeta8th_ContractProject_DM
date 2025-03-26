@@ -37,6 +37,7 @@ public enum NoteColor
 
 public enum NoteRatings
 {
+    None,
     Miss,
     Perfect,
     Great,
@@ -88,6 +89,7 @@ public enum PanelType
     ResultDetail,
     Result,
     Option,
+    Scoreboard,
 
     // 에디터 전용
     NoteEditor,
