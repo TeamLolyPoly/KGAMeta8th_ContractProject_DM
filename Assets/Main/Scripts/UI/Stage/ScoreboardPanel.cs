@@ -70,27 +70,6 @@ public class ScoreboardPanel : Panel
         if (scoreSystem == null)
             return NoteRatings.Miss;
 
-        // Miss가 아닌 노트의 수를 계산
-        int hitNotes =
-            scoreSystem.ratingCount[NoteRatings.Perfect]
-            + scoreSystem.ratingCount[NoteRatings.Great]
-            + scoreSystem.ratingCount[NoteRatings.Good]
-            + scoreSystem.ratingCount[NoteRatings.Success];
-
-        int totalNotes = scoreSystem.totalNoteCount;
-        if (totalNotes == 0)
-            return NoteRatings.Miss;
-
-        // 가장 높은 등급의 판정을 반환
-        if (scoreSystem.ratingCount[NoteRatings.Perfect] > 0)
-            return NoteRatings.Perfect;
-        else if (scoreSystem.ratingCount[NoteRatings.Great] > 0)
-            return NoteRatings.Great;
-        else if (scoreSystem.ratingCount[NoteRatings.Good] > 0)
-            return NoteRatings.Good;
-        else if (scoreSystem.ratingCount[NoteRatings.Success] > 0)
-            return NoteRatings.Success;
-        else
-            return NoteRatings.Miss;
+        return scoreSystem.LastRating;
     }
 }

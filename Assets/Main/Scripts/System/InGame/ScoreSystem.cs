@@ -57,6 +57,10 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     public bool IsInitialized => isInitialized;
 
+    // 최근 판정 결과 저장
+    private NoteRatings lastRating = NoteRatings.Miss;
+    public NoteRatings LastRating => lastRating;
+
     //테스트용 코드
     void Update()
     {
@@ -118,10 +122,11 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     public void SetScore(float score, NoteRatings ratings)
     {
         ratingCount[ratings] += 1;
+        lastRating = ratings; // 최근 판정 업데이트
 
         if (ratings == NoteRatings.Miss)
         {
-            combo = 0 < combo ? 0 : combo - 1;
+            combo = 0 < combo ? 0 : combo - 1; // 콤보가 0보다 크면 0으로, 아니면 1 감소
             multiplier = 1;
         }
         else
