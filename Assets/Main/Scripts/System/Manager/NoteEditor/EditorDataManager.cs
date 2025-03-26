@@ -20,24 +20,21 @@ namespace NoteEditor
 
         public bool IsInitialized { get; private set; }
 
-        private void Start()
-        {
-            fileService = new AudioFileService();
-            Initialize();
-        }
-
         public async void Initialize()
         {
+            fileService = new AudioFileService();
             AudioPathProvider.EnsureDirectoriesExist();
             await LoadAllTracksAsync();
             IsInitialized = true;
-            Debug.Log("AudioDataManager 초기화 완료");
+            Debug.Log("[EditorDataManager] 초기화 완료");
         }
 
         public async Task LoadAllTracksAsync()
         {
             var metadata = await fileService.LoadMetadataAsync();
-            Debug.Log($"메타데이터에서 {metadata.Count}개의 트랙 정보를 로드했습니다.");
+            Debug.Log(
+                $"[EditorDataManager] 메타데이터에서 {metadata.Count}개의 트랙 정보를 로드했습니다."
+            );
 
             tracks.Clear();
 
@@ -55,6 +52,8 @@ namespace NoteEditor
                 };
 
                 tracks.Add(track);
+
+                await LoadTrackAudioAsync(track.trackName);
             }
 
             Debug.Log($"{tracks.Count}개의 트랙이 로드되었습니다.");
