@@ -27,7 +27,7 @@ namespace NoteEditor
 
         public void Initialize()
         {
-            foreach (var track in EditorDataManager.Instance.GetAllTracks())
+            foreach (var track in EditorDataManager.Instance.Tracks)
             {
                 TrackButton trackButton = Instantiate(trackButtonPrefab, contentParent);
                 trackButton.Initialize(track);

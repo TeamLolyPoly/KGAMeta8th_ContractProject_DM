@@ -173,9 +173,10 @@ namespace NoteEditor
                 return;
             }
 
-            LoadingManager.Instance.LoadScene("Editor");
+            LoadingManager.Instance.LoadScene("Editor_Main");
 
             Debug.Log($"트랙 '{track.trackName}'의 오디오 로드 중...");
+
             await EditorDataManager.Instance.LoadTrackAudioAsync(track.trackName);
 
             if (track.TrackAudio == null)
