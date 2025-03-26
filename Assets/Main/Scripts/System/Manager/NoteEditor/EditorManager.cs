@@ -14,7 +14,7 @@ namespace NoteEditor
         public RailController railController { get; private set; }
         public CellController cellController { get; private set; }
         public NoteEditor noteEditor { get; private set; }
-        public NoteEditorPanel editorPanel { get; private set; }
+        public EditorPanel editorPanel { get; private set; }
 
         private Camera editorCamera;
         private InputActionAsset editorControlActions;
@@ -93,33 +93,27 @@ namespace NoteEditor
                 () => EditorDataManager.Instance != null && EditorDataManager.Instance.IsInitialized
             );
 
-            Debug.Log("[EditorManager] 컴포넌트 초기화 시작");
-
             if (railController != null && !railController.IsInitialized)
             {
                 railController.Initialize();
                 yield return new WaitUntil(() => railController.IsInitialized);
-                Debug.Log("[EditorManager] RailController 초기화 완료");
             }
 
             if (cellController != null && !cellController.IsInitialized)
             {
                 cellController.Initialize();
                 yield return new WaitUntil(() => cellController.IsInitialized);
-                Debug.Log("[EditorManager] CellController 초기화 완료");
             }
 
             if (noteEditor != null && !noteEditor.IsInitialized)
             {
                 noteEditor.Initialize();
                 yield return new WaitUntil(() => noteEditor.IsInitialized);
-                Debug.Log("[EditorManager] NoteEditor 초기화 완료");
             }
 
             yield return new WaitUntil(() => UIManager.Instance.IsInitialized);
-            editorPanel = UIManager.Instance.OpenPanel(PanelType.NoteEditor) as NoteEditorPanel;
+            editorPanel = UIManager.Instance.OpenPanel(PanelType.NoteEditor) as EditorPanel;
             yield return new WaitUntil(() => editorPanel.IsInitialized);
-            Debug.Log("[EditorManager] EditorPanel 초기화 완료");
 
             InitializeCamera();
 
@@ -468,10 +462,8 @@ namespace NoteEditor
                 currentSceneName,
                 () =>
                 {
-                    // 1. First refresh our cached tracks list
                     RefreshTrackList();
 
-                    // 2. Find the track in our updated list
                     TrackData trackToSelect = cachedTracks.FirstOrDefault(t =>
                         t.trackName == trackName
                     );
@@ -482,13 +474,10 @@ namespace NoteEditor
                         currentTrackIndex = newTrackIndex;
                     }
 
-                    // 3. Update the UI panel elements
                     if (editorPanel != null && editorPanel.IsInitialized)
                     {
-                        // Refresh all panels track-related UI
                         editorPanel.RefreshTrackList();
 
-                        // Explicitly set the dropdown index
                         if (newTrackIndex >= 0)
                         {
                             editorPanel.trackDropdown.SetDropdownIndex(newTrackIndex);
@@ -580,28 +569,22 @@ namespace NoteEditor
                 currentSceneName,
                 () =>
                 {
-                    // 1. First refresh our cached tracks list
                     RefreshTrackList();
 
-                    // 2. Find the track in our updated list
                     TrackData currentSelectedTrack = cachedTracks.FirstOrDefault(t =>
                         t.trackName == trackName
                     );
                     int trackIndex = cachedTracks.FindIndex(t => t.trackName == trackName);
 
-                    // 3. Update UI panel
                     if (editorPanel != null && editorPanel.IsInitialized)
                     {
-                        // Refresh the track list display
                         editorPanel.RefreshTrackList();
 
-                        // Make sure the dropdown shows the current track
                         if (trackIndex >= 0)
                         {
                             editorPanel.trackDropdown.SetDropdownIndex(trackIndex);
                         }
 
-                        // 4. Update track display if needed
                         if (
                             currentSelectedTrack != null
                             && currentTrack != null
