@@ -29,41 +29,15 @@ public class LoadingManager : Singleton<LoadingManager>
             return;
 
         isLoading = true;
-        StartCoroutine(LoadSceneWithLoadingScene(sceneName, onComplete));
-    }
 
-    private IEnumerator LoadSceneWithLoadingScene(string sceneName, Action onComplete)
-    {
-        AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
-        while (!loadLoadingScene.isDone)
+        if (!UIManager.Instance.IsInitialized)
         {
-            yield return null;
+            UIManager.Instance.Initialize();
         }
 
-        loadingUI = FindObjectOfType<LoadingPanel>();
-        progressBar = FindObjectOfType<ProgressBar>();
+        loadingUI = UIManager.Instance.OpenPanel(PanelType.Loading) as LoadingPanel;
 
-        AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneName);
-        asyncOperation.allowSceneActivation = false;
-
-        float startTime = Time.time;
-        float progress = 0;
-
-        while (!asyncOperation.isDone)
-        {
-            progress = Mathf.Clamp01(asyncOperation.progress / 0.9f);
-            UpdateProgress(progress);
-
-            if (progress >= 1.0f && (Time.time - startTime) >= minimumLoadingTime)
-            {
-                asyncOperation.allowSceneActivation = true;
-            }
-
-            yield return null;
-        }
-
-        isLoading = false;
-        onComplete?.Invoke();
+        StartCoroutine(LoadSceneRoutine(sceneName, onComplete));
     }
 
     /// <summary>
@@ -71,9 +45,9 @@ public class LoadingManager : Singleton<LoadingManager>
     /// </summary>
     /// <param name="operations">비동기 작업 목록</param>
     /// <param name="onComplete">로딩 완료 후 실행할 콜백</param>
-    public void LoadMultipleOperations(
+    public void LoadScene(
         string targetSceneName,
-        List<AsyncOperation> operations,
+        List<Func<IEnumerator>> operations,
         Action onComplete = null
     )
     {
@@ -82,72 +56,23 @@ public class LoadingManager : Singleton<LoadingManager>
 
         isLoading = true;
 
-        StartCoroutine(LoadOperationsWithLoadingScene(targetSceneName, operations, onComplete));
-    }
-
-    private IEnumerator LoadOperationsWithLoadingScene(
-        string targetSceneName,
-        List<AsyncOperation> operations,
-        Action onComplete
-    )
-    {
-        AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
-        while (!loadLoadingScene.isDone)
+        if (!UIManager.Instance.IsInitialized)
         {
-            yield return null;
+            UIManager.Instance.Initialize();
         }
 
-        AsyncOperation loadTargetSceneAsync = SceneManager.LoadSceneAsync(targetSceneName);
-        loadTargetSceneAsync.allowSceneActivation = false;
+        loadingUI = UIManager.Instance.OpenPanel(PanelType.Loading) as LoadingPanel;
 
-        loadingUI = FindObjectOfType<LoadingPanel>();
-        progressBar = FindObjectOfType<ProgressBar>();
-
-        float startTime = Time.time;
-        bool allOperationsComplete = false;
-
-        while (!allOperationsComplete)
-        {
-            float totalProgress = 0f;
-
-            foreach (AsyncOperation operation in operations)
-            {
-                totalProgress += operation.progress;
-            }
-
-            float averageProgress = totalProgress / operations.Count;
-            UpdateProgress(averageProgress);
-
-            allOperationsComplete = true;
-            foreach (AsyncOperation operation in operations)
-            {
-                if (!operation.isDone)
-                {
-                    allOperationsComplete = false;
-                    break;
-                }
-            }
-
-            if (allOperationsComplete && (Time.time - startTime) < minimumLoadingTime)
-            {
-                allOperationsComplete = false;
-            }
-
-            yield return null;
-        }
-
-        isLoading = false;
-        onComplete?.Invoke();
+        StartCoroutine(LoadOperations(targetSceneName, operations, onComplete));
     }
 
     /// <summary>
     /// 비동기 작업을 로딩합니다.
     /// </summary>
-    /// <typeparam name="T">반환 값 타입</typeparam>
     /// <param name="asyncOperation">비동기 작업</param>
     /// <param name="loadingText">로딩 텍스트</param>
     /// <param name="onComplete">로딩 완료 후 실행할 콜백</param>
-    public void LoadAsyncOperation(
+    public void LoadScene(
         string targetSceneName,
         Func<IEnumerator> asyncOperation,
         Action onComplete = null
@@ -158,16 +83,66 @@ public class LoadingManager : Singleton<LoadingManager>
 
         isLoading = true;
 
-        UIManager.Instance.CloseAllPanels();
+        if (!UIManager.Instance.IsInitialized)
+        {
+            UIManager.Instance.Initialize();
+        }
 
         loadingUI = UIManager.Instance.OpenPanel(PanelType.Loading) as LoadingPanel;
 
-        StartCoroutine(
-            ProcessAsyncOperationWithLoadingScene(targetSceneName, asyncOperation, onComplete)
-        );
+        if (asyncOperation != null)
+        {
+            StartCoroutine(LoadOpertion(targetSceneName, asyncOperation, onComplete));
+        }
+        else
+        {
+            SceneManager.LoadScene(targetSceneName);
+        }
     }
 
-    private IEnumerator ProcessAsyncOperationWithLoadingScene(
+    private IEnumerator LoadSceneRoutine(string targetSceneName, Action onComplete)
+    {
+        AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
+        while (!loadLoadingScene.isDone)
+        {
+            yield return null;
+        }
+
+        AsyncOperation loadTargetScene = SceneManager.LoadSceneAsync(targetSceneName);
+
+        loadTargetScene.allowSceneActivation = false;
+
+        float startTime = Time.time;
+        float progress = 0;
+
+        while (!loadTargetScene.isDone)
+        {
+            UpdateProgress(0);
+
+            progress = Mathf.Clamp01(loadTargetScene.progress / 0.9f);
+
+            UpdateProgress(progress);
+
+            if (progress >= 1.0f && (Time.time - startTime) >= minimumLoadingTime)
+            {
+                loadTargetScene.allowSceneActivation = true;
+            }
+
+            yield return null;
+        }
+
+        isLoading = false;
+
+        loadTargetScene.allowSceneActivation = true;
+
+        yield return new WaitUntil(() => loadTargetScene.isDone);
+
+        loadingUI.Close();
+
+        onComplete?.Invoke();
+    }
+
+    private IEnumerator LoadOpertion(
         string targetSceneName,
         Func<IEnumerator> asyncOperation,
         Action onComplete = null
@@ -208,6 +183,67 @@ public class LoadingManager : Singleton<LoadingManager>
         loadingUI.Close();
 
         isLoading = false;
+
+        onComplete?.Invoke();
+    }
+
+    private IEnumerator LoadOperations(
+        string targetSceneName,
+        List<Func<IEnumerator>> operations,
+        Action onComplete
+    )
+    {
+        AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
+        while (!loadLoadingScene.isDone)
+        {
+            yield return null;
+        }
+
+        AsyncOperation loadTargetSceneAsync = SceneManager.LoadSceneAsync(targetSceneName);
+        loadTargetSceneAsync.allowSceneActivation = false;
+
+        float startTime = Time.time;
+        bool allOperationsComplete = false;
+
+        while (!allOperationsComplete)
+        {
+            float totalProgress = 0f;
+
+            foreach (Func<IEnumerator> operation in operations)
+            {
+                var operationCoroutine = operation();
+
+                while (operationCoroutine.MoveNext())
+                {
+                    if (operationCoroutine.Current is float progressValue)
+                    {
+                        totalProgress += progressValue;
+                        float averageProgress = totalProgress / operations.Count;
+                        UpdateProgress(averageProgress);
+                    }
+                    yield return operationCoroutine.Current;
+                }
+            }
+
+            if (allOperationsComplete && (Time.time - startTime) < minimumLoadingTime)
+            {
+                allOperationsComplete = false;
+            }
+
+            loadTargetSceneAsync.allowSceneActivation = true;
+
+            yield return new WaitUntil(() => loadTargetSceneAsync.isDone);
+
+            allOperationsComplete = true;
+        }
+
+        isLoading = false;
+
+        loadTargetSceneAsync.allowSceneActivation = true;
+
+        yield return new WaitUntil(() => loadTargetSceneAsync.isDone);
+
+        loadingUI.Close();
 
         onComplete?.Invoke();
     }

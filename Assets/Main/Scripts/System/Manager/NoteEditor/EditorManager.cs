@@ -51,21 +51,34 @@ namespace NoteEditor
 
         public void Initialize()
         {
-            if (isInitialized)
-            {
-                return;
-            }
-
-            InitializeComponents();
-            UIManager.Instance.OpenPanel(PanelType.EditorStart);
+            LoadingManager.Instance.LoadScene(
+                "Editor_Start",
+                InitializeAsync,
+                () =>
+                {
+                    UIManager.Instance.OpenPanel(PanelType.EditorStart);
+                }
+            );
         }
 
-        private void InitializeComponents()
+        public IEnumerator InitializeAsync()
         {
+            yield return 0;
+            yield return new WaitForSeconds(0.3f);
+
+            LoadingManager.Instance.SetLoadingText("오디오 매니저 초기화 중...");
             AudioManager.Instance.Initialize();
+            yield return 0.5f;
+            yield return new WaitForSeconds(3f);
+
+            LoadingManager.Instance.SetLoadingText("데이터 매니저 초기화 중...");
             EditorDataManager.Instance.Initialize();
-            UIManager.Instance.Initialize();
+            yield return 0.8f;
+            yield return new WaitForSeconds(5f);
+
             isInitialized = true;
+            yield return 1f;
+            yield return new WaitForSeconds(0.5f);
         }
 
         public void InstantiateControllers()
@@ -148,12 +161,14 @@ namespace NoteEditor
 
             CurrentTrack = track;
 
-            LoadingManager.Instance.LoadAsyncOperation(
+            LoadingManager.Instance.LoadScene(
                 "Editor_Main",
                 InitializeEditorAsync,
                 () =>
                 {
                     cameraController.Initialize();
+
+                    UIManager.Instance.CloseAllPanels();
 
                     editorPanel = UIManager.Instance.OpenPanel(PanelType.NoteEditor) as EditorPanel;
 
@@ -166,10 +181,13 @@ namespace NoteEditor
 
         private IEnumerator InitializeEditorAsync()
         {
+            yield return 0;
+            yield return new WaitForSeconds(0.3f);
+
             LoadingManager.Instance.SetLoadingText("컨트롤러 생성 중...");
             InstantiateControllers();
             yield return 0.1f;
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(1f);
 
             LoadingManager.Instance.SetLoadingText("레일 초기화 중...");
             railController.Initialize();
@@ -189,24 +207,24 @@ namespace NoteEditor
             LoadingManager.Instance.SetLoadingText("트랙 설정 중...");
             AudioManager.Instance.SetTrack(CurrentTrack, CurrentTrack.TrackAudio);
             yield return 0.5f;
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(3f);
 
             LoadingManager.Instance.SetLoadingText("입력 설정 중...");
             SetupInputActions();
             yield return 0.7f;
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(1f);
 
             LoadingManager.Instance.SetLoadingText("노트 에디터 트랙 설정 중...");
             noteEditor.SetTrack(CurrentTrack);
             yield return 0.8f;
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(3f);
 
             LoadingManager.Instance.SetLoadingText("에디터 준비 완료!");
             yield return 0.9f;
-            yield return new WaitForSeconds(0.2f);
+            yield return new WaitForSeconds(1f);
 
             yield return 1f;
-            yield return new WaitForSeconds(0.2f);
+            yield return new WaitForSeconds(1f);
         }
 
         public async void RemoveTrack(TrackData track)

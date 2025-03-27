@@ -48,6 +48,9 @@ namespace NoteEditor
         [SerializeField]
         private SettingsElement clockwiseToggle;
 
+        [SerializeField]
+        private ButtonManager CameraToggleButton;
+
         public bool IsInitialized { get; private set; }
 
         private bool isLoadingAlbumArt = false;
@@ -90,6 +93,13 @@ namespace NoteEditor
                 SwitchManager switchManager =
                     clockwiseToggle.GetComponentInChildren<SwitchManager>();
                 switchManager.onValueChanged.AddListener(OnClockwiseToggleChanged);
+            }
+
+            if (CameraToggleButton != null)
+            {
+                CameraToggleButton.onClick.AddListener(
+                    EditorManager.Instance.cameraController.ToggleFreeLook
+                );
             }
         }
 

@@ -31,6 +31,10 @@ public class LoadingPanel : Panel
     [SerializeField]
     private bool randomizeBackground = true;
 
+    private float currentProgress = 0f;
+    private float targetProgress = 0f;
+    private const float SMOOTH_SPEED = 5f;
+
     public override void Open()
     {
         if (canvasGroup == null)
@@ -83,13 +87,32 @@ public class LoadingPanel : Panel
         }
     }
 
+    private void Update()
+    {
+        if (currentProgress != targetProgress)
+        {
+            currentProgress = Mathf.Lerp(
+                currentProgress,
+                targetProgress,
+                Time.deltaTime * SMOOTH_SPEED
+            );
+
+            if (Mathf.Abs(currentProgress - targetProgress) < 0.01f)
+            {
+                currentProgress = targetProgress;
+            }
+
+            if (progressBar != null)
+            {
+                progressBar.currentValue = currentProgress * 100f;
+                progressBar.UpdateUI();
+            }
+        }
+    }
+
     public void UpdateProgress(float progress)
     {
-        if (progressBar != null)
-        {
-            progressBar.currentValue = progress * 100f;
-            progressBar.UpdateUI();
-        }
+        targetProgress = progress;
     }
 
     public void SetLoadingText(string text)
