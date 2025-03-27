@@ -16,26 +16,25 @@ namespace NoteEditor
     {
         private AudioFileService fileService;
         private List<TrackData> tracks = new List<TrackData>();
-        public bool IsInitialized { get; private set; }
+        public List<TrackData> Tracks => tracks;
 
-        private void Start()
-        {
-            fileService = new AudioFileService();
-            Initialize();
-        }
+        public bool IsInitialized { get; private set; }
 
         public async void Initialize()
         {
+            fileService = new AudioFileService();
             AudioPathProvider.EnsureDirectoriesExist();
             await LoadAllTracksAsync();
             IsInitialized = true;
-            Debug.Log("AudioDataManager 초기화 완료");
+            Debug.Log("[EditorDataManager] 초기화 완료");
         }
 
         public async Task LoadAllTracksAsync()
         {
             var metadata = await fileService.LoadMetadataAsync();
-            Debug.Log($"메타데이터에서 {metadata.Count}개의 트랙 정보를 로드했습니다.");
+            Debug.Log(
+                $"[EditorDataManager] 메타데이터에서 {metadata.Count}개의 트랙 정보를 로드했습니다."
+            );
 
             tracks.Clear();
 
@@ -53,6 +52,8 @@ namespace NoteEditor
                 };
 
                 tracks.Add(track);
+
+                await LoadTrackAudioAsync(track.trackName);
             }
 
             Debug.Log($"{tracks.Count}개의 트랙이 로드되었습니다.");
@@ -170,21 +171,9 @@ namespace NoteEditor
         {
             await fileService.DeleteAllTrackFilesAsync();
 
-            // 삭제된 트랙 목록 저장
-            List<TrackData> removedTracks = new List<TrackData>(tracks);
-
             tracks.Clear();
 
             Debug.Log("모든 트랙이 삭제되었습니다.");
-        }
-
-        /// <summary>
-        /// 모든 트랙 정보를 가져옵니다.
-        /// </summary>
-        /// <returns>트랙 데이터 목록</returns>
-        public List<TrackData> GetAllTracks()
-        {
-            return new List<TrackData>(tracks);
         }
 
         /// <summary>
@@ -302,7 +291,6 @@ namespace NoteEditor
             {
                 Debug.Log($"오디오 로드 완료: {trackName}");
 
-                // 트랙 찾기
                 TrackData updatedTrack = tracks.FirstOrDefault(t => t.trackName == trackName);
                 if (updatedTrack != null)
                 {

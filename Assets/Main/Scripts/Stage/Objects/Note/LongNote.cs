@@ -34,4 +34,10 @@ public class LongNote : Note
             Miss();
         }
     }
+
+    protected override void Miss()
+    {
+        base.Miss();
+        Destroy(gameObject);
+    }
 }

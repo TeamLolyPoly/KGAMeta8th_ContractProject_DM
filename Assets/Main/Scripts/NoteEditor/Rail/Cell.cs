@@ -41,7 +41,7 @@ namespace NoteEditor
         {
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
             {
-                Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
+                Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
                 if (Physics.Raycast(ray, out RaycastHit hit))
                 {

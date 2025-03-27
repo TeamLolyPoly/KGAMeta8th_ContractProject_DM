@@ -57,8 +57,6 @@ Shader "Unlit/LedShader"
 				float4 c = tex2D(_MainTex, float2(_OffsetX,_OffsetY) + (floor(i.uv*_Tiling)/ (_Tiling)));
 				float4 d = tex2D(_LEDTex, i.uv*_Tiling);
 
-                UNITY_APPLY_FOG(i.fogCoord, col);
-
                 return c*d*_Brightness;
             }
             ENDCG
