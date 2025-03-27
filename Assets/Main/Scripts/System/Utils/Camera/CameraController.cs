@@ -1,8 +1,10 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CameraController : MonoBehaviour, IInitializable
 {
-    private Camera editorCamera;
+    public Camera editorCamera;
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
     public float cameraSpeed = 5f;
@@ -11,6 +13,7 @@ public class CameraController : MonoBehaviour, IInitializable
     public void Initialize()
     {
         editorCamera = Camera.main;
+
         if (editorCamera != null)
         {
             editorCamera.transform.position = new Vector3(0, 5, -5);

@@ -24,7 +24,7 @@ public class AlbumPanel : Panel
         rightAlbum.onClick.AddListener(OnRightAlbumClick);
     }
 
-    public override void Close()
+    public override void Close(bool objActive = false)
     {
         backButton.onClick.RemoveListener(OnBackButtonClick);
         laftTogle.onClick.RemoveListener(OnLeftToggleClick);
@@ -32,7 +32,7 @@ public class AlbumPanel : Panel
         selectAlbum.onClick.RemoveListener(OnSelectAlbumClick);
         leftAlbum.onClick.RemoveListener(OnLeftAlbumClick);
         rightAlbum.onClick.RemoveListener(OnRightAlbumClick);
-        base.Close();
+        base.Close(objActive);
     }
 
     [SerializeField]

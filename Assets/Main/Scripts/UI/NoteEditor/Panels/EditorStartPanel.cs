@@ -4,8 +4,8 @@ using ProjectDM.UI;
 public class EditorStartPanel : Panel
 {
     public override PanelType PanelType => PanelType.EditorStart;
-    public PanelButton NewTrackButton;
-    public PanelButton LoadTrackButton;
+    public ButtonManager NewTrackButton;
+    public ButtonManager LoadTrackButton;
 
     public override void Open()
     {
@@ -14,22 +14,22 @@ public class EditorStartPanel : Panel
         LoadTrackButton.onClick.AddListener(OnLoadTrackButtonClick);
     }
 
-    public override void Close()
+    public override void Close(bool objActive = false)
     {
         NewTrackButton.onClick.RemoveListener(OnNewTrackButtonClick);
         LoadTrackButton.onClick.RemoveListener(OnLoadTrackButtonClick);
-        base.Close();
+        base.Close(objActive);
     }
 
     private void OnNewTrackButtonClick()
     {
         UIManager.Instance.OpenPanel(PanelType.NewTrack);
-        Close();
+        Close(true);
     }
 
     private void OnLoadTrackButtonClick()
     {
         UIManager.Instance.OpenPanel(PanelType.LoadTrack);
-        Close();
+        Close(true);
     }
 }

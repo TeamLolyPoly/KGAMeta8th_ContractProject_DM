@@ -69,7 +69,7 @@ namespace NoteEditor
             if (BPMInput != null)
             {
                 BPMInput.onSubmit.AddListener(() => OnBPMInputSubmit(BPMInput.inputText.text));
-                BPMInput.inputText.text = "선택된 트랙 없음";
+                BPMInput.inputText.text = EditorManager.Instance.CurrentTrack.bpm.ToString();
             }
 
             InitializeAlbumArtButton();

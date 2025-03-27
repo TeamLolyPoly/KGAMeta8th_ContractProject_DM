@@ -19,10 +19,13 @@ namespace ProjectDM.UI
             }
         }
 
-        public virtual void Close()
+        public virtual void Close(bool objActive = true)
         {
-            gameObject.SetActive(false);
             isOpen = false;
+            if (!objActive)
+            {
+                gameObject.SetActive(false);
+            }
             if (animator != null)
             {
                 animator.SetBool("isOpen", isOpen);

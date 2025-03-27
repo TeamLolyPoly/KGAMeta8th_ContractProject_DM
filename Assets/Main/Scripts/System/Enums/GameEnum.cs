@@ -90,6 +90,7 @@ public enum PanelType
     Result,
     Option,
     Scoreboard,
+    Loading,
 
     // 에디터 전용
     NoteEditor,

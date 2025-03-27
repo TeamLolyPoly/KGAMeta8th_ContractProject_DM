@@ -17,10 +17,10 @@ public class OptionPanel : Panel
         base.Open();
     }
 
-    public override void Close()
+    public override void Close(bool objActive = false)
     {
         closeButton.onClick.RemoveListener(OnCloseButtonClick);
-        base.Close();
+        base.Close(objActive);
     }
 
     private void OnCloseButtonClick()

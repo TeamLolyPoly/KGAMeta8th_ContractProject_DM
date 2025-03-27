@@ -76,14 +76,10 @@ namespace NoteEditor
         /// </summary>
         public bool IsPlaying => isPlaying;
 
-        /// <summary>
-        /// 매니저를 초기화합니다.
-        /// </summary>
         public void Initialize()
         {
             currentAudioSource = gameObject.AddComponent<AudioSource>();
             IsInitialized = true;
-            Debug.Log("[AudioManager] 초기화 완료");
         }
 
         /// <summary>
