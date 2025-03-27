@@ -76,12 +76,6 @@ namespace NoteEditor
         /// </summary>
         public bool IsPlaying => isPlaying;
 
-        public IEnumerator Start()
-        {
-            yield return new WaitUntil(() => EditorDataManager.Instance.IsInitialized);
-            Initialize();
-        }
-
         /// <summary>
         /// 매니저를 초기화합니다.
         /// </summary>

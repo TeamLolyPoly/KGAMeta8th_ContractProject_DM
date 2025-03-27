@@ -114,7 +114,6 @@ namespace NoteEditor
 
             UpdateRailAndCells(AudioManager.Instance.currentTrack);
             ApplyNotesToCells();
-            SaveNoteMap();
         }
 
         private void UpdateRailAndCells(TrackData track)

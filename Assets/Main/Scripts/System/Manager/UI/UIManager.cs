@@ -13,11 +13,6 @@ public class UIManager : Singleton<UIManager>, IInitializable
     public List<Panel> PanelPrefabs = new List<Panel>();
     public List<Panel> Panels = new List<Panel>();
 
-    private void Start()
-    {
-        Initialize();
-    }
-
     public void Initialize()
     {
         LoadResources();

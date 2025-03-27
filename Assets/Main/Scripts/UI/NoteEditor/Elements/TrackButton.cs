@@ -1,4 +1,3 @@
-using System;
 using Michsky.UI.Heat;
 using UnityEngine;
 using UnityEngine.UI;
@@ -33,6 +32,9 @@ namespace NoteEditor
 
         private void LoadTrack()
         {
+            UIManager.Instance.ClosePanel(PanelType.LoadTrack);
+            UIManager.Instance.ClosePanel(PanelType.EditorStart);
+
             EditorManager.Instance.SelectTrack(track);
         }
 
