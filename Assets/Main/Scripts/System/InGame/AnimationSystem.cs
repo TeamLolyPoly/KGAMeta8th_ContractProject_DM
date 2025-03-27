@@ -106,6 +106,11 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         {
             defaultEngagement = engagement;
         }
+        else if (defaultEngagement == engagement)
+        {
+            currentnumberOfUnits = 0;
+            changeBands.Clear();
+        }
         if (numberOfUnits == 0)
         {
             numberOfUnits = 100000000;
