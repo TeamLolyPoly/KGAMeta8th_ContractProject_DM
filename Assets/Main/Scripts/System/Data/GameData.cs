@@ -118,7 +118,39 @@ public class NoteMap
     public List<NoteData> notes = new List<NoteData>();
     public float bpm = 120f;
     public int beatsPerBar = 4;
-    public int TotalNoteCount => notes.Count;
+
+    [JsonIgnore]
+    public int TotalNoteCount
+    {
+        get
+        {
+            int count = 0;
+            foreach (var note in notes)
+            {
+                if (note.noteType == NoteType.Long)
+                {
+                    float secondsPerBeat = 60f / bpm;
+                    float totalDurationSeconds =
+                        (note.durationBars * beatsPerBar + note.durationBeats) * secondsPerBeat;
+                    float spawnInterval = 0.1f;
+                    int segmentCount = 72;
+
+                    int calculatedArcLength = Mathf.RoundToInt(
+                        totalDurationSeconds / spawnInterval
+                    );
+                    calculatedArcLength = Mathf.Max(1, calculatedArcLength);
+                    calculatedArcLength = Mathf.Min(calculatedArcLength, segmentCount - 1);
+
+                    count += calculatedArcLength;
+                }
+                else
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+    }
 }
 #endregion
 
