@@ -31,6 +31,7 @@ public class LoadingPanel : Panel
     [SerializeField]
     private bool randomizeBackground = true;
 
+    private bool isFirstText = true;
     private float currentProgress = 0f;
     private float targetProgress = 0f;
     private const float SMOOTH_SPEED = 5f;
@@ -120,6 +121,11 @@ public class LoadingPanel : Panel
         if (loadingText != null)
         {
             loadingText.text = text;
+        }
+        if (isFirstText)
+        {
+            animator.SetBool("isOpen", true);
+            isFirstText = false;
         }
     }
 
