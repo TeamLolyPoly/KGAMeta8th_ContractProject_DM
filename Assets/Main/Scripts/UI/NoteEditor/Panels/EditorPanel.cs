@@ -48,6 +48,9 @@ namespace NoteEditor
         [SerializeField]
         private SettingsElement clockwiseToggle;
 
+        [SerializeField]
+        private ButtonManager CameraToggleButton;
+
         public bool IsInitialized { get; private set; }
 
         private bool isLoadingAlbumArt = false;
@@ -69,7 +72,7 @@ namespace NoteEditor
             if (BPMInput != null)
             {
                 BPMInput.onSubmit.AddListener(() => OnBPMInputSubmit(BPMInput.inputText.text));
-                BPMInput.inputText.text = "선택된 트랙 없음";
+                BPMInput.inputText.text = EditorManager.Instance.CurrentTrack.bpm.ToString();
             }
 
             InitializeAlbumArtButton();
@@ -90,6 +93,13 @@ namespace NoteEditor
                 SwitchManager switchManager =
                     clockwiseToggle.GetComponentInChildren<SwitchManager>();
                 switchManager.onValueChanged.AddListener(OnClockwiseToggleChanged);
+            }
+
+            if (CameraToggleButton != null)
+            {
+                CameraToggleButton.onClick.AddListener(
+                    EditorManager.Instance.cameraController.ToggleFreeLook
+                );
             }
         }
 

@@ -15,10 +15,10 @@ public class ResultDetailPanel : Panel
         base.Open();
     }
 
-    public override void Close()
+    public override void Close(bool objActive = false)
     {
         backButton.onClick.RemoveListener(OnBackButtonClick);
-        base.Close();
+        base.Close(objActive);
     }
 
     [SerializeField]

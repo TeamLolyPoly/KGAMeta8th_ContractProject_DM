@@ -12,14 +12,14 @@ public class DifficultPanel : Panel
         base.Open();
     }
 
-    public override void Close()
+    public override void Close(bool objActive = false)
     {
         backButton.onClick.RemoveListener(OnBackButtonClick);
         easyButton.onClick.RemoveListener(OnEasyButtonClick);
         normalButton.onClick.RemoveListener(OnNormalButtonClick);
         hardButton.onClick.RemoveListener(OnHardButtonClick);
         gameStartButton.onClick.RemoveListener(OnGameStartButtonClick);
-        base.Close();
+        base.Close(objActive);
     }
 
     [SerializeField]

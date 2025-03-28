@@ -12,18 +12,12 @@ namespace NoteEditor
         public RectTransform contentParent;
         public TrackButton trackButtonPrefab;
         public ButtonManager backButton;
-        public List<TrackButton> trackButtons = new List<TrackButton>();
-
-        private IEnumerator Start()
-        {
-            yield return new WaitUntil(() => EditorDataManager.Instance.IsInitialized);
-            animator.SetBool("isOpen", true);
-            Initialize();
-        }
+        private List<TrackButton> trackButtons = new List<TrackButton>();
 
         public override void Open()
         {
             base.Open();
+            transform.SetAsLastSibling();
             Initialize();
         }
 
@@ -40,14 +34,19 @@ namespace NoteEditor
                 trackButton.Initialize(track);
                 trackButtons.Add(trackButton);
             }
-            backButton.onClick.AddListener(Close);
+            backButton.onClick.AddListener(OnBackButtonClick);
         }
 
-        public override void Close()
+        private void OnBackButtonClick()
         {
-            backButton.onClick.RemoveAllListeners();
-            base.Close();
+            Close(true);
             UIManager.Instance.OpenPanel(PanelType.EditorStart);
+        }
+
+        public override void Close(bool objActive = false)
+        {
+            base.Close(objActive);
+            backButton.onClick.RemoveAllListeners();
         }
     }
 }
