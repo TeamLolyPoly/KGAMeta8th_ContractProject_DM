@@ -26,18 +26,18 @@ public class TitlePanel : Panel
         base.Open();
     }
 
-    public override void Close()
+    public override void Close(bool objActive = false)
     {
         startButton.onClick.RemoveListener(OnStartButtonClick);
         settingButton.onClick.RemoveListener(OnOptionButtonClick);
         quitButton.onClick.RemoveListener(OnQuitButtonClick);
-        base.Close();
+        base.Close(objActive);
     }
 
     private void OnStartButtonClick()
     {
         UIManager.Instance.OpenPanel(PanelType.Mode);
-        Close();
+        Close(false);
     }
 
     private void OnOptionButtonClick()

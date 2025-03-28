@@ -23,12 +23,12 @@ public class ModePanel : Panel
         base.Open();
     }
 
-    public override void Close()
+    public override void Close(bool objActive = false)
     {
         backButton.onClick.RemoveListener(OnBackButtonClick);
         singleButton.onClick.RemoveListener(OnSingleButtonClick);
         multiButton.onClick.RemoveListener(OnMultiButtonClick);
-        base.Close();
+        base.Close(objActive);
     }
 
     private void OnBackButtonClick()

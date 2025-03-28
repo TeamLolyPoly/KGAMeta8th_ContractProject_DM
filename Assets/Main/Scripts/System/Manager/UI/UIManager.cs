@@ -81,7 +81,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
         return null;
     }
 
-    public void ClosePanel(PanelType panelType)
+    public void ClosePanel(PanelType panelType, bool objActive = true)
     {
         Panel panel = Panels.Find(p => p.PanelType == panelType);
         if (panel == null)
@@ -89,14 +89,19 @@ public class UIManager : Singleton<UIManager>, IInitializable
             Debug.LogError($"PanelType {panelType} not found");
             return;
         }
-        panel.Close();
+        panel.Close(objActive);
+    }
+
+    public Panel GetPanel(PanelType panelType)
+    {
+        return Panels.Find(p => p.PanelType == panelType);
     }
 
     public void CloseAllPanels()
     {
         foreach (var panel in Panels)
         {
-            panel.Close();
+            panel.Close(false);
         }
     }
 }

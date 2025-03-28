@@ -14,13 +14,14 @@ namespace NoteEditor
         public override void Open()
         {
             base.Open();
+            transform.SetAsLastSibling();
             BackButton.onClick.AddListener(OnBackButtonClick);
         }
 
-        public override void Close()
+        public override void Close(bool objActive = false)
         {
             BackButton.onClick.RemoveListener(OnBackButtonClick);
-            base.Close();
+            base.Close(objActive);
         }
 
         public void LoadTrack()
@@ -45,7 +46,7 @@ namespace NoteEditor
                     if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
                     {
                         isLoadingTrack = true;
-                        EditorManager.Instance.LoadAudioFile(paths[0]);
+                        EditorManager.Instance.LoadTrack(paths[0]);
                         isLoadingTrack = false;
                     }
                 }
@@ -55,7 +56,7 @@ namespace NoteEditor
         private void OnBackButtonClick()
         {
             UIManager.Instance.OpenPanel(PanelType.EditorStart);
-            Close();
+            Close(true);
         }
     }
 }

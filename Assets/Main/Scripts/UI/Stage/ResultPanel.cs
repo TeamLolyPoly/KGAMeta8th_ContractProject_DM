@@ -14,12 +14,12 @@ public class ResultPanel : Panel
         base.Open();
     }
 
-    public override void Close()
+    public override void Close(bool objActive = false)
     {
         resultDetailButton.onClick.RemoveListener(OnClickResultDetail);
         homeButton.onClick.RemoveListener(OnHomeButtonClick);
         restartButton.onClick.RemoveListener(OnRestartButtonClick);
-        base.Close();
+        base.Close(objActive);
     }
 
     [SerializeField]
