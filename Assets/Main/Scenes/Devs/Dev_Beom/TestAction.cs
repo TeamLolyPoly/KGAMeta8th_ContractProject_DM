@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class TestAction : MonoBehaviourPun
 {
-    [PunRPC] //�ٸ� Ŭ���̾�Ʈ�� ȣ���� �� �ִ� �Լ�
+    [PunRPC]
     public void TakeDamage(int damage)
     {
         Debug.Log("�÷��̾ " + damage + " ���ظ� ����");
@@ -13,7 +13,8 @@ public class TestAction : MonoBehaviourPun
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            photonView.RPC("TakeDamage", RpcTarget.All, 10); //��� Ŭ���̾�Ʈ�� ���� ����
+            photonView.RPC("TakeDamage", RpcTarget.All, 10);
         }
+
     }
 }

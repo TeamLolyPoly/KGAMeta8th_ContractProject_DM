@@ -1,21 +1,47 @@
+using System.Collections.Generic;
+using System.Linq;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class TestNetworkManager : MonoBehaviourPunCallbacks
 {
-    public GameObject playerPrefab; //ÇÃ·¹ÀÌ¾î ÇÁ¸®ÆÕ (Inspector¿¡¼­ ¿¬°á)
+    public static TestNetworkManager Instance { get; private set; }
+
+    public GameObject playerPrefab;
+    private bool isMultiplayer = false;
+    private Dictionary<int, bool> playerReadyStatus = new Dictionary<int, bool>();
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+    void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
 
     void Start()
     {
-        Debug.Log("Connecting to Photon Server...");
-        PhotonNetwork.ConnectUsingSettings(); // Photon ¼­¹ö ¿¬°á ½ÃÀÛ
+        PhotonNetwork.AutomaticallySyncScene = true;
+        PhotonNetwork.ConnectUsingSettings();
     }
 
     public override void OnConnectedToMaster()
     {
-        Debug.Log("Connected to Master Server! Joining Lobby...");
-        PhotonNetwork.JoinLobby(); //Master Server¿¡ ¿¬°áµÇ¸é ·Îºñ Âü°¡
+        PhotonNetwork.JoinLobby();
     }
 
     public override void OnJoinedLobby()
@@ -23,32 +49,75 @@ public class TestNetworkManager : MonoBehaviourPunCallbacks
         Debug.Log("Joined Lobby! Ready for matchmaking.");
     }
 
-    public void CreateOrJoinRoom()
+    // ì‹±ê¸€ í”Œë ˆì´ ì „ìš©
+    public void CreateSinglePlayerRoom()
     {
-        if (PhotonNetwork.IsConnectedAndReady && PhotonNetwork.InLobby)
-        {
-            Debug.Log("Trying to join a random room...");
-            PhotonNetwork.JoinRandomRoom(); //·£´ı ·ë Âü°¡
-        }
-        else
-        {
-            Debug.LogError("Cannot join room. Not connected to Master Server or not in lobby.");
-        }
+        isMultiplayer = false;
+        RoomOptions options = new RoomOptions { MaxPlayers = 1 };
+        PhotonNetwork.CreateRoom("SingleRoom_" + Random.Range(0, 10000), options);
+    }
+
+    // ë©€í‹° í”Œë ˆì´ ì „ìš©
+    public void CreateOrJoinMultiplayerRoom()
+    {
+        isMultiplayer = true;
+        PhotonNetwork.JoinRandomRoom();
     }
 
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
-        Debug.Log("No random room found, creating a new room.");
-        PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = 4 }); //·£´ı ·ëÀÌ ¾øÀ¸¸é »õ·Î¿î ¹æ »ı¼º
+        PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = 2 });
     }
 
     public override void OnJoinedRoom()
     {
-        Debug.Log("Successfully joined room: " + PhotonNetwork.CurrentRoom.Name);
-        SpawnPlayer(); //¹æ ÀÔÀå ÈÄ ÇÃ·¹ÀÌ¾î »ı¼º
+        playerReadyStatus.Clear();
+
+        Debug.Log("Room joined: " + PhotonNetwork.CurrentRoom.Name);
+
+        // ì‹±ê¸€ í”Œë ˆì´ëŠ” ë°”ë¡œ ì”¬ ì „í™˜
+        if (!isMultiplayer)
+        {
+            PhotonNetwork.LoadLevel("GameScene");
+            return;
+        }
+
+        // ë©€í‹° í”Œë ˆì´ì–´ê°€ 2ëª… ëª¨ì´ë©´ ë§ˆìŠ¤í„°ê°€ ì”¬ ì „í™˜
+        if (PhotonNetwork.CurrentRoom.PlayerCount == 2 && PhotonNetwork.IsMasterClient)
+        {
+            PhotonNetwork.AutomaticallySyncScene = true;
+            PhotonNetwork.LoadLevel("GameScene");
+        }
+    }
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        Debug.Log("Player joined: " + newPlayer.NickName);
     }
 
-    void SpawnPlayer()
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        playerReadyStatus.Remove(otherPlayer.ActorNumber);
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "GameScene" && PhotonNetwork.InRoom)
+        {
+            SpawnPlayer();
+
+            if (isMultiplayer)
+            {
+                photonView.RPC("SetPlayerReady", RpcTarget.MasterClient);
+            }
+            else
+            {
+                // ì‹±ê¸€ì€ ë°”ë¡œ ì‹œì‘
+                // GameManager.Instance.StartGame();
+            }
+        }
+    }
+
+    private void SpawnPlayer()
     {
         if (playerPrefab == null)
         {
@@ -56,9 +125,79 @@ public class TestNetworkManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        //·£´ıÇÑ À§Ä¡¿¡¼­ ÇÃ·¹ÀÌ¾î »ı¼º
-        Vector3 spawnPos = new Vector3(Random.Range(-5f, 5f), 0, Random.Range(-5f, 5f));
-        spawnPos.y = 2.0f;
-        PhotonNetwork.Instantiate(playerPrefab.name, spawnPos, Quaternion.identity);
+        Transform spawnPoint = GetSpawnPoint();
+        PhotonNetwork.Instantiate(playerPrefab.name, spawnPoint.position, spawnPoint.rotation);
+    }
+
+    private Transform GetSpawnPoint()
+    {
+        // TODO: ìŠ¤í° í¬ì¸íŠ¸ ì‹œìŠ¤í…œ êµ¬í˜„
+        // ê°„ë‹¨í•œ ì˜ˆ: Photon Player IDë¡œ ë‘ ê°œ ìœ„ì¹˜ ê³ ì •
+        // GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
+
+        // if (spawnPoints.Length >= PhotonNetwork.CurrentRoom.PlayerCount)
+        // {
+        //     int index = PhotonNetwork.LocalPlayer.ActorNumber % spawnPoints.Length;
+        //     return spawnPoints[index].transform;
+        // }
+        return transform;
+    }
+
+    // ë ˆë”” ë²„íŠ¼ ì´ë²¤íŠ¸ìš©
+    // public void OnReadyButtonClicked()
+    // {
+    //     if (PhotonNetwork.InRoom)
+    //     {
+    //         photonView.RPC("SetPlayerReady", RpcTarget.MasterClient);
+    //     }
+    // }
+
+    [PunRPC]
+    public void SetPlayerReady()
+    {
+        int playerId = PhotonNetwork.LocalPlayer.ActorNumber;
+        playerReadyStatus[playerId] = true;
+
+        if (PhotonNetwork.IsMasterClient && AreAllPlayersReady())
+        {
+            photonView.RPC("StartGame", RpcTarget.All);
+        }
+    }
+
+    private bool AreAllPlayersReady()
+    {
+        return playerReadyStatus.Count == PhotonNetwork.CurrentRoom.PlayerCount &&
+               playerReadyStatus.All(status => status.Value);
+    }
+
+    [PunRPC]
+    public void StartGame()
+    {
+        // TODO : í”Œë ˆì´ì–´ ìƒíƒœ ì²´í¬ ì™„ë£Œ, í˜¹ì€ ì‹±ê¸€ í”Œë ˆì´ì—ì„œ ì´í›„ ê²Œì„ ì‹œì‘
+        // GameManager.Instance.StartGame();
+    }
+
+    public override void OnDisconnected(DisconnectCause cause)
+    {
+        Debug.LogWarning($"ì„œë²„ ì—°ê²°ì´ ëŠì–´ì¡ŒìŠµë‹ˆë‹¤: {cause}");
+        // TODO: ì¬ì—°ê²° ë¡œì§ êµ¬í˜„
+    }
+
+    public override void OnCreateRoomFailed(short returnCode, string message)
+    {
+        Debug.LogError($"ë°© ìƒì„± ì‹¤íŒ¨: {message}");
+        // TODO: ì¬ì‹œë„ ë¡œì§ êµ¬í˜„
+    }
+
+    public void LeaveGame()
+    {
+        if (PhotonNetwork.InRoom)
+        {
+            PhotonNetwork.LeaveRoom();
+        }
+        else
+        {
+            PhotonNetwork.Disconnect();
+        }
     }
 }
