@@ -161,6 +161,7 @@ public class LoadingManager : Singleton<LoadingManager>
         float startTime = Time.time;
 
         var operationCoroutine = asyncOperation();
+
         while (operationCoroutine.MoveNext())
         {
             if (operationCoroutine.Current is float progressValue)
