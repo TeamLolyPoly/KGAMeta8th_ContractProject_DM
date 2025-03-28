@@ -16,26 +16,24 @@ namespace NoteEditor
     {
         private AudioFileService fileService;
         private List<TrackData> tracks = new List<TrackData>();
-        public bool IsInitialized { get; private set; }
+        public List<TrackData> Tracks => tracks;
 
-        private void Start()
-        {
-            fileService = new AudioFileService();
-            Initialize();
-        }
+        public bool IsInitialized { get; private set; }
 
         public async void Initialize()
         {
+            fileService = new AudioFileService();
             AudioPathProvider.EnsureDirectoriesExist();
             await LoadAllTracksAsync();
             IsInitialized = true;
-            Debug.Log("AudioDataManager 초기화 완료");
         }
 
         public async Task LoadAllTracksAsync()
         {
             var metadata = await fileService.LoadMetadataAsync();
-            Debug.Log($"메타데이터에서 {metadata.Count}개의 트랙 정보를 로드했습니다.");
+            Debug.Log(
+                $"[EditorDataManager] 메타데이터에서 {metadata.Count}개의 트랙 정보를 로드했습니다."
+            );
 
             tracks.Clear();
 
@@ -53,9 +51,24 @@ namespace NoteEditor
                 };
 
                 tracks.Add(track);
+
+                await LoadTrackAudioAsync(track.trackName);
             }
 
-            Debug.Log($"{tracks.Count}개의 트랙이 로드되었습니다.");
+            foreach (var track in tracks)
+            {
+                Debug.Log(
+                    $"========= {track.trackName} 로드 완료 =========\n"
+                        + $"트랙 오디오 : {track.TrackAudio.name}\n"
+                        + $"트랙 길이 : {track.TrackAudio.length}\n"
+                        + $"트랙 BPM : {track.bpm}\n"
+                        + $"트랙 아티스트 : {track.artistName}\n"
+                        + $"트랙 앨범 : {track.albumName}\n"
+                        + $"트랙 연도 : {track.year}\n"
+                        + $"트랙 장르 : {track.genre}\n"
+                        + $"트랙 길이 : {track.duration}\n"
+                );
+            }
         }
 
         /// <summary>
@@ -170,21 +183,9 @@ namespace NoteEditor
         {
             await fileService.DeleteAllTrackFilesAsync();
 
-            // 삭제된 트랙 목록 저장
-            List<TrackData> removedTracks = new List<TrackData>(tracks);
-
             tracks.Clear();
 
             Debug.Log("모든 트랙이 삭제되었습니다.");
-        }
-
-        /// <summary>
-        /// 모든 트랙 정보를 가져옵니다.
-        /// </summary>
-        /// <returns>트랙 데이터 목록</returns>
-        public List<TrackData> GetAllTracks()
-        {
-            return new List<TrackData>(tracks);
         }
 
         /// <summary>
@@ -215,9 +216,9 @@ namespace NoteEditor
                 AudioClip audioClip = await fileService.LoadAudioAsync(trackName, progress);
                 track.TrackAudio = audioClip;
 
-                if (track.TrackAudio != null)
+                if (track.TrackAudio == null)
                 {
-                    Debug.Log($"트랙 오디오 로드: {trackName}");
+                    Debug.LogError($"트랙 오디오 로드 실패: {trackName}");
                 }
             }
 
@@ -239,7 +240,7 @@ namespace NoteEditor
                 track.bpm = bpm;
 
                 await UpdateTrackMetadataAsync();
-                await SaveNoteMapAsync(track.trackName, track.noteMap);
+                await SaveNoteMapAsync(track, track.noteMap);
 
                 Debug.Log($"트랙 BPM 업데이트: {trackName}, BPM: {bpm}");
             }
@@ -302,7 +303,6 @@ namespace NoteEditor
             {
                 Debug.Log($"오디오 로드 완료: {trackName}");
 
-                // 트랙 찾기
                 TrackData updatedTrack = tracks.FirstOrDefault(t => t.trackName == trackName);
                 if (updatedTrack != null)
                 {
@@ -357,31 +357,28 @@ namespace NoteEditor
         /// </summary>
         /// <param name="trackName">트랙 이름</param>
         /// <returns>로드된 노트맵</returns>
-        public async Task<NoteMap> LoadNoteMapAsync(string trackName)
+        public async Task<NoteMap> LoadNoteMapAsync(TrackData track)
         {
-            if (string.IsNullOrEmpty(trackName))
+            if (track == null)
                 return null;
 
             try
             {
-                string noteMapPath = AudioPathProvider.GetNoteMapPath(trackName);
+                string noteMapPath = AudioPathProvider.GetNoteMapPath(track.trackName);
 
                 if (!File.Exists(noteMapPath))
                 {
-                    Debug.LogWarning($"노트맵 파일을 찾을 수 없음: {noteMapPath}");
                     return null;
                 }
 
                 string json = await Task.Run(() => File.ReadAllText(noteMapPath));
                 NoteMap noteMap = JsonConvert.DeserializeObject<NoteMap>(json);
 
-                TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
                 if (track != null)
                 {
                     track.noteMap = noteMap;
                 }
 
-                Debug.Log($"노트맵 로드 완료: {noteMapPath}");
                 return noteMap;
             }
             catch (Exception ex)
@@ -397,14 +394,14 @@ namespace NoteEditor
         /// <param name="trackName">트랙 이름</param>
         /// <param name="noteMap">저장할 노트맵</param>
         /// <returns>성공 여부</returns>
-        public async Task<bool> SaveNoteMapAsync(string trackName, NoteMap noteMap)
+        public async Task<bool> SaveNoteMapAsync(TrackData track, NoteMap noteMap)
         {
-            if (string.IsNullOrEmpty(trackName) || noteMap == null)
+            if (track == null || noteMap == null)
                 return false;
 
             try
             {
-                string noteMapPath = AudioPathProvider.GetNoteMapPath(trackName);
+                string noteMapPath = AudioPathProvider.GetNoteMapPath(track.trackName);
 
                 JsonSerializerSettings settings = new JsonSerializerSettings
                 {
@@ -422,7 +419,6 @@ namespace NoteEditor
 
                 await Task.Run(() => File.WriteAllText(noteMapPath, noteMapJson));
 
-                TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
                 if (track != null)
                 {
                     track.noteMap = noteMap;

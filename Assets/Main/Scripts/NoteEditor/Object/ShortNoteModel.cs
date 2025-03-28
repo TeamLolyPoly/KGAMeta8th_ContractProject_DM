@@ -45,24 +45,24 @@ public class ShortNoteModel : MonoBehaviour
                 transform.rotation = Quaternion.Euler(0f, -NOTE_ANGLE_OFFSET, 90f);
                 break;
             case NoteDirection.West:
-                transform.rotation = Quaternion.Euler(0f, NOTE_ANGLE_OFFSET, 90f);
+                transform.rotation = Quaternion.Euler(0f, NOTE_ANGLE_OFFSET, -90f);
                 break;
             case NoteDirection.South:
-                transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+                transform.rotation = Quaternion.Euler(-NOTE_ANGLE_OFFSET, 0f, 0f);
                 break;
             case NoteDirection.North:
-                transform.rotation = Quaternion.Euler(0f, 0f, 180f);
+                transform.rotation = Quaternion.Euler(NOTE_ANGLE_OFFSET, 0f, 180f);
                 break;
-            case NoteDirection.Northeast:
+            case NoteDirection.NorthEast:
                 transform.rotation = Quaternion.Euler(0f, -NOTE_ANGLE_OFFSET, 135f);
                 break;
-            case NoteDirection.Northwest:
-                transform.rotation = Quaternion.Euler(0f, NOTE_ANGLE_OFFSET, 135f);
+            case NoteDirection.NorthWest:
+                transform.rotation = Quaternion.Euler(0f, NOTE_ANGLE_OFFSET, -135f);
                 break;
-            case NoteDirection.Southeast:
+            case NoteDirection.SouthEast:
                 transform.rotation = Quaternion.Euler(0f, -NOTE_ANGLE_OFFSET, 45f);
                 break;
-            case NoteDirection.Southwest:
+            case NoteDirection.SouthWest:
                 transform.rotation = Quaternion.Euler(0f, NOTE_ANGLE_OFFSET, -45f);
                 break;
             default:

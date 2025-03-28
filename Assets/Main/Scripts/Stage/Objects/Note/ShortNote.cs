@@ -8,7 +8,7 @@ public class ShortNote : Note
     [SerializeField, Header("타격 정확도 허용범위")]
     protected float[] accuracyPoint = { 0.34f, 0.67f };
 
-    [SerializeField, Header("노트 플레이어 방향 기울기")]
+    [SerializeField, Range(0, 50), Header("노트 플레이어 방향 기울기")]
     protected float noteLookAtAngle = 40f;
     public Renderer topRenderer;
     protected Vector3 noteDownDirection;
@@ -131,21 +131,25 @@ public class ShortNote : Note
                 rotationZ = 180f;
                 rotationX = noteLookAtAngle;
                 break;
-            case NoteDirection.Northeast:
+            case NoteDirection.NorthEast:
                 rotationZ = 135f;
-                rotationX = noteLookAtAngle;
+                rotationX = noteLookAtAngle / 2;
+                rotationY = -noteLookAtAngle / 2;
                 break;
-            case NoteDirection.Northwest:
+            case NoteDirection.NorthWest:
                 rotationZ = -135f;
-                rotationX = noteLookAtAngle;
+                rotationX = noteLookAtAngle / 2;
+                rotationY = noteLookAtAngle / 2;
                 break;
-            case NoteDirection.Southeast:
+            case NoteDirection.SouthEast:
                 rotationZ = 45f;
-                rotationX = -noteLookAtAngle;
+                rotationX = -noteLookAtAngle / 2;
+                rotationY = -noteLookAtAngle / 2;
                 break;
-            case NoteDirection.Southwest:
+            case NoteDirection.SouthWest:
                 rotationZ = -45f;
-                rotationX = -noteLookAtAngle;
+                rotationX = -noteLookAtAngle / 2;
+                rotationY = noteLookAtAngle / 2;
                 break;
         }
 
@@ -272,5 +276,11 @@ public class ShortNote : Note
         Vector3 hitPoint = other.GetContact(0).point;
         Vector3 notePos = transform.position - (-transform.up * noteDistance);
         return Vector3.Distance(hitPoint, notePos);
+    }
+
+    protected override void Miss()
+    {
+        base.Miss();
+        Destroy(gameObject);
     }
 }

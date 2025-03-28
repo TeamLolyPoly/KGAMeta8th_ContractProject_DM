@@ -1,0 +1,62 @@
+using System.Collections;
+using Michsky.UI.Heat;
+using ProjectDM.UI;
+using SFB;
+
+namespace NoteEditor
+{
+    public class NewTrackPanel : Panel
+    {
+        public override PanelType PanelType => PanelType.NewTrack;
+        private bool isLoadingTrack = false;
+        public PanelButton BackButton;
+
+        public override void Open()
+        {
+            base.Open();
+            transform.SetAsLastSibling();
+            BackButton.onClick.AddListener(OnBackButtonClick);
+        }
+
+        public override void Close(bool objActive = false)
+        {
+            BackButton.onClick.RemoveListener(OnBackButtonClick);
+            base.Close(objActive);
+        }
+
+        public void LoadTrack()
+        {
+            if (isLoadingTrack)
+                return;
+
+            ExtensionFilter[] extensions =
+            {
+                new ExtensionFilter("오디오 파일", "mp3", "wav", "ogg"),
+            };
+
+            print("[Loading] LoadTrack 호출됨");
+
+            StandaloneFileBrowser.OpenFilePanelAsync(
+                "오디오 파일 선택",
+                "",
+                extensions,
+                false,
+                (string[] paths) =>
+                {
+                    if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
+                    {
+                        isLoadingTrack = true;
+                        EditorManager.Instance.LoadTrack(paths[0]);
+                        isLoadingTrack = false;
+                    }
+                }
+            );
+        }
+
+        private void OnBackButtonClick()
+        {
+            UIManager.Instance.OpenPanel(PanelType.EditorStart);
+            Close(true);
+        }
+    }
+}

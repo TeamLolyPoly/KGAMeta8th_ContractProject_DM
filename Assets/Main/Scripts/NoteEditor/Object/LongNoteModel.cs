@@ -58,19 +58,23 @@ namespace NoteEditor
                 endCell = end;
                 UpdateVisual();
                 isInitialized = true;
-                return;
+
+                Debug.Log(
+                    $"대칭 롱노트 모델 생성: {startCell.cellPosition} -> {endCell.cellPosition}"
+                );
             }
+            else
+            {
+                startCell = start;
+                endCell = end;
+                noteData = data;
+                isInitialized = true;
+                UpdateVisual();
 
-            startCell = start;
-            endCell = end;
-            noteData = data;
-            isInitialized = true;
-
-            UpdateVisual();
-
-            Debug.Log(
-                $"롱노트 모델 초기화: 시작 인덱스={data.startIndex}, 끝 인덱스={data.endIndex}, 대칭={data.isSymmetric}, 시계방향={data.isClockwise}"
-            );
+                Debug.Log(
+                    $"롱노트 모델 초기화: 시작 인덱스={data.startIndex}, 끝 인덱스={data.endIndex}, 대칭={data.isSymmetric}, 시계방향={data.isClockwise}"
+                );
+            }
         }
 
         public void UpdateVisual()

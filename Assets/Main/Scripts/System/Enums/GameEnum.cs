@@ -13,10 +13,10 @@ public enum NoteDirection
     West,
     South,
     North,
-    Northeast,
-    Northwest,
-    Southeast,
-    Southwest,
+    NorthEast,
+    NorthWest,
+    SouthEast,
+    SouthWest,
 }
 
 public enum NoteAxis
@@ -37,6 +37,7 @@ public enum NoteColor
 
 public enum NoteRatings
 {
+    None,
     Miss,
     Perfect,
     Great,
@@ -88,9 +89,14 @@ public enum PanelType
     ResultDetail,
     Result,
     Option,
+    Scoreboard,
+    Loading,
 
     // 에디터 전용
     NoteEditor,
+    EditorStart,
+    NewTrack,
+    LoadTrack,
 }
 
 public enum Difficulty

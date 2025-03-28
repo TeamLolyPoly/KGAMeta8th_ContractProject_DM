@@ -9,10 +9,10 @@ public class GridGenerator : MonoBehaviour, IInitializable
     private int verticalCells = 3;
 
     [SerializeField]
-    private int handGridSize = 3;
+    private int leftGridSize = 3;
 
     [SerializeField]
-    private float cellSize = 0.5f;
+    private float cellSize = 0.35f;
 
     [SerializeField]
     private float cellSpacing = 0.05f;
@@ -29,7 +29,7 @@ public class GridGenerator : MonoBehaviour, IInitializable
 
     public int TotalHorizontalCells => totalHorizontalCells;
     public int VerticalCells => verticalCells;
-    public int HandGridSize => handGridSize;
+    public int LeftGridSize => leftGridSize;
     public float CellSize => cellSize;
     public float GridDistance => gridDistance;
 
@@ -94,15 +94,15 @@ public class GridGenerator : MonoBehaviour, IInitializable
         visual.transform.localScale = new Vector3(cellSize, cellSize, cellSize);
 
         MeshRenderer renderer = visual.GetComponent<MeshRenderer>();
-        if (x < handGridSize)
+        if (x < leftGridSize)
         {
             renderer.material = LeftGridMaterial;
         }
-        if (x >= totalHorizontalCells - handGridSize)
+        if (x >= totalHorizontalCells - leftGridSize)
         {
             renderer.material = RightGridMaterial;
         }
-        if (x >= handGridSize - 1 && x < totalHorizontalCells - handGridSize + 1)
+        if (x >= leftGridSize - 1 && x < totalHorizontalCells - leftGridSize + 1)
         {
             renderer.material = OverlapGridMaterial;
         }
@@ -113,12 +113,12 @@ public class GridGenerator : MonoBehaviour, IInitializable
 
     public bool IsLeftHand(int x)
     {
-        return x < handGridSize;
+        return x < leftGridSize;
     }
 
     public bool IsRightHand(int x)
     {
-        return x >= totalHorizontalCells - handGridSize;
+        return x >= totalHorizontalCells - leftGridSize;
     }
 
     public Vector3 GetCellPosition(Transform gridTransform, int x, int y)
@@ -142,7 +142,7 @@ public class GridGenerator : MonoBehaviour, IInitializable
 
     public Vector3 GetHandGridCenter(Transform gridTransform, bool isLeftHand)
     {
-        int centerX = isLeftHand ? HandGridSize / 2 : TotalHorizontalCells - HandGridSize / 2 - 1;
+        int centerX = isLeftHand ? LeftGridSize / 2 : TotalHorizontalCells - LeftGridSize / 2 - 1;
         int centerY = VerticalCells / 2;
 
         return GetCellPosition(gridTransform, centerX, centerY);
