@@ -171,6 +171,7 @@ namespace NoteEditor
                 );
             }
 
+            ToggleLongNoteUI(false);
             ToggleShortNoteUI(false);
         }
 
@@ -238,14 +239,9 @@ namespace NoteEditor
 
             if (editor != null)
             {
-                editor.UpdateBPM(bpm);
+                await EditorManager.Instance.SetBPMAsync(bpm);
                 UpdateStatusText($"<color=green>BPM 변경됨: {bpm}</color>");
             }
-
-            await EditorDataManager.Instance.SetBPMAsync(
-                EditorManager.Instance.CurrentTrack.trackName,
-                bpm
-            );
         }
 
         private void InitializeAlbumArtButton()

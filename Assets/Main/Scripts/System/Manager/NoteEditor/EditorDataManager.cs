@@ -52,15 +52,16 @@ namespace NoteEditor
 
                 tracks.Add(track);
 
-                await LoadTrackAudioAsync(track.trackName);
+                await LoadAlbumArtAsync(track);
+                await LoadTrackAudioAsync(track);
             }
 
             foreach (var track in tracks)
             {
                 Debug.Log(
                     $"========= {track.trackName} 로드 완료 =========\n"
-                        + $"트랙 오디오 : {track.TrackAudio.name}\n"
-                        + $"트랙 길이 : {track.TrackAudio.length}\n"
+                        + $"트랙 오디오 : {(track.TrackAudio != null ? track.TrackAudio.name : "없음")}\n"
+                        + $"트랙 길이 : {(track.TrackAudio != null ? track.TrackAudio.length.ToString() : "0.0")}\n"
                         + $"트랙 BPM : {track.bpm}\n"
                         + $"트랙 아티스트 : {track.artistName}\n"
                         + $"트랙 앨범 : {track.albumName}\n"
@@ -68,6 +69,58 @@ namespace NoteEditor
                         + $"트랙 장르 : {track.genre}\n"
                         + $"트랙 길이 : {track.duration}\n"
                 );
+            }
+        }
+
+        /// <summary>
+        /// 앨범 아트를 비동기적으로 로드합니다.
+        /// <param name="trackName">트랙 이름</param>
+        /// </summary>
+        private async Task LoadAlbumArtAsync(TrackData track)
+        {
+            if (string.IsNullOrEmpty(track.trackName))
+            {
+                Debug.LogWarning("앨범 아트 로드: 트랙 이름이 비어 있습니다");
+                return;
+            }
+
+            try
+            {
+                var albumArtCoroutine = fileService.LoadAlbumArtAsync(track.trackName);
+                if (albumArtCoroutine == null)
+                {
+                    Debug.LogError($"앨범 아트 코루틴 생성 실패: {track.trackName}");
+                    return;
+                }
+
+                int maxIterations = 100;
+                int iterations = 0;
+
+                while (albumArtCoroutine.MoveNext() && iterations < maxIterations)
+                {
+                    iterations++;
+                    if (albumArtCoroutine.Current != null)
+                    {
+                        track.AlbumArt = albumArtCoroutine.Current;
+                        Debug.Log($"앨범 아트 로드 성공: {track.trackName}");
+                        break;
+                    }
+                    await Task.Yield();
+                }
+
+                if (iterations >= maxIterations)
+                {
+                    Debug.LogWarning($"앨범 아트 로드 타임아웃: {track.trackName}");
+                }
+
+                return;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError(
+                    $"앨범 아트 초기 로드 중 오류 발생: {track.trackName} - {ex.Message}"
+                );
+                return;
             }
         }
 
@@ -107,6 +160,8 @@ namespace NoteEditor
                 TrackData newTrack = new TrackData { trackName = result.trackName, bpm = 120f };
 
                 newTrack.TrackAudio = result.clip;
+
+                await SaveNoteMapAsync(newTrack, new NoteMap());
 
                 tracks.Add(newTrack);
 
@@ -205,21 +260,49 @@ namespace NoteEditor
         /// <param name="progress">진행 상황 보고 인터페이스</param>
         /// <returns>로드된 트랙 데이터</returns>
         public async Task<TrackData> LoadTrackAudioAsync(
-            string trackName,
+            TrackData track,
             IProgress<float> progress = null
         )
         {
-            TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
+            if (string.IsNullOrEmpty(track.trackName))
+            {
+                Debug.LogError("트랙 이름이 없습니다.");
+                return null;
+            }
 
             if (track != null)
             {
-                AudioClip audioClip = await fileService.LoadAudioAsync(trackName, progress);
-                track.TrackAudio = audioClip;
-
-                if (track.TrackAudio == null)
+                try
                 {
-                    Debug.LogError($"트랙 오디오 로드 실패: {trackName}");
+                    AudioClip audioClip = await fileService.LoadAudioAsync(
+                        track.trackName,
+                        progress
+                    );
+                    track.TrackAudio = audioClip;
+
+                    if (track.TrackAudio == null)
+                    {
+                        Debug.LogError(
+                            $"트랙 오디오 로드 실패: {track.trackName} - 파일이 존재하지 않거나 형식이 잘못되었을 수 있습니다."
+                        );
+                    }
+                    else
+                    {
+                        Debug.Log(
+                            $"트랙 오디오 로드 성공: {track.trackName}, 길이: {track.TrackAudio.length}초"
+                        );
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Debug.LogError(
+                        $"트랙 오디오 로드 중 예외 발생: {track.trackName} - {ex.Message}"
+                    );
+                }
+            }
+            else
+            {
+                Debug.LogError($"트랙을 찾을 수 없음: {track.trackName}");
             }
 
             return track;
@@ -243,71 +326,6 @@ namespace NoteEditor
                 await SaveNoteMapAsync(track, track.noteMap);
 
                 Debug.Log($"트랙 BPM 업데이트: {trackName}, BPM: {bpm}");
-            }
-        }
-
-        /// <summary>
-        /// 트랙 이름으로 앨범 아트를 가져옵니다.
-        /// </summary>
-        /// <param name="trackName">트랙 이름</param>
-        /// <returns>앨범 아트 Sprite</returns>
-        public Sprite GetAlbumArt(string trackName)
-        {
-            if (string.IsNullOrEmpty(trackName))
-                return null;
-
-            TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
-            if (track != null && track.AlbumArt != null)
-                return track.AlbumArt;
-
-            StartCoroutine(LoadAlbumArtCoroutine(trackName));
-            return null;
-        }
-
-        private IEnumerator<Sprite> LoadAlbumArtCoroutine(string trackName)
-        {
-            var task = fileService.LoadAlbumArtAsync(trackName);
-
-            yield return task.Result;
-
-            if (!task.IsFaulted && task.Result != null)
-            {
-                Debug.Log($"앨범 아트 로드 완료: {trackName}");
-            }
-        }
-
-        /// <summary>
-        /// 트랙 이름으로 오디오 클립을 가져옵니다.
-        /// </summary>
-        /// <param name="trackName">트랙 이름</param>
-        /// <returns>AudioClip</returns>
-        public AudioClip GetAudioClip(string trackName)
-        {
-            if (string.IsNullOrEmpty(trackName))
-                return null;
-
-            TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
-            if (track != null && track.TrackAudio != null)
-                return track.TrackAudio;
-
-            StartCoroutine(LoadAudioClipCoroutine(trackName));
-            return null;
-        }
-
-        private IEnumerator LoadAudioClipCoroutine(string trackName)
-        {
-            var task = fileService.LoadAudioAsync(trackName);
-            yield return new WaitUntil(() => task.IsCompleted);
-
-            if (!task.IsFaulted && task.Result != null)
-            {
-                Debug.Log($"오디오 로드 완료: {trackName}");
-
-                TrackData updatedTrack = tracks.FirstOrDefault(t => t.trackName == trackName);
-                if (updatedTrack != null)
-                {
-                    updatedTrack.TrackAudio = task.Result;
-                }
             }
         }
 

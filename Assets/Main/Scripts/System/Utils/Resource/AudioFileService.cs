@@ -104,6 +104,7 @@ namespace NoteEditor
         {
             string trackName = Path.GetFileNameWithoutExtension(filePath);
 
+            LoadingManager.Instance.SetLoadingText($"오디오 경로 로드 중... {trackName}");
             progress?.Report(0.1f);
 
             try
@@ -122,6 +123,7 @@ namespace NoteEditor
 
                     var operation = www.SendWebRequest();
 
+                    LoadingManager.Instance.SetLoadingText($"오디오 파일 로드 중...");
                     while (!operation.isDone)
                     {
                         progress?.Report(0.1f + 0.6f * www.downloadProgress);
@@ -130,6 +132,7 @@ namespace NoteEditor
 
                     if (www.result == UnityWebRequest.Result.Success)
                     {
+                        LoadingManager.Instance.SetLoadingText($"오디오 파일 저장 중... ");
                         AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
                         clip.name = trackName;
 
@@ -163,11 +166,7 @@ namespace NoteEditor
         /// <param name="trackName">트랙 이름</param>
         /// <param name="onMainThreadProcess">메인 스레드에서 실행할 텍스처 처리 콜백</param>
         /// <returns>비동기 작업</returns>
-        public async Task SaveAudioAsync(
-            AudioClip clip,
-            string trackName,
-            Action<float[], short[], byte[]> onMainThreadProcess = null
-        )
+        public async Task SaveAudioAsync(AudioClip clip, string trackName)
         {
             if (clip == null)
                 return;
@@ -184,20 +183,14 @@ namespace NoteEditor
             short[] intData = new short[samples.Length];
             byte[] bytesData = new byte[samples.Length * 2];
 
-            if (onMainThreadProcess != null)
+            int rescaleFactor = 32767;
+            for (int i = 0; i < samples.Length; i++)
             {
-                onMainThreadProcess(samples, intData, bytesData);
+                intData[i] = (short)(samples[i] * rescaleFactor);
+                byte[] byteArr = BitConverter.GetBytes(intData[i]);
+                byteArr.CopyTo(bytesData, i * 2);
             }
-            else
-            {
-                int rescaleFactor = 32767;
-                for (int i = 0; i < samples.Length; i++)
-                {
-                    intData[i] = (short)(samples[i] * rescaleFactor);
-                    byte[] byteArr = BitConverter.GetBytes(intData[i]);
-                    byteArr.CopyTo(bytesData, i * 2);
-                }
-            }
+
             await Task.Run(() =>
             {
                 try
@@ -229,71 +222,51 @@ namespace NoteEditor
         /// <param name="trackName">트랙 이름</param>
         /// <param name="progress">진행 상황 보고 인터페이스</param>
         /// <returns>로드된 Sprite</returns>
-        public async Task<Sprite> LoadAlbumArtAsync(
-            string trackName,
-            IProgress<float> progress = null
-        )
+        public IEnumerator<Sprite> LoadAlbumArtAsync(string trackName)
         {
             if (imageCache.TryGetValue(trackName, out Sprite cachedSprite))
             {
                 Debug.Log($"이미지 캐시에서 로드: {trackName}");
-                progress?.Report(1.0f);
-                return cachedSprite;
+                yield return cachedSprite;
             }
 
             string filePath = AudioPathProvider.GetAlbumArtPath(trackName);
             if (!File.Exists(filePath))
             {
                 Debug.Log($"앨범 아트 파일을 찾을 수 없음: {filePath}");
-                return null;
+                yield break;
             }
 
-            progress?.Report(0.1f);
+            UnityWebRequest www = UnityWebRequestTexture.GetTexture("file://" + filePath);
 
-            try
+            www.useHttpContinue = false;
+            www.certificateHandler = null;
+            www.disposeCertificateHandlerOnDispose = true;
+            www.disposeDownloadHandlerOnDispose = true;
+
+            var operation = www.SendWebRequest();
+
+            while (!operation.isDone)
             {
-                using (
-                    UnityWebRequest www = UnityWebRequestTexture.GetTexture("file://" + filePath)
-                )
-                {
-                    www.useHttpContinue = false;
-                    www.certificateHandler = null;
-                    www.disposeCertificateHandlerOnDispose = true;
-                    www.disposeDownloadHandlerOnDispose = true;
-
-                    var operation = www.SendWebRequest();
-
-                    while (!operation.isDone)
-                    {
-                        progress?.Report(0.1f + 0.8f * www.downloadProgress);
-                        await Task.Delay(10);
-                    }
-
-                    if (www.result == UnityWebRequest.Result.Success)
-                    {
-                        Texture2D texture = DownloadHandlerTexture.GetContent(www);
-                        Sprite sprite = Sprite.Create(
-                            texture,
-                            new Rect(0, 0, texture.width, texture.height),
-                            new Vector2(0.5f, 0.5f)
-                        );
-
-                        imageCache[trackName] = sprite;
-
-                        progress?.Report(1.0f);
-                        return sprite;
-                    }
-                    else
-                    {
-                        Debug.LogError($"앨범 아트 로드 실패: {www.error}");
-                        return null;
-                    }
-                }
+                yield return null;
             }
-            catch (Exception ex)
+
+            if (www.result == UnityWebRequest.Result.Success)
             {
-                Debug.LogError($"앨범 아트 로드 중 예외 발생: {ex.Message}");
-                return null;
+                Texture2D texture = DownloadHandlerTexture.GetContent(www);
+                Sprite sprite = Sprite.Create(
+                    texture,
+                    new Rect(0, 0, texture.width, texture.height),
+                    new Vector2(0.5f, 0.5f)
+                );
+
+                imageCache[trackName] = sprite;
+
+                yield return sprite;
+            }
+            else
+            {
+                Debug.LogError($"앨범 아트 로드 실패: {www.error}");
             }
         }
 
@@ -370,11 +343,7 @@ namespace NoteEditor
         /// <param name="trackName">트랙 이름</param>
         /// <param name="onMainThreadProcess">메인 스레드에서 실행할 텍스처 처리 콜백</param>
         /// <returns>비동기 작업</returns>
-        public async Task SaveAlbumArtAsync(
-            Sprite albumArt,
-            string trackName,
-            Action<byte[]> onMainThreadProcess = null
-        )
+        public async Task SaveAlbumArtAsync(Sprite albumArt, string trackName)
         {
             if (albumArt == null)
                 return;
@@ -382,11 +351,6 @@ namespace NoteEditor
             string filePath = AudioPathProvider.GetAlbumArtPath(trackName);
 
             byte[] bytes = albumArt.texture.EncodeToPNG();
-
-            if (onMainThreadProcess != null)
-            {
-                onMainThreadProcess(bytes);
-            }
 
             await Task.Run(() =>
             {

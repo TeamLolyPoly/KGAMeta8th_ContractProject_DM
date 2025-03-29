@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Threading.Tasks;
+using SFB;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -19,24 +20,6 @@ namespace NoteEditor
         private string pendingAudioFilePath;
         private string pendingAlbumArtFilePath;
         private string currentSceneName;
-        private bool isLoadingTrack = false;
-
-        private readonly string[] audioLoadingTips =
-        {
-            "오디오 파일을 분석하는 중입니다...",
-            "웨이브폼을 생성하는 중입니다...",
-            "트랙 정보를 처리하는 중입니다...",
-            "대용량 오디오 파일은 처리 시간이 더 오래 걸릴 수 있습니다.",
-            "고품질 오디오 파일을 사용하면 더 정확한 웨이브폼을 볼 수 있습니다.",
-        };
-
-        private readonly string[] albumArtLoadingTips =
-        {
-            "이미지 파일을 처리하는 중입니다...",
-            "앨범 아트를 최적화하는 중입니다...",
-            "트랙 정보에 앨범 아트를 연결하는 중입니다...",
-            "앨범 아트는 트랙 정보와 함께 저장됩니다.",
-        };
 
         private bool isInitialized = false;
         public bool IsInitialized => isInitialized;
@@ -61,6 +44,10 @@ namespace NoteEditor
         public IEnumerator InitializeAsync()
         {
             yield return 0;
+            SceneManager.sceneLoaded += (scene, mode) =>
+            {
+                currentSceneName = scene.name;
+            };
             yield return new WaitForSeconds(0.3f);
 
             LoadingManager.Instance.SetLoadingText("오디오 시스템 초기화 중...");
@@ -97,51 +84,6 @@ namespace NoteEditor
             cameraController = cameraObj.AddComponent<CameraController>();
         }
 
-        private void SetupInputActions()
-        {
-            editorControlActions = Resources.Load<InputActionAsset>("Input/EditorControls");
-            if (editorControlActions != null)
-            {
-                var actionMap = editorControlActions.FindActionMap("NoteEditor");
-                if (actionMap != null)
-                {
-                    var playPauseAction = actionMap.FindAction("PlayPause");
-                    if (playPauseAction != null)
-                    {
-                        playPauseAction.performed += ctx => AudioManager.Instance.TogglePlayPause();
-                    }
-
-                    var volumeUpAction = actionMap.FindAction("VolumeUp");
-                    if (volumeUpAction != null)
-                    {
-                        volumeUpAction.performed += ctx =>
-                            AudioManager.Instance.AdjustVolume(0.05f);
-                    }
-
-                    var volumeDownAction = actionMap.FindAction("VolumeDown");
-                    if (volumeDownAction != null)
-                    {
-                        volumeDownAction.performed += ctx =>
-                            AudioManager.Instance.AdjustVolume(-0.05f);
-                    }
-
-                    actionMap.Enable();
-                }
-                else
-                {
-                    Debug.LogError(
-                        "NoteEditor 액션맵을 찾을 수 없습니다. InputActionAsset 설정을 확인하세요."
-                    );
-                }
-            }
-            else
-            {
-                Debug.LogWarning(
-                    "editorControlActions이 할당되지 않았습니다. Resources/Input/EditorControls를 확인하세요."
-                );
-            }
-        }
-
         public async void SelectTrack(TrackData track)
         {
             if (track == null)
@@ -153,7 +95,7 @@ namespace NoteEditor
             if (track.TrackAudio == null)
             {
                 Debug.Log("트랙의 오디오가 로드되지 않아 로드 중...");
-                await EditorDataManager.Instance.LoadTrackAudioAsync(track.trackName);
+                await EditorDataManager.Instance.LoadTrackAudioAsync(track);
             }
 
             CurrentTrack = track;
@@ -223,24 +165,77 @@ namespace NoteEditor
             yield return new WaitForSeconds(1f);
         }
 
-        public async void RemoveTrack(TrackData track)
+        private void SetupInputActions()
         {
-            await EditorDataManager.Instance.DeleteTrackAsync(track.trackName);
+            editorControlActions = Resources.Load<InputActionAsset>("Input/EditorControls");
+            if (editorControlActions != null)
+            {
+                var actionMap = editorControlActions.FindActionMap("NoteEditor");
+                if (actionMap != null)
+                {
+                    var playPauseAction = actionMap.FindAction("PlayPause");
+                    if (playPauseAction != null)
+                    {
+                        playPauseAction.performed += ctx => AudioManager.Instance.TogglePlayPause();
+                    }
+
+                    var volumeUpAction = actionMap.FindAction("VolumeUp");
+                    if (volumeUpAction != null)
+                    {
+                        volumeUpAction.performed += ctx =>
+                            AudioManager.Instance.AdjustVolume(0.05f);
+                    }
+
+                    var volumeDownAction = actionMap.FindAction("VolumeDown");
+                    if (volumeDownAction != null)
+                    {
+                        volumeDownAction.performed += ctx =>
+                            AudioManager.Instance.AdjustVolume(-0.05f);
+                    }
+
+                    actionMap.Enable();
+                }
+                else
+                {
+                    Debug.LogError(
+                        "NoteEditor 액션맵을 찾을 수 없습니다. InputActionAsset 설정을 확인하세요."
+                    );
+                }
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "editorControlActions이 할당되지 않았습니다. Resources/Input/EditorControls를 확인하세요."
+                );
+            }
         }
 
         public void LoadTrack(string filePath)
         {
-            if (string.IsNullOrEmpty(filePath) || isLoadingTrack)
+            if (string.IsNullOrEmpty(filePath))
                 return;
 
             pendingAudioFilePath = filePath;
-            currentSceneName = SceneManager.GetActiveScene().name;
-            isLoadingTrack = true;
+            ExtensionFilter[] extensions =
+            {
+                new ExtensionFilter("앨범아트 파일", "png", "jpg", "jpeg"),
+            };
 
-            LoadingManager.Instance.LoadScene(
-                LoadingManager.LOADING_SCENE_NAME,
-                () => StartCoroutine(LoadAudioFileProcess())
+            StandaloneFileBrowser.OpenFilePanelAsync(
+                "앨범아트 파일 선택",
+                "",
+                extensions,
+                false,
+                (string[] paths) =>
+                {
+                    if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
+                    {
+                        pendingAlbumArtFilePath = paths[0];
+                    }
+                }
             );
+
+            LoadingManager.Instance.LoadScene(currentSceneName, LoadTrackProcess, OnTrackLoaded);
         }
 
         public void SetAlbumArt(string filePath, TrackData track)
@@ -249,43 +244,26 @@ namespace NoteEditor
                 return;
 
             pendingAlbumArtFilePath = filePath;
-            currentSceneName = SceneManager.GetActiveScene().name;
 
             LoadingManager.Instance.LoadScene(
-                LoadingManager.LOADING_SCENE_NAME,
+                currentSceneName,
                 () => StartCoroutine(LoadAlbumArtProcess(track))
             );
         }
 
-        private IEnumerator LoadAudioFileProcess()
+        private IEnumerator LoadTrackProcess()
         {
             if (string.IsNullOrEmpty(pendingAudioFilePath))
             {
                 LoadingManager.Instance.LoadScene(currentSceneName);
-                isLoadingTrack = false;
                 yield break;
-            }
-
-            LoadingPanel loadingUI = FindObjectOfType<LoadingPanel>();
-            Action<float> updateProgress = LoadingManager.Instance.UpdateProgress;
-
-            updateProgress(0.1f);
-            loadingUI?.SetLoadingText("오디오 파일 로드 중...");
-
-            if (loadingUI != null)
-            {
-                SetRandomTip(loadingUI, audioLoadingTips);
             }
 
             yield return new WaitForSeconds(0.2f);
 
-            updateProgress(0.3f);
-            loadingUI?.SetLoadingText("오디오 파일 분석 중...");
-
-            var progress = new Progress<float>(p =>
+            IProgress<float> progress = new Progress<float>(p =>
             {
-                float currentProgress = 0.3f + p * 0.6f;
-                updateProgress(currentProgress);
+                LoadingManager.Instance.UpdateProgress(p);
             });
 
             var addTrackTask = EditorDataManager.Instance.AddTrackAsync(
@@ -295,35 +273,38 @@ namespace NoteEditor
 
             while (!addTrackTask.IsCompleted)
             {
-                if (loadingUI != null && UnityEngine.Random.value < 0.05f)
-                {
-                    SetRandomTip(loadingUI, audioLoadingTips);
-                }
                 yield return null;
             }
 
-            TrackData newTrack = addTrackTask.Result;
+            CurrentTrack = addTrackTask.Result;
 
-            if (newTrack == null)
+            if (pendingAlbumArtFilePath != null)
+            {
+                var albumArtTask = EditorDataManager.Instance.SetAlbumArtAsync(
+                    CurrentTrack.trackName,
+                    pendingAlbumArtFilePath
+                );
+
+                while (!albumArtTask.IsCompleted)
+                {
+                    yield return null;
+                }
+
+                CurrentTrack = albumArtTask.Result;
+            }
+
+            if (CurrentTrack == null)
             {
                 Debug.LogError("트랙 추가 실패");
                 pendingAudioFilePath = null;
-                isLoadingTrack = false;
                 LoadingManager.Instance.LoadScene(currentSceneName);
                 yield break;
             }
 
-            updateProgress(0.9f);
-            loadingUI?.SetLoadingText("트랙 정보 저장 중...");
             yield return new WaitForSeconds(0.2f);
 
-            updateProgress(1.0f);
             pendingAudioFilePath = null;
-            isLoadingTrack = false;
-
-            string trackName = newTrack.trackName;
-
-            LoadingManager.Instance.LoadScene(currentSceneName);
+            pendingAlbumArtFilePath = null;
         }
 
         private IEnumerator LoadAlbumArtProcess(TrackData track)
@@ -339,11 +320,6 @@ namespace NoteEditor
 
             updateProgress(0.2f);
             loadingUI?.SetLoadingText("앨범 아트 로드 중...");
-
-            if (loadingUI != null)
-            {
-                SetRandomTip(loadingUI, albumArtLoadingTips);
-            }
 
             yield return new WaitForSeconds(0.2f);
 
@@ -366,10 +342,6 @@ namespace NoteEditor
 
             while (!setAlbumArtTask.IsCompleted)
             {
-                if (loadingUI != null && UnityEngine.Random.value < 0.05f)
-                {
-                    SetRandomTip(loadingUI, albumArtLoadingTips);
-                }
                 yield return null;
             }
 
@@ -379,7 +351,6 @@ namespace NoteEditor
             {
                 Debug.LogError("앨범 아트 로드 실패");
                 pendingAlbumArtFilePath = null;
-                LoadingManager.Instance.LoadScene(currentSceneName);
                 yield break;
             }
 
@@ -393,25 +364,40 @@ namespace NoteEditor
             LoadingManager.Instance.LoadScene(currentSceneName);
         }
 
-        private void SetRandomTip(LoadingPanel loadingUI, string[] tips)
+        public void OnTrackLoaded()
         {
-            if (tips.Length > 0)
+            if (currentSceneName == "Editor_Start")
             {
-                int randomIndex = UnityEngine.Random.Range(0, tips.Length);
-                loadingUI.SetLoadingText(tips[randomIndex]);
+                UIManager.Instance.OpenPanel(PanelType.EditorStart);
+                UIManager.Instance.ClosePanel(PanelType.EditorStart);
+                UIManager.Instance.OpenPanel(PanelType.NewTrack);
+                NewTrackPanel newTrackPanel =
+                    UIManager.Instance.GetPanel(PanelType.NewTrack) as NewTrackPanel;
+                newTrackPanel.SetInfo(CurrentTrack);
             }
         }
 
-        public async Task SetBPMAsync(TrackData track, float bpm)
+        public async void RemoveTrack(TrackData track)
         {
-            if (EditorDataManager.Instance != null)
-            {
-                await EditorDataManager.Instance.SetBPMAsync(track.trackName, bpm);
+            if (track != null)
+                await EditorDataManager.Instance.DeleteTrackAsync(track.trackName);
+        }
 
-                if (CurrentTrack != null && CurrentTrack.trackName == track.trackName)
-                {
-                    noteEditor.UpdateBPM(bpm);
-                }
+        public async void UpdateTrackInfo(TrackData track)
+        {
+            if (track != null)
+                await EditorDataManager.Instance.UpdateTrackAsync(track);
+        }
+
+        public async Task SetBPMAsync(float bpm)
+        {
+            if (CurrentTrack != null)
+            {
+                await EditorDataManager.Instance.SetBPMAsync(CurrentTrack.trackName, bpm);
+
+                AudioManager.Instance.CurrentBPM = bpm;
+
+                noteEditor.UpdateBPM(bpm);
             }
         }
 

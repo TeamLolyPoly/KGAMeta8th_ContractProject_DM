@@ -1,7 +1,9 @@
-using System.Collections;
 using Michsky.UI.Heat;
 using ProjectDM.UI;
 using SFB;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace NoteEditor
 {
@@ -9,19 +11,60 @@ namespace NoteEditor
     {
         public override PanelType PanelType => PanelType.NewTrack;
         private bool isLoadingTrack = false;
-        public PanelButton BackButton;
+
+        [SerializeField]
+        private ButtonManager closeButton;
+
+        [SerializeField]
+        private ButtonManager proceedButton;
+
+        [SerializeField]
+        private BoxButtonManager loadTrackButton;
+
+        [SerializeField]
+        private TMP_InputField bpmInput;
+
+        [SerializeField]
+        private TMP_InputField trackNameInput;
+
+        [SerializeField]
+        private TMP_InputField artistNameInput;
+
+        [SerializeField]
+        private TMP_InputField albumNameInput;
+
+        [SerializeField]
+        private TMP_InputField yearInput;
+
+        [SerializeField]
+        private TMP_InputField genreInput;
 
         public override void Open()
         {
             base.Open();
             transform.SetAsLastSibling();
-            BackButton.onClick.AddListener(OnBackButtonClick);
+            closeButton.onClick.AddListener(OnBackButtonClick);
+            loadTrackButton.onClick.AddListener(LoadTrack);
+            proceedButton.onClick.AddListener(Proceed);
         }
 
         public override void Close(bool objActive = false)
         {
-            BackButton.onClick.RemoveListener(OnBackButtonClick);
+            closeButton.onClick.RemoveListener(OnBackButtonClick);
+            loadTrackButton.onClick.RemoveListener(LoadTrack);
+            proceedButton.onClick.RemoveListener(Proceed);
             base.Close(objActive);
+        }
+
+        public void SetInfo(TrackData track)
+        {
+            loadTrackButton.SetText(track.trackName);
+            loadTrackButton.SetBackground(track.AlbumArt);
+            trackNameInput.text = track.trackName;
+            artistNameInput.text = track.artistName;
+            albumNameInput.text = track.albumName;
+            yearInput.text = track.year.ToString();
+            genreInput.text = track.genre;
         }
 
         public void LoadTrack()
@@ -51,6 +94,11 @@ namespace NoteEditor
                     }
                 }
             );
+        }
+
+        public void Proceed()
+        {
+            EditorManager.Instance.SelectTrack(EditorManager.Instance.CurrentTrack);
         }
 
         private void OnBackButtonClick()
