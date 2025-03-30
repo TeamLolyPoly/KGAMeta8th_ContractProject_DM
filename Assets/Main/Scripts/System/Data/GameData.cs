@@ -126,6 +126,7 @@ public class NoteMap
 [Serializable]
 public class TrackData
 {
+    public Guid id;
     public string trackName;
     public string artistName;
     public string albumName;

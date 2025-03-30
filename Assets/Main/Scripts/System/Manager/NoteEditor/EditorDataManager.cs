@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,7 +13,6 @@ namespace NoteEditor
     /// </summary>
     public class EditorDataManager : Singleton<EditorDataManager>, IInitializable
     {
-        private AudioFileService fileService;
         private List<TrackData> tracks = new List<TrackData>();
         public List<TrackData> Tracks => tracks;
 
@@ -22,15 +20,14 @@ namespace NoteEditor
 
         public async void Initialize()
         {
-            fileService = new AudioFileService();
-            AudioPathProvider.EnsureDirectoriesExist();
+            ResourcePath.EnsureDirectoriesExist();
             await LoadAllTracksAsync();
             IsInitialized = true;
         }
 
         public async Task LoadAllTracksAsync()
         {
-            var metadata = await fileService.LoadMetadataAsync();
+            var metadata = await ResourceIO.LoadMetadataAsync();
             Debug.Log(
                 $"[EditorDataManager] 메타데이터에서 {metadata.Count}개의 트랙 정보를 로드했습니다."
             );
@@ -41,6 +38,7 @@ namespace NoteEditor
             {
                 TrackData track = new TrackData
                 {
+                    id = trackMetadata.id != Guid.Empty ? trackMetadata.id : Guid.NewGuid(),
                     trackName = trackMetadata.trackName,
                     bpm = trackMetadata.bpm,
                     artistName = trackMetadata.artistName,
@@ -60,6 +58,7 @@ namespace NoteEditor
             {
                 Debug.Log(
                     $"========= {track.trackName} 로드 완료 =========\n"
+                        + $"GUID : {track.id}\n"
                         + $"트랙 오디오 : {(track.TrackAudio != null ? track.TrackAudio.name : "없음")}\n"
                         + $"트랙 길이 : {(track.TrackAudio != null ? track.TrackAudio.length.ToString() : "0.0")}\n"
                         + $"트랙 BPM : {track.bpm}\n"
@@ -86,7 +85,7 @@ namespace NoteEditor
 
             try
             {
-                var albumArtCoroutine = fileService.LoadAlbumArtAsync(track.trackName);
+                var albumArtCoroutine = ResourceIO.LoadAlbumArtAsync(track);
                 if (albumArtCoroutine == null)
                 {
                     Debug.LogError($"앨범 아트 코루틴 생성 실패: {track.trackName}");
@@ -135,7 +134,7 @@ namespace NoteEditor
             IProgress<float> progress = null
         )
         {
-            var result = await fileService.ImportAudioFileAsync(filePath, progress);
+            var result = await ResourceIO.ImportAudioFileAsync(filePath, progress);
 
             if (result.clip == null)
             {
@@ -143,7 +142,7 @@ namespace NoteEditor
                 return null;
             }
 
-            TrackData existingTrack = tracks.FirstOrDefault(t => t.trackName == result.trackName);
+            TrackData existingTrack = tracks.FirstOrDefault(t => t.id == result.trackData.id);
 
             if (existingTrack != null)
             {
@@ -157,17 +156,25 @@ namespace NoteEditor
             }
             else
             {
-                TrackData newTrack = new TrackData { trackName = result.trackName, bpm = 120f };
+                TrackData newTrack = result.trackData;
 
                 newTrack.TrackAudio = result.clip;
 
-                await SaveNoteMapAsync(newTrack, new NoteMap());
+                await SaveNoteMapAsync(
+                    newTrack,
+                    new NoteMap()
+                    {
+                        bpm = 120f,
+                        beatsPerBar = 4,
+                        notes = new List<NoteData>(),
+                    }
+                );
 
                 tracks.Add(newTrack);
 
                 await UpdateTrackMetadataAsync();
 
-                Debug.Log($"새 트랙 추가: {newTrack.trackName}");
+                Debug.Log($"새 트랙 추가: {newTrack.trackName}, ID: {newTrack.id}");
 
                 return newTrack;
             }
@@ -195,12 +202,12 @@ namespace NoteEditor
 
                 if (track.TrackAudio != null)
                 {
-                    await fileService.SaveAudioAsync(track.TrackAudio, track.trackName);
+                    await ResourceIO.SaveAudioAsync(track.TrackAudio, track);
                 }
 
                 if (track.AlbumArt != null)
                 {
-                    await fileService.SaveAlbumArtAsync(track.AlbumArt, track.trackName);
+                    await ResourceIO.SaveAlbumArtAsync(track.AlbumArt, track);
                 }
 
                 await UpdateTrackMetadataAsync();
@@ -220,7 +227,7 @@ namespace NoteEditor
 
             if (trackToRemove != null)
             {
-                await fileService.DeleteTrackFilesAsync(trackName);
+                await ResourceIO.DeleteTrackFilesAsync(trackToRemove.id);
 
                 tracks.Remove(trackToRemove);
 
@@ -236,7 +243,7 @@ namespace NoteEditor
         /// <returns>비동기 작업</returns>
         public async Task DeleteAllTracksAsync()
         {
-            await fileService.DeleteAllTrackFilesAsync();
+            await ResourceIO.DeleteAllTrackFilesAsync();
 
             tracks.Clear();
 
@@ -274,10 +281,7 @@ namespace NoteEditor
             {
                 try
                 {
-                    AudioClip audioClip = await fileService.LoadAudioAsync(
-                        track.trackName,
-                        progress
-                    );
+                    AudioClip audioClip = await ResourceIO.LoadAudioAsync(track, progress);
                     track.TrackAudio = audioClip;
 
                     if (track.TrackAudio == null)
@@ -337,6 +341,7 @@ namespace NoteEditor
             {
                 TrackData metadata = new TrackData
                 {
+                    id = track.id,
                     trackName = track.trackName,
                     bpm = track.bpm,
                     artistName = track.artistName,
@@ -348,7 +353,7 @@ namespace NoteEditor
 
                 if (track.noteMap != null)
                 {
-                    string noteMapPath = AudioPathProvider.GetNoteMapPath(track.trackName);
+                    string noteMapPath = ResourcePath.GetNoteMapPath(track.id);
                     string noteMapJson = JsonConvert.SerializeObject(
                         track.noteMap,
                         Formatting.Indented
@@ -367,7 +372,7 @@ namespace NoteEditor
                 metadataList.Add(metadata);
             }
 
-            await fileService.SaveMetadataAsync(metadataList);
+            await ResourceIO.SaveMetadataAsync(metadataList);
         }
 
         /// <summary>
@@ -382,7 +387,7 @@ namespace NoteEditor
 
             try
             {
-                string noteMapPath = AudioPathProvider.GetNoteMapPath(track.trackName);
+                string noteMapPath = ResourcePath.GetNoteMapPath(track.id);
 
                 if (!File.Exists(noteMapPath))
                 {
@@ -419,7 +424,7 @@ namespace NoteEditor
 
             try
             {
-                string noteMapPath = AudioPathProvider.GetNoteMapPath(track.trackName);
+                string noteMapPath = ResourcePath.GetNoteMapPath(track.id);
 
                 JsonSerializerSettings settings = new JsonSerializerSettings
                 {
@@ -468,9 +473,9 @@ namespace NoteEditor
 
             if (track != null)
             {
-                Sprite albumArt = await fileService.ImportAlbumArtAsync(
+                Sprite albumArt = await ResourceIO.ImportAlbumArtAsync(
                     albumArtPath,
-                    trackName,
+                    track,
                     progress
                 );
 
