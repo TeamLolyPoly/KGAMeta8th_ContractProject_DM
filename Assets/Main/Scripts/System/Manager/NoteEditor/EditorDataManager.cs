@@ -92,7 +92,7 @@ namespace NoteEditor
                     return;
                 }
 
-                int maxIterations = 100;
+                int maxIterations = 1000;
                 int iterations = 0;
 
                 while (albumArtCoroutine.MoveNext() && iterations < maxIterations)
@@ -148,7 +148,7 @@ namespace NoteEditor
             {
                 existingTrack.TrackAudio = result.clip;
 
-                await UpdateTrackMetadataAsync();
+                await UpdateSingleTrackAsync(existingTrack);
 
                 Debug.Log($"트랙 업데이트: {existingTrack.trackName}");
 
@@ -160,19 +160,9 @@ namespace NoteEditor
 
                 newTrack.TrackAudio = result.clip;
 
-                await SaveNoteMapAsync(
-                    newTrack,
-                    new NoteMap()
-                    {
-                        bpm = 120f,
-                        beatsPerBar = 4,
-                        notes = new List<NoteData>(),
-                    }
-                );
-
                 tracks.Add(newTrack);
 
-                await UpdateTrackMetadataAsync();
+                await UpdateSingleTrackAsync(newTrack);
 
                 Debug.Log($"새 트랙 추가: {newTrack.trackName}, ID: {newTrack.id}");
 
@@ -185,7 +175,7 @@ namespace NoteEditor
         /// </summary>
         /// <param name="track">업데이트할 트랙 데이터</param>
         /// <returns>비동기 작업</returns>
-        public async Task UpdateTrackAsync(TrackData track)
+        public async Task UpdateSingleTrackAsync(TrackData track)
         {
             if (track == null || string.IsNullOrEmpty(track.trackName))
             {
@@ -193,24 +183,14 @@ namespace NoteEditor
                 return;
             }
 
-            TrackData existingTrack = tracks.FirstOrDefault(t => t.trackName == track.trackName);
+            TrackData existingTrack = tracks.FirstOrDefault(t => t.id == track.id);
 
             if (existingTrack != null)
             {
                 int index = tracks.IndexOf(existingTrack);
                 tracks[index] = track;
 
-                if (track.TrackAudio != null)
-                {
-                    await ResourceIO.SaveAudioAsync(track.TrackAudio, track);
-                }
-
-                if (track.AlbumArt != null)
-                {
-                    await ResourceIO.SaveAlbumArtAsync(track.AlbumArt, track);
-                }
-
-                await UpdateTrackMetadataAsync();
+                await SaveAllTracksMetadataAsync();
 
                 Debug.Log($"트랙 업데이트: {track.trackName}");
             }
@@ -221,9 +201,9 @@ namespace NoteEditor
         /// </summary>
         /// <param name="trackName">삭제할 트랙 이름</param>
         /// <returns>비동기 작업</returns>
-        public async Task DeleteTrackAsync(string trackName)
+        public async Task DeleteTrackAsync(TrackData track)
         {
-            TrackData trackToRemove = tracks.FirstOrDefault(t => t.trackName == trackName);
+            TrackData trackToRemove = tracks.FirstOrDefault(t => t.id == track.id);
 
             if (trackToRemove != null)
             {
@@ -231,9 +211,9 @@ namespace NoteEditor
 
                 tracks.Remove(trackToRemove);
 
-                await UpdateTrackMetadataAsync();
+                await SaveAllTracksMetadataAsync();
 
-                Debug.Log($"트랙 삭제: {trackName}");
+                Debug.Log($"트랙 삭제: {track.trackName}");
             }
         }
 
@@ -326,18 +306,22 @@ namespace NoteEditor
             {
                 track.bpm = bpm;
 
-                await UpdateTrackMetadataAsync();
+                await SaveAllTracksMetadataAsync();
                 await SaveNoteMapAsync(track, track.noteMap);
 
                 Debug.Log($"트랙 BPM 업데이트: {trackName}, BPM: {bpm}");
             }
         }
 
-        private async Task UpdateTrackMetadataAsync()
+        private async Task SaveAllTracksMetadataAsync()
         {
             List<TrackData> metadataList = new List<TrackData>();
+            List<Task> noteMapSaveTasks = new List<Task>();
 
-            foreach (var track in tracks)
+            // 컬렉션 복사본 만들기
+            List<TrackData> tracksCopy = new List<TrackData>(tracks);
+
+            foreach (var track in tracksCopy)
             {
                 TrackData metadata = new TrackData
                 {
@@ -350,6 +334,8 @@ namespace NoteEditor
                     genre = track.genre,
                     duration = track.duration,
                 };
+
+                metadataList.Add(metadata);
 
                 if (track.noteMap != null)
                 {
@@ -365,11 +351,19 @@ namespace NoteEditor
                         Directory.CreateDirectory(directory);
                     }
 
-                    await Task.Run(() => File.WriteAllText(noteMapPath, noteMapJson));
-                    Debug.Log($"노트맵 저장 완료: {noteMapPath}");
-                }
+                    var saveTask = Task.Run(() =>
+                    {
+                        File.WriteAllText(noteMapPath, noteMapJson);
+                        Debug.Log($"노트맵 저장 완료: {noteMapPath}");
+                    });
 
-                metadataList.Add(metadata);
+                    noteMapSaveTasks.Add(saveTask);
+                }
+            }
+
+            if (noteMapSaveTasks.Count > 0)
+            {
+                await Task.WhenAll(noteMapSaveTasks);
             }
 
             await ResourceIO.SaveMetadataAsync(metadataList);

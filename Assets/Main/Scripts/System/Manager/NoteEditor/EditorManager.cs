@@ -238,7 +238,7 @@ namespace NoteEditor
             LoadingManager.Instance.LoadScene(currentSceneName, LoadTrackProcess, OnTrackLoaded);
         }
 
-        public void SetAlbumArt(string filePath, TrackData track)
+        public void SetAlbumArt(string filePath, TrackData track, Action onLoaded = null)
         {
             if (string.IsNullOrEmpty(filePath))
                 return;
@@ -247,7 +247,8 @@ namespace NoteEditor
 
             LoadingManager.Instance.LoadScene(
                 currentSceneName,
-                () => StartCoroutine(LoadAlbumArtProcess(track))
+                () => LoadAlbumArtProcess(track),
+                onLoaded
             );
         }
 
@@ -311,20 +312,18 @@ namespace NoteEditor
         {
             if (string.IsNullOrEmpty(pendingAlbumArtFilePath))
             {
-                LoadingManager.Instance.LoadScene(currentSceneName);
                 yield break;
             }
 
-            LoadingPanel loadingUI = FindObjectOfType<LoadingPanel>();
             Action<float> updateProgress = LoadingManager.Instance.UpdateProgress;
 
             updateProgress(0.2f);
-            loadingUI?.SetLoadingText("앨범 아트 로드 중...");
+            LoadingManager.Instance.SetLoadingText("앨범 아트 로드 중...");
 
             yield return new WaitForSeconds(0.2f);
 
             updateProgress(0.4f);
-            loadingUI?.SetLoadingText("이미지 파일 처리 중...");
+            LoadingManager.Instance.SetLoadingText("이미지 파일 처리 중...");
 
             string trackName = track.trackName;
 
@@ -355,13 +354,11 @@ namespace NoteEditor
             }
 
             updateProgress(0.9f);
-            loadingUI?.SetLoadingText("앨범 아트 적용 중...");
+            LoadingManager.Instance.SetLoadingText("앨범 아트 적용 중...");
             yield return new WaitForSeconds(0.2f);
 
             updateProgress(1.0f);
             pendingAlbumArtFilePath = null;
-
-            LoadingManager.Instance.LoadScene(currentSceneName);
         }
 
         public void OnTrackLoaded()
@@ -380,13 +377,35 @@ namespace NoteEditor
         public async void RemoveTrack(TrackData track)
         {
             if (track != null)
-                await EditorDataManager.Instance.DeleteTrackAsync(track.trackName);
+                await EditorDataManager.Instance.DeleteTrackAsync(track);
         }
 
-        public async void UpdateTrackInfo(TrackData track)
+        public async void UpdateTrackInfo(
+            TrackData track,
+            string bpm = null,
+            string trackName = null,
+            string artistName = null,
+            string albumName = null,
+            string year = null,
+            string genre = null
+        )
         {
             if (track != null)
-                await EditorDataManager.Instance.UpdateTrackAsync(track);
+            {
+                if (bpm != null)
+                    track.bpm = float.Parse(bpm);
+                if (trackName != null)
+                    track.trackName = trackName;
+                if (artistName != null)
+                    track.artistName = artistName;
+                if (albumName != null)
+                    track.albumName = albumName;
+                if (year != null)
+                    track.year = int.Parse(year);
+                if (genre != null)
+                    track.genre = genre;
+                await EditorDataManager.Instance.UpdateSingleTrackAsync(track);
+            }
         }
 
         public async Task SetBPMAsync(float bpm)

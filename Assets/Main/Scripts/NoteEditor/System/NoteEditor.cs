@@ -70,7 +70,7 @@ namespace NoteEditor
             {
                 Debug.Log($"[NoteEditor] 노트맵이 존재하지 않아 새로 생성 : {track.trackName}");
                 noteMap = new NoteMap();
-                noteMap.bpm = 120f;
+                noteMap.bpm = track.bpm;
                 noteMap.beatsPerBar = 4;
                 noteMap.notes = new List<NoteData>();
                 var saveTask = EditorDataManager.Instance.SaveNoteMapAsync(track, noteMap);

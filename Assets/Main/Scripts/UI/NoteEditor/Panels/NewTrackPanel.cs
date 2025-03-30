@@ -3,7 +3,6 @@ using ProjectDM.UI;
 using SFB;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace NoteEditor
 {
@@ -56,6 +55,37 @@ namespace NoteEditor
             base.Close(objActive);
         }
 
+        private bool SaveMetaData()
+        {
+            string BPM = bpmInput.text;
+            if (string.IsNullOrEmpty(BPM))
+                return false;
+
+            string trackName = trackNameInput.text;
+            if (string.IsNullOrEmpty(trackName))
+                return false;
+
+            string artistName = artistNameInput.text;
+            if (string.IsNullOrEmpty(artistName))
+                return false;
+
+            string albumName = albumNameInput.text;
+            string year = yearInput.text;
+            string genre = genreInput.text;
+
+            EditorManager.Instance.UpdateTrackInfo(
+                EditorManager.Instance.CurrentTrack,
+                bpm: BPM,
+                trackName: trackName,
+                artistName: artistName,
+                albumName: albumName != string.Empty ? albumName : null,
+                year: year != string.Empty ? year : null,
+                genre: genre != string.Empty ? genre : null
+            );
+
+            return true;
+        }
+
         public void SetInfo(TrackData track)
         {
             loadTrackButton.SetText(track.trackName);
@@ -98,7 +128,14 @@ namespace NoteEditor
 
         public void Proceed()
         {
-            EditorManager.Instance.SelectTrack(EditorManager.Instance.CurrentTrack);
+            if (SaveMetaData())
+            {
+                EditorManager.Instance.SelectTrack(EditorManager.Instance.CurrentTrack);
+            }
+            else
+            {
+                Debug.Log("BPM , 트랙명 , 아티스트명은 필수 정보입니다");
+            }
         }
 
         private void OnBackButtonClick()
