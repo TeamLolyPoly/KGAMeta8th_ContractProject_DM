@@ -89,7 +89,10 @@ namespace NoteEditor
         public void SetInfo(TrackData track)
         {
             loadTrackButton.SetText(track.trackName);
-            loadTrackButton.SetBackground(track.AlbumArt);
+            if (track.AlbumArt != null)
+            {
+                loadTrackButton.SetBackground(track.AlbumArt);
+            }
             trackNameInput.text = track.trackName;
             artistNameInput.text = track.artistName;
             albumNameInput.text = track.albumName;
