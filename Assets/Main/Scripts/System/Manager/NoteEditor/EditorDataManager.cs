@@ -15,6 +15,7 @@ namespace NoteEditor
     {
         private List<TrackData> tracks = new List<TrackData>();
         public List<TrackData> Tracks => tracks;
+        public TrackData TmpTrack { get; set; }
 
         public bool IsInitialized { get; private set; }
 
@@ -481,6 +482,14 @@ namespace NoteEditor
             }
 
             return track;
+        }
+
+        public async void OnDisable()
+        {
+            if (TmpTrack != null)
+            {
+                await DeleteTrackAsync(TmpTrack);
+            }
         }
 
         protected override void OnDestroy()

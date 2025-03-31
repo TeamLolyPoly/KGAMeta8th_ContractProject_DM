@@ -91,12 +91,14 @@ public enum PanelType
     Option,
     Scoreboard,
     Loading,
+    PopUp,
 
     // 에디터 전용
     NoteEditor,
     EditorStart,
     NewTrack,
     LoadTrack,
+    EditorSettings,
 }
 
 public enum Difficulty

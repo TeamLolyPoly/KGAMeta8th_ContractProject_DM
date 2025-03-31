@@ -41,6 +41,58 @@ namespace NoteEditor
             );
         }
 
+        public void BackToMain()
+        {
+            LoadingManager.Instance.LoadScene(
+                "Editor_Start",
+                Clear,
+                () =>
+                {
+                    UIManager.Instance.OpenPanel(PanelType.EditorStart);
+                }
+            );
+        }
+
+        public IEnumerator Clear()
+        {
+            var actionMap = editorControlActions.FindActionMap("NoteEditor");
+            if (actionMap != null)
+            {
+                actionMap.Disable();
+            }
+            LoadingManager.Instance.SetLoadingText("트랙 초기화 중...");
+            CurrentTrack = null;
+            AudioManager.Instance.Stop();
+            AudioManager.Instance.currentAudioSource = null;
+            AudioManager.Instance.currentTrack = null;
+            yield return 0.2f;
+            yield return new WaitForSeconds(0.3f);
+            LoadingManager.Instance.SetLoadingText("셀 초기화 중...");
+            if (cellController != null)
+            {
+                cellController.Cleanup();
+            }
+            yield return 0.4f;
+            yield return new WaitForSeconds(0.3f);
+            LoadingManager.Instance.SetLoadingText("레일 초기화 중...");
+            if (railController != null)
+            {
+                railController.Cleanup();
+            }
+            yield return 0.6f;
+            yield return new WaitForSeconds(0.3f);
+            LoadingManager.Instance.SetLoadingText("노트 에디터 초기화 중...");
+            if (noteEditor != null)
+            {
+                noteEditor.Cleanup();
+            }
+
+            yield return 0.8f;
+            yield return new WaitForSeconds(0.3f);
+            yield return 1f;
+            yield return new WaitForSeconds(0.5f);
+        }
+
         public IEnumerator InitializeAsync()
         {
             yield return 0;
@@ -106,8 +158,6 @@ namespace NoteEditor
                 () =>
                 {
                     cameraController.Initialize();
-
-                    UIManager.Instance.CloseAllPanels();
 
                     editorPanel = UIManager.Instance.OpenPanel(PanelType.NoteEditor) as EditorPanel;
 
@@ -191,6 +241,12 @@ namespace NoteEditor
                     {
                         volumeDownAction.performed += ctx =>
                             AudioManager.Instance.AdjustVolume(-0.05f);
+                    }
+
+                    var SettingsAction = actionMap.FindAction("Setting");
+                    if (SettingsAction != null)
+                    {
+                        SettingsAction.performed += ctx => UIManager.Instance.ToggleSettignsPanel();
                     }
 
                     actionMap.Enable();
@@ -296,9 +352,14 @@ namespace NoteEditor
 
             if (CurrentTrack == null)
             {
-                Debug.LogError("트랙 추가 실패");
                 pendingAudioFilePath = null;
-                LoadingManager.Instance.LoadScene(currentSceneName);
+                LoadingManager.Instance.LoadScene(
+                    currentSceneName,
+                    () =>
+                    {
+                        UIManager.Instance.OpenPopUp("오류", "트랙 추가 실패");
+                    }
+                );
                 yield break;
             }
 
@@ -371,6 +432,7 @@ namespace NoteEditor
                 NewTrackPanel newTrackPanel =
                     UIManager.Instance.GetPanel(PanelType.NewTrack) as NewTrackPanel;
                 newTrackPanel.SetInfo(CurrentTrack);
+                EditorDataManager.Instance.TmpTrack = CurrentTrack;
             }
         }
 

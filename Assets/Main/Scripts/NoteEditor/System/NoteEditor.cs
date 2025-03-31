@@ -26,6 +26,14 @@ namespace NoteEditor
         private ShortNoteModel shortNoteModelPrefab;
         private LongNoteModel longNoteModelPrefab;
 
+        public void Cleanup()
+        {
+            if (noteMap != null)
+            {
+                noteMap = null;
+            }
+        }
+
         public void Initialize()
         {
             try

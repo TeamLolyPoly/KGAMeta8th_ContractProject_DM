@@ -1,7 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Michsky.UI.Heat;
+using Ookii.Dialogs;
 using ProjectDM.UI;
 using UnityEngine;
+using UnityEngine.Android;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -12,6 +16,9 @@ public class UIManager : Singleton<UIManager>, IInitializable
 
     public List<Panel> PanelPrefabs = new List<Panel>();
     public List<Panel> Panels = new List<Panel>();
+    public Sprite defaultAlbumArt;
+    public EditorSettingsPanel editorSettingsPanel;
+    private ModalWindowManager popUpWindow;
 
     public void Initialize()
     {
@@ -53,6 +60,36 @@ public class UIManager : Singleton<UIManager>, IInitializable
             PanelPrefabs = Resources.LoadAll<Panel>("Prefabs/UI/Panels/Stage").ToList();
             PanelPrefabs.AddRange(Resources.LoadAll<Panel>("Prefabs/UI/Panels/NoteEditor"));
         }
+        if (popUpWindow == null)
+        {
+            ModalWindowManager popUpWindowPrefab = Resources.Load<ModalWindowManager>(
+                "Prefabs/UI/Panels/UI_Panel_PopUp"
+            );
+            popUpWindow = Instantiate(popUpWindowPrefab, transform);
+        }
+        if (defaultAlbumArt == null)
+        {
+            defaultAlbumArt = Resources.Load<Sprite>("Textures/DefaultAlbumArt");
+        }
+    }
+
+    public void ToggleSettignsPanel()
+    {
+        if (editorSettingsPanel != null)
+        {
+            if (editorSettingsPanel.IsOpen)
+            {
+                editorSettingsPanel.Close();
+            }
+            else
+            {
+                editorSettingsPanel.Open();
+            }
+        }
+        else
+        {
+            editorSettingsPanel = OpenPanel(PanelType.EditorSettings) as EditorSettingsPanel;
+        }
     }
 
     public Panel OpenPanel(PanelType panelType)
@@ -92,6 +129,17 @@ public class UIManager : Singleton<UIManager>, IInitializable
         panel.Close(objActive);
     }
 
+    public void OpenPopUp(string title, string description, Action OnConfirm = null)
+    {
+        popUpWindow.windowTitle.text = title;
+        popUpWindow.windowDescription.text = description;
+        popUpWindow.showCancelButton = false;
+        popUpWindow.closeOnConfirm = true;
+        popUpWindow.transform.SetAsLastSibling();
+        popUpWindow.OpenWindow();
+        popUpWindow.onConfirm.AddListener(() => OnConfirm?.Invoke());
+    }
+
     public Panel GetPanel(PanelType panelType)
     {
         return Panels.Find(p => p.PanelType == panelType);
@@ -102,6 +150,10 @@ public class UIManager : Singleton<UIManager>, IInitializable
         foreach (var panel in Panels)
         {
             panel.Close(false);
+        }
+        if (popUpWindow.isOn)
+        {
+            popUpWindow.CloseWindow();
         }
     }
 }

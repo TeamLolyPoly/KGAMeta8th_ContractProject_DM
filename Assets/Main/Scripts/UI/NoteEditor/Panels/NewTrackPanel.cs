@@ -1,4 +1,5 @@
 using Michsky.UI.Heat;
+using Ookii.Dialogs;
 using ProjectDM.UI;
 using SFB;
 using TMPro;
@@ -49,6 +50,13 @@ namespace NoteEditor
 
         public override void Close(bool objActive = false)
         {
+            loadTrackButton.SetText("새 트랙");
+            loadTrackButton.SetBackground(UIManager.Instance.defaultAlbumArt);
+            trackNameInput.text = "";
+            artistNameInput.text = "";
+            albumNameInput.text = "";
+            yearInput.text = "";
+            genreInput.text = "";
             closeButton.onClick.RemoveListener(OnBackButtonClick);
             loadTrackButton.onClick.RemoveListener(LoadTrack);
             proceedButton.onClick.RemoveListener(Proceed);
@@ -134,15 +142,25 @@ namespace NoteEditor
             if (SaveMetaData())
             {
                 EditorManager.Instance.SelectTrack(EditorManager.Instance.CurrentTrack);
+                EditorDataManager.Instance.TmpTrack = null;
+            }
+            else if (EditorManager.Instance.CurrentTrack == null)
+            {
+                UIManager.Instance.OpenPopUp("오류", "오디오 파일을 로드하지 않았습니다");
             }
             else
             {
-                Debug.Log("BPM , 트랙명 , 아티스트명은 필수 정보입니다");
+                UIManager.Instance.OpenPopUp("오류", "BPM , 트랙명 , 아티스트명은 필수 정보입니다");
             }
         }
 
         private void OnBackButtonClick()
         {
+            if (EditorDataManager.Instance.TmpTrack != null)
+            {
+                EditorManager.Instance.RemoveTrack(EditorDataManager.Instance.TmpTrack);
+                EditorDataManager.Instance.TmpTrack = null;
+            }
             UIManager.Instance.OpenPanel(PanelType.EditorStart);
             Close(true);
         }

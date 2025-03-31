@@ -19,6 +19,8 @@ namespace NoteEditor
 
         private TrackData track;
 
+        public TrackData Track => track;
+
         public void Initialize(TrackData track, LoadTrackPanel loadTrackPanel)
         {
             this.track = track;

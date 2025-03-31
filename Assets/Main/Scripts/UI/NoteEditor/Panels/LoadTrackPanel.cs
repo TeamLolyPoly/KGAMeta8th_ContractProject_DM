@@ -126,6 +126,7 @@ namespace NoteEditor
                                 UIManager.Instance.OpenPanel(PanelType.EditorStart);
                                 UIManager.Instance.ClosePanel(PanelType.EditorStart);
                                 UIManager.Instance.OpenPanel(PanelType.LoadTrack);
+
                                 SelectTrack(currentTrack);
                             }
                         );
@@ -144,7 +145,14 @@ namespace NoteEditor
             albumNameInputField.text = selectedTrack.albumName;
             yearInputField.text = selectedTrack.year.ToString();
             genreInputField.text = selectedTrack.genre;
-            loadAlbumArtButton.SetBackground(track.AlbumArt);
+            if (selectedTrack.AlbumArt != null)
+            {
+                loadAlbumArtButton.SetBackground(selectedTrack.AlbumArt);
+            }
+            else
+            {
+                loadAlbumArtButton.SetBackground(UIManager.Instance.defaultAlbumArt);
+            }
             loadAlbumArtButton.buttonTitle = track.trackName;
             loadAlbumArtButton.UpdateUI();
             loadAlbumArtButton.onClick.AddListener(OnLoadAlbumArtButtonClick);
@@ -164,7 +172,19 @@ namespace NoteEditor
 
         private void OnDeleteButtonClick()
         {
-            EditorManager.Instance.RemoveTrack(selectedTrack);
+            if (selectedTrack != null)
+            {
+                TrackButton trackButton = trackButtons.Find(button =>
+                    button.Track == selectedTrack
+                );
+                trackButtons.Remove(trackButton);
+                if (trackButton != null)
+                {
+                    Destroy(trackButton.gameObject);
+                }
+                trackInfoPanelAnimator.SetBool("isOpen", false);
+                EditorManager.Instance.RemoveTrack(selectedTrack);
+            }
         }
 
         public override void Close(bool objActive = false)
