@@ -4,6 +4,7 @@ using Michsky.UI.Heat;
 using ProjectDM;
 using ProjectDM.UI;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ResultPanel : Panel
 {
@@ -23,13 +24,13 @@ public class ResultPanel : Panel
     }
 
     [SerializeField]
-    private ShopButtonManager restartButton;
+    private Button restartButton;
 
     [SerializeField]
-    private ShopButtonManager homeButton;
+    private Button homeButton;
 
     [SerializeField]
-    private PanelButton resultDetailButton;
+    private BoxButtonManager resultDetailButton;
 
     private void Start()
     {
