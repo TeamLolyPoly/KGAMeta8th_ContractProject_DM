@@ -4,15 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using UnityEngine;
 using NoteEditor;
-using UnityEngine.Networking;
+using UnityEngine;
 
 public class DataManager : Singleton<DataManager>, IInitializable
 {
-    private List<TrackData> tracks = new List<TrackData>(); // 트랙 목록
-    private string trackDataPath => Path.Combine(AudioPathProvider.TrackDataPath, "TrackData.json");
-
+    private List<TrackData> tracks = new List<TrackData>();
     public bool IsInitialized { get; private set; }
 
     private void Start()
@@ -22,7 +19,7 @@ public class DataManager : Singleton<DataManager>, IInitializable
 
     public async void Initialize()
     {
-        AudioPathProvider.EnsureDirectoriesExist();
+        ResourcePath.EnsureDirectoriesExist();
         await LoadAllTracksAsync();
         IsInitialized = true;
         Debug.Log("[TrackDataManager] 초기화 완료");
@@ -31,7 +28,7 @@ public class DataManager : Singleton<DataManager>, IInitializable
     // 모든 트랙 데이터를 JSON에서 불러옴
     public async Task LoadAllTracksAsync()
     {
-        if (!File.Exists(trackDataPath))
+        if (!File.Exists(ResourcePath.TRACK_METADATA_PATH))
         {
             Debug.LogWarning("[TrackDataManager] 트랙 데이터 파일이 없습니다.");
             return;
@@ -39,7 +36,7 @@ public class DataManager : Singleton<DataManager>, IInitializable
 
         try
         {
-            string json = await Task.Run(() => File.ReadAllText(trackDataPath));
+            string json = await Task.Run(() => File.ReadAllText(ResourcePath.TRACK_METADATA_PATH));
             tracks = JsonConvert.DeserializeObject<List<TrackData>>(json) ?? new List<TrackData>();
 
             Debug.Log($"[TrackDataManager] {tracks.Count}개의 트랙을 불러왔습니다.");
@@ -62,4 +59,3 @@ public class DataManager : Singleton<DataManager>, IInitializable
         return new List<TrackData>(tracks);
     }
 }
-
