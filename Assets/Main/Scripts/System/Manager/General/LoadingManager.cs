@@ -88,6 +88,8 @@ public class LoadingManager : Singleton<LoadingManager>
             UIManager.Instance.Initialize();
         }
 
+        UIManager.Instance.CloseAllPanels();
+
         loadingUI = UIManager.Instance.OpenPanel(PanelType.Loading) as LoadingPanel;
 
         if (asyncOperation != null)
@@ -161,6 +163,7 @@ public class LoadingManager : Singleton<LoadingManager>
         float startTime = Time.time;
 
         var operationCoroutine = asyncOperation();
+
         while (operationCoroutine.MoveNext())
         {
             if (operationCoroutine.Current is float progressValue)
