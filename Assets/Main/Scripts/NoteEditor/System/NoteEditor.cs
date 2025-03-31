@@ -64,28 +64,9 @@ namespace NoteEditor
             if (track == null)
                 return;
 
-            StartCoroutine(LoadNoteMapRoutine(track));
-        }
+            noteMap = track.noteMap;
 
-        private IEnumerator LoadNoteMapRoutine(TrackData track)
-        {
-            var task = EditorDataManager.Instance.LoadNoteMapAsync(track);
-            yield return new WaitUntil(() => task.IsCompleted);
-
-            noteMap = task.Result;
-
-            if (noteMap == null)
-            {
-                Debug.Log($"[NoteEditor] 노트맵이 존재하지 않아 새로 생성 : {track.trackName}");
-                noteMap = new NoteMap();
-                noteMap.bpm = track.bpm;
-                noteMap.beatsPerBar = 4;
-                noteMap.notes = new List<NoteData>();
-                var saveTask = EditorDataManager.Instance.SaveNoteMapAsync(track, noteMap);
-                yield return new WaitUntil(() => saveTask.IsCompleted);
-            }
-
-            UpdateRailAndCells(EditorManager.Instance.CurrentTrack);
+            UpdateRailAndCells(track);
 
             ApplyNotesToCells();
         }
@@ -102,7 +83,7 @@ namespace NoteEditor
 
             if (railController != null && railController.IsInitialized)
             {
-                railController.SetupRail(noteMap.bpm, noteMap.beatsPerBar, track.TrackAudio);
+                railController.SetupRail(track.TrackAudio);
             }
 
             if (cellController != null && cellController.IsInitialized)
@@ -711,16 +692,16 @@ namespace NoteEditor
 
             try
             {
-                if (AudioManager.Instance.currentTrack != null)
+                if (EditorManager.Instance.CurrentTrack != null)
                 {
-                    string trackName = AudioManager.Instance.currentTrack.trackName;
+                    string trackName = EditorManager.Instance.CurrentTrack.trackName;
 
-                    AudioManager.Instance.currentTrack.noteMap = noteMap;
+                    EditorManager.Instance.CurrentTrack.noteMap = noteMap;
 
                     if (EditorDataManager.Instance != null)
                     {
                         await EditorDataManager.Instance.SaveNoteMapAsync(
-                            AudioManager.Instance.currentTrack,
+                            EditorManager.Instance.CurrentTrack,
                             noteMap
                         );
                         editorManager.editorPanel.UpdateStatusText(
@@ -840,11 +821,11 @@ namespace NoteEditor
             }
 
             if (
-                AudioManager.Instance.currentTrack != null
-                && AudioManager.Instance.currentTrack.TrackAudio != null
+                EditorManager.Instance.CurrentTrack != null
+                && EditorManager.Instance.CurrentTrack.TrackAudio != null
             )
             {
-                UpdateRailAndCells(AudioManager.Instance.currentTrack);
+                UpdateRailAndCells(EditorManager.Instance.CurrentTrack);
             }
 
             SaveNoteMap();
@@ -857,18 +838,15 @@ namespace NoteEditor
 
             noteMap.beatsPerBar = newBeatsPerBar;
 
-            if (railController != null && railController.IsInitialized)
-            {
-                railController.UpdateBeatsPerBar(newBeatsPerBar);
-            }
+            AudioManager.Instance.BeatsPerBar = newBeatsPerBar;
 
-            if (
-                AudioManager.Instance.currentTrack != null
-                && AudioManager.Instance.currentTrack.TrackAudio != null
-            )
-            {
-                UpdateRailAndCells(AudioManager.Instance.currentTrack);
-            }
+            railController.SetupRail(EditorManager.Instance.CurrentTrack.TrackAudio);
+
+            cellController.Setup();
+
+            noteMap = new NoteMap() { beatsPerBar = newBeatsPerBar, bpm = noteMap.bpm };
+
+            EditorManager.Instance.CurrentTrack.noteMap = noteMap;
 
             SaveNoteMap();
 

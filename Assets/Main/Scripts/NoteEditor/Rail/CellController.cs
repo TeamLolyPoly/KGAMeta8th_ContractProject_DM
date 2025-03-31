@@ -62,7 +62,7 @@ namespace NoteEditor
             railWidth = railController.RailWidth;
             railSpacing = railController.RailSpacing;
 
-            if (railController.TotalBars <= 0)
+            if (AudioManager.Instance.TotalBars <= 0)
             {
                 Debug.LogWarning(
                     "[CellController] RailController의 TotalBars가 유효하지 않습니다."
@@ -91,7 +91,7 @@ namespace NoteEditor
 
         public void GenerateCells()
         {
-            if (railController == null || railController.TotalBars <= 0)
+            if (railController == null || AudioManager.Instance.TotalBars <= 0)
             {
                 Debug.LogWarning(
                     "[CellController] RailController가 초기화되지 않았거나 TotalBars 값이 유효하지 않습니다. 셀 생성을 건너뜁니다."
@@ -102,7 +102,7 @@ namespace NoteEditor
             cells.Clear();
             selectedCell = null;
 
-            float totalBars = railController.TotalBars;
+            float totalBars = AudioManager.Instance.TotalBars;
             float unitsPerBar = railController.UnitsPerBar;
 
             if (totalBars <= 0 || unitsPerBar <= 0)
@@ -116,7 +116,7 @@ namespace NoteEditor
             float totalWidth = (laneCount * railWidth) + ((laneCount - 1) * railSpacing);
             float startX = -totalWidth / 2f + (railWidth / 2f);
 
-            for (int bar = 0; bar <= Mathf.CeilToInt(totalBars); bar++)
+            for (int bar = 0; bar < Mathf.CeilToInt(totalBars); bar++)
             {
                 float barStartPos = (bar / totalBars) * railLength;
 

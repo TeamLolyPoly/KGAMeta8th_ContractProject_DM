@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -13,28 +14,43 @@ namespace NoteEditor
         private float volume = 1.0f;
         public float Volume => volume;
 
+        public int TotalBeats
+        {
+            get
+            {
+                if (currentTrack == null || currentAudioSource == null)
+                    return 0;
+
+                if (totalBars <= 0)
+                {
+                    return 0;
+                }
+
+                print(
+                    $"[AudioManager] TotalBeats: {Mathf.RoundToInt(totalBars * currentBeatsPerBar)} totalBars: {totalBars} currentBeatsPerBar: {currentBeatsPerBar}"
+                );
+
+                return Mathf.RoundToInt(totalBars * currentBeatsPerBar);
+            }
+        }
+
         private float currentBPM = 120f;
         private int currentBeatsPerBar = 4;
-        private float totalBars = 0;
+        private int totalBars = 0;
 
-        public float TotalBars => totalBars;
+        public int TotalBars => totalBars;
 
         public float CurrentBPM
         {
             get => currentBPM;
             set
             {
-                if (!Mathf.Approximately(currentBPM, value))
+                if (currentTrack != null)
                 {
-                    currentBPM = value;
-
-                    if (currentTrack != null)
-                    {
-                        currentTrack.bpm = value;
-                    }
-
-                    UpdateTotalBars();
+                    currentTrack.bpm = value;
                 }
+
+                UpdateTotalBars();
             }
         }
 
@@ -46,7 +62,6 @@ namespace NoteEditor
                 if (currentBeatsPerBar != value)
                 {
                     currentBeatsPerBar = value;
-                    UpdateTotalBars();
                 }
             }
         }
@@ -187,9 +202,7 @@ namespace NoteEditor
             currentPlaybackTime = 0;
 
             CurrentBPM = track.bpm;
-            BeatsPerBar = 4;
-
-            UpdateTotalBars();
+            BeatsPerBar = track.noteMap.beatsPerBar;
         }
 
         /// <summary>
@@ -201,8 +214,19 @@ namespace NoteEditor
             {
                 float clipDuration = currentAudioSource.clip.length;
                 float secondsPerBeat = 60f / currentBPM;
-                float secondsPerBar = secondsPerBeat * currentBeatsPerBar;
-                totalBars = clipDuration / secondsPerBar;
+                float secondsPerBar = secondsPerBeat * BeatsPerBar;
+                float rawTotalBars = clipDuration / secondsPerBar;
+                totalBars = Mathf.FloorToInt(rawTotalBars);
+                print(
+                    $"[AudioManager] UpdateTotalBars\n"
+                        + $" currentBeatsPerBar: {currentBeatsPerBar}\n"
+                        + $" currentBPM: {currentBPM}\n"
+                        + $" secondsPerBeat: {secondsPerBeat}\n"
+                        + $" secondsPerBar: {secondsPerBar}\n"
+                        + $" clipDuration: {clipDuration}\n"
+                        + $" rawTotalBars: {rawTotalBars}\n"
+                        + $" totalBars: {totalBars}\n"
+                );
             }
         }
 

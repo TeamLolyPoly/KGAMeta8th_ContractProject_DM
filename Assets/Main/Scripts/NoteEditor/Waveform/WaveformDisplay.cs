@@ -24,7 +24,6 @@ namespace NoteEditor
         private Color downBeatMarkerColor = Color.yellow;
 
         public float bpm = 120f;
-        public int beatsPerBar = 4;
 
         public GameObject beatMarkerPrefab;
         public GameObject downBeatMarkerPrefab;
@@ -86,7 +85,6 @@ namespace NoteEditor
             waveformImage.rectTransform.offsetMax = Vector2.zero;
 
             bpm = AudioManager.Instance.CurrentBPM;
-            beatsPerBar = AudioManager.Instance.BeatsPerBar;
 
             if (
                 AudioManager.Instance.currentTrack != null
@@ -108,9 +106,8 @@ namespace NoteEditor
             }
         }
 
-        public void OnBeatsPerBarChanged(int newBeatsPerBar)
+        public void OnBeatsPerBarChanged()
         {
-            beatsPerBar = newBeatsPerBar;
             if (IsInitialized && currentClip != null)
             {
                 GenerateBeatMarkers();
@@ -241,26 +238,36 @@ namespace NoteEditor
             if (currentClip == null || bpm <= 0)
                 return;
 
+            int beatsPerBar = AudioManager.Instance.BeatsPerBar;
             float totalBars = AudioManager.Instance.TotalBars;
             float waveformWidth = waveformRect.rect.width;
 
-            for (int bar = 0; bar <= Mathf.CeilToInt(totalBars); bar++)
+            Debug.Log(
+                $"[WaveformDisplay] 비트 마커 생성: totalBars={totalBars}, beatsPerBar={beatsPerBar}, waveformWidth={waveformWidth}"
+            );
+
+            float barWidth = waveformWidth / totalBars;
+
+            for (int bar = 0; bar < Mathf.RoundToInt(totalBars); bar++)
             {
                 float barStartPos = (bar / totalBars) * waveformWidth;
                 float adjustedBarPos = barStartPos - (waveformWidth / 2f);
+
                 CreateBeatMarker(adjustedBarPos, true);
 
                 for (int beat = 1; beat < beatsPerBar; beat++)
                 {
-                    float beatPos =
-                        barStartPos + (beat * (waveformWidth / (totalBars * beatsPerBar)));
+                    float beatPos = barStartPos + (beat * (barWidth / beatsPerBar));
                     float adjustedBeatPos = beatPos - (waveformWidth / 2f);
+
                     if (beatPos <= waveformWidth)
                     {
                         CreateBeatMarker(adjustedBeatPos, false);
                     }
                 }
             }
+
+            Debug.Log($"[WaveformDisplay] 비트 마커 생성 완료: {beatMarkerObjects.Count}개");
         }
 
         private void CreateBeatMarker(float position, bool isDownBeat)

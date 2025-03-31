@@ -47,6 +47,7 @@ namespace NoteEditor
                     year = trackMetadata.year,
                     genre = trackMetadata.genre,
                     duration = trackMetadata.duration,
+                    noteMap = await LoadNoteMapAsync(trackMetadata),
                 };
 
                 tracks.Add(track);
@@ -160,6 +161,8 @@ namespace NoteEditor
                 TrackData newTrack = result.trackData;
 
                 newTrack.TrackAudio = result.clip;
+
+                newTrack.noteMap = new NoteMap() { beatsPerBar = 4, bpm = newTrack.bpm };
 
                 tracks.Add(newTrack);
 
@@ -386,7 +389,9 @@ namespace NoteEditor
 
                 if (!File.Exists(noteMapPath))
                 {
-                    return null;
+                    NoteMap NM = new NoteMap() { beatsPerBar = 4, bpm = track.bpm };
+                    await SaveNoteMapAsync(track, NM);
+                    return NM;
                 }
 
                 string json = await Task.Run(() => File.ReadAllText(noteMapPath));
