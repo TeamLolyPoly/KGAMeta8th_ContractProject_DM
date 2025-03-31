@@ -66,15 +66,15 @@ namespace NoteEditor
             yield return 0;
             yield return new WaitForSeconds(0.3f);
 
-            LoadingManager.Instance.SetLoadingText("오디오 매니저 초기화 중...");
+            LoadingManager.Instance.SetLoadingText("오디오 시스템 초기화 중...");
             AudioManager.Instance.Initialize();
             yield return 0.5f;
-            yield return new WaitForSeconds(3f);
+            yield return new WaitForSeconds(1f);
 
-            LoadingManager.Instance.SetLoadingText("데이터 매니저 초기화 중...");
+            LoadingManager.Instance.SetLoadingText("데이터 시스템 초기화 중...");
             EditorDataManager.Instance.Initialize();
             yield return 0.8f;
-            yield return new WaitForSeconds(5f);
+            yield return new WaitForSeconds(1f);
 
             isInitialized = true;
             yield return 1f;
@@ -207,7 +207,7 @@ namespace NoteEditor
             LoadingManager.Instance.SetLoadingText("트랙 설정 중...");
             AudioManager.Instance.SetTrack(CurrentTrack, CurrentTrack.TrackAudio);
             yield return 0.5f;
-            yield return new WaitForSeconds(3f);
+            yield return new WaitForSeconds(1f);
 
             LoadingManager.Instance.SetLoadingText("입력 설정 중...");
             SetupInputActions();
@@ -217,9 +217,8 @@ namespace NoteEditor
             LoadingManager.Instance.SetLoadingText("노트 에디터 트랙 설정 중...");
             noteEditor.SetTrack(CurrentTrack);
             yield return 0.8f;
-            yield return new WaitForSeconds(3f);
+            yield return new WaitForSeconds(1f);
 
-            LoadingManager.Instance.SetLoadingText("에디터 준비 완료!");
             yield return 0.9f;
             yield return new WaitForSeconds(1f);
 
