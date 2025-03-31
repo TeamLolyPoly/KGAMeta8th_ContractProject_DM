@@ -27,22 +27,20 @@ namespace NoteEditor
                 }
 
                 print(
-                    $"[AudioManager] TotalBeats: {Mathf.RoundToInt(totalBars * currentBeatsPerBar)} totalBars: {totalBars} currentBeatsPerBar: {currentBeatsPerBar}"
+                    $"[AudioManager] TotalBeats: {Mathf.RoundToInt(totalBars * currentTrack.noteMap.beatsPerBar)} totalBars: {totalBars} currentBeatsPerBar: {currentTrack.noteMap.beatsPerBar}"
                 );
 
-                return Mathf.RoundToInt(totalBars * currentBeatsPerBar);
+                return Mathf.RoundToInt(totalBars * currentTrack.noteMap.beatsPerBar);
             }
         }
 
-        private float currentBPM = 120f;
-        private int currentBeatsPerBar = 4;
         private int totalBars = 0;
 
         public int TotalBars => totalBars;
 
         public float CurrentBPM
         {
-            get => currentBPM;
+            get => currentTrack.bpm;
             set
             {
                 if (currentTrack != null)
@@ -56,12 +54,12 @@ namespace NoteEditor
 
         public int BeatsPerBar
         {
-            get => currentBeatsPerBar;
+            get => currentTrack.noteMap.beatsPerBar;
             set
             {
-                if (currentBeatsPerBar != value)
+                if (currentTrack.noteMap.beatsPerBar != value)
                 {
-                    currentBeatsPerBar = value;
+                    currentTrack.noteMap.beatsPerBar = value;
                 }
             }
         }
@@ -213,14 +211,14 @@ namespace NoteEditor
             if (currentAudioSource != null && currentAudioSource.clip != null)
             {
                 float clipDuration = currentAudioSource.clip.length;
-                float secondsPerBeat = 60f / currentBPM;
-                float secondsPerBar = secondsPerBeat * BeatsPerBar;
+                float secondsPerBeat = 60f / CurrentBPM;
+                float secondsPerBar = secondsPerBeat * 4;
                 float rawTotalBars = clipDuration / secondsPerBar;
                 totalBars = Mathf.FloorToInt(rawTotalBars);
                 print(
                     $"[AudioManager] UpdateTotalBars\n"
-                        + $" currentBeatsPerBar: {currentBeatsPerBar}\n"
-                        + $" currentBPM: {currentBPM}\n"
+                        + $" currentTrack.noteMap.beatsPerBar: {currentTrack.noteMap.beatsPerBar}\n"
+                        + $" currentBPM: {CurrentBPM}\n"
                         + $" secondsPerBeat: {secondsPerBeat}\n"
                         + $" secondsPerBar: {secondsPerBar}\n"
                         + $" clipDuration: {clipDuration}\n"

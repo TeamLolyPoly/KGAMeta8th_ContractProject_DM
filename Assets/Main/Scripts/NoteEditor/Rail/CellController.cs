@@ -103,7 +103,7 @@ namespace NoteEditor
             selectedCell = null;
 
             float totalBars = AudioManager.Instance.TotalBars;
-            float unitsPerBar = railController.UnitsPerBar;
+            float unitsPerBar = railController.UnitsPerBeat * AudioManager.Instance.BeatsPerBar;
 
             if (totalBars <= 0 || unitsPerBar <= 0)
             {
@@ -116,15 +116,15 @@ namespace NoteEditor
             float totalWidth = (laneCount * railWidth) + ((laneCount - 1) * railSpacing);
             float startX = -totalWidth / 2f + (railWidth / 2f);
 
-            for (int bar = 0; bar < Mathf.CeilToInt(totalBars); bar++)
+            for (int bar = 0; bar < totalBars; bar++)
             {
                 float barStartPos = (bar / totalBars) * railLength;
 
-                int beatsPerBar = railController.BeatsPerBar;
+                int beatsPerBar = AudioManager.Instance.BeatsPerBar;
 
                 for (int beat = 0; beat < beatsPerBar; beat++)
                 {
-                    float beatPos = barStartPos + (beat * (unitsPerBar / beatsPerBar));
+                    float beatPos = barStartPos + (beat * railController.UnitsPerBeat);
 
                     float nextBeatPos;
                     if (beat == beatsPerBar - 1)
@@ -133,7 +133,7 @@ namespace NoteEditor
                     }
                     else
                     {
-                        nextBeatPos = barStartPos + ((beat + 1) * (unitsPerBar / beatsPerBar));
+                        nextBeatPos = barStartPos + ((beat + 1) * railController.UnitsPerBeat);
                     }
 
                     float middleBeatPos = (beatPos + nextBeatPos) / 2f;

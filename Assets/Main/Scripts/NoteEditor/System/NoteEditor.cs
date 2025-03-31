@@ -278,7 +278,7 @@ namespace NoteEditor
                 if (durationBeats < 0)
                 {
                     durationBars--;
-                    durationBeats += railController.BeatsPerBar;
+                    durationBeats += AudioManager.Instance.BeatsPerBar;
                 }
 
                 bool isStartCellInGrid = !(
@@ -606,10 +606,10 @@ namespace NoteEditor
                     int endBar = symmetricStartCell.bar + durationBars;
                     int endBeat = symmetricStartCell.beat + durationBeats;
 
-                    if (endBeat >= railController.BeatsPerBar)
+                    if (endBeat >= AudioManager.Instance.BeatsPerBar)
                     {
-                        endBar += endBeat / railController.BeatsPerBar;
-                        endBeat = endBeat % railController.BeatsPerBar;
+                        endBar += endBeat / AudioManager.Instance.BeatsPerBar;
+                        endBeat = endBeat % AudioManager.Instance.BeatsPerBar;
                     }
 
                     symmetricEndCell = cellController.GetCell(
@@ -766,10 +766,10 @@ namespace NoteEditor
                         int endBar = note.bar + note.durationBars;
                         int endBeat = note.beat + note.durationBeats;
 
-                        if (endBeat >= railController.BeatsPerBar)
+                        if (endBeat >= AudioManager.Instance.BeatsPerBar)
                         {
-                            endBar += endBeat / railController.BeatsPerBar;
-                            endBeat = endBeat % railController.BeatsPerBar;
+                            endBar += endBeat / AudioManager.Instance.BeatsPerBar;
+                            endBeat = endBeat % AudioManager.Instance.BeatsPerBar;
                         }
 
                         targetCell = cellController.GetCell(endBar, endBeat, targetLane, targetY);
@@ -815,9 +815,11 @@ namespace NoteEditor
 
             noteMap.bpm = newBpm;
 
+            AudioManager.Instance.CurrentBPM = newBpm;
+
             if (railController != null && railController.IsInitialized)
             {
-                railController.UpdateBPM(newBpm);
+                railController.UpdateBPM();
             }
 
             if (

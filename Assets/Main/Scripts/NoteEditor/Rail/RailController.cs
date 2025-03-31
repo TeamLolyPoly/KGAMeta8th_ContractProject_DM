@@ -8,7 +8,6 @@ namespace NoteEditor
     public class RailController : MonoBehaviour, IInitializable
     {
         private int laneCount = 5;
-        private float unitsPerBar = 10f;
         private float minRailLength = 20f;
         private float railWidth = 1f;
         private float railSpacing = 0.1f;
@@ -36,11 +35,8 @@ namespace NoteEditor
         private Canvas waveformCanvas;
         private bool isInitialized = false;
         public bool IsInitialized => isInitialized;
-        private float bpm = 120f;
-        private int beatsPerBar = 4;
+
         private float railLength = 20f;
-        public float UnitsPerBar => unitsPerBar;
-        public int BeatsPerBar => beatsPerBar;
 
         public void Initialize()
         {
@@ -185,14 +181,6 @@ namespace NoteEditor
                         float barStartPos =
                             bar / (float)AudioManager.Instance.TotalBars * railLength;
 
-                        print(
-                            $"[RailController] 레일 생성\n"
-                                + $" bar: {bar}\n"
-                                + $" barStartPos: {barStartPos}\n"
-                                + $" railLength: {railLength}\n"
-                                + $" TotalBars: {AudioManager.Instance.TotalBars}\n"
-                        );
-
                         if (barStartPos <= railLength)
                         {
                             GameObject barContainer = new GameObject($"Bar_{bar}");
@@ -237,10 +225,11 @@ namespace NoteEditor
                                 barRenderer.material = barLineMaterial;
                                 divisionsList.Add(barLine);
 
-                                for (int beat = 1; beat < beatsPerBar; beat++)
+                                for (int beat = 1; beat < AudioManager.Instance.BeatsPerBar; beat++)
                                 {
                                     float beatPos =
-                                        barStartPos + (beat * (barLength / beatsPerBar));
+                                        barStartPos
+                                        + (beat * (barLength / AudioManager.Instance.BeatsPerBar));
                                     GameObject beatLine = GameObject.CreatePrimitive(
                                         PrimitiveType.Cube
                                     );
@@ -349,7 +338,7 @@ namespace NoteEditor
                         waveformRect.offsetMin = Vector2.zero;
                         waveformRect.offsetMax = Vector2.zero;
 
-                        waveformDisplay.bpm = bpm;
+                        waveformDisplay.bpm = AudioManager.Instance.CurrentBPM;
                         waveformDisplay.SetColors(
                             beatMarkerColor,
                             downBeatMarkerColor,
@@ -382,7 +371,7 @@ namespace NoteEditor
             railLength = Mathf.Max(calculatedLength, minRailLength);
 
             Debug.Log(
-                $"[RailController] 레일 설정: BPM = {bpm}, BeatsPerBar = {beatsPerBar}, TotalBeats = {totalBeats}, Length = {railLength}"
+                $"[RailController] 레일 설정: BPM = {AudioManager.Instance.CurrentBPM}, BeatsPerBar = {AudioManager.Instance.BeatsPerBar}, TotalBeats = {totalBeats}, Length = {railLength}"
             );
 
             Cleanup();
@@ -391,10 +380,8 @@ namespace NoteEditor
             waveformDisplay.UpdateWaveform(clip);
         }
 
-        public void UpdateBPM(float newBpm)
+        public void UpdateBPM()
         {
-            bpm = newBpm;
-
             SetupRail(EditorManager.Instance.CurrentTrack.TrackAudio);
         }
     }
