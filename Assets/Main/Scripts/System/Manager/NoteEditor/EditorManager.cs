@@ -63,7 +63,7 @@ namespace NoteEditor
             LoadingManager.Instance.SetLoadingText("트랙 초기화 중...");
             CurrentTrack = null;
             AudioManager.Instance.Stop();
-            AudioManager.Instance.currentAudioSource = null;
+            AudioManager.Instance.currentAudioSource.clip = null;
             AudioManager.Instance.currentTrack = null;
             yield return 0.2f;
             yield return new WaitForSeconds(0.3f);
