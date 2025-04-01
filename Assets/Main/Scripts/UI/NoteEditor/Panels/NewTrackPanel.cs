@@ -46,6 +46,11 @@ namespace NoteEditor
             closeButton.onClick.AddListener(OnBackButtonClick);
             loadTrackButton.onClick.AddListener(LoadTrack);
             proceedButton.onClick.AddListener(Proceed);
+            bpmInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+            bpmInput.onValidateInput += ValidateBPMInput;
+
+            yearInput.contentType = TMP_InputField.ContentType.IntegerNumber;
+            yearInput.onValidateInput += ValidateYearInput;
         }
 
         public override void Close(bool objActive = false)
@@ -60,7 +65,23 @@ namespace NoteEditor
             closeButton.onClick.RemoveListener(OnBackButtonClick);
             loadTrackButton.onClick.RemoveListener(LoadTrack);
             proceedButton.onClick.RemoveListener(Proceed);
+            bpmInput.onValidateInput -= ValidateBPMInput;
+            yearInput.onValidateInput -= ValidateYearInput;
             base.Close(objActive);
+        }
+
+        private char ValidateBPMInput(string text, int charIndex, char addedChar)
+        {
+            if (char.IsDigit(addedChar) || (addedChar == '.' && !text.Contains(".")))
+                return addedChar;
+            return '\0';
+        }
+
+        private char ValidateYearInput(string text, int charIndex, char addedChar)
+        {
+            if (char.IsDigit(addedChar))
+                return addedChar;
+            return '\0';
         }
 
         private bool SaveMetaData()

@@ -19,10 +19,9 @@ namespace NoteEditor
         private ShortNoteModel shortNoteModelPrefab;
         private LongNoteModel longNoteModelPrefab;
 
-        // 이벤트 핸들러를 저장할 변수들
-        private System.Action<InputAction.CallbackContext> createShortNoteHandler;
-        private System.Action<InputAction.CallbackContext> createLongNoteHandler;
-        private System.Action<InputAction.CallbackContext> deleteNoteHandler;
+        private Action<InputAction.CallbackContext> createShortNoteHandler;
+        private Action<InputAction.CallbackContext> createLongNoteHandler;
+        private Action<InputAction.CallbackContext> deleteNoteHandler;
 
         public void Initialize()
         {
@@ -125,6 +124,7 @@ namespace NoteEditor
                 cellController != null
                 && cellController.SelectedCell != null
                 && cellController.SelectedCell.isOccupied == false
+                && !isCreatingLongNote
             )
             {
                 CreateShortNote(cellController.SelectedCell);
@@ -151,6 +151,12 @@ namespace NoteEditor
             {
                 editorManager.editorPanel.UpdateStatusText(
                     "<color=red>이미 노트가 있는 셀입니다.</color>"
+                );
+            }
+            else if (isCreatingLongNote)
+            {
+                editorManager.editorPanel.UpdateStatusText(
+                    "<color=red>롱노트를 생성하는 중입니다. 끝점을 선택해주세요.</color>"
                 );
             }
             else
@@ -193,6 +199,26 @@ namespace NoteEditor
             if (isCreatingLongNote)
             {
                 Cell endCell = selectedCell;
+
+                if (longNoteStartCell == endCell)
+                {
+                    editorManager.editorPanel.UpdateStatusText(
+                        "<color=red>시작점과 끝점이 같은 셀입니다.</color>"
+                    );
+                    isCreatingLongNote = false;
+                    longNoteStartCell = null;
+                    return;
+                }
+
+                if (longNoteStartCell.bar == endCell.bar && longNoteStartCell.beat == endCell.beat)
+                {
+                    editorManager.editorPanel.UpdateStatusText(
+                        "<color=red>시작점과 끝점이 같은 셀입니다.</color>"
+                    );
+                    isCreatingLongNote = false;
+                    longNoteStartCell = null;
+                    return;
+                }
 
                 CreateLongNote(longNoteStartCell, endCell);
 
@@ -461,15 +487,17 @@ namespace NoteEditor
 
             if (isSymmetric && cell.longNoteModel.symmetricObject != null)
             {
-                symmetricObject = cell.longNoteModel.symmetricObject;
+                symmetricObject = cell.longNoteModel.symmetricObject.gameObject;
             }
-
-            UpdateSymmetricNote(
-                cell.longNoteModel.startCell,
-                cell.longNoteModel.endCell,
-                cell.noteData,
-                false
-            );
+            if (isSymmetric)
+            {
+                UpdateSymmetricNote(
+                    cell.longNoteModel.startCell,
+                    cell.longNoteModel.endCell,
+                    cell.noteData,
+                    false
+                );
+            }
 
             Destroy(cell.longNoteModel.gameObject);
             cell.longNoteModel = null;
@@ -542,20 +570,33 @@ namespace NoteEditor
 
                 longNoteModel.startCell.noteData.isSymmetric = isSymmetric;
 
-                GameObject symmetricModel = UpdateSymmetricNote(
+                LongNoteModel symmetricModel = UpdateSymmetricNote(
                     longNoteModel.startCell,
                     longNoteModel.endCell,
                     cellController.SelectedCell.noteData,
                     isSymmetric
                 );
-                longNoteModel.symmetricObject = symmetricModel;
+                if (symmetricModel != null)
+                {
+                    longNoteModel.symmetricObject = symmetricModel;
+                }
+                else
+                {
+                    cellController.SelectedCell.noteData.isSymmetric = false;
+
+                    cellController.SelectedCell.longNoteModel.SetSymmetric(false);
+
+                    editorManager.editorPanel.UpdateStatusText(
+                        "<color=red>대칭 노트를 위한 셀이 비어있지 않습니다.</color>"
+                    );
+                }
             }
 
             editorManager.SaveNoteMapAsync();
             return true;
         }
 
-        public GameObject UpdateSymmetricNote(
+        public LongNoteModel UpdateSymmetricNote(
             Cell originalStart,
             Cell orignialTarget,
             NoteData noteData,
@@ -566,10 +607,10 @@ namespace NoteEditor
                 return null;
 
             string symmetricVisualName = $"SymmetricNote_{originalStart.name}";
-            GameObject existingSymmetricModel = originalStart.longNoteModel.symmetricObject;
-            if (existingSymmetricModel != null)
+
+            if (originalStart.longNoteModel.symmetricObject != null)
             {
-                Destroy(existingSymmetricModel);
+                Destroy(originalStart.longNoteModel.symmetricObject.gameObject);
             }
 
             if (createSymmetric)
@@ -588,42 +629,30 @@ namespace NoteEditor
                         2 * centerGrid.y - orignialTarget.cellPosition.y
                     );
 
-                    Cell symmetricStartCell = GetCellByPosition(symStartPos);
-                    Cell symmetricEndCell = GetCellByPosition(symEndPos);
+                    Cell symmetricStartCell = cellController.GetCell(
+                        originalStart.bar,
+                        originalStart.beat,
+                        symStartPos.x,
+                        symStartPos.y
+                    );
+
+                    Cell symmetricEndCell = cellController.GetCell(
+                        orignialTarget.bar,
+                        orignialTarget.beat,
+                        symEndPos.x,
+                        symEndPos.y
+                    );
+                    if (symmetricStartCell.isOccupied || symmetricEndCell.isOccupied)
+                    {
+                        return null;
+                    }
 
                     if (symmetricStartCell == null || symmetricEndCell == null)
                     {
                         Debug.LogWarning(
                             $"대칭 노트를 위한 셀을 찾을 수 없습니다. "
-                                + $"시작점: ({symStartPos.x}, {symStartPos.y}), "
-                                + $"끝점: ({symEndPos.x}, {symEndPos.y})"
-                        );
-                        return null;
-                    }
-
-                    int durationBars = noteData.durationBars;
-                    int durationBeats = noteData.durationBeats;
-
-                    int endBar = symmetricStartCell.bar + durationBars;
-                    int endBeat = symmetricStartCell.beat + durationBeats;
-
-                    if (endBeat >= AudioManager.Instance.BeatsPerBar)
-                    {
-                        endBar += endBeat / AudioManager.Instance.BeatsPerBar;
-                        endBeat = endBeat % AudioManager.Instance.BeatsPerBar;
-                    }
-
-                    symmetricEndCell = cellController.GetCell(
-                        endBar,
-                        endBeat,
-                        symEndPos.x,
-                        symEndPos.y
-                    );
-
-                    if (symmetricEndCell == null)
-                    {
-                        Debug.LogWarning(
-                            $"대칭 노트의 끝점 셀을 찾을 수 없습니다: 마디 {endBar}, 박자 {endBeat}, 위치 ({symEndPos.x}, {symEndPos.y})"
+                                + $"시작점: 마디 {originalStart.bar}, 박자 {originalStart.beat}, 위치 ({symStartPos.x}, {symStartPos.y}), "
+                                + $"끝점: 마디 {orignialTarget.bar}, 박자 {orignialTarget.beat}, 위치 ({symEndPos.x}, {symEndPos.y})"
                         );
                         return null;
                     }
@@ -642,7 +671,7 @@ namespace NoteEditor
 
                     symmetricNoteModel.Initialize(symmetricStartCell, symmetricEndCell);
 
-                    return symmetricNoteModel.gameObject;
+                    return symmetricNoteModel;
                 }
                 else
                 {
@@ -650,17 +679,23 @@ namespace NoteEditor
                     return null;
                 }
             }
-
-            return null;
-        }
-
-        private Cell GetCellByPosition(Vector2Int position)
-        {
-            foreach (var cell in cellController.Cells.Values)
+            else
             {
-                if (cell.cellPosition == position)
-                    return cell;
+                cellController.SelectedCell.longNoteModel.SetSymmetric(createSymmetric);
+                cellController.SelectedCell.longNoteModel.symmetricObject.startCell.isOccupied =
+                    false;
+                cellController.SelectedCell.longNoteModel.symmetricObject.startCell.cellRenderer.SetActive(
+                    true
+                );
+                cellController.SelectedCell.longNoteModel.symmetricObject.endCell.isOccupied =
+                    false;
+                cellController.SelectedCell.longNoteModel.symmetricObject.endCell.cellRenderer.SetActive(
+                    true
+                );
+                Destroy(cellController.SelectedCell.longNoteModel.symmetricObject.gameObject);
+                cellController.SelectedCell.longNoteModel.symmetricObject = null;
             }
+
             return null;
         }
 
