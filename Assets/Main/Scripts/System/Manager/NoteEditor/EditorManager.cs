@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Linq;
 using System.Threading.Tasks;
 using SFB;
 using UnityEngine;
@@ -17,6 +18,8 @@ namespace NoteEditor
         public CameraController cameraController { get; private set; }
         private InputActionAsset editorControlActions;
         public TrackData CurrentTrack { get; private set; }
+        public NoteMapData CurrentNoteMapData { get; set; }
+        public NoteMap CurrentNoteMap { get; set; }
         private string pendingAudioFilePath;
         private string pendingAlbumArtFilePath;
         private string currentSceneName;
@@ -60,11 +63,12 @@ namespace NoteEditor
             {
                 actionMap.Disable();
             }
+            CurrentNoteMap = null;
             LoadingManager.Instance.SetLoadingText("트랙 초기화 중...");
             CurrentTrack = null;
+            CurrentNoteMapData = null;
             AudioManager.Instance.Stop();
             AudioManager.Instance.currentAudioSource.clip = null;
-            AudioManager.Instance.currentTrack = null;
             yield return 0.2f;
             yield return new WaitForSeconds(0.3f);
             LoadingManager.Instance.SetLoadingText("셀 초기화 중...");
@@ -136,7 +140,7 @@ namespace NoteEditor
             cameraController = cameraObj.AddComponent<CameraController>();
         }
 
-        public async void SelectTrack(TrackData track)
+        public async void SelectTrack(TrackData track, NoteMapData noteMapData)
         {
             if (track == null)
             {
@@ -151,6 +155,10 @@ namespace NoteEditor
             }
 
             CurrentTrack = track;
+
+            CurrentNoteMapData = noteMapData;
+
+            CurrentNoteMap = noteMapData.noteMap;
 
             LoadingManager.Instance.LoadScene(
                 "Editor_Main",
@@ -194,7 +202,7 @@ namespace NoteEditor
             yield return new WaitUntil(() => noteEditor.IsInitialized);
 
             LoadingManager.Instance.SetLoadingText("트랙 설정 중...");
-            AudioManager.Instance.SetTrack(CurrentTrack, CurrentTrack.TrackAudio);
+            AudioManager.Instance.SetTrack(CurrentTrack.TrackAudio);
             yield return 0.5f;
             yield return new WaitForSeconds(1f);
 
@@ -204,7 +212,7 @@ namespace NoteEditor
             yield return new WaitForSeconds(1f);
 
             LoadingManager.Instance.SetLoadingText("노트 에디터 트랙 설정 중...");
-            noteEditor.SetTrack(CurrentTrack);
+            noteEditor.SetTrack();
             yield return 0.8f;
             yield return new WaitForSeconds(1f);
 
@@ -334,6 +342,12 @@ namespace NoteEditor
             }
 
             CurrentTrack = addTrackTask.Result;
+
+            CurrentNoteMapData = CurrentTrack.noteMapData.FirstOrDefault(n =>
+                n.difficulty == Difficulty.Easy
+            );
+
+            CurrentNoteMap = CurrentNoteMapData.noteMap;
 
             if (pendingAlbumArtFilePath != null)
             {
@@ -474,11 +488,23 @@ namespace NoteEditor
         {
             if (CurrentTrack != null)
             {
-                await EditorDataManager.Instance.SetBPMAsync(CurrentTrack.trackName, bpm);
+                await EditorDataManager.Instance.SetBPMAsync(CurrentTrack, bpm);
 
                 AudioManager.Instance.CurrentBPM = bpm;
 
                 noteEditor.UpdateBPM(bpm);
+            }
+        }
+
+        public async void SaveNoteMapAsync(TrackData track = null)
+        {
+            if (track != null)
+            {
+                await EditorDataManager.Instance.SaveNoteMapAsync(track);
+            }
+            else if (CurrentTrack != null)
+            {
+                await EditorDataManager.Instance.SaveNoteMapAsync(CurrentTrack);
             }
         }
 
