@@ -11,10 +11,11 @@ namespace NoteEditor
     /// <summary>
     /// 오디오 파일 및 관련 리소스의 로드/저장을 담당하는 서비스 클래스
     /// </summary>
-    public class AudioFileService
+    public static class ResourceIO
     {
-        private Dictionary<string, AudioClip> audioCache = new Dictionary<string, AudioClip>();
-        private Dictionary<string, Sprite> imageCache = new Dictionary<string, Sprite>();
+        private static Dictionary<string, AudioClip> audioCache =
+            new Dictionary<string, AudioClip>();
+        private static Dictionary<string, Sprite> imageCache = new Dictionary<string, Sprite>();
 
         #region 오디오 파일 관련 메서드
 
@@ -24,19 +25,19 @@ namespace NoteEditor
         /// <param name="trackName">트랙 이름</param>
         /// <param name="progress">진행 상황 보고 인터페이스</param>
         /// <returns>로드된 AudioClip</returns>
-        public async Task<AudioClip> LoadAudioAsync(
-            string trackName,
+        public static async Task<AudioClip> LoadAudioAsync(
+            TrackData trackData,
             IProgress<float> progress = null
         )
         {
-            if (audioCache.TryGetValue(trackName, out AudioClip cachedClip))
+            if (audioCache.TryGetValue(trackData.id.ToString(), out AudioClip cachedClip))
             {
-                Debug.Log($"오디오 캐시에서 로드: {trackName}");
+                Debug.Log($"오디오 캐시에서 로드: {trackData.trackName}");
                 progress?.Report(1.0f);
                 return cachedClip;
             }
 
-            string filePath = AudioPathProvider.GetAudioFilePath(trackName);
+            string filePath = ResourcePath.GetAudioFilePath(trackData.id);
             if (!File.Exists(filePath))
             {
                 Debug.LogError($"오디오 파일을 찾을 수 없음: {filePath}");
@@ -70,9 +71,9 @@ namespace NoteEditor
                     if (www.result == UnityWebRequest.Result.Success)
                     {
                         AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
-                        clip.name = trackName;
+                        clip.name = trackData.trackName;
 
-                        audioCache[trackName] = clip;
+                        audioCache[trackData.id.ToString()] = clip;
 
                         progress?.Report(1.0f);
                         return clip;
@@ -97,13 +98,14 @@ namespace NoteEditor
         /// <param name="filePath">외부 파일 경로</param>
         /// <param name="progress">진행 상황 보고 인터페이스</param>
         /// <returns>로드된 AudioClip과 트랙 이름</returns>
-        public async Task<(AudioClip clip, string trackName)> ImportAudioFileAsync(
+        public static async Task<(AudioClip clip, TrackData trackData)> ImportAudioFileAsync(
             string filePath,
             IProgress<float> progress = null
         )
         {
             string trackName = Path.GetFileNameWithoutExtension(filePath);
 
+            LoadingManager.Instance.SetLoadingText($"오디오 경로 로드 중... {trackName}");
             progress?.Report(0.1f);
 
             try
@@ -122,6 +124,7 @@ namespace NoteEditor
 
                     var operation = www.SendWebRequest();
 
+                    LoadingManager.Instance.SetLoadingText($"오디오 파일 로드 중...");
                     while (!operation.isDone)
                     {
                         progress?.Report(0.1f + 0.6f * www.downloadProgress);
@@ -130,29 +133,37 @@ namespace NoteEditor
 
                     if (www.result == UnityWebRequest.Result.Success)
                     {
+                        LoadingManager.Instance.SetLoadingText($"오디오 파일 저장 중... ");
                         AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
-                        clip.name = trackName;
+
+                        TrackData trackData = new TrackData
+                        {
+                            id = Guid.NewGuid(),
+                            trackName = trackName,
+                        };
+
+                        clip.name = trackData.id.ToString();
 
                         progress?.Report(0.7f);
 
-                        await SaveAudioAsync(clip, trackName);
+                        await SaveAudioAsync(clip, trackData);
 
-                        audioCache[trackName] = clip;
+                        audioCache[trackData.id.ToString()] = clip;
 
                         progress?.Report(1.0f);
-                        return (clip, trackName);
+                        return (clip, trackData);
                     }
                     else
                     {
                         Debug.LogError($"오디오 파일 로드 실패: {www.error}");
-                        return (null, trackName);
+                        return (null, null);
                     }
                 }
             }
             catch (Exception ex)
             {
                 Debug.LogError($"오디오 로드 중 예외 발생: {ex.Message}");
-                return (null, trackName);
+                return (null, null);
             }
         }
 
@@ -163,16 +174,12 @@ namespace NoteEditor
         /// <param name="trackName">트랙 이름</param>
         /// <param name="onMainThreadProcess">메인 스레드에서 실행할 텍스처 처리 콜백</param>
         /// <returns>비동기 작업</returns>
-        public async Task SaveAudioAsync(
-            AudioClip clip,
-            string trackName,
-            Action<float[], short[], byte[]> onMainThreadProcess = null
-        )
+        public static async Task SaveAudioAsync(AudioClip clip, TrackData trackData)
         {
             if (clip == null)
                 return;
 
-            string filePath = AudioPathProvider.GetAudioFilePath(trackName);
+            string filePath = ResourcePath.GetAudioFilePath(trackData.id);
 
             float[] samples = new float[clip.samples * clip.channels];
             clip.GetData(samples, 0);
@@ -184,25 +191,19 @@ namespace NoteEditor
             short[] intData = new short[samples.Length];
             byte[] bytesData = new byte[samples.Length * 2];
 
-            if (onMainThreadProcess != null)
+            int rescaleFactor = 32767;
+            for (int i = 0; i < samples.Length; i++)
             {
-                onMainThreadProcess(samples, intData, bytesData);
+                intData[i] = (short)(samples[i] * rescaleFactor);
+                byte[] byteArr = BitConverter.GetBytes(intData[i]);
+                byteArr.CopyTo(bytesData, i * 2);
             }
-            else
-            {
-                int rescaleFactor = 32767;
-                for (int i = 0; i < samples.Length; i++)
-                {
-                    intData[i] = (short)(samples[i] * rescaleFactor);
-                    byte[] byteArr = BitConverter.GetBytes(intData[i]);
-                    byteArr.CopyTo(bytesData, i * 2);
-                }
-            }
+
             await Task.Run(() =>
             {
                 try
                 {
-                    AudioPathProvider.EnsureDirectoriesExist();
+                    ResourcePath.EnsureDirectoriesExist();
 
                     using (FileStream fileStream = CreateEmptyWav(filePath))
                     {
@@ -227,73 +228,52 @@ namespace NoteEditor
         /// 트랙 이름으로 앨범 아트를 로드합니다.
         /// </summary>
         /// <param name="trackName">트랙 이름</param>
-        /// <param name="progress">진행 상황 보고 인터페이스</param>
         /// <returns>로드된 Sprite</returns>
-        public async Task<Sprite> LoadAlbumArtAsync(
-            string trackName,
-            IProgress<float> progress = null
-        )
+        public static IEnumerator<Sprite> LoadAlbumArtAsync(TrackData trackData)
         {
-            if (imageCache.TryGetValue(trackName, out Sprite cachedSprite))
+            if (imageCache.TryGetValue(trackData.id.ToString(), out Sprite cachedSprite))
             {
-                Debug.Log($"이미지 캐시에서 로드: {trackName}");
-                progress?.Report(1.0f);
-                return cachedSprite;
+                Debug.Log($"이미지 캐시에서 로드: {trackData.trackName}");
+                yield return cachedSprite;
             }
 
-            string filePath = AudioPathProvider.GetAlbumArtPath(trackName);
+            string filePath = ResourcePath.GetAlbumArtPath(trackData.id);
             if (!File.Exists(filePath))
             {
                 Debug.Log($"앨범 아트 파일을 찾을 수 없음: {filePath}");
-                return null;
+                yield break;
             }
 
-            progress?.Report(0.1f);
+            UnityWebRequest www = UnityWebRequestTexture.GetTexture("file://" + filePath);
 
-            try
+            www.useHttpContinue = false;
+            www.certificateHandler = null;
+            www.disposeCertificateHandlerOnDispose = true;
+            www.disposeDownloadHandlerOnDispose = true;
+
+            var operation = www.SendWebRequest();
+
+            while (!operation.isDone)
             {
-                using (
-                    UnityWebRequest www = UnityWebRequestTexture.GetTexture("file://" + filePath)
-                )
-                {
-                    www.useHttpContinue = false;
-                    www.certificateHandler = null;
-                    www.disposeCertificateHandlerOnDispose = true;
-                    www.disposeDownloadHandlerOnDispose = true;
-
-                    var operation = www.SendWebRequest();
-
-                    while (!operation.isDone)
-                    {
-                        progress?.Report(0.1f + 0.8f * www.downloadProgress);
-                        await Task.Delay(10);
-                    }
-
-                    if (www.result == UnityWebRequest.Result.Success)
-                    {
-                        Texture2D texture = DownloadHandlerTexture.GetContent(www);
-                        Sprite sprite = Sprite.Create(
-                            texture,
-                            new Rect(0, 0, texture.width, texture.height),
-                            new Vector2(0.5f, 0.5f)
-                        );
-
-                        imageCache[trackName] = sprite;
-
-                        progress?.Report(1.0f);
-                        return sprite;
-                    }
-                    else
-                    {
-                        Debug.LogError($"앨범 아트 로드 실패: {www.error}");
-                        return null;
-                    }
-                }
+                yield return null;
             }
-            catch (Exception ex)
+
+            if (www.result == UnityWebRequest.Result.Success)
             {
-                Debug.LogError($"앨범 아트 로드 중 예외 발생: {ex.Message}");
-                return null;
+                Texture2D texture = DownloadHandlerTexture.GetContent(www);
+                Sprite sprite = Sprite.Create(
+                    texture,
+                    new Rect(0, 0, texture.width, texture.height),
+                    new Vector2(0.5f, 0.5f)
+                );
+
+                imageCache[trackData.id.ToString()] = sprite;
+
+                yield return sprite;
+            }
+            else
+            {
+                Debug.LogError($"앨범 아트 로드 실패: {www.error}");
             }
         }
 
@@ -301,12 +281,12 @@ namespace NoteEditor
         /// 외부 이미지 파일을 앨범 아트로 로드하고 저장합니다.
         /// </summary>
         /// <param name="filePath">외부 이미지 파일 경로</param>
-        /// <param name="trackName">트랙 이름</param>
+        /// <param name="trackData">트랙 데이터</param>
         /// <param name="progress">진행 상황 보고 인터페이스</param>
         /// <returns>로드된 Sprite</returns>
-        public async Task<Sprite> ImportAlbumArtAsync(
+        public static async Task<Sprite> ImportAlbumArtAsync(
             string filePath,
-            string trackName,
+            TrackData trackData,
             IProgress<float> progress = null
         )
         {
@@ -342,9 +322,9 @@ namespace NoteEditor
 
                         progress?.Report(0.7f);
 
-                        await SaveAlbumArtAsync(sprite, trackName);
+                        await SaveAlbumArtAsync(sprite, trackData);
 
-                        imageCache[trackName] = sprite;
+                        imageCache[trackData.id.ToString()] = sprite;
 
                         progress?.Report(1.0f);
                         return sprite;
@@ -370,29 +350,20 @@ namespace NoteEditor
         /// <param name="trackName">트랙 이름</param>
         /// <param name="onMainThreadProcess">메인 스레드에서 실행할 텍스처 처리 콜백</param>
         /// <returns>비동기 작업</returns>
-        public async Task SaveAlbumArtAsync(
-            Sprite albumArt,
-            string trackName,
-            Action<byte[]> onMainThreadProcess = null
-        )
+        public static async Task SaveAlbumArtAsync(Sprite albumArt, TrackData trackData)
         {
             if (albumArt == null)
                 return;
 
-            string filePath = AudioPathProvider.GetAlbumArtPath(trackName);
+            string filePath = ResourcePath.GetAlbumArtPath(trackData.id);
 
             byte[] bytes = albumArt.texture.EncodeToPNG();
-
-            if (onMainThreadProcess != null)
-            {
-                onMainThreadProcess(bytes);
-            }
 
             await Task.Run(() =>
             {
                 try
                 {
-                    AudioPathProvider.EnsureDirectoriesExist();
+                    ResourcePath.EnsureDirectoriesExist();
                     File.WriteAllBytes(filePath, bytes);
                     Debug.Log($"앨범 아트 저장됨: {filePath}");
                 }
@@ -411,9 +382,9 @@ namespace NoteEditor
         /// 트랙 메타데이터를 로드합니다.
         /// </summary>
         /// <returns>트랙 메타데이터 리스트</returns>
-        public async Task<List<TrackData>> LoadMetadataAsync()
+        public static async Task<List<TrackData>> LoadMetadataAsync()
         {
-            string filePath = Path.Combine(AudioPathProvider.TrackDataPath, "TrackData.json");
+            string filePath = ResourcePath.TRACK_METADATA_PATH;
 
             if (!File.Exists(filePath))
             {
@@ -424,6 +395,7 @@ namespace NoteEditor
             try
             {
                 string json = await Task.Run(() => File.ReadAllText(filePath));
+
                 return JsonConvert.DeserializeObject<List<TrackData>>(json);
             }
             catch (Exception ex)
@@ -438,18 +410,16 @@ namespace NoteEditor
         /// </summary>
         /// <param name="metadata">저장할 메타데이터 리스트</param>
         /// <returns>비동기 작업</returns>
-        public async Task SaveMetadataAsync(List<TrackData> metadata)
+        public static async Task SaveMetadataAsync(List<TrackData> metadata)
         {
-            string filePath = AudioPathProvider.TrackDataPath;
+            string filePath = ResourcePath.TRACK_METADATA_PATH;
 
             try
             {
-                AudioPathProvider.EnsureDirectoriesExist();
-
-                var dataPath = Path.Combine(filePath, "TrackData.json");
+                ResourcePath.EnsureDirectoriesExist();
 
                 string json = JsonConvert.SerializeObject(metadata);
-                await Task.Run(() => File.WriteAllText(dataPath, json));
+                await Task.Run(() => File.WriteAllText(filePath, json));
 
                 Debug.Log("트랙 메타데이터가 저장되었습니다.");
             }
@@ -462,30 +432,37 @@ namespace NoteEditor
         /// <summary>
         /// 트랙 파일을 삭제합니다.
         /// </summary>
-        /// <param name="trackName">삭제할 트랙 이름</param>
+        /// <param name="guid">삭제할 트랙 고유 식별자</param>
         /// <returns>비동기 작업</returns>
-        public async Task DeleteTrackFilesAsync(string trackName)
+        public static async Task DeleteTrackFilesAsync(Guid guid)
         {
             await Task.Run(() =>
             {
                 try
                 {
-                    string audioFilePath = AudioPathProvider.GetAudioFilePath(trackName);
+                    string audioFilePath = ResourcePath.GetAudioFilePath(guid);
                     if (File.Exists(audioFilePath))
                     {
                         File.Delete(audioFilePath);
                         Debug.Log($"트랙 파일 삭제됨: {audioFilePath}");
                     }
 
-                    string albumArtPath = AudioPathProvider.GetAlbumArtPath(trackName);
+                    string albumArtPath = ResourcePath.GetAlbumArtPath(guid);
                     if (File.Exists(albumArtPath))
                     {
                         File.Delete(albumArtPath);
                         Debug.Log($"앨범 아트 파일 삭제됨: {albumArtPath}");
                     }
 
-                    audioCache.Remove(trackName);
-                    imageCache.Remove(trackName);
+                    string noteMapPath = ResourcePath.GetNoteMapPath(guid);
+                    if (File.Exists(noteMapPath))
+                    {
+                        File.Delete(noteMapPath);
+                        Debug.Log($"노트맵 파일 삭제됨: {noteMapPath}");
+                    }
+
+                    audioCache.Remove(guid.ToString());
+                    imageCache.Remove(guid.ToString());
                 }
                 catch (Exception ex)
                 {
@@ -498,16 +475,16 @@ namespace NoteEditor
         /// 모든 트랙 파일을 삭제합니다.
         /// </summary>
         /// <returns>비동기 작업</returns>
-        public async Task DeleteAllTrackFilesAsync()
+        public static async Task DeleteAllTrackFilesAsync()
         {
             await Task.Run(() =>
             {
                 try
                 {
-                    if (Directory.Exists(AudioPathProvider.BasePath))
+                    if (Directory.Exists(ResourcePath.TRACK_AUDIO_PATH))
                     {
                         string[] audioFiles = Directory.GetFiles(
-                            AudioPathProvider.BasePath,
+                            ResourcePath.TRACK_AUDIO_PATH,
                             "*.wav"
                         );
                         foreach (string file in audioFiles)
@@ -517,10 +494,10 @@ namespace NoteEditor
                         Debug.Log("모든 오디오 파일이 삭제되었습니다.");
                     }
 
-                    if (Directory.Exists(AudioPathProvider.AlbumArtPath))
+                    if (Directory.Exists(ResourcePath.ALBUM_ART_PATH))
                     {
                         string[] artFiles = Directory.GetFiles(
-                            AudioPathProvider.AlbumArtPath,
+                            ResourcePath.ALBUM_ART_PATH,
                             "*.png"
                         );
                         foreach (string file in artFiles)
@@ -530,9 +507,9 @@ namespace NoteEditor
                         Debug.Log("모든 앨범 아트 파일이 삭제되었습니다.");
                     }
 
-                    if (File.Exists(AudioPathProvider.TrackDataPath))
+                    if (File.Exists(ResourcePath.TRACK_METADATA_PATH))
                     {
-                        File.Delete(AudioPathProvider.TrackDataPath);
+                        File.Delete(ResourcePath.TRACK_METADATA_PATH);
                         Debug.Log("메타데이터 파일이 삭제되었습니다.");
                     }
 
@@ -552,7 +529,7 @@ namespace NoteEditor
         /// <summary>
         /// 캐시를 초기화합니다.
         /// </summary>
-        public void ClearCache()
+        public static void ClearCache()
         {
             audioCache.Clear();
             imageCache.Clear();
@@ -564,7 +541,7 @@ namespace NoteEditor
         /// </summary>
         /// <param name="filePath">파일 경로</param>
         /// <returns>오디오 타입</returns>
-        private AudioType GetAudioTypeFromExtension(string filePath)
+        private static AudioType GetAudioTypeFromExtension(string filePath)
         {
             string extension = Path.GetExtension(filePath).ToLower();
 
@@ -590,7 +567,7 @@ namespace NoteEditor
         /// </summary>
         /// <param name="filepath">파일 경로</param>
         /// <returns>FileStream</returns>
-        private FileStream CreateEmptyWav(string filepath)
+        private static FileStream CreateEmptyWav(string filepath)
         {
             string directoryPath = Path.GetDirectoryName(filepath);
             if (!Directory.Exists(directoryPath))
@@ -616,7 +593,12 @@ namespace NoteEditor
         /// <param name="frequency">주파수</param>
         /// <param name="channels">채널</param>
         /// <param name="samples">샘플</param>
-        private void WriteWavHeader(FileStream fileStream, int frequency, int channels, int samples)
+        private static void WriteWavHeader(
+            FileStream fileStream,
+            int frequency,
+            int channels,
+            int samples
+        )
         {
             fileStream.Seek(0, SeekOrigin.Begin);
 
@@ -665,5 +647,70 @@ namespace NoteEditor
         }
 
         #endregion
+    }
+
+    /// <summary>
+    /// 오디오 관련 파일 경로를 관리하는 유틸리티 클래스
+    /// </summary>
+    public static class ResourcePath
+    {
+        private static readonly string BASE_PATH = Application.persistentDataPath;
+        private static readonly string TRACK_DATA_PATH = Path.Combine(BASE_PATH, "Data");
+
+        public static readonly string ALBUM_ART_PATH = Path.Combine(BASE_PATH, "AlbumArts");
+        public static readonly string TRACK_METADATA_PATH = Path.Combine(
+            BASE_PATH,
+            "Data/TrackData.json"
+        );
+        public static readonly string NOTEMAP_PATH = Path.Combine(BASE_PATH, "NoteMaps");
+        public static readonly string TRACK_AUDIO_PATH = Path.Combine(BASE_PATH, "Audio");
+
+        /// <summary>
+        /// 트랙 이름으로 오디오 파일 경로를 가져옵니다.
+        /// </summary>
+        /// <param name="guid">고유 식별자</param>
+        /// <returns>오디오 파일 경로</returns>
+        public static string GetAudioFilePath(Guid guid)
+        {
+            return Path.Combine(TRACK_AUDIO_PATH, $"{guid}.wav");
+        }
+
+        /// <summary>
+        /// 트랙 이름으로 앨범 아트 파일 경로를 가져옵니다.
+        /// </summary>
+        /// <param name="guid">고유 식별자</param>
+        /// <returns>앨범 아트 파일 경로</returns>
+        public static string GetAlbumArtPath(Guid guid)
+        {
+            return Path.Combine(ALBUM_ART_PATH, $"{guid}.png");
+        }
+
+        /// <summary>
+        /// 트랙 이름으로 노트맵 파일 경로를 가져옵니다.
+        /// </summary>
+        /// <param name="guid">고유 식별자</param>
+        /// <returns>노트맵 파일 경로</returns>
+        public static string GetNoteMapPath(Guid guid)
+        {
+            return Path.Combine(NOTEMAP_PATH, $"{guid}.json");
+        }
+
+        /// <summary>
+        /// 필요한 디렉토리가 존재하는지 확인하고, 없으면 생성합니다.
+        /// </summary>
+        public static void EnsureDirectoriesExist()
+        {
+            if (!Directory.Exists(BASE_PATH))
+                Directory.CreateDirectory(BASE_PATH);
+
+            if (!Directory.Exists(TRACK_DATA_PATH))
+                Directory.CreateDirectory(TRACK_DATA_PATH);
+
+            if (!Directory.Exists(ALBUM_ART_PATH))
+                Directory.CreateDirectory(ALBUM_ART_PATH);
+
+            if (!Directory.Exists(NOTEMAP_PATH))
+                Directory.CreateDirectory(NOTEMAP_PATH);
+        }
     }
 }

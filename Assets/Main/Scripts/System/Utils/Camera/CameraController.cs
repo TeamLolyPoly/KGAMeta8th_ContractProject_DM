@@ -12,9 +12,6 @@ public class CameraController : MonoBehaviour, IInitializable
     public float rotationSpeed = 7f;
 
     private bool isFreeLook = false;
-
-    private float minVerticalAngle = -80f;
-    private float maxVerticalAngle = 80f;
     private float rotationX
     {
         get => transform.eulerAngles.x;
@@ -176,8 +173,6 @@ public class CameraController : MonoBehaviour, IInitializable
 
         rotationY += mouseX;
         rotationX += mouseY;
-
-        rotationX = Mathf.Clamp(rotationX, minVerticalAngle, maxVerticalAngle);
 
         editorCamera.transform.rotation = Quaternion.Euler(rotationX, rotationY, 0f);
     }

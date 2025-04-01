@@ -11,6 +11,7 @@ namespace NoteEditor
 
         private bool isPlaying = false;
         private float volume = 1.0f;
+        public float Volume => volume;
 
         private float currentBPM = 120f;
         private int currentBeatsPerBar = 4;

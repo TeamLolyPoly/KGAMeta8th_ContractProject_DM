@@ -2,7 +2,6 @@ using System.Collections;
 using Photon.Pun;
 using UnityEngine;
 
-[RequireComponent(typeof(PhotonView))]
 public class PoolManager : Singleton<PoolManager>, IInitializable
 {
     public bool IsInitialized { get; private set; }
@@ -12,7 +11,7 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
     protected override void Awake()
     {
         base.Awake();
-        photonView = GetComponent<PhotonView>();
+        photonView = gameObject.AddComponent<PhotonView>();
     }
 
     public void Initialize()
@@ -48,7 +47,12 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
     }
 
     // isNetworked가 true일 경우 PhotonNetwork를 사용하여 네트워크 오브젝트 생성
-    public T Spawn<T>(GameObject prefab, Vector3 position, Quaternion rotation, bool isNetworked = false)
+    public T Spawn<T>(
+        GameObject prefab,
+        Vector3 position,
+        Quaternion rotation,
+        bool isNetworked = false
+    )
         where T : Component
     {
         string originalName = prefab.name;
@@ -57,7 +61,11 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
         if (isNetworked && PhotonNetwork.IsConnected)
         {
             // 네트워크 오브젝트 생성
-            GameObject networkedObj = PhotonNetwork.Instantiate($"Items/{originalName}", position, rotation);
+            GameObject networkedObj = PhotonNetwork.Instantiate(
+                $"Items/{originalName}",
+                position,
+                rotation
+            );
             spawnedObj = networkedObj.GetComponent<T>();
         }
         else
@@ -69,7 +77,8 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
         return spawnedObj;
     }
 
-    public void Despawn<T>(T obj, bool isNetworked = false) where T : Component
+    public void Despawn<T>(T obj, bool isNetworked = false)
+        where T : Component
     {
         if (!IsInitialized || obj == null)
         {
@@ -88,7 +97,8 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
             objectPool.Despawn(obj);
     }
 
-    public void Despawn<T>(T obj, float delay, bool isNetworked = false) where T : Component
+    public void Despawn<T>(T obj, float delay, bool isNetworked = false)
+        where T : Component
     {
         if (!IsInitialized || obj == null)
         {
@@ -96,10 +106,18 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
             return;
         }
 
-        StartCoroutine(DespawnCoroutine(obj, delay, isNetworked));
+        if (delay > 0)
+        {
+            StartCoroutine(DespawnCoroutine(obj, delay, isNetworked));
+        }
+        else
+        {
+            Despawn(obj, isNetworked);
+        }
     }
 
-    private IEnumerator DespawnCoroutine<T>(T obj, float delay, bool isNetworked) where T : Component
+    private IEnumerator DespawnCoroutine<T>(T obj, float delay, bool isNetworked)
+        where T : Component
     {
         yield return new WaitForSeconds(delay);
         if (obj != null)
