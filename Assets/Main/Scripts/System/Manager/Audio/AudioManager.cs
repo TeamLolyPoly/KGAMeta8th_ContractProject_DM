@@ -6,7 +6,6 @@ namespace NoteEditor
 {
     public class AudioManager : Singleton<AudioManager>, IInitializable
     {
-        public TrackData currentTrack;
         public AudioSource currentAudioSource;
         public bool IsInitialized { get; private set; }
 
@@ -18,7 +17,7 @@ namespace NoteEditor
         {
             get
             {
-                if (currentTrack == null || currentAudioSource == null)
+                if (currentAudioSource == null)
                     return 0;
 
                 if (totalBars <= 0)
@@ -27,10 +26,12 @@ namespace NoteEditor
                 }
 
                 print(
-                    $"[AudioManager] TotalBeats: {Mathf.RoundToInt(totalBars * currentTrack.noteMap.beatsPerBar)} totalBars: {totalBars} currentBeatsPerBar: {currentTrack.noteMap.beatsPerBar}"
+                    $"[AudioManager] TotalBeats: {Mathf.RoundToInt(totalBars * EditorManager.Instance.CurrentNoteMap.beatsPerBar)} totalBars: {totalBars} currentBeatsPerBar: {EditorManager.Instance.CurrentNoteMap.beatsPerBar}"
                 );
 
-                return Mathf.RoundToInt(totalBars * currentTrack.noteMap.beatsPerBar);
+                return Mathf.RoundToInt(
+                    totalBars * EditorManager.Instance.CurrentNoteMap.beatsPerBar
+                );
             }
         }
 
@@ -40,12 +41,12 @@ namespace NoteEditor
 
         public float CurrentBPM
         {
-            get => currentTrack.bpm;
+            get => EditorManager.Instance.CurrentNoteMap.bpm;
             set
             {
-                if (currentTrack != null)
+                if (EditorManager.Instance.CurrentNoteMap != null)
                 {
-                    currentTrack.bpm = value;
+                    EditorManager.Instance.CurrentNoteMap.bpm = value;
                 }
 
                 UpdateTotalBars();
@@ -54,12 +55,12 @@ namespace NoteEditor
 
         public int BeatsPerBar
         {
-            get => currentTrack.noteMap.beatsPerBar;
+            get => EditorManager.Instance.CurrentNoteMap.beatsPerBar;
             set
             {
-                if (currentTrack.noteMap.beatsPerBar != value)
+                if (EditorManager.Instance.CurrentNoteMap.beatsPerBar != value)
                 {
-                    currentTrack.noteMap.beatsPerBar = value;
+                    EditorManager.Instance.CurrentNoteMap.beatsPerBar = value;
                 }
             }
         }
@@ -116,7 +117,7 @@ namespace NoteEditor
         /// </summary>
         public void PlayCurrentTrack()
         {
-            if (currentTrack != null && currentAudioSource.clip != null)
+            if (EditorManager.Instance.CurrentNoteMap != null && currentAudioSource.clip != null)
             {
                 double startTime = AudioSettings.dspTime;
                 currentAudioSource.PlayScheduled(startTime);
@@ -190,17 +191,16 @@ namespace NoteEditor
         /// <summary>
         /// 트랙을 설정합니다. (EditorManager에서 호출)
         /// </summary>
-        public void SetTrack(TrackData track, AudioClip clip)
+        public void SetTrack(AudioClip clip)
         {
-            if (track == null || clip == null)
+            if (clip == null)
                 return;
 
-            currentTrack = track;
             currentAudioSource.clip = clip;
             currentPlaybackTime = 0;
 
-            CurrentBPM = track.bpm;
-            BeatsPerBar = track.noteMap.beatsPerBar;
+            CurrentBPM = EditorManager.Instance.CurrentNoteMap.bpm;
+            BeatsPerBar = EditorManager.Instance.CurrentNoteMap.beatsPerBar;
         }
 
         /// <summary>
@@ -217,7 +217,7 @@ namespace NoteEditor
                 totalBars = Mathf.FloorToInt(rawTotalBars);
                 print(
                     $"[AudioManager] UpdateTotalBars\n"
-                        + $" currentTrack.noteMap.beatsPerBar: {currentTrack.noteMap.beatsPerBar}\n"
+                        + $" currentNoteMap.beatsPerBar: {EditorManager.Instance.CurrentNoteMap.beatsPerBar}\n"
                         + $" currentBPM: {CurrentBPM}\n"
                         + $" secondsPerBeat: {secondsPerBeat}\n"
                         + $" secondsPerBar: {secondsPerBar}\n"

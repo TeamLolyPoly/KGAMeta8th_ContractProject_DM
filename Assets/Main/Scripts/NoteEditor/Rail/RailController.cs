@@ -364,8 +364,10 @@ namespace NoteEditor
             }
         }
 
-        public void SetupRail(AudioClip clip)
+        public void SetupRail()
         {
+            AudioClip clip = AudioManager.Instance.currentAudioSource.clip;
+
             int totalBeats = AudioManager.Instance.TotalBeats;
             float calculatedLength = totalBeats * unitsPerBeat;
             railLength = Mathf.Max(calculatedLength, minRailLength);
@@ -382,7 +384,7 @@ namespace NoteEditor
 
         public void UpdateBPM()
         {
-            SetupRail(EditorManager.Instance.CurrentTrack.TrackAudio);
+            SetupRail();
         }
     }
 }

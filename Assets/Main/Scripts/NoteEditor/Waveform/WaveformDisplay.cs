@@ -86,13 +86,7 @@ namespace NoteEditor
 
             bpm = AudioManager.Instance.CurrentBPM;
 
-            if (
-                AudioManager.Instance.currentTrack != null
-                && AudioManager.Instance.currentTrack.TrackAudio != null
-            )
-            {
-                UpdateWaveform(AudioManager.Instance.currentTrack.TrackAudio);
-            }
+            UpdateWaveform(AudioManager.Instance.currentAudioSource.clip);
 
             IsInitialized = true;
         }
