@@ -78,40 +78,47 @@ namespace NoteEditor
             InitializeAlbumArtButton();
             InitializeNoteUI();
             InitializeBeatsPerBarDropdown();
+            currentTrackPlaybackTime.text =
+                $"00:00:00 / {FormatTime(AudioManager.Instance.currentPlaybackDuration)}";
             IsInitialized = true;
             Debug.Log("[NoteEditorPanel] 초기화 완료");
-
-            if (symmetricToggle != null)
-            {
-                SwitchManager switchManager =
-                    symmetricToggle.GetComponentInChildren<SwitchManager>();
-                switchManager.onValueChanged.AddListener(OnSymmetricToggleChanged);
-            }
-
-            if (clockwiseToggle != null)
-            {
-                SwitchManager switchManager =
-                    clockwiseToggle.GetComponentInChildren<SwitchManager>();
-                switchManager.onValueChanged.AddListener(OnClockwiseToggleChanged);
-            }
-
-            if (CameraToggleButton != null)
-            {
-                CameraToggleButton.onClick.AddListener(
-                    EditorManager.Instance.cameraController.ToggleFreeLook
-                );
-            }
         }
 
         private void InitializeBeatsPerBarDropdown()
         {
             if (beatsPerBarDropdown == null)
                 return;
-
-            beatsPerBarDropdown.items.Clear();
-            foreach (BeatsPerBar beatsPerBar in Enum.GetValues(typeof(BeatsPerBar)))
+            if (!IsInitialized)
             {
-                beatsPerBarDropdown.CreateNewItem(beatsPerBar.ToString(), true);
+                foreach (BeatsPerBar beatsPerBar in Enum.GetValues(typeof(BeatsPerBar)))
+                {
+                    beatsPerBarDropdown.CreateNewItem(beatsPerBar.ToString(), true);
+                }
+            }
+
+            switch (AudioManager.Instance.BeatsPerBar)
+            {
+                case 4:
+                    beatsPerBarDropdown.SetDropdownIndex(0);
+                    break;
+                case 8:
+                    beatsPerBarDropdown.SetDropdownIndex(1);
+                    break;
+                case 6:
+                    beatsPerBarDropdown.SetDropdownIndex(2);
+                    break;
+                case 12:
+                    beatsPerBarDropdown.SetDropdownIndex(3);
+                    break;
+                case 16:
+                    beatsPerBarDropdown.SetDropdownIndex(4);
+                    break;
+                case 32:
+                    beatsPerBarDropdown.SetDropdownIndex(5);
+                    break;
+                default:
+                    beatsPerBarDropdown.SetDropdownIndex(0);
+                    break;
             }
 
             beatsPerBarDropdown.onValueChanged.AddListener(OnBeatsPerBarDropdownValueChanged);
@@ -199,22 +206,96 @@ namespace NoteEditor
             }
         }
 
-        private void OnDestroy()
+        public override void Close(bool objActive = true)
         {
-            if (SetAlbumArtButton != null)
-                SetAlbumArtButton.onClick.RemoveAllListeners();
+            Cleanup();
+            base.Close(objActive);
+        }
 
+        private void Cleanup()
+        {
             if (BPMInput != null)
+            {
                 BPMInput.onSubmit.RemoveAllListeners();
-
-            if (beatsPerBarDropdown != null)
-                beatsPerBarDropdown.onValueChanged.RemoveAllListeners();
+            }
 
             if (noteColorDropdown != null)
+            {
                 noteColorDropdown.onValueChanged.RemoveAllListeners();
+            }
 
             if (noteDirectionDropdown != null)
+            {
                 noteDirectionDropdown.onValueChanged.RemoveAllListeners();
+            }
+
+            if (beatsPerBarDropdown != null)
+            {
+                beatsPerBarDropdown.onValueChanged.RemoveAllListeners();
+            }
+
+            if (symmetricToggle != null)
+            {
+                symmetricToggle
+                    .GetComponentInChildren<SwitchManager>()
+                    .onValueChanged.RemoveAllListeners();
+            }
+
+            if (clockwiseToggle != null)
+            {
+                clockwiseToggle
+                    .GetComponentInChildren<SwitchManager>()
+                    .onValueChanged.RemoveAllListeners();
+            }
+
+            if (CameraToggleButton != null)
+            {
+                CameraToggleButton.onClick.RemoveAllListeners();
+            }
+
+            if (SetAlbumArtButton != null)
+            {
+                SetAlbumArtButton.onClick.RemoveAllListeners();
+            }
+
+            if (CurrentTrackInfo != null)
+            {
+                CurrentTrackInfo.onClick.RemoveAllListeners();
+            }
+
+            if (statusText != null)
+            {
+                statusText.text = "";
+            }
+
+            if (currentTrackPlaybackTime != null)
+            {
+                currentTrackPlaybackTime.text = "";
+            }
+
+            if (selectedCellInfoText != null)
+            {
+                selectedCellInfoText.text = "";
+            }
+
+            if (longNoteGroupAnimator != null)
+            {
+                longNoteGroupAnimator.SetBool("isOpen", false);
+            }
+
+            if (noteColorAnimator != null)
+            {
+                noteColorAnimator.SetBool("isOpen", false);
+            }
+
+            if (noteDirectionAnimator != null)
+            {
+                noteDirectionAnimator.SetBool("isOpen", false);
+            }
+            if (beatsPerBarDropdown != null)
+            {
+                beatsPerBarDropdown.onValueChanged.RemoveAllListeners();
+            }
         }
 
         private async void OnBPMInputSubmit(string value)
@@ -315,15 +396,6 @@ namespace NoteEditor
             }
         }
 
-        private void OnSaveButtonClicked()
-        {
-            if (editor == null || !editor.IsInitialized)
-                return;
-
-            editor.SaveNoteMap();
-            UpdateStatusText($"{AudioManager.Instance.currentTrack.trackName} 노트맵 저장 완료");
-        }
-
         public void UpdateStatusText(string message)
         {
             if (statusText != null)
@@ -381,11 +453,6 @@ namespace NoteEditor
         {
             noteDirectionAnimator.SetBool("isOpen", isVisible);
             noteColorAnimator.SetBool("isOpen", isVisible);
-        }
-
-        private void InitializeInputFields()
-        {
-            BPMInput.inputText.text = EditorManager.Instance.CurrentTrack.bpm.ToString();
         }
 
         private void OnSymmetricToggleChanged(bool isOn)

@@ -141,7 +141,10 @@ namespace NoteEditor
         {
             if (SaveMetaData())
             {
-                EditorManager.Instance.SelectTrack(EditorManager.Instance.CurrentTrack);
+                EditorManager.Instance.SelectTrack(
+                    EditorManager.Instance.CurrentTrack,
+                    EditorManager.Instance.CurrentNoteMapData
+                );
                 EditorDataManager.Instance.TmpTrack = null;
             }
             else if (EditorManager.Instance.CurrentTrack == null)
