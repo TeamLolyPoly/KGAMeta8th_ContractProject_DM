@@ -10,13 +10,13 @@ public class TitlePanel : Panel
     public override PanelType PanelType => PanelType.Title;
 
     [SerializeField]
-    private ShopButtonManager startButton;
+    private ButtonManager startButton;
 
     [SerializeField]
-    private ShopButtonManager settingButton;
+    private ButtonManager settingButton;
 
     [SerializeField]
-    private ShopButtonManager quitButton;
+    private ButtonManager quitButton;
 
     public override void Open()
     {
