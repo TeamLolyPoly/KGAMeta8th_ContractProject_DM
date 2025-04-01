@@ -6,34 +6,40 @@ namespace NoteEditor
 {
     public class TrackButton : MonoBehaviour
     {
+        private LoadTrackPanel loadTrackPanel;
+
+        [SerializeField]
         private ShopButtonManager trackButton;
 
         [SerializeField]
-        private ButtonManager loadButton;
+        private ButtonManager selectButton;
 
         [SerializeField]
-        private Image albumArt;
+        private Image[] albumArt;
 
         private TrackData track;
 
-        public void Initialize(TrackData track)
+        public TrackData Track => track;
+
+        public void Initialize(TrackData track, LoadTrackPanel loadTrackPanel)
         {
             this.track = track;
-            trackButton = GetComponent<ShopButtonManager>();
+            this.loadTrackPanel = loadTrackPanel;
             trackButton.buttonTitle = track.trackName;
-            trackButton.buttonDescription = $"BPM : {track.bpm}";
+            trackButton.UpdateUI();
             if (track.AlbumArt != null)
             {
-                albumArt.sprite = track.AlbumArt;
+                foreach (var art in albumArt)
+                {
+                    art.sprite = track.AlbumArt;
+                }
             }
-            trackButton.UpdateUI();
-            loadButton.onClick.AddListener(LoadTrack);
+            selectButton.onClick.AddListener(OnSelectTrack);
         }
 
-        private void LoadTrack()
+        private void OnSelectTrack()
         {
-            EditorManager.Instance.SelectTrack(track);
-            trackButton.onClick.RemoveAllListeners();
+            loadTrackPanel.SelectTrack(track);
         }
     }
 }
