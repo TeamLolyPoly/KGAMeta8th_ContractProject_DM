@@ -9,7 +9,7 @@ public class OptionPanel : Panel
     public override PanelType PanelType => PanelType.Option;
 
     [SerializeField]
-    private PanelButton closeButton;
+    private BoxButtonManager closeButton;
 
     public override void Open()
     {

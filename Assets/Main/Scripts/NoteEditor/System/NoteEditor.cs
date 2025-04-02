@@ -1,6 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -10,29 +9,19 @@ namespace NoteEditor
     {
         private RailController railController;
         private CellController cellController;
-
-        private InputActionAsset audioControlActions;
-
+        private InputActionAsset editorControlActions;
         private EditorManager editorManager;
-
-        private NoteMap noteMap;
         private bool isInitialized = false;
-
         public bool IsInitialized => isInitialized;
-
         private bool isCreatingLongNote = false;
         private Cell longNoteStartCell = null;
 
         private ShortNoteModel shortNoteModelPrefab;
         private LongNoteModel longNoteModelPrefab;
 
-        public void Cleanup()
-        {
-            if (noteMap != null)
-            {
-                noteMap = null;
-            }
-        }
+        private Action<InputAction.CallbackContext> createShortNoteHandler;
+        private Action<InputAction.CallbackContext> createLongNoteHandler;
+        private Action<InputAction.CallbackContext> deleteNoteHandler;
 
         public void Initialize()
         {
@@ -59,40 +48,16 @@ namespace NoteEditor
             }
         }
 
-        public void SetTrack(TrackData track)
+        public void SetTrack()
         {
-            if (track == null)
-                return;
-
-            StartCoroutine(LoadNoteMapRoutine(track));
-        }
-
-        private IEnumerator LoadNoteMapRoutine(TrackData track)
-        {
-            var task = EditorDataManager.Instance.LoadNoteMapAsync(track);
-            yield return new WaitUntil(() => task.IsCompleted);
-
-            noteMap = task.Result;
-
-            if (noteMap == null)
-            {
-                Debug.Log($"[NoteEditor] 노트맵이 존재하지 않아 새로 생성 : {track.trackName}");
-                noteMap = new NoteMap();
-                noteMap.bpm = track.bpm;
-                noteMap.beatsPerBar = 4;
-                noteMap.notes = new List<NoteData>();
-                var saveTask = EditorDataManager.Instance.SaveNoteMapAsync(track, noteMap);
-                yield return new WaitUntil(() => saveTask.IsCompleted);
-            }
-
-            UpdateRailAndCells(EditorManager.Instance.CurrentTrack);
+            UpdateRailAndCells();
 
             ApplyNotesToCells();
         }
 
-        private void UpdateRailAndCells(TrackData track)
+        private void UpdateRailAndCells()
         {
-            if (track == null || track.TrackAudio == null)
+            if (AudioManager.Instance.currentAudioSource.clip == null)
             {
                 Debug.LogWarning(
                     "[NoteEditor] 트랙 또는 오디오가 없어 레일과 셀을 업데이트할 수 없습니다."
@@ -102,7 +67,7 @@ namespace NoteEditor
 
             if (railController != null && railController.IsInitialized)
             {
-                railController.SetupRail(noteMap.bpm, noteMap.beatsPerBar, track.TrackAudio);
+                railController.SetupRail();
             }
 
             if (cellController != null && cellController.IsInitialized)
@@ -111,19 +76,44 @@ namespace NoteEditor
             }
         }
 
-        private void SetActions()
+        public void Cleanup()
         {
-            audioControlActions = Resources.Load<InputActionAsset>("Input/EditorControls");
-            if (audioControlActions != null)
+            if (editorControlActions != null)
             {
-                var actionMap = audioControlActions.FindActionMap("NoteEditor");
+                var actionMap = editorControlActions.FindActionMap("NoteEditor");
                 if (actionMap != null)
                 {
-                    actionMap.FindAction("CreateShortNote").performed += (ctx) =>
-                        CreateShortNoteAction();
-                    actionMap.FindAction("CreateLongNote").performed += (ctx) =>
-                        CreateLongNoteAction();
-                    actionMap.FindAction("DeleteNote").performed += (ctx) => DeleteNoteAction();
+                    if (createShortNoteHandler != null)
+                        actionMap.FindAction("CreateShortNote").performed -= createShortNoteHandler;
+
+                    if (createLongNoteHandler != null)
+                        actionMap.FindAction("CreateLongNote").performed -= createLongNoteHandler;
+
+                    if (deleteNoteHandler != null)
+                        actionMap.FindAction("DeleteNote").performed -= deleteNoteHandler;
+                }
+            }
+
+            createShortNoteHandler = null;
+            createLongNoteHandler = null;
+            deleteNoteHandler = null;
+        }
+
+        private void SetActions()
+        {
+            editorControlActions = Resources.Load<InputActionAsset>("Input/EditorControls");
+            if (editorControlActions != null)
+            {
+                var actionMap = editorControlActions.FindActionMap("NoteEditor");
+                if (actionMap != null)
+                {
+                    createShortNoteHandler = (ctx) => CreateShortNoteAction();
+                    createLongNoteHandler = (ctx) => CreateLongNoteAction();
+                    deleteNoteHandler = (ctx) => DeleteNoteAction();
+
+                    actionMap.FindAction("CreateShortNote").performed += createShortNoteHandler;
+                    actionMap.FindAction("CreateLongNote").performed += createLongNoteHandler;
+                    actionMap.FindAction("DeleteNote").performed += deleteNoteHandler;
                 }
             }
         }
@@ -134,6 +124,7 @@ namespace NoteEditor
                 cellController != null
                 && cellController.SelectedCell != null
                 && cellController.SelectedCell.isOccupied == false
+                && !isCreatingLongNote
             )
             {
                 CreateShortNote(cellController.SelectedCell);
@@ -152,7 +143,7 @@ namespace NoteEditor
 
                 editorManager.editorPanel.UpdateSelectedCellInfo(cellController.SelectedCell);
 
-                SaveNoteMap();
+                editorManager.SaveNoteMapAsync();
 
                 editorManager.editorPanel.ToggleShortNoteUI(true);
             }
@@ -160,6 +151,12 @@ namespace NoteEditor
             {
                 editorManager.editorPanel.UpdateStatusText(
                     "<color=red>이미 노트가 있는 셀입니다.</color>"
+                );
+            }
+            else if (isCreatingLongNote)
+            {
+                editorManager.editorPanel.UpdateStatusText(
+                    "<color=red>롱노트를 생성하는 중입니다. 끝점을 선택해주세요.</color>"
                 );
             }
             else
@@ -203,6 +200,26 @@ namespace NoteEditor
             {
                 Cell endCell = selectedCell;
 
+                if (longNoteStartCell == endCell)
+                {
+                    editorManager.editorPanel.UpdateStatusText(
+                        "<color=red>시작점과 끝점이 같은 셀입니다.</color>"
+                    );
+                    isCreatingLongNote = false;
+                    longNoteStartCell = null;
+                    return;
+                }
+
+                if (longNoteStartCell.bar == endCell.bar && longNoteStartCell.beat == endCell.beat)
+                {
+                    editorManager.editorPanel.UpdateStatusText(
+                        "<color=red>시작점과 끝점이 같은 셀입니다.</color>"
+                    );
+                    isCreatingLongNote = false;
+                    longNoteStartCell = null;
+                    return;
+                }
+
                 CreateLongNote(longNoteStartCell, endCell);
 
                 editorManager.editorPanel.UpdateStatusText(
@@ -211,7 +228,7 @@ namespace NoteEditor
 
                 editorManager.editorPanel.UpdateSelectedCellInfo(endCell);
 
-                SaveNoteMap();
+                editorManager.SaveNoteMapAsync();
 
                 isCreatingLongNote = false;
                 longNoteStartCell = null;
@@ -230,7 +247,7 @@ namespace NoteEditor
 
         public void CreateShortNote(Cell cell)
         {
-            if (cell == null || noteMap == null)
+            if (cell == null)
                 return;
 
             try
@@ -249,7 +266,7 @@ namespace NoteEditor
                     isClockwise = false,
                 };
 
-                noteMap.notes.Add(noteData);
+                EditorManager.Instance.CurrentNoteMap.notes.Add(noteData);
 
                 cell.noteData = noteData;
                 cell.isOccupied = true;
@@ -262,7 +279,7 @@ namespace NoteEditor
 
         public void CreateLongNote(Cell startCell, Cell endCell)
         {
-            if (startCell == null || endCell == null || noteMap == null)
+            if (startCell == null || endCell == null)
                 return;
 
             try
@@ -297,7 +314,7 @@ namespace NoteEditor
                 if (durationBeats < 0)
                 {
                     durationBars--;
-                    durationBeats += railController.BeatsPerBar;
+                    durationBeats += AudioManager.Instance.BeatsPerBar;
                 }
 
                 bool isStartCellInGrid = !(
@@ -345,7 +362,7 @@ namespace NoteEditor
                     durationBeats = durationBeats,
                 };
 
-                noteMap.notes.Add(noteData);
+                EditorManager.Instance.CurrentNoteMap.notes.Add(noteData);
                 startCell.noteData = noteData;
 
                 if (longNoteModelPrefab != null)
@@ -435,12 +452,12 @@ namespace NoteEditor
 
         public void DeleteNote(Cell cell)
         {
-            if (cell == null || cell.noteData == null || noteMap == null)
+            if (cell == null || cell.noteData == null)
                 return;
 
             try
             {
-                noteMap.notes.Remove(cell.noteData);
+                EditorManager.Instance.CurrentNoteMap.notes.Remove(cell.noteData);
 
                 if (cell.noteData.noteType == NoteType.Short && cell.noteModel != null)
                 {
@@ -454,7 +471,7 @@ namespace NoteEditor
                 cell.noteData = null;
                 cell.cellRenderer.SetActive(true);
 
-                SaveNoteMap();
+                editorManager.SaveNoteMapAsync();
             }
             catch (Exception e)
             {
@@ -470,15 +487,17 @@ namespace NoteEditor
 
             if (isSymmetric && cell.longNoteModel.symmetricObject != null)
             {
-                symmetricObject = cell.longNoteModel.symmetricObject;
+                symmetricObject = cell.longNoteModel.symmetricObject.gameObject;
             }
-
-            UpdateSymmetricNote(
-                cell.longNoteModel.startCell,
-                cell.longNoteModel.endCell,
-                cell.noteData,
-                false
-            );
+            if (isSymmetric)
+            {
+                UpdateSymmetricNote(
+                    cell.longNoteModel.startCell,
+                    cell.longNoteModel.endCell,
+                    cell.noteData,
+                    false
+                );
+            }
 
             Destroy(cell.longNoteModel.gameObject);
             cell.longNoteModel = null;
@@ -504,9 +523,6 @@ namespace NoteEditor
 
         public bool UpdateNoteColor(int index)
         {
-            if (noteMap == null)
-                return false;
-
             if (cellController.SelectedCell == null)
                 return false;
 
@@ -522,29 +538,23 @@ namespace NoteEditor
                 }
             }
 
-            SaveNoteMap();
+            editorManager.SaveNoteMapAsync();
             return true;
         }
 
         public bool UpdateNoteDirection(int index)
         {
-            if (noteMap == null)
-                return false;
-
             if (cellController.SelectedCell == null)
                 return false;
 
             cellController.SelectedCell.noteData.direction = (NoteDirection)index;
             cellController.SelectedCell.noteModel.SetNoteDirection((NoteDirection)index);
-            SaveNoteMap();
+            editorManager.SaveNoteMapAsync();
             return true;
         }
 
         public bool UpdateNoteSymmetric(bool isSymmetric)
         {
-            if (noteMap == null)
-                return false;
-
             if (cellController.SelectedCell == null || cellController.SelectedCell.noteData == null)
                 return false;
 
@@ -560,20 +570,23 @@ namespace NoteEditor
 
                 longNoteModel.startCell.noteData.isSymmetric = isSymmetric;
 
-                GameObject symmetricModel = UpdateSymmetricNote(
+                LongNoteModel symmetricModel = UpdateSymmetricNote(
                     longNoteModel.startCell,
                     longNoteModel.endCell,
                     cellController.SelectedCell.noteData,
                     isSymmetric
                 );
-                longNoteModel.symmetricObject = symmetricModel;
+                if (symmetricModel != null)
+                {
+                    longNoteModel.symmetricObject = symmetricModel;
+                }
             }
 
-            SaveNoteMap();
+            editorManager.SaveNoteMapAsync();
             return true;
         }
 
-        public GameObject UpdateSymmetricNote(
+        public LongNoteModel UpdateSymmetricNote(
             Cell originalStart,
             Cell orignialTarget,
             NoteData noteData,
@@ -584,10 +597,12 @@ namespace NoteEditor
                 return null;
 
             string symmetricVisualName = $"SymmetricNote_{originalStart.name}";
-            GameObject existingSymmetricModel = originalStart.longNoteModel.symmetricObject;
-            if (existingSymmetricModel != null)
+
+            isCreatingLongNote = false;
+
+            if (originalStart.longNoteModel.symmetricObject != null)
             {
-                Destroy(existingSymmetricModel);
+                Destroy(originalStart.longNoteModel.symmetricObject.gameObject);
             }
 
             if (createSymmetric)
@@ -606,42 +621,30 @@ namespace NoteEditor
                         2 * centerGrid.y - orignialTarget.cellPosition.y
                     );
 
-                    Cell symmetricStartCell = GetCellByPosition(symStartPos);
-                    Cell symmetricEndCell = GetCellByPosition(symEndPos);
+                    Cell symmetricStartCell = cellController.GetCell(
+                        originalStart.bar,
+                        originalStart.beat,
+                        symStartPos.x,
+                        symStartPos.y
+                    );
+
+                    Cell symmetricEndCell = cellController.GetCell(
+                        orignialTarget.bar,
+                        orignialTarget.beat,
+                        symEndPos.x,
+                        symEndPos.y
+                    );
+                    if (symmetricStartCell.isOccupied || symmetricEndCell.isOccupied)
+                    {
+                        return null;
+                    }
 
                     if (symmetricStartCell == null || symmetricEndCell == null)
                     {
                         Debug.LogWarning(
                             $"대칭 노트를 위한 셀을 찾을 수 없습니다. "
-                                + $"시작점: ({symStartPos.x}, {symStartPos.y}), "
-                                + $"끝점: ({symEndPos.x}, {symEndPos.y})"
-                        );
-                        return null;
-                    }
-
-                    int durationBars = noteData.durationBars;
-                    int durationBeats = noteData.durationBeats;
-
-                    int endBar = symmetricStartCell.bar + durationBars;
-                    int endBeat = symmetricStartCell.beat + durationBeats;
-
-                    if (endBeat >= railController.BeatsPerBar)
-                    {
-                        endBar += endBeat / railController.BeatsPerBar;
-                        endBeat = endBeat % railController.BeatsPerBar;
-                    }
-
-                    symmetricEndCell = cellController.GetCell(
-                        endBar,
-                        endBeat,
-                        symEndPos.x,
-                        symEndPos.y
-                    );
-
-                    if (symmetricEndCell == null)
-                    {
-                        Debug.LogWarning(
-                            $"대칭 노트의 끝점 셀을 찾을 수 없습니다: 마디 {endBar}, 박자 {endBeat}, 위치 ({symEndPos.x}, {symEndPos.y})"
+                                + $"시작점: 마디 {originalStart.bar}, 박자 {originalStart.beat}, 위치 ({symStartPos.x}, {symStartPos.y}), "
+                                + $"끝점: 마디 {orignialTarget.bar}, 박자 {orignialTarget.beat}, 위치 ({symEndPos.x}, {symEndPos.y})"
                         );
                         return null;
                     }
@@ -660,7 +663,7 @@ namespace NoteEditor
 
                     symmetricNoteModel.Initialize(symmetricStartCell, symmetricEndCell);
 
-                    return symmetricNoteModel.gameObject;
+                    return symmetricNoteModel;
                 }
                 else
                 {
@@ -668,25 +671,28 @@ namespace NoteEditor
                     return null;
                 }
             }
-
-            return null;
-        }
-
-        private Cell GetCellByPosition(Vector2Int position)
-        {
-            foreach (var cell in cellController.Cells.Values)
+            else
             {
-                if (cell.cellPosition == position)
-                    return cell;
+                cellController.SelectedCell.longNoteModel.SetSymmetric(createSymmetric);
+                cellController.SelectedCell.longNoteModel.symmetricObject.startCell.isOccupied =
+                    false;
+                cellController.SelectedCell.longNoteModel.symmetricObject.startCell.cellRenderer.SetActive(
+                    true
+                );
+                cellController.SelectedCell.longNoteModel.symmetricObject.endCell.isOccupied =
+                    false;
+                cellController.SelectedCell.longNoteModel.symmetricObject.endCell.cellRenderer.SetActive(
+                    true
+                );
+                Destroy(cellController.SelectedCell.longNoteModel.symmetricObject.gameObject);
+                cellController.SelectedCell.longNoteModel.symmetricObject = null;
             }
+
             return null;
         }
 
         public bool UpdateNoteClockwise(bool isClockwise)
         {
-            if (noteMap == null)
-                return false;
-
             if (cellController.SelectedCell == null || cellController.SelectedCell.noteData == null)
                 return false;
 
@@ -700,51 +706,16 @@ namespace NoteEditor
                 cellController.SelectedCell.longNoteModel.SetClockwise(isClockwise);
             }
 
-            SaveNoteMap();
+            editorManager.SaveNoteMapAsync();
             return true;
-        }
-
-        public async void SaveNoteMap()
-        {
-            if (noteMap == null)
-                return;
-
-            try
-            {
-                if (AudioManager.Instance.currentTrack != null)
-                {
-                    string trackName = AudioManager.Instance.currentTrack.trackName;
-
-                    AudioManager.Instance.currentTrack.noteMap = noteMap;
-
-                    if (EditorDataManager.Instance != null)
-                    {
-                        await EditorDataManager.Instance.SaveNoteMapAsync(
-                            AudioManager.Instance.currentTrack,
-                            noteMap
-                        );
-                        editorManager.editorPanel.UpdateStatusText(
-                            $"노트맵 저장 완료: {trackName}"
-                        );
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                editorManager.editorPanel.UpdateStatusText($"노트맵 저장 실패: {e.Message}");
-                Debug.LogError($"노트맵 저장 실패: {e.Message}");
-            }
         }
 
         private void ApplyNotesToCells()
         {
-            if (noteMap == null || cellController == null)
-                return;
-
-            foreach (var note in noteMap.notes)
+            foreach (var note in EditorManager.Instance.CurrentNoteMap.notes)
             {
-                int lane = (int)note.StartCell.x;
-                int y = (int)note.StartCell.y;
+                int lane = note.StartCell.x;
+                int y = note.StartCell.y;
                 Cell cell = cellController.GetCell(note.bar, note.beat, lane, y);
 
                 if (cell != null)
@@ -778,20 +749,24 @@ namespace NoteEditor
 
                         cell.noteData = note;
 
-                        int targetLane = (int)note.TargetCell.x;
-                        int targetY = (int)note.TargetCell.y;
-                        Cell targetCell = null;
+                        int targetLane = note.TargetCell.x;
+                        int targetY = note.TargetCell.y;
 
                         int endBar = note.bar + note.durationBars;
                         int endBeat = note.beat + note.durationBeats;
 
-                        if (endBeat >= railController.BeatsPerBar)
+                        if (endBeat >= AudioManager.Instance.BeatsPerBar)
                         {
-                            endBar += endBeat / railController.BeatsPerBar;
-                            endBeat = endBeat % railController.BeatsPerBar;
+                            endBar += endBeat / AudioManager.Instance.BeatsPerBar;
+                            endBeat = endBeat % AudioManager.Instance.BeatsPerBar;
                         }
 
-                        targetCell = cellController.GetCell(endBar, endBeat, targetLane, targetY);
+                        Cell targetCell = cellController.GetCell(
+                            endBar,
+                            endBeat,
+                            targetLane,
+                            targetY
+                        );
 
                         if (targetCell != null)
                         {
@@ -829,48 +804,53 @@ namespace NoteEditor
 
         public void UpdateBPM(float newBpm)
         {
-            if (noteMap == null)
-                return;
+            EditorManager.Instance.CurrentNoteMap.bpm = newBpm;
 
-            noteMap.bpm = newBpm;
+            AudioManager.Instance.CurrentBPM = newBpm;
 
             if (railController != null && railController.IsInitialized)
             {
-                railController.UpdateBPM(newBpm);
+                railController.UpdateBPM();
             }
 
-            if (
-                AudioManager.Instance.currentTrack != null
-                && AudioManager.Instance.currentTrack.TrackAudio != null
-            )
+            if (cellController != null && cellController.IsInitialized)
             {
-                UpdateRailAndCells(AudioManager.Instance.currentTrack);
+                cellController.Setup();
             }
-
-            SaveNoteMap();
         }
 
         public bool UpdateBeatsPerBar(int newBeatsPerBar)
         {
-            if (noteMap == null)
+            if (AudioManager.Instance.currentAudioSource.clip == null)
                 return false;
 
-            noteMap.beatsPerBar = newBeatsPerBar;
+            EditorManager.Instance.CurrentNoteMap.beatsPerBar = newBeatsPerBar;
 
-            if (railController != null && railController.IsInitialized)
+            AudioManager.Instance.BeatsPerBar = newBeatsPerBar;
+
+            railController.SetupRail();
+
+            cellController.Setup();
+
+            EditorManager.Instance.CurrentNoteMap = new NoteMap()
             {
-                railController.UpdateBeatsPerBar(newBeatsPerBar);
-            }
+                bpm = EditorManager.Instance.CurrentNoteMap.bpm,
+                beatsPerBar = newBeatsPerBar,
+            };
 
-            if (
-                AudioManager.Instance.currentTrack != null
-                && AudioManager.Instance.currentTrack.TrackAudio != null
-            )
-            {
-                UpdateRailAndCells(AudioManager.Instance.currentTrack);
-            }
+            EditorManager.Instance.CurrentNoteMapData.noteMap = EditorManager
+                .Instance
+                .CurrentNoteMap;
 
-            SaveNoteMap();
+            EditorManager
+                .Instance.CurrentTrack.noteMapData.Find(
+                    (noteMapData) =>
+                        noteMapData.difficulty
+                        == EditorManager.Instance.CurrentNoteMapData.difficulty
+                )
+                .noteMap = EditorManager.Instance.CurrentNoteMap;
+
+            editorManager.SaveNoteMapAsync();
 
             return true;
         }

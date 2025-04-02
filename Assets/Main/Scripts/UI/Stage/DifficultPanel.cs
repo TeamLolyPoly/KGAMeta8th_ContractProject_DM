@@ -28,13 +28,13 @@ public class DifficultPanel : Panel
     //todo:랭킹 스크롤 작업 해야함
 
     [SerializeField]
-    private Button easyButton;
+    private ButtonManager easyButton;
 
     [SerializeField]
-    private Button normalButton;
+    private ButtonManager normalButton;
 
     [SerializeField]
-    private Button hardButton;
+    private ButtonManager hardButton;
 
     [SerializeField]
     private Button gameStartButton;

@@ -4,7 +4,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 public class NoteInteractor : MonoBehaviour
 {
     public NoteColor noteColor;
-    public XRBaseController controller;
+    private XRBaseController controller;
 
     private void Awake()
     {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -9,9 +10,10 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     private Dictionary<BandType, BandAnimationData> bandAnimators =
         new Dictionary<BandType, BandAnimationData>();
 
-    //Unit을 상속받지만 불필요한 연산을 막기위해 타입캐스팅을 미리하여서 관리
+    //씬위에 올라와있는 밴드와 관객
     private List<Band> Bands = new List<Band>();
     private List<Spectator> spectators = new List<Spectator>();
+
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
 
@@ -30,7 +32,8 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         }
 
         GameManager.Instance.ScoreSystem.onBandEngagementChange += BandAnimationClipChange;
-        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange += SpectatorAnimationClipChange;
+        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange +=
+            SpectatorAnimationClipChange;
 
         isInitialized = true;
     }
@@ -88,32 +91,21 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             action(defaultClip, "Default");
         }
     }
-    public void BandAnimationClipChange(Engagement engagement)
+
+    /// <summary>
+    /// 밴드 전체변경은 numberOfUnits 0 으로 실행
+    /// </summary>
+    /// <param name="engagement"></param>
+    /// <param name="numberOfUnits"></param>
+    public void BandAnimationClipChange(Engagement engagement, int numberOfUnits = 0)
     {
         foreach (Band band in Bands)
         {
-            if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData AnimationData))
+            if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData animationData))
             {
-                if ((int)engagement >= AnimationData.animationClip.Length)
+                if ((int)engagement >= animationData.animationClip.Length)
                     continue;
-                AnimationClip animationClip = AnimationData?.animationClip[(int)engagement];
-
-                if (animationClip == null)
-                    continue;
-                band.SetAnimationClip(animationClip, "Usual");
-            }
-        }
-    }
-
-    public void BandAnimationClipChange(Engagement engagement, int BandMember)
-    {
-        foreach (Band band in Bands)
-        {
-            if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData AnimationData))
-            {
-                if ((int)engagement >= AnimationData.animationClip.Length)
-                    continue;
-                AnimationClip animationClip = AnimationData?.animationClip[(int)engagement];
+                AnimationClip animationClip = animationData.animationClip[(int)engagement];
 
                 if (animationClip == null)
                     continue;
