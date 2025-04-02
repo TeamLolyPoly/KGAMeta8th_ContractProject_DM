@@ -1,11 +1,11 @@
-using UnityEngine;
 using Photon.Pun;
+using UnityEngine;
 
 public class SpawnTestStarter : MonoBehaviour
 {
     public void OnStartButtonClicked()
     {
-        //SpawnTest.Instance.CheckXRDevice();
+        SpawnTest.Instance.CheckXRDevice();
 
         // 포톤 방에 이미 들어가 있다면 씬 전환
         if (PhotonNetwork.IsConnectedAndReady)

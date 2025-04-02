@@ -1,9 +1,10 @@
-using UnityEngine;
-using Photon.Pun;
-using UnityEngine.XR;
-using Photon.Realtime;
-using UnityEngine.SceneManagement;
+using System.Collections;
 using System.Collections.Generic;
+using Photon.Pun;
+using Photon.Realtime;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.XR;
 
 public class SpawnTest : MonoBehaviourPunCallbacks
 {
@@ -95,17 +96,19 @@ public class SpawnTest : MonoBehaviourPunCallbacks
     {
         if (scene.name == "XRTest2" && PhotonNetwork.InRoom)
         {
-            SpawnXRPlayer();
+            StartCoroutine(SpawnXRPlayer());
         }
     }
 
-    public void SpawnXRPlayer()
+    public IEnumerator SpawnXRPlayer()
     {
         if (xrPlayerPrefab == null)
         {
             Debug.LogError("[SpawnTest] XR Player Prefab이 지정되지 않았습니다.");
-            return;
+            yield return null;
         }
+
+        yield return new WaitForSeconds(2f);
 
         Vector3 spawnPos = new Vector3(0, 1, 0);
         PhotonNetwork.Instantiate(xrPlayerPrefab.name, spawnPos, Quaternion.identity);
