@@ -156,4 +156,20 @@ public class UIManager : Singleton<UIManager>, IInitializable
             popUpWindow.CloseWindow();
         }
     }
+
+    public bool IsValidBPM(string value, out float bpmValue)
+    {
+        bpmValue = 0f;
+
+        if (string.IsNullOrEmpty(value))
+            return false;
+
+        if (!float.TryParse(value, out bpmValue))
+            return false;
+
+        if (bpmValue <= 0 || bpmValue >= 500)
+            return false;
+
+        return true;
+    }
 }

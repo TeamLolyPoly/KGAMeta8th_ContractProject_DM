@@ -469,7 +469,14 @@ namespace NoteEditor
             if (track != null)
             {
                 if (bpm != null)
+                {
                     track.bpm = float.Parse(bpm);
+                    foreach (var noteMapData in track.noteMapData)
+                    {
+                        noteMapData.noteMap.bpm = track.bpm;
+                    }
+                    SaveNoteMapAsync(track);
+                }
                 if (trackName != null)
                     track.trackName = trackName;
                 if (artistName != null)
