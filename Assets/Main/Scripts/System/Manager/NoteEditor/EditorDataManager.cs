@@ -47,7 +47,22 @@ namespace NoteEditor
                     year = trackMetadata.year,
                     genre = trackMetadata.genre,
                     duration = trackMetadata.duration,
+                    noteMapData = await LoadNoteMapAsync(trackMetadata),
                 };
+
+                if (track.noteMapData == null)
+                {
+                    track.noteMapData = new List<NoteMapData>()
+                    {
+                        new NoteMapData()
+                        {
+                            difficulty = Difficulty.Easy,
+                            noteMap = new NoteMap() { beatsPerBar = 4, bpm = track.bpm },
+                        },
+                    };
+
+                    await SaveNoteMapAsync(track);
+                }
 
                 tracks.Add(track);
 
@@ -160,6 +175,14 @@ namespace NoteEditor
                 TrackData newTrack = result.trackData;
 
                 newTrack.TrackAudio = result.clip;
+                newTrack.noteMapData = new List<NoteMapData>();
+                newTrack.noteMapData.Add(
+                    new NoteMapData()
+                    {
+                        difficulty = Difficulty.Easy,
+                        noteMap = new NoteMap() { beatsPerBar = 4, bpm = newTrack.bpm },
+                    }
+                );
 
                 tracks.Add(newTrack);
 
@@ -299,27 +322,23 @@ namespace NoteEditor
         /// <param name="trackName">트랙 이름</param>
         /// <param name="bpm">설정할 BPM 값</param>
         /// <returns>비동기 작업</returns>
-        public async Task SetBPMAsync(string trackName, float bpm)
+        public async Task SetBPMAsync(TrackData track, float bpm)
         {
-            TrackData track = tracks.FirstOrDefault(t => t.trackName == trackName);
+            if (track == null)
+                return;
 
-            if (track != null)
-            {
-                track.bpm = bpm;
+            track.bpm = bpm;
 
-                await SaveAllTracksMetadataAsync();
-                await SaveNoteMapAsync(track, track.noteMap);
+            await SaveAllTracksMetadataAsync();
+            await SaveNoteMapAsync(track);
 
-                Debug.Log($"트랙 BPM 업데이트: {trackName}, BPM: {bpm}");
-            }
+            Debug.Log($"트랙 BPM 업데이트: {track.trackName}, BPM: {bpm}");
         }
 
         private async Task SaveAllTracksMetadataAsync()
         {
             List<TrackData> metadataList = new List<TrackData>();
             List<Task> noteMapSaveTasks = new List<Task>();
-
-            // 컬렉션 복사본 만들기
             List<TrackData> tracksCopy = new List<TrackData>(tracks);
 
             foreach (var track in tracksCopy)
@@ -338,13 +357,10 @@ namespace NoteEditor
 
                 metadataList.Add(metadata);
 
-                if (track.noteMap != null)
+                if (track.noteMapData != null)
                 {
                     string noteMapPath = ResourcePath.GetNoteMapPath(track.id);
-                    string noteMapJson = JsonConvert.SerializeObject(
-                        track.noteMap,
-                        Formatting.Indented
-                    );
+                    string noteMapJson = JsonConvert.SerializeObject(track.noteMapData);
 
                     string directory = Path.GetDirectoryName(noteMapPath);
                     if (!Directory.Exists(directory))
@@ -354,8 +370,30 @@ namespace NoteEditor
 
                     var saveTask = Task.Run(() =>
                     {
-                        File.WriteAllText(noteMapPath, noteMapJson);
-                        Debug.Log($"노트맵 저장 완료: {noteMapPath}");
+                        try
+                        {
+                            using (
+                                var fileStream = new FileStream(
+                                    noteMapPath,
+                                    FileMode.Create,
+                                    FileAccess.Write,
+                                    FileShare.ReadWrite
+                                )
+                            )
+                            using (var writer = new StreamWriter(fileStream))
+                            {
+                                writer.Write(noteMapJson);
+                            }
+                            Debug.Log($"노트맵 저장 완료: {noteMapPath}");
+                        }
+                        catch (IOException ex)
+                        {
+                            Debug.LogError($"노트맵 저장 중 IO 오류 발생: {ex.Message}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"노트맵 저장 중 오류 발생: {ex.Message}");
+                        }
                     });
 
                     noteMapSaveTasks.Add(saveTask);
@@ -375,7 +413,7 @@ namespace NoteEditor
         /// </summary>
         /// <param name="trackName">트랙 이름</param>
         /// <returns>로드된 노트맵</returns>
-        public async Task<NoteMap> LoadNoteMapAsync(TrackData track)
+        public async Task<List<NoteMapData>> LoadNoteMapAsync(TrackData track)
         {
             if (track == null)
                 return null;
@@ -386,18 +424,23 @@ namespace NoteEditor
 
                 if (!File.Exists(noteMapPath))
                 {
+                    Debug.LogWarning(
+                        $"[EditorDataManager] {track.trackName}의 노트맵 파일이 존재하지 않아 새로 생성합니다 "
+                    );
                     return null;
                 }
 
                 string json = await Task.Run(() => File.ReadAllText(noteMapPath));
-                NoteMap noteMap = JsonConvert.DeserializeObject<NoteMap>(json);
+                List<NoteMapData> noteMapData = JsonConvert.DeserializeObject<List<NoteMapData>>(
+                    json
+                );
 
                 if (track != null)
                 {
-                    track.noteMap = noteMap;
+                    track.noteMapData = noteMapData;
                 }
 
-                return noteMap;
+                return noteMapData;
             }
             catch (Exception ex)
             {
@@ -412,9 +455,9 @@ namespace NoteEditor
         /// <param name="trackName">트랙 이름</param>
         /// <param name="noteMap">저장할 노트맵</param>
         /// <returns>성공 여부</returns>
-        public async Task<bool> SaveNoteMapAsync(TrackData track, NoteMap noteMap)
+        public async Task<bool> SaveNoteMapAsync(TrackData track)
         {
-            if (track == null || noteMap == null)
+            if (track == null)
                 return false;
 
             try
@@ -424,10 +467,12 @@ namespace NoteEditor
                 JsonSerializerSettings settings = new JsonSerializerSettings
                 {
                     ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                    Formatting = Formatting.Indented,
+                    Formatting = Formatting.None,
                 };
 
-                string noteMapJson = JsonConvert.SerializeObject(noteMap, settings);
+                List<NoteMapData> noteMapData = track.noteMapData;
+
+                string noteMapJson = JsonConvert.SerializeObject(noteMapData, settings);
 
                 string directory = Path.GetDirectoryName(noteMapPath);
                 if (!Directory.Exists(directory))
@@ -435,11 +480,33 @@ namespace NoteEditor
                     Directory.CreateDirectory(directory);
                 }
 
-                await Task.Run(() => File.WriteAllText(noteMapPath, noteMapJson));
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        using (
+                            var fileStream = new FileStream(
+                                noteMapPath,
+                                FileMode.Create,
+                                FileAccess.Write,
+                                FileShare.ReadWrite
+                            )
+                        )
+                        using (var writer = new StreamWriter(fileStream))
+                        {
+                            writer.Write(noteMapJson);
+                        }
+                    }
+                    catch (IOException ex)
+                    {
+                        Debug.LogError($"노트맵 저장 중 IO 오류 발생: {ex.Message}");
+                        throw;
+                    }
+                });
 
                 if (track != null)
                 {
-                    track.noteMap = noteMap;
+                    track.noteMapData = noteMapData;
                 }
 
                 return true;

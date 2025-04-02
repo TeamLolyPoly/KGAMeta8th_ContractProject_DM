@@ -40,7 +40,7 @@ public class ModePanel : Panel
     private void OnSingleButtonClick()
     {
         UIManager.Instance.ClosePanel(PanelType.Mode);
-        UIManager.Instance.OpenPanel(PanelType.Album);
+        UIManager.Instance.OpenPanel(PanelType.Music);
     }
 
     private void OnMultiButtonClick()

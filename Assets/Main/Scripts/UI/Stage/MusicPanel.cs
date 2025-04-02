@@ -15,7 +15,7 @@ public class MusicPanel : Panel
     private BoxButtonManager albumButton;
 
     [SerializeField]
-    private BoxButtonManager SampleButton;
+    private ShopButtonManager SampleButton;
 
     // todo: 곡들을 어떤식으로 담을지 고민해야함 + 버튼 클릭 시 곡 재생,앨범사진도 바뀌게? 아니면 아티스트 대표사진만 노출?
 

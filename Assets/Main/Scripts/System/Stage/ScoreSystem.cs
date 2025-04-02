@@ -62,29 +62,29 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     public NoteRatings LastRating => lastRating;
 
     //테스트용 코드
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            SetScore(100, NoteRatings.Perfect);
-        }
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            SetScore(100, NoteRatings.Good);
-        }
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            SetScore(0, NoteRatings.Miss);
-        }
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            print(
-                $"\nGood: {ratingCount[NoteRatings.Good]}"
-                    + $"\nMiss: {ratingCount[NoteRatings.Miss]}"
-                    + $"\n게임랭크: {GetGameRank()}"
-            );
-        }
-    }
+    // void Update()
+    // {
+    //     if (Input.GetKeyDown(KeyCode.Q))
+    //     {
+    //         SetScore(100, NoteRatings.Perfect);
+    //     }
+    //     if (Input.GetKeyDown(KeyCode.W))
+    //     {
+    //         SetScore(100, NoteRatings.Good);
+    //     }
+    //     if (Input.GetKeyDown(KeyCode.E))
+    //     {
+    //         SetScore(0, NoteRatings.Miss);
+    //     }
+    //     if (Input.GetKeyDown(KeyCode.R))
+    //     {
+    //         print(
+    //             $"\nGood: {ratingCount[NoteRatings.Good]}"
+    //                 + $"\nMiss: {ratingCount[NoteRatings.Miss]}"
+    //                 + $"\n게임랭크: {GetGameRank()}"
+    //         );
+    //     }
+    // }
 
     public void Initialize()
     {
@@ -103,7 +103,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             for (int i = 0; i < scoreSettingData.engagementThreshold.Count; i++)
             {
                 bandEngagementType.Add(scoreSettingData.engagementThreshold[i], (Engagement)i);
-                bandActiveMember.Add((Engagement)i, scoreSettingData.bandActiveMembers[i]);
+                bandActiveMember.Add((Engagement)i, scoreSettingData.engagementMemberThreshold[i]);
             }
             for (int i = 0; i < scoreSettingData.multiplierScore.Count; i++)
             {
@@ -181,7 +181,6 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     private void SetSpectatorEngagement()
     {
-        print($"totalNoteCount: {totalNoteCount}");
         SpectatorEventThreshold newThreshold =
             scoreSettingData.sectatorEventThreshold.LastOrDefault(threshold =>
                 CheckEngagement(threshold, totalNoteCount)

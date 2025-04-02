@@ -55,6 +55,9 @@ namespace NoteEditor
 
         private bool isLoadingAlbumArt = false;
 
+        private UnityEngine.Events.UnityAction<bool> symmetricToggleHandler;
+        private UnityEngine.Events.UnityAction<bool> clockwiseToggleHandler;
+
         public override void Open()
         {
             base.Open();
@@ -71,6 +74,8 @@ namespace NoteEditor
 
             if (BPMInput != null)
             {
+                BPMInput.inputText.contentType = TMP_InputField.ContentType.IntegerNumber;
+                BPMInput.inputText.characterLimit = 3;
                 BPMInput.onSubmit.AddListener(() => OnBPMInputSubmit(BPMInput.inputText.text));
                 BPMInput.inputText.text = EditorManager.Instance.CurrentTrack.bpm.ToString();
             }
@@ -78,40 +83,47 @@ namespace NoteEditor
             InitializeAlbumArtButton();
             InitializeNoteUI();
             InitializeBeatsPerBarDropdown();
+            currentTrackPlaybackTime.text =
+                $"00:00:00 / {FormatTime(AudioManager.Instance.currentPlaybackDuration)}";
             IsInitialized = true;
             Debug.Log("[NoteEditorPanel] 초기화 완료");
-
-            if (symmetricToggle != null)
-            {
-                SwitchManager switchManager =
-                    symmetricToggle.GetComponentInChildren<SwitchManager>();
-                switchManager.onValueChanged.AddListener(OnSymmetricToggleChanged);
-            }
-
-            if (clockwiseToggle != null)
-            {
-                SwitchManager switchManager =
-                    clockwiseToggle.GetComponentInChildren<SwitchManager>();
-                switchManager.onValueChanged.AddListener(OnClockwiseToggleChanged);
-            }
-
-            if (CameraToggleButton != null)
-            {
-                CameraToggleButton.onClick.AddListener(
-                    EditorManager.Instance.cameraController.ToggleFreeLook
-                );
-            }
         }
 
         private void InitializeBeatsPerBarDropdown()
         {
             if (beatsPerBarDropdown == null)
                 return;
-
-            beatsPerBarDropdown.items.Clear();
-            foreach (BeatsPerBar beatsPerBar in Enum.GetValues(typeof(BeatsPerBar)))
+            if (!IsInitialized)
             {
-                beatsPerBarDropdown.CreateNewItem(beatsPerBar.ToString(), true);
+                foreach (BeatsPerBar beatsPerBar in Enum.GetValues(typeof(BeatsPerBar)))
+                {
+                    beatsPerBarDropdown.CreateNewItem(beatsPerBar.ToString(), true);
+                }
+            }
+
+            switch (AudioManager.Instance.BeatsPerBar)
+            {
+                case 4:
+                    beatsPerBarDropdown.SetDropdownIndex(0);
+                    break;
+                case 8:
+                    beatsPerBarDropdown.SetDropdownIndex(1);
+                    break;
+                case 6:
+                    beatsPerBarDropdown.SetDropdownIndex(2);
+                    break;
+                case 12:
+                    beatsPerBarDropdown.SetDropdownIndex(3);
+                    break;
+                case 16:
+                    beatsPerBarDropdown.SetDropdownIndex(4);
+                    break;
+                case 32:
+                    beatsPerBarDropdown.SetDropdownIndex(5);
+                    break;
+                default:
+                    beatsPerBarDropdown.SetDropdownIndex(0);
+                    break;
             }
 
             beatsPerBarDropdown.onValueChanged.AddListener(OnBeatsPerBarDropdownValueChanged);
@@ -171,6 +183,22 @@ namespace NoteEditor
                 );
             }
 
+            if (symmetricToggle != null)
+            {
+                symmetricToggleHandler = OnSymmetricToggleChanged;
+                symmetricToggle
+                    .GetComponentInChildren<SwitchManager>()
+                    .onValueChanged.AddListener(symmetricToggleHandler);
+            }
+
+            if (clockwiseToggle != null)
+            {
+                clockwiseToggleHandler = OnClockwiseToggleChanged;
+                clockwiseToggle
+                    .GetComponentInChildren<SwitchManager>()
+                    .onValueChanged.AddListener(clockwiseToggleHandler);
+            }
+
             ToggleLongNoteUI(false);
             ToggleShortNoteUI(false);
         }
@@ -199,39 +227,108 @@ namespace NoteEditor
             }
         }
 
-        private void OnDestroy()
+        public override void Close(bool objActive = true)
         {
-            if (SetAlbumArtButton != null)
-                SetAlbumArtButton.onClick.RemoveAllListeners();
+            Cleanup();
+            base.Close(objActive);
+        }
 
+        private void Cleanup()
+        {
             if (BPMInput != null)
+            {
                 BPMInput.onSubmit.RemoveAllListeners();
-
-            if (beatsPerBarDropdown != null)
-                beatsPerBarDropdown.onValueChanged.RemoveAllListeners();
+            }
 
             if (noteColorDropdown != null)
+            {
                 noteColorDropdown.onValueChanged.RemoveAllListeners();
+            }
 
             if (noteDirectionDropdown != null)
+            {
                 noteDirectionDropdown.onValueChanged.RemoveAllListeners();
+            }
+
+            if (beatsPerBarDropdown != null)
+            {
+                beatsPerBarDropdown.onValueChanged.RemoveAllListeners();
+            }
+
+            if (symmetricToggle != null)
+            {
+                symmetricToggle
+                    .GetComponentInChildren<SwitchManager>()
+                    .onValueChanged.RemoveListener(symmetricToggleHandler);
+            }
+
+            if (clockwiseToggle != null)
+            {
+                clockwiseToggle
+                    .GetComponentInChildren<SwitchManager>()
+                    .onValueChanged.RemoveListener(clockwiseToggleHandler);
+            }
+
+            if (CameraToggleButton != null)
+            {
+                CameraToggleButton.onClick.RemoveAllListeners();
+            }
+
+            if (SetAlbumArtButton != null)
+            {
+                SetAlbumArtButton.onClick.RemoveAllListeners();
+            }
+
+            if (CurrentTrackInfo != null)
+            {
+                CurrentTrackInfo.onClick.RemoveAllListeners();
+            }
+
+            if (statusText != null)
+            {
+                statusText.text = "";
+            }
+
+            if (currentTrackPlaybackTime != null)
+            {
+                currentTrackPlaybackTime.text = "";
+            }
+
+            if (selectedCellInfoText != null)
+            {
+                selectedCellInfoText.text = "";
+            }
+
+            if (longNoteGroupAnimator != null)
+            {
+                longNoteGroupAnimator.SetBool("isOpen", false);
+            }
+
+            if (noteColorAnimator != null)
+            {
+                noteColorAnimator.SetBool("isOpen", false);
+            }
+
+            if (noteDirectionAnimator != null)
+            {
+                noteDirectionAnimator.SetBool("isOpen", false);
+            }
+            if (beatsPerBarDropdown != null)
+            {
+                beatsPerBarDropdown.onValueChanged.RemoveAllListeners();
+            }
         }
 
         private async void OnBPMInputSubmit(string value)
         {
             if (string.IsNullOrEmpty(value))
             {
-                Debug.LogWarning("BPM을 입력하세요.");
+                UpdateStatusText("<color=red>BPM을 입력하세요.</color>");
                 return;
             }
-            if (!int.TryParse(value, out int bpm))
+            if (!UIManager.Instance.IsValidBPM(value, out float bpm))
             {
-                Debug.LogWarning("유효한 숫자를 입력하세요.");
-                return;
-            }
-            if (bpm <= 0)
-            {
-                UpdateStatusText("<color=red>BPM은 0보다 커야 합니다.</color>");
+                UpdateStatusText("<color=red>유효한 숫자를 입력하세요.</color>");
                 return;
             }
 
@@ -315,15 +412,6 @@ namespace NoteEditor
             }
         }
 
-        private void OnSaveButtonClicked()
-        {
-            if (editor == null || !editor.IsInitialized)
-                return;
-
-            editor.SaveNoteMap();
-            UpdateStatusText($"{AudioManager.Instance.currentTrack.trackName} 노트맵 저장 완료");
-        }
-
         public void UpdateStatusText(string message)
         {
             if (statusText != null)
@@ -383,11 +471,6 @@ namespace NoteEditor
             noteColorAnimator.SetBool("isOpen", isVisible);
         }
 
-        private void InitializeInputFields()
-        {
-            BPMInput.inputText.text = EditorManager.Instance.CurrentTrack.bpm.ToString();
-        }
-
         private void OnSymmetricToggleChanged(bool isOn)
         {
             if (EditorManager.Instance != null && EditorManager.Instance.noteEditor != null)
@@ -415,23 +498,29 @@ namespace NoteEditor
             )
             {
                 var noteData = EditorManager.Instance.cellController.SelectedCell.noteData;
-                if (symmetricToggle != null)
+
+                SwitchManager symmetricSwitch =
+                    symmetricToggle.GetComponentInChildren<SwitchManager>();
+                SwitchManager clockwiseSwitch =
+                    clockwiseToggle.GetComponentInChildren<SwitchManager>();
+
+                if (symmetricSwitch != null)
                 {
-                    SwitchManager switchManager =
-                        symmetricToggle.GetComponentInChildren<SwitchManager>();
+                    symmetricSwitch.onValueChanged.RemoveListener(symmetricToggleHandler);
                     if (noteData.isSymmetric)
-                        switchManager.SetOn();
+                        symmetricSwitch.SetOn();
                     else
-                        switchManager.SetOff();
+                        symmetricSwitch.SetOff();
+                    symmetricSwitch.onValueChanged.AddListener(symmetricToggleHandler);
                 }
-                if (clockwiseToggle != null)
+                if (clockwiseSwitch != null)
                 {
-                    SwitchManager switchManager =
-                        clockwiseToggle.GetComponentInChildren<SwitchManager>();
+                    clockwiseSwitch.onValueChanged.RemoveListener(clockwiseToggleHandler);
                     if (noteData.isClockwise)
-                        switchManager.SetOn();
+                        clockwiseSwitch.SetOn();
                     else
-                        switchManager.SetOff();
+                        clockwiseSwitch.SetOff();
+                    clockwiseSwitch.onValueChanged.AddListener(clockwiseToggleHandler);
                 }
             }
         }
