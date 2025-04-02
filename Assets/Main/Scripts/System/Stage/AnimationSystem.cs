@@ -14,10 +14,6 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     private List<Band> Bands = new List<Band>();
     private List<Spectator> spectators = new List<Spectator>();
 
-    //이전에 클립이 변경된 밴드
-    private HashSet<Band> changeBands = new HashSet<Band>();
-    private Engagement? defaultEngagement;
-    private int currentnumberOfUnits = 0;
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
 
@@ -36,7 +32,8 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         }
 
         GameManager.Instance.ScoreSystem.onBandEngagementChange += BandAnimationClipChange;
-        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange += SpectatorAnimationClipChange;
+        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange +=
+            SpectatorAnimationClipChange;
 
         isInitialized = true;
     }
@@ -104,7 +101,6 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     {
         foreach (Band band in Bands)
         {
-
             if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData animationData))
             {
                 if ((int)engagement >= animationData.animationClip.Length)
@@ -114,7 +110,6 @@ public class AnimationSystem : MonoBehaviour, IInitializable
                 if (animationClip == null)
                     continue;
                 band.SetAnimationClip(animationClip, "Usual");
-
             }
         }
     }
