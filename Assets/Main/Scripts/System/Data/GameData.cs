@@ -152,6 +152,14 @@ public class NoteMap
         }
     }
 }
+
+[Serializable]
+public class NoteMapData
+{
+    public Difficulty difficulty;
+    public NoteMap noteMap;
+}
+
 #endregion
 
 #region NoteEditor
@@ -166,27 +174,9 @@ public class TrackData
     public string genre;
     public float duration;
     public float bpm = 120f;
-    public NoteMap noteMap;
-
-    [JsonIgnore]
-    private Sprite _albumArt;
-
-    [JsonIgnore]
-    private AudioClip _audioClip;
-
-    [JsonIgnore]
-    public Sprite AlbumArt
-    {
-        get { return _albumArt; }
-        set { _albumArt = value; }
-    }
-
-    [JsonIgnore]
-    public AudioClip TrackAudio
-    {
-        get { return _audioClip; }
-        set { _audioClip = value; }
-    }
+    public List<NoteMapData> noteMapData { get; set; }
+    public Sprite AlbumArt { get; set; }
+    public AudioClip TrackAudio { get; set; }
 }
 
 [Serializable]
