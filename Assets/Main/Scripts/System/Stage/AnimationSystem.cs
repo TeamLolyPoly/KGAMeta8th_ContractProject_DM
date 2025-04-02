@@ -11,13 +11,12 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         new Dictionary<BandType, BandAnimationData>();
 
     //씬위에 올라와있는 밴드와 관객
-    private List<Band> Bands = new List<Band>();
+    private List<Band> bands = new List<Band>();
     private List<Spectator> spectators = new List<Spectator>();
 
-    //이전에 클립이 변경된 밴드
-    private HashSet<Band> changeBands = new HashSet<Band>();
+    //디폴트 호응도
     private Engagement? defaultEngagement;
-    private int currentnumberOfUnits = 0;
+
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
 
@@ -45,7 +44,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     {
         if (unit is Band band)
         {
-            Bands.Add(band);
+            bands.Add(band);
         }
         else if (unit is Spectator spectator)
         {
@@ -57,7 +56,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     {
         if (unit is Band band)
         {
-            Bands.Remove(band);
+            bands.Remove(band);
         }
         else if (unit is Spectator spectator)
         {
@@ -102,19 +101,64 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     /// <param name="numberOfUnits"></param>
     public void BandAnimationClipChange(Engagement engagement, int numberOfUnits = 0)
     {
-        foreach (Band band in Bands)
+        if (defaultEngagement == null)
         {
+            defaultEngagement = engagement;
+        }
 
+        foreach (Band band in bands)
+        {
             if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData animationData))
             {
-                if ((int)engagement >= animationData.animationClip.Length)
+                if ((int)defaultEngagement >= animationData.animationClip.Length)
                     continue;
-                AnimationClip animationClip = animationData.animationClip[(int)engagement];
+                AnimationClip animationClip = animationData.animationClip[(int)defaultEngagement];
 
                 if (animationClip == null)
                     continue;
                 band.SetAnimationClip(animationClip, "Usual");
+            }
+        }
 
+        List<int> ints = new List<int>();
+        if (numberOfUnits != 0)
+        {
+            for (int i = 0; i < bands.Count; i++)
+            {
+                ints.Add(i);
+            }
+
+            for (int i = 0; i < numberOfUnits; i++)
+            {
+                int a = ints[Random.Range(0, ints.Count)];
+                ints.RemoveAt(a);
+
+                if (bandAnimators.TryGetValue(bands[a].bandType, out BandAnimationData animationData))
+                {
+                    if ((int)engagement >= animationData.animationClip.Length)
+                        continue;
+                    AnimationClip animationClip = animationData.animationClip[(int)engagement];
+
+                    if (animationClip == null)
+                        continue;
+                    bands[a].SetAnimationClip(animationClip, "Usual");
+                }
+            }
+        }
+        else
+        {
+            foreach (Band band in bands)
+            {
+                if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData animationData))
+                {
+                    if ((int)engagement >= animationData.animationClip.Length)
+                        continue;
+                    AnimationClip animationClip = animationData.animationClip[(int)engagement];
+
+                    if (animationClip == null)
+                        continue;
+                    band.SetAnimationClip(animationClip, "Usual");
+                }
             }
         }
     }
