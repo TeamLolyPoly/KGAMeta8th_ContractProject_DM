@@ -13,7 +13,7 @@ namespace NoteEditor
         [SerializeField]
         private GameObject endPoint;
 
-        public GameObject symmetricObject { get; set; }
+        public LongNoteModel symmetricObject { get; set; }
 
         public Cell startCell;
         public Cell endCell;
@@ -125,7 +125,6 @@ namespace NoteEditor
             if (noteData != null)
             {
                 noteData.isSymmetric = isSymmetric;
-                Debug.Log($"롱노트 대칭 설정: {isSymmetric}");
             }
         }
 
@@ -134,7 +133,6 @@ namespace NoteEditor
             if (noteData != null)
             {
                 noteData.isClockwise = isClockwise;
-                Debug.Log($"롱노트 회전 방향 설정: {isClockwise}");
 
                 if (
                     noteData.isSymmetric
@@ -142,12 +140,7 @@ namespace NoteEditor
                     && EditorManager.Instance.noteEditor != null
                 )
                 {
-                    EditorManager.Instance.noteEditor.UpdateSymmetricNote(
-                        startCell,
-                        endCell,
-                        noteData,
-                        true
-                    );
+                    EditorManager.Instance.noteEditor.UpdateNoteClockwise(isClockwise);
                 }
             }
         }
