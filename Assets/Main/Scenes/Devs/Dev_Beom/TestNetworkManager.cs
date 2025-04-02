@@ -12,6 +12,7 @@ public class TestNetworkManager : MonoBehaviourPunCallbacks
     public GameObject playerPrefab;
     private bool isMultiplayer = false;
     private Dictionary<int, bool> playerReadyStatus = new Dictionary<int, bool>();
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -23,15 +24,16 @@ public class TestNetworkManager : MonoBehaviourPunCallbacks
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
-    void OnEnable()
-    {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
 
-    void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
+    // void OnEnable()
+    // {
+    //     SceneManager.sceneLoaded += OnSceneLoaded;
+    // }
+
+    // void OnDisable()
+    // {
+    //     SceneManager.sceneLoaded -= OnSceneLoaded;
+    // }
 
     void Start()
     {
@@ -89,6 +91,7 @@ public class TestNetworkManager : MonoBehaviourPunCallbacks
             PhotonNetwork.LoadLevel("GameScene");
         }
     }
+
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
         Debug.Log("Player joined: " + newPlayer.NickName);
@@ -166,8 +169,8 @@ public class TestNetworkManager : MonoBehaviourPunCallbacks
 
     private bool AreAllPlayersReady()
     {
-        return playerReadyStatus.Count == PhotonNetwork.CurrentRoom.PlayerCount &&
-               playerReadyStatus.All(status => status.Value);
+        return playerReadyStatus.Count == PhotonNetwork.CurrentRoom.PlayerCount
+            && playerReadyStatus.All(status => status.Value);
     }
 
     [PunRPC]
