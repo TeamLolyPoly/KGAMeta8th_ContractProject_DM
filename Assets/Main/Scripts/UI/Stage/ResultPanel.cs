@@ -24,10 +24,10 @@ public class ResultPanel : Panel
     }
 
     [SerializeField]
-    private Button restartButton;
+    private ButtonManager restartButton;
 
     [SerializeField]
-    private Button homeButton;
+    private ButtonManager homeButton;
 
     [SerializeField]
     private BoxButtonManager resultDetailButton;
