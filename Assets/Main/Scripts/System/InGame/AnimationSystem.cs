@@ -102,40 +102,10 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     /// <param name="numberOfUnits"></param>
     public void BandAnimationClipChange(Engagement engagement, int numberOfUnits = 0)
     {
-        if (defaultEngagement == null)
+        foreach (Band band in Bands)
         {
-            defaultEngagement = engagement;
-        }
-        else if (defaultEngagement == engagement)
-        {
-            currentnumberOfUnits = 0;
-            changeBands.Clear();
-        }
-        if (numberOfUnits == 0)
-        {
-            numberOfUnits = 100000000;
-        }
-        else
-        {
-            int a = numberOfUnits - currentnumberOfUnits;
-            currentnumberOfUnits = numberOfUnits;
-            numberOfUnits = a;
-        }
 
-        HashSet<int> aa = new HashSet<int>();
-
-        numberOfUnits = Mathf.Min(numberOfUnits, Bands.Count);
-
-        while (aa.Count < numberOfUnits)
-        {
-            aa.Add(Random.Range(0, numberOfUnits));
-        }
-        foreach (int i in aa)
-        {
-            if (changeBands.Contains(Bands[i]))
-                continue;
-
-            if (bandAnimators.TryGetValue(Bands[i].bandType, out BandAnimationData animationData))
+            if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData animationData))
             {
                 if ((int)engagement >= animationData.animationClip.Length)
                     continue;
@@ -143,28 +113,10 @@ public class AnimationSystem : MonoBehaviour, IInitializable
 
                 if (animationClip == null)
                     continue;
-                Bands[i].SetAnimationClip(animationClip, "Usual");
+                band.SetAnimationClip(animationClip, "Usual");
 
-                changeBands.Add(Bands[i]);
             }
         }
-        // foreach (Band band in Bands)
-        // {
-        //     if (changeBands.Contains(band))
-        //         continue;
-
-        //     if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData animationData))
-        //     {
-        //         if ((int)engagement >= animationData.animationClip.Length)
-        //             continue;
-        //         AnimationClip animationClip = animationData.animationClip[(int)engagement];
-
-        //         if (animationClip == null)
-        //             continue;
-        //         band.SetAnimationClip(animationClip, "Usual");
-        //         changeBands.Add(band);
-        //     }
-        // }
     }
 
     public void SpectatorAnimationClipChange(Engagement engagement)
