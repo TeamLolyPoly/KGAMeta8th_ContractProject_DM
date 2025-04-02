@@ -471,13 +471,11 @@ namespace NoteEditor
                 if (bpm != null)
                 {
                     track.bpm = float.Parse(bpm);
-                    foreach (var noteMapData in CurrentTrack.noteMapData)
+                    foreach (var noteMapData in track.noteMapData)
                     {
                         noteMapData.noteMap.bpm = track.bpm;
                     }
-                    CurrentNoteMapData.noteMap.bpm = track.bpm;
-                    CurrentNoteMap.bpm = track.bpm;
-                    SaveNoteMapAsync();
+                    SaveNoteMapAsync(track);
                 }
                 if (trackName != null)
                     track.trackName = trackName;

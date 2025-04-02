@@ -580,16 +580,6 @@ namespace NoteEditor
                 {
                     longNoteModel.symmetricObject = symmetricModel;
                 }
-                else
-                {
-                    cellController.SelectedCell.noteData.isSymmetric = false;
-
-                    cellController.SelectedCell.longNoteModel.SetSymmetric(false);
-
-                    editorManager.editorPanel.UpdateStatusText(
-                        "<color=red>대칭 노트를 위한 셀이 비어있지 않습니다.</color>"
-                    );
-                }
             }
 
             editorManager.SaveNoteMapAsync();
@@ -607,6 +597,8 @@ namespace NoteEditor
                 return null;
 
             string symmetricVisualName = $"SymmetricNote_{originalStart.name}";
+
+            isCreatingLongNote = false;
 
             if (originalStart.longNoteModel.symmetricObject != null)
             {
