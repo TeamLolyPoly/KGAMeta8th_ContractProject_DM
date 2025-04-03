@@ -23,8 +23,5 @@ public class OptionPanel : Panel
         base.Close(objActive);
     }
 
-    private void OnCloseButtonClick()
-    {
-        UIManager.Instance.ClosePanel(PanelType.Option);
-    }
+    private void OnCloseButtonClick() { }
 }

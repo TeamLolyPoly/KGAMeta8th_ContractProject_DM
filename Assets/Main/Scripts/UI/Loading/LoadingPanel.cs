@@ -66,7 +66,7 @@ public class LoadingPanel : Panel
 
     public override void Close(bool objActive = true)
     {
-        UIManager.Instance.Panels.Remove(this);
+        EditorUIManager.Instance.Panels.Remove(this);
         Destroy(gameObject);
     }
 

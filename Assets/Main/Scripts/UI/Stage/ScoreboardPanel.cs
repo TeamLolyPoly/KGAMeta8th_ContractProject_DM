@@ -26,12 +26,10 @@ public class ScoreboardPanel : Panel
     {
         scoreSystem = GameManager.Instance.ScoreSystem;
 
-        // 초기값 설정
         lastScore = 0;
         lastCombo = 0;
         lastRating = scoreSystem.LastRating;
 
-        // UI 업데이트
         if (scoreText != null)
         {
             scoreText.text = "0";
@@ -51,7 +49,6 @@ public class ScoreboardPanel : Panel
         if (scoreSystem == null)
             return;
 
-        // 값이 변경된 경우에만 업데이트
         if (lastScore != scoreSystem.currentScore)
         {
             lastScore = scoreSystem.currentScore;

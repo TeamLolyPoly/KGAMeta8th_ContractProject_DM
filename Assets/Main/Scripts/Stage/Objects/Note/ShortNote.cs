@@ -241,36 +241,6 @@ public class ShortNote : Note
         }
     }
 
-    // private void OnCollisionExit(Collision other)
-    // {
-    //     if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
-    //     {
-    //         if (noteInteractor.noteColor == noteData.noteColor)
-    //         {
-    //             Vector3 ExitPoint = (transform.position - other.transform.position).normalized;
-    //             ExitAngle = Vector3.Angle(ExitPoint, noteUpDirection);
-
-    //             Debug.DrawRay(transform.position, ExitPoint, Color.red, 0.5f);
-
-    //             if (EnterAngle <= directionalRange && ExitAngle <= directionalRange)
-    //             {
-    //                 HitScore(hitdis);
-    //                 noteInteractor.SendImpulse();
-    //             }
-    //             else
-    //             {
-    //                 print("이상한 방향을 타격함");
-    //                 Miss();
-    //             }
-    //         }
-    //         else
-    //         {
-    //             print("HitObject 타입이 다름");
-    //             Miss();
-    //         }
-    //     }
-    // }
-
     private float HitPoint(Collision other)
     {
         Vector3 hitPoint = other.GetContact(0).point;

@@ -2,11 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using Michsky.UI.Heat;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class CarouselMenu : MonoBehaviour
 {
-    [SerializeField]
-    private List<RectTransform> menuItems = new List<RectTransform>();
+    private List<BoxButtonManager> instantiatedItems = new List<BoxButtonManager>();
 
     [SerializeField]
     private ButtonManager leftButton;
@@ -43,34 +43,50 @@ public class CarouselMenu : MonoBehaviour
     [SerializeField]
     private Vector2 itemSize = new Vector2(200, 200);
 
-    private List<BoxButtonManager> instantiatedItems = new List<BoxButtonManager>();
+    [SerializeField]
+    private XRPlayer xrPlayer;
+
+    private bool isMoving = false;
+    private float joystickCooldown = 0.3f;
+    private float lastJoystickTime;
 
     void Start()
     {
         InitializeCarousel();
         CreateMenuItems();
-        SetupButtons();
+
+        if (xrPlayer != null)
+        {
+            xrPlayer.LeftController.rotateAnchorAction.action.performed += HandleJoystickMovement;
+        }
 
         selectedIndex = 0;
 
-        if (menuItems.Count > 0)
+        if (instantiatedItems.Count > 0)
         {
             currentPosition = 0;
             StartCoroutine(InitialAnimation());
         }
+
+        leftButton.onClick.AddListener(SelectPrevious);
+        rightButton.onClick.AddListener(SelectNext);
     }
 
-    private void SetupButtons()
+    private void HandleJoystickMovement(InputAction.CallbackContext context)
     {
-        if (leftButton != null)
+        if (Time.time - lastJoystickTime < joystickCooldown || isMoving)
+            return;
+
+        if (context.ReadValue<Vector2>().x > 0)
         {
-            leftButton.onClick.AddListener(SelectPrevious);
+            SelectNext();
+        }
+        else if (context.ReadValue<Vector2>().x < 0)
+        {
+            SelectPrevious();
         }
 
-        if (rightButton != null)
-        {
-            rightButton.onClick.AddListener(SelectNext);
-        }
+        lastJoystickTime = Time.time;
     }
 
     private void CreateMenuItems()
@@ -84,10 +100,8 @@ public class CarouselMenu : MonoBehaviour
         for (int i = 0; i < itemCount; i++)
         {
             BoxButtonManager item = Instantiate(menuItemPrefab, contentParent);
-            RectTransform rectTransform = item.GetComponent<RectTransform>();
-            rectTransform.sizeDelta = itemSize;
-            AddItem(rectTransform);
-            instantiatedItems.Add(item);
+            item.GetComponent<RectTransform>().sizeDelta = itemSize;
+            AddItem(item);
             item.SetInteractable(false);
         }
     }
@@ -99,28 +113,28 @@ public class CarouselMenu : MonoBehaviour
             bool isSelected = (i == selectedIndex);
             instantiatedItems[i].SetInteractable(isSelected);
 
-            if (isSelected && !Mathf.Approximately(menuItems[i].localScale.x, 1f))
+            if (isSelected && !Mathf.Approximately(instantiatedItems[i].transform.localScale.x, 1f))
             {
-                menuItems[i].localScale = Vector3.one;
+                instantiatedItems[i].transform.localScale = Vector3.one;
             }
         }
     }
 
     private void InitializeCarousel()
     {
-        positions = new float[menuItems.Count];
+        positions = new float[instantiatedItems.Count];
 
-        for (int i = 0; i < menuItems.Count; i++)
+        for (int i = 0; i < instantiatedItems.Count; i++)
         {
             positions[i] = i * spacing;
 
-            Vector3 targetPosition = menuItems[i].localPosition;
+            Vector3 targetPosition = instantiatedItems[i].transform.localPosition;
             targetPosition.x = positions[i];
-            menuItems[i].localPosition = targetPosition;
+            instantiatedItems[i].transform.localPosition = targetPosition;
 
             float normalizedDistance = Mathf.Abs(positions[i]) / (spacing * 2);
             float scale = Mathf.Lerp(1f, scaleRatio, scaleCurve.Evaluate(normalizedDistance));
-            menuItems[i].localScale = new Vector3(scale, scale, 1f);
+            instantiatedItems[i].transform.localScale = new Vector3(scale, scale, 1f);
         }
 
         currentPosition = 0;
@@ -132,7 +146,7 @@ public class CarouselMenu : MonoBehaviour
         float closestDistance = float.MaxValue;
         int newSelectedIndex = selectedIndex;
 
-        for (int i = 0; i < menuItems.Count; i++)
+        for (int i = 0; i < instantiatedItems.Count; i++)
         {
             float distance = Mathf.Abs(positions[i] - position);
             if (distance < closestDistance)
@@ -148,17 +162,17 @@ public class CarouselMenu : MonoBehaviour
             UpdateItemSelected();
         }
 
-        for (int i = 0; i < menuItems.Count; i++)
+        for (int i = 0; i < instantiatedItems.Count; i++)
         {
             float distance = positions[i] - position;
 
-            Vector3 targetPosition = menuItems[i].localPosition;
+            Vector3 targetPosition = instantiatedItems[i].transform.localPosition;
             targetPosition.x = distance;
-            menuItems[i].localPosition = targetPosition;
+            instantiatedItems[i].transform.localPosition = targetPosition;
 
             float normalizedDistance = Mathf.Abs(distance) / (spacing * 2);
             float scale = Mathf.Lerp(1f, scaleRatio, scaleCurve.Evaluate(normalizedDistance));
-            menuItems[i].localScale = new Vector3(scale, scale, 1f);
+            instantiatedItems[i].transform.localScale = new Vector3(scale, scale, 1f);
         }
     }
 
@@ -186,7 +200,7 @@ public class CarouselMenu : MonoBehaviour
 
     public void SelectNext()
     {
-        if (selectedIndex < menuItems.Count - 1)
+        if (selectedIndex < instantiatedItems.Count - 1)
         {
             selectedIndex++;
             float newTargetPosition = positions[selectedIndex];
@@ -221,17 +235,17 @@ public class CarouselMenu : MonoBehaviour
         return selectedIndex;
     }
 
-    public void AddItem(RectTransform item)
+    public void AddItem(BoxButtonManager item)
     {
-        menuItems.Add(item);
+        instantiatedItems.Add(item);
         InitializeCarousel();
     }
 
-    public void RemoveItem(RectTransform item)
+    public void RemoveItem(BoxButtonManager item)
     {
-        if (menuItems.Contains(item))
+        if (instantiatedItems.Contains(item))
         {
-            menuItems.Remove(item);
+            instantiatedItems.Remove(item);
             InitializeCarousel();
         }
     }
@@ -249,14 +263,9 @@ public class CarouselMenu : MonoBehaviour
             StopCoroutine(currentMoveCoroutine);
         }
 
-        if (leftButton != null)
+        if (xrPlayer != null)
         {
-            leftButton.onClick.RemoveListener(SelectPrevious);
-        }
-
-        if (rightButton != null)
-        {
-            rightButton.onClick.RemoveListener(SelectNext);
+            xrPlayer.LeftController.rotateAnchorAction.action.performed -= HandleJoystickMovement;
         }
     }
 
@@ -265,7 +274,7 @@ public class CarouselMenu : MonoBehaviour
         float contentWidth = contentParent.GetComponent<RectTransform>().rect.width;
         float contentHeight = contentParent.GetComponent<RectTransform>().rect.height;
 
-        for (int i = 0; i < menuItems.Count; i++)
+        for (int i = 0; i < instantiatedItems.Count; i++)
         {
             int spawnArea = Random.Range(0, 4);
             float randomX,
@@ -291,17 +300,17 @@ public class CarouselMenu : MonoBehaviour
                     break;
             }
 
-            menuItems[i].localPosition = new Vector3(randomX, randomY, 0f);
-            menuItems[i].localScale = Vector3.zero;
+            instantiatedItems[i].transform.localPosition = new Vector3(randomX, randomY, 0f);
+            instantiatedItems[i].transform.localScale = Vector3.zero;
         }
 
         float gatherTime = 1.2f;
         float elapsedTime = 0f;
 
-        Vector3[] startPositions = new Vector3[menuItems.Count];
-        for (int i = 0; i < menuItems.Count; i++)
+        Vector3[] startPositions = new Vector3[instantiatedItems.Count];
+        for (int i = 0; i < instantiatedItems.Count; i++)
         {
-            startPositions[i] = menuItems[i].localPosition;
+            startPositions[i] = instantiatedItems[i].transform.localPosition;
         }
 
         while (elapsedTime < gatherTime)
@@ -311,10 +320,18 @@ public class CarouselMenu : MonoBehaviour
 
             t = 1f - Mathf.Pow(1f - t, 4f);
 
-            for (int i = 0; i < menuItems.Count; i++)
+            for (int i = 0; i < instantiatedItems.Count; i++)
             {
-                menuItems[i].localPosition = Vector3.Lerp(startPositions[i], Vector3.zero, t);
-                menuItems[i].localScale = Vector3.Lerp(Vector3.zero, Vector3.one * 0.8f, t);
+                instantiatedItems[i].transform.localPosition = Vector3.Lerp(
+                    startPositions[i],
+                    Vector3.zero,
+                    t
+                );
+                instantiatedItems[i].transform.localScale = Vector3.Lerp(
+                    Vector3.zero,
+                    Vector3.one * 0.8f,
+                    t
+                );
             }
 
             yield return null;
@@ -323,10 +340,10 @@ public class CarouselMenu : MonoBehaviour
         float spreadTime = 1f;
         elapsedTime = 0f;
 
-        Vector3[] targetPositions = new Vector3[menuItems.Count];
-        Vector3[] targetScales = new Vector3[menuItems.Count];
+        Vector3[] targetPositions = new Vector3[instantiatedItems.Count];
+        Vector3[] targetScales = new Vector3[instantiatedItems.Count];
 
-        for (int i = 0; i < menuItems.Count; i++)
+        for (int i = 0; i < instantiatedItems.Count; i++)
         {
             float distance = positions[i] - currentPosition;
             targetPositions[i] = new Vector3(distance, 0f, 0f);
@@ -344,10 +361,18 @@ public class CarouselMenu : MonoBehaviour
 
             t = t < 0.5f ? 4f * t * t * t : 1f - Mathf.Pow(-2f * t + 2f, 3f) / 2f;
 
-            for (int i = 0; i < menuItems.Count; i++)
+            for (int i = 0; i < instantiatedItems.Count; i++)
             {
-                menuItems[i].localPosition = Vector3.Lerp(Vector3.zero, targetPositions[i], t);
-                menuItems[i].localScale = Vector3.Lerp(Vector3.one * 0.8f, targetScales[i], t);
+                instantiatedItems[i].transform.localPosition = Vector3.Lerp(
+                    Vector3.zero,
+                    targetPositions[i],
+                    t
+                );
+                instantiatedItems[i].transform.localScale = Vector3.Lerp(
+                    Vector3.one * 0.8f,
+                    targetScales[i],
+                    t
+                );
             }
 
             yield return null;

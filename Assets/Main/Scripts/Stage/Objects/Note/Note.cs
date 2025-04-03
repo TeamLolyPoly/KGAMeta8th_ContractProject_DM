@@ -12,8 +12,6 @@ public class Note : MonoBehaviour, IInitializable
     protected Vector3 startPosition;
     protected Vector3 targetPosition;
     public GameObject Rim;
-    public XRBaseController leftController;
-    public XRBaseController rightController;
 
     protected bool isInitialized = false;
     protected bool isHit = false;

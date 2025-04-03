@@ -55,27 +55,16 @@ public class AlbumPanel : Panel
 
     //todo:  앨범 위치 바뀌면서 이동하는 기능을 가진 스크롤을 만들어야함 좌우 버튼 클릭과 양옆 작은 앨범도 누르면 중앙으로 이동해야함 곡을 선택하려면 무조건 중앙으로 위치하도록 해야함.
 
-    private void OnBackButtonClick()
-    {
-        UIManager.Instance.OpenPanel(PanelType.Mode);
-        UIManager.Instance.ClosePanel(PanelType.Album);
-    }
+    private void OnBackButtonClick() { }
 
-    private void OnLeftToggleClick()
-    {
-        // TODO: 왼쪽으로 앨범 이동
-    }
+    private void OnLeftToggleClick() { }
 
     private void OnRightToggleClick()
     {
         // TODO: 오른쪽으로 앨범 이동
     }
 
-    private void OnSelectAlbumClick()
-    {
-        UIManager.Instance.OpenPanel(PanelType.Music);
-        UIManager.Instance.ClosePanel(PanelType.Album);
-    }
+    private void OnSelectAlbumClick() { }
 
     private void OnLeftAlbumClick()
     {

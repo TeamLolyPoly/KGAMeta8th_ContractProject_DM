@@ -31,17 +31,9 @@ public class ModePanel : Panel
         base.Close(objActive);
     }
 
-    private void OnBackButtonClick()
-    {
-        UIManager.Instance.ClosePanel(PanelType.Mode);
-        UIManager.Instance.OpenPanel(PanelType.Title);
-    }
+    private void OnBackButtonClick() { }
 
-    private void OnSingleButtonClick()
-    {
-        UIManager.Instance.ClosePanel(PanelType.Mode);
-        UIManager.Instance.OpenPanel(PanelType.Music);
-    }
+    private void OnSingleButtonClick() { }
 
     private void OnMultiButtonClick()
     {

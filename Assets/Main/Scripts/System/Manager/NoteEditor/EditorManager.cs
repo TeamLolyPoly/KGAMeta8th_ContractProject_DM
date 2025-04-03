@@ -39,7 +39,7 @@ namespace NoteEditor
                 InitializeAsync,
                 () =>
                 {
-                    UIManager.Instance.OpenPanel(PanelType.EditorStart);
+                    EditorUIManager.Instance.OpenPanel(PanelType.EditorStart);
                 }
             );
         }
@@ -51,7 +51,7 @@ namespace NoteEditor
                 Clear,
                 () =>
                 {
-                    UIManager.Instance.OpenPanel(PanelType.EditorStart);
+                    EditorUIManager.Instance.OpenPanel(PanelType.EditorStart);
                 }
             );
         }
@@ -167,7 +167,8 @@ namespace NoteEditor
                 {
                     cameraController.Initialize();
 
-                    editorPanel = UIManager.Instance.OpenPanel(PanelType.NoteEditor) as EditorPanel;
+                    editorPanel =
+                        EditorUIManager.Instance.OpenPanel(PanelType.NoteEditor) as EditorPanel;
 
                     Debug.Log(
                         $"트랙 선택됨: {CurrentTrack.trackName}, BPM: {CurrentTrack.bpm}, 길이: {CurrentTrack.TrackAudio.length}초"
@@ -254,7 +255,8 @@ namespace NoteEditor
                     var SettingsAction = actionMap.FindAction("Setting");
                     if (SettingsAction != null)
                     {
-                        SettingsAction.performed += ctx => UIManager.Instance.ToggleSettignsPanel();
+                        SettingsAction.performed += ctx =>
+                            EditorUIManager.Instance.ToggleSettignsPanel();
                     }
 
                     actionMap.Enable();
@@ -371,7 +373,7 @@ namespace NoteEditor
                     currentSceneName,
                     () =>
                     {
-                        UIManager.Instance.OpenPopUp("오류", "트랙 추가 실패");
+                        EditorUIManager.Instance.OpenPopUp("오류", "트랙 추가 실패");
                     }
                 );
                 yield break;
@@ -440,11 +442,11 @@ namespace NoteEditor
         {
             if (currentSceneName == "Editor_Start")
             {
-                UIManager.Instance.OpenPanel(PanelType.EditorStart);
-                UIManager.Instance.ClosePanel(PanelType.EditorStart);
-                UIManager.Instance.OpenPanel(PanelType.NewTrack);
+                EditorUIManager.Instance.OpenPanel(PanelType.EditorStart);
+                EditorUIManager.Instance.ClosePanel(PanelType.EditorStart);
+                EditorUIManager.Instance.OpenPanel(PanelType.NewTrack);
                 NewTrackPanel newTrackPanel =
-                    UIManager.Instance.GetPanel(PanelType.NewTrack) as NewTrackPanel;
+                    EditorUIManager.Instance.GetPanel(PanelType.NewTrack) as NewTrackPanel;
                 newTrackPanel.SetInfo(CurrentTrack);
                 EditorDataManager.Instance.TmpTrack = CurrentTrack;
             }

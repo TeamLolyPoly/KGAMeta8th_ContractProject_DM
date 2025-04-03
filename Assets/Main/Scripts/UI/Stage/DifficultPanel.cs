@@ -77,11 +77,7 @@ public class DifficultPanel : Panel
         // TODO: 게임 시작 로직
     }
 
-    private void OnBackButtonClick()
-    {
-        UIManager.Instance.OpenPanel(PanelType.Music);
-        UIManager.Instance.ClosePanel(PanelType.Difficult);
-    }
+    private void OnBackButtonClick() { }
 
     private void SetDifficulty(Difficulty difficulty)
     {

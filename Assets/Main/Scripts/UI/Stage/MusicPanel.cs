@@ -35,20 +35,12 @@ public class MusicPanel : Panel
         base.Close(objActive);
     }
 
-    private void OnBackButtonClick()
-    {
-        UIManager.Instance.OpenPanel(PanelType.Album);
-        UIManager.Instance.ClosePanel(PanelType.Music);
-    }
+    private void OnBackButtonClick() { }
 
     private void OnAlbumButtonClick()
     {
         // TODO: 앨범 정보 표시
     }
 
-    private void OnSampleButtonClick()
-    {
-        UIManager.Instance.OpenPanel(PanelType.Difficult);
-        UIManager.Instance.ClosePanel(PanelType.Music);
-    }
+    private void OnSampleButtonClick() { }
 }

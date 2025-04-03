@@ -39,15 +39,9 @@ public class ResultPanel : Panel
         restartButton.onClick.AddListener(OnRestartButtonClick);
     }
 
-    private void OnClickResultDetail()
-    {
-        UIManager.Instance.OpenPanel(PanelType.ResultDetail);
-    }
+    private void OnClickResultDetail() { }
 
-    private void OnHomeButtonClick()
-    {
-        UIManager.Instance.OpenPanel(PanelType.Title);
-    }
+    private void OnHomeButtonClick() { }
 
     private void OnRestartButtonClick()
     {

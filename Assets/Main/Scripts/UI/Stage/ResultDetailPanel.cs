@@ -24,8 +24,5 @@ public class ResultDetailPanel : Panel
     [SerializeField]
     private PanelButton backButton;
 
-    private void OnBackButtonClick()
-    {
-        UIManager.Instance.OpenPanel(PanelType.Result);
-    }
+    private void OnBackButtonClick() { }
 }

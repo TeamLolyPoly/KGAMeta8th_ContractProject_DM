@@ -1,16 +1,13 @@
-using System.Collections;
-using System.Collections.Generic;
 using Michsky.UI.Heat;
 using ProjectDM.UI;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class TitlePanel : Panel
 {
     public override PanelType PanelType => PanelType.Title;
 
     [SerializeField]
-    private ButtonManager startButton;
+    private ButtonManager titleStartButton;
 
     [SerializeField]
     private ButtonManager settingButton;
@@ -20,7 +17,7 @@ public class TitlePanel : Panel
 
     public override void Open()
     {
-        startButton.onClick.AddListener(OnStartButtonClick);
+        titleStartButton.onClick.AddListener(OnTitleStartButtonClick);
         settingButton.onClick.AddListener(OnOptionButtonClick);
         quitButton.onClick.AddListener(OnQuitButtonClick);
         base.Open();
@@ -28,22 +25,19 @@ public class TitlePanel : Panel
 
     public override void Close(bool objActive = false)
     {
-        startButton.onClick.RemoveListener(OnStartButtonClick);
+        titleStartButton.onClick.RemoveListener(OnTitleStartButtonClick);
         settingButton.onClick.RemoveListener(OnOptionButtonClick);
         quitButton.onClick.RemoveListener(OnQuitButtonClick);
         base.Close(objActive);
     }
 
-    private void OnStartButtonClick()
+    private void OnTitleStartButtonClick()
     {
-        UIManager.Instance.OpenPanel(PanelType.Mode);
-        Close(false);
+        StageUIManager.Instance.OpenPanel(PanelType.Mode);
+        Close(true);
     }
 
-    private void OnOptionButtonClick()
-    {
-        UIManager.Instance.OpenPanel(PanelType.Option);
-    }
+    private void OnOptionButtonClick() { }
 
     private void OnQuitButtonClick()
     {

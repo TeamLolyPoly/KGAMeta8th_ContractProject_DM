@@ -2,14 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Michsky.UI.Heat;
-using Ookii.Dialogs;
 using ProjectDM.UI;
 using UnityEngine;
-using UnityEngine.Android;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
-public class UIManager : Singleton<UIManager>, IInitializable
+public class StageUIManager : Singleton<StageUIManager>, IInitializable
 {
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
@@ -17,40 +13,12 @@ public class UIManager : Singleton<UIManager>, IInitializable
     public List<Panel> PanelPrefabs = new List<Panel>();
     public List<Panel> Panels = new List<Panel>();
     public Sprite defaultAlbumArt;
-    public EditorSettingsPanel editorSettingsPanel;
     private ModalWindowManager popUpWindow;
 
     public void Initialize()
     {
         LoadResources();
-        InitializeComponents();
         isInitialized = true;
-    }
-
-    private void InitializeComponents()
-    {
-        if (GetComponentInChildren<EventSystem>() == null)
-        {
-            GameObject eventSystem = Instantiate(
-                Resources.Load<GameObject>("Prefabs/Utils/EventSystem")
-            );
-            eventSystem.transform.SetParent(transform);
-        }
-        if (GetComponentInChildren<Canvas>() == null)
-        {
-            Canvas canvas = gameObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        }
-        if (GetComponentInChildren<CanvasScaler>() == null)
-        {
-            CanvasScaler canvasScaler = gameObject.AddComponent<CanvasScaler>();
-            canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            canvasScaler.referenceResolution = new Vector2(1920, 1080);
-        }
-        if (GetComponentInChildren<GraphicRaycaster>() == null)
-        {
-            gameObject.AddComponent<GraphicRaycaster>();
-        }
     }
 
     private void LoadResources()
@@ -58,38 +26,17 @@ public class UIManager : Singleton<UIManager>, IInitializable
         if (PanelPrefabs.Count == 0)
         {
             PanelPrefabs = Resources.LoadAll<Panel>("Prefabs/UI/Panels/Stage").ToList();
-            PanelPrefabs.AddRange(Resources.LoadAll<Panel>("Prefabs/UI/Panels/NoteEditor"));
-            PanelPrefabs.AddRange(Resources.LoadAll<Panel>("Prefabs/UI/Panels"));
         }
         if (popUpWindow == null)
         {
             ModalWindowManager popUpWindowPrefab = Resources.Load<ModalWindowManager>(
-                "Prefabs/UI/Panels/UI_Panel_PopUp"
+                "Prefabs/UI/Panels/General/UI_Panel_PopUp"
             );
             popUpWindow = Instantiate(popUpWindowPrefab, transform);
         }
         if (defaultAlbumArt == null)
         {
             defaultAlbumArt = Resources.Load<Sprite>("Textures/DefaultAlbumArt");
-        }
-    }
-
-    public void ToggleSettignsPanel()
-    {
-        if (editorSettingsPanel != null)
-        {
-            if (editorSettingsPanel.IsOpen)
-            {
-                editorSettingsPanel.Close();
-            }
-            else
-            {
-                editorSettingsPanel.Open();
-            }
-        }
-        else
-        {
-            editorSettingsPanel = OpenPanel(PanelType.EditorSettings) as EditorSettingsPanel;
         }
     }
 
@@ -156,21 +103,5 @@ public class UIManager : Singleton<UIManager>, IInitializable
         {
             popUpWindow.CloseWindow();
         }
-    }
-
-    public bool IsValidBPM(string value, out float bpmValue)
-    {
-        bpmValue = 0f;
-
-        if (string.IsNullOrEmpty(value))
-            return false;
-
-        if (!float.TryParse(value, out bpmValue))
-            return false;
-
-        if (bpmValue <= 0 || bpmValue >= 500)
-            return false;
-
-        return true;
     }
 }

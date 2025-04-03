@@ -18,7 +18,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
     public NoteMap NoteMap => noteMap;
     private NoteSpawner noteSpawner;
     private GridGenerator gridGenerator;
+    private PlayerSystem playerSystem;
     private ScoreSystem scoreSystem;
+
+    public PlayerSystem PlayerSystem => playerSystem;
     public ScoreSystem ScoreSystem => scoreSystem;
     private AnimationSystem unitAnimationManager;
     public AnimationSystem UnitAnimationSystem => unitAnimationManager;
@@ -53,6 +56,11 @@ public class GameManager : Singleton<GameManager>, IInitializable
     }
 
     public void InitializeSystem()
+    {
+        playerSystem = new GameObject("PlayerSystem").AddComponent<PlayerSystem>();
+    }
+
+    public void InitializeStage()
     {
         noteSpawner = new GameObject("NoteSpawner").AddComponent<NoteSpawner>();
 
@@ -125,7 +133,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
             return;
         }
 
-        InitializeSystem();
+        InitializeStage();
         GameObject scoreboard = Resources.Load<GameObject>(
             "Prefabs/UI/Panels/Stage/UI_Panel_ScorePanel"
         );

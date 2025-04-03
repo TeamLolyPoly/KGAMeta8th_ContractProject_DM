@@ -30,12 +30,12 @@ public class LoadingManager : Singleton<LoadingManager>
 
         isLoading = true;
 
-        if (!UIManager.Instance.IsInitialized)
+        if (!EditorUIManager.Instance.IsInitialized)
         {
-            UIManager.Instance.Initialize();
+            EditorUIManager.Instance.Initialize();
         }
 
-        loadingUI = UIManager.Instance.OpenPanel(PanelType.Loading) as LoadingPanel;
+        loadingUI = EditorUIManager.Instance.OpenPanel(PanelType.Loading) as LoadingPanel;
 
         StartCoroutine(LoadSceneRoutine(sceneName, onComplete));
     }
@@ -56,12 +56,12 @@ public class LoadingManager : Singleton<LoadingManager>
 
         isLoading = true;
 
-        if (!UIManager.Instance.IsInitialized)
+        if (!EditorUIManager.Instance.IsInitialized)
         {
-            UIManager.Instance.Initialize();
+            EditorUIManager.Instance.Initialize();
         }
 
-        loadingUI = UIManager.Instance.OpenPanel(PanelType.Loading) as LoadingPanel;
+        loadingUI = EditorUIManager.Instance.OpenPanel(PanelType.Loading) as LoadingPanel;
 
         StartCoroutine(LoadOperations(targetSceneName, operations, onComplete));
     }
@@ -83,14 +83,14 @@ public class LoadingManager : Singleton<LoadingManager>
 
         isLoading = true;
 
-        if (!UIManager.Instance.IsInitialized)
+        if (!EditorUIManager.Instance.IsInitialized)
         {
-            UIManager.Instance.Initialize();
+            EditorUIManager.Instance.Initialize();
         }
 
-        UIManager.Instance.CloseAllPanels();
+        EditorUIManager.Instance.CloseAllPanels();
 
-        loadingUI = UIManager.Instance.OpenPanel(PanelType.Loading) as LoadingPanel;
+        loadingUI = EditorUIManager.Instance.OpenPanel(PanelType.Loading) as LoadingPanel;
 
         if (asyncOperation != null)
         {
