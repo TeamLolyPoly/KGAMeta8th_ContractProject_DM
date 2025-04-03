@@ -3,12 +3,20 @@ using UnityEngine;
 public class GhostTrailEffect : MonoBehaviour
 {
     [Header("트레일 설정")]
-    [SerializeField] private float trailTime = 0.5f;        // 트레일 지속 시간
-    [SerializeField] private float startWidth = 0.5f;      // 시작 너비
-    [SerializeField] private float endWidth = 0.1f;        // 끝 너비
-    [SerializeField] private float minVertexDistance = 0.1f; // 최소 버텍스 간격
-    [SerializeField] private Color trailColor = Color.white; // 트레일 색상
-    [SerializeField] private float fadeSpeed = 1f;         // 페이드아웃 속도
+    [SerializeField]
+    private float trailTime = 0.5f; // 트레일 지속 시간
+
+    [SerializeField]
+    private float startWidth = 0.5f; // 시작 너비
+
+    [SerializeField]
+    private float endWidth = 0.1f; // 끝 너비
+
+    [SerializeField]
+    private float minVertexDistance = 0.1f; // 최소 버텍스 간격
+
+    [SerializeField]
+    private Color trailColor = Color.white; // 트레일 색상
 
     private TrailRenderer trailRenderer;
     private Material trailMaterial;

@@ -105,7 +105,7 @@ namespace NoteEditor
         {
             string trackName = Path.GetFileNameWithoutExtension(filePath);
 
-            LoadingManager.Instance.SetLoadingText($"오디오 경로 로드 중... {trackName}");
+            EditorLoadingManager.Instance.SetLoadingText($"오디오 경로 로드 중... {trackName}");
             progress?.Report(0.1f);
 
             try
@@ -124,7 +124,7 @@ namespace NoteEditor
 
                     var operation = www.SendWebRequest();
 
-                    LoadingManager.Instance.SetLoadingText($"오디오 파일 로드 중...");
+                    EditorLoadingManager.Instance.SetLoadingText($"오디오 파일 로드 중...");
                     while (!operation.isDone)
                     {
                         progress?.Report(0.1f + 0.6f * www.downloadProgress);
@@ -133,7 +133,7 @@ namespace NoteEditor
 
                     if (www.result == UnityWebRequest.Result.Success)
                     {
-                        LoadingManager.Instance.SetLoadingText($"오디오 파일 저장 중... ");
+                        EditorLoadingManager.Instance.SetLoadingText($"오디오 파일 저장 중... ");
                         AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
 
                         TrackData trackData = new TrackData

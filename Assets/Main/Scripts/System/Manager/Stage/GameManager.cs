@@ -1,7 +1,11 @@
 using System;
 using System.Collections;
-using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.ComponentModel;
+using JetBrains.Annotations;
+using Michsky.UI.Heat;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : Singleton<GameManager>, IInitializable
 {
@@ -9,10 +13,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
     public int currentBeat { get; private set; } = 0;
     private float startDelay = 1f;
     private double startDspTime;
-    public event Action<bool> OnGameStateChanged;
-    public event Action<int, int> OnBeatChanged;
 
-    [SerializeField]
     private AudioSource musicSource;
     private NoteMap noteMap;
     public NoteMap NoteMap => noteMap;
@@ -20,6 +21,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
     private GridGenerator gridGenerator;
     private PlayerSystem playerSystem;
     private ScoreSystem scoreSystem;
+
+    [SerializeField]
+    private StageUIManager stageUIManager;
+    public StageUIManager StageUIManager => stageUIManager;
 
     public PlayerSystem PlayerSystem => playerSystem;
     public ScoreSystem ScoreSystem => scoreSystem;
@@ -36,28 +41,48 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     public void Initialize()
     {
-        Test();
-
-        isInitialized = true;
+        StartCoroutine(InitializeAsync());
     }
 
-    public void Test()
+    public IEnumerator InitializeAsync()
     {
-        string TestNoteMap = Resources.Load<TextAsset>("JSON/TestMap").text;
-        NoteMap noteMap = JsonConvert.DeserializeObject<NoteMap>(TestNoteMap);
-        StartGame(noteMap);
-    }
+        if (stageUIManager == null)
+        {
+            stageUIManager = Instantiate(
+                Resources.Load<StageUIManager>("Prefabs/Stage/System/StageUIManager")
+            );
+        }
+        yield return null;
 
-    private void ResetGameState()
-    {
-        currentBar = 0;
-        currentBeat = 0;
-        isPlaying = false;
-    }
-
-    public void InitializeSystem()
-    {
         playerSystem = new GameObject("PlayerSystem").AddComponent<PlayerSystem>();
+        StageLoadingManager.Instance.SetLoadingText("시스템 초기화중...");
+
+        List<Func<IEnumerator>> initOperations = new List<Func<IEnumerator>>();
+
+        Action onInitComplete = () =>
+        {
+            Debug.Log("모든 초기화 작업이 완료되었습니다!");
+            isInitialized = true;
+        };
+
+        if (!DataManager.Instance.IsInitialized)
+        {
+            StageLoadingManager.Instance.SetLoadingText("트랙 메타데이터 로딩중...");
+
+            initOperations = DataManager.Instance.GetInitializationOperations();
+
+            StageLoadingManager.Instance.LoadScene(
+                SceneManager.GetActiveScene().name,
+                initOperations,
+                onInitComplete
+            );
+        }
+        else
+        {
+            onInitComplete?.Invoke();
+        }
+
+        musicSource = new GameObject("MusicSource").AddComponent<AudioSource>();
     }
 
     public void InitializeStage()
@@ -79,6 +104,22 @@ public class GameManager : Singleton<GameManager>, IInitializable
         scoreSystem.Initialize();
 
         noteSpawner.Initialize(gridGenerator, noteMap);
+    }
+
+    public void Cleanup()
+    {
+        Destroy(noteSpawner.gameObject);
+        Destroy(gridGenerator.gameObject);
+        Destroy(scoreSystem.gameObject);
+        Destroy(unitAnimationManager.gameObject);
+
+        currentBar = 0;
+        currentBeat = 0;
+        musicSource.clip = null;
+        noteSpawner = null;
+        gridGenerator = null;
+        scoreSystem = null;
+        unitAnimationManager = null;
     }
 
     private void Update()
@@ -106,7 +147,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         {
             currentBar = newBar;
             currentBeat = newBeat;
-            OnBeatChanged?.Invoke(currentBar, currentBeat);
         }
     }
 
@@ -119,7 +159,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
             Debug.LogError("노트맵이 설정되지 않았습니다!");
             return;
         }
-        ResetGameState();
+
         GameObject RenderCanvas = GameObject.Find("RenderCanvas");
         if (RenderCanvas == null)
         {
@@ -134,19 +174,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         }
 
         InitializeStage();
-        GameObject scoreboard = Resources.Load<GameObject>(
-            "Prefabs/UI/Panels/Stage/UI_Panel_ScorePanel"
-        );
-        if (scoreboard != null)
-        {
-            GameObject scoreboardInstance = Instantiate(scoreboard, rendererObject);
-            Debug.Log("ScoreboardPanel이 성공적으로 생성되었습니다.");
-        }
-        else
-        {
-            Debug.LogError("ScoreboardPanel 프리팹을 찾을 수 없습니다!");
-            return;
-        }
 
         StartCoroutine(StageRoutine());
     }
@@ -190,39 +217,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
             Debug.LogWarning("음악 소스나 클립이 설정되지 않았습니다. 노트만 생성됩니다.");
         }
 
-        OnGameStateChanged?.Invoke(true);
         Debug.Log("게임 시작!");
-    }
-
-    public void PauseGame()
-    {
-        if (!isPlaying)
-            return;
-
-        isPlaying = false;
-
-        noteSpawner.StopSpawning();
-
-        if (musicSource != null && musicSource.isPlaying)
-        {
-            musicSource.Pause();
-        }
-
-        OnGameStateChanged?.Invoke(false);
-
-        Debug.Log("게임 일시정지");
-    }
-
-    public void ResumeGame()
-    {
-        if (isPlaying)
-            return;
-
-        //TODO : 게임 재개 로직
-
-        isPlaying = true;
-
-        Debug.Log("게임 재개");
     }
 
     public void StopGame()
@@ -238,8 +233,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         {
             musicSource.Stop();
         }
-
-        OnGameStateChanged?.Invoke(false);
 
         Debug.Log("게임 중지");
     }
