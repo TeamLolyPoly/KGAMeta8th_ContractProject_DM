@@ -16,6 +16,8 @@ public class Unit : MonoBehaviour
         Initialize();
     }
 
+
+
     protected virtual void Initialize()
     {
         animator = GetComponent<Animator>();
