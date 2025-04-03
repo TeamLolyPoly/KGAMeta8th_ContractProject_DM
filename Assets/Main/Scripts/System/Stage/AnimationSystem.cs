@@ -118,67 +118,54 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         {
             defaultEngagement = engagement;
         }
+        print($"defaultEngagement : {defaultEngagement.Value}");
+        if (bands == null || bands.Count == 0)
+            return;
 
         foreach (Band band in bands)
         {
-            if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData animationData))
-            {
-                if ((int)defaultEngagement >= animationData.animationClip.Length)
-                    continue;
-                AnimationClip animationClip = animationData.animationClip[(int)defaultEngagement];
-
-                if (animationClip == null)
-                    continue;
-                band.SetAnimationClip(animationClip, "Usual");
-            }
+            ChangeAnimation(band, defaultEngagement.Value);
         }
 
-        List<int> ints = new List<int>();
-        if (numberOfUnits != 0)
+        //var indices = Enumerable.Range(0, bands.Count).ToList();
+        List<int> randomBand = new List<int>();
+        if (numberOfUnits > 0)
         {
             for (int i = 0; i < bands.Count; i++)
             {
-                ints.Add(i);
+                randomBand.Add(i);
             }
 
-            for (int i = 0; i < numberOfUnits; i++)
+            for (int i = 0; i < numberOfUnits && randomBand.Count > 0; i++)
             {
-                int a = ints[Random.Range(0, ints.Count)];
-                ints.RemoveAt(a);
-
-                if (
-                    bandAnimators.TryGetValue(
-                        bands[a].bandType,
-                        out BandAnimationData animationData
-                    )
-                )
-                {
-                    if ((int)engagement >= animationData.animationClip.Length)
-                        continue;
-                    AnimationClip animationClip = animationData.animationClip[(int)engagement];
-
-                    if (animationClip == null)
-                        continue;
-                    bands[a].SetAnimationClip(animationClip, "Usual");
-                }
+                int randomIndex = Random.Range(0, randomBand.Count);
+                int selectedBandIndex = randomBand[randomIndex];
+                randomBand.RemoveAt(randomIndex);
+                ChangeAnimation(bands[selectedBandIndex], engagement);
             }
         }
-        else
+        else if (numberOfUnits == 0)
         {
             foreach (Band band in bands)
             {
-                if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData animationData))
-                {
-                    if ((int)engagement >= animationData.animationClip.Length)
-                        continue;
-                    AnimationClip animationClip = animationData.animationClip[(int)engagement];
-
-                    if (animationClip == null)
-                        continue;
-                    band.SetAnimationClip(animationClip, "Usual");
-                }
+                ChangeAnimation(band, engagement);
             }
         }
+    }
+
+    public void ChangeAnimation(Band band, Engagement engagement)
+    {
+        if (!bandAnimators.TryGetValue(band.bandType, out BandAnimationData animationData))
+            return;
+
+        if ((int)engagement >= animationData.animationClip.Length)
+            return;
+
+        AnimationClip animationClip = animationData.animationClip[(int)engagement];
+        if (animationClip == null)
+            return;
+
+        band.SetAnimationClip(animationClip, "Usual");
     }
 
     public void SpectatorAnimationClipChange(Engagement engagement)
@@ -196,5 +183,22 @@ public class AnimationSystem : MonoBehaviour, IInitializable
                 continue;
             spectator.SetAnimationClip(animationClip, "Usual");
         }
+    }
+
+    private void OnDestroy()
+    {
+        CleanUp();
+    }
+
+    private void CleanUp()
+    {
+        var scoreSystem = GameManager.Instance.ScoreSystem;
+        if (scoreSystem != null)
+        {
+            scoreSystem.onBandEngagementChange -= BandAnimationClipChange;
+            scoreSystem.onSpectatorEngagementChange -= SpectatorAnimationClipChange;
+        }
+
+        Destroy(this.gameObject);
     }
 }

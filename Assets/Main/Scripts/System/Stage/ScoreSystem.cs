@@ -252,4 +252,15 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         else
             return combo <= num;
     }
+    private void CleanUp()
+    {
+        onBandEngagementChange = null;
+        onSpectatorEngagementChange = null;
+
+        Destroy(this.gameObject);
+    }
+    private void OnDestroy()
+    {
+        CleanUp();
+    }
 }

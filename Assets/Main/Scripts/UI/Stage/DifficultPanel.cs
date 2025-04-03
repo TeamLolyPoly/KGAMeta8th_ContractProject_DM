@@ -37,7 +37,7 @@ public class DifficultPanel : Panel
     private ButtonManager hardButton;
 
     [SerializeField]
-    private Button gameStartButton;
+    private ButtonManager gameStartButton;
 
     public Difficulty userDifficulty = Difficulty.None;
 
@@ -45,7 +45,7 @@ public class DifficultPanel : Panel
 
     private void Start()
     {
-        gameStartButton.interactable = false;
+        gameStartButton.isInteractable = false;
         backButton.onClick.AddListener(OnBackButtonClick);
         easyButton.onClick.AddListener(OnEasyButtonClick);
         normalButton.onClick.AddListener(OnNormalButtonClick);
@@ -81,7 +81,7 @@ public class DifficultPanel : Panel
 
     private void SetDifficulty(Difficulty difficulty)
     {
-        gameStartButton.interactable = true;
+        gameStartButton.isInteractable = true;
         userDifficulty = difficulty;
     }
 }
