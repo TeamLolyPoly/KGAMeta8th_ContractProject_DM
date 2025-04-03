@@ -507,6 +507,12 @@ namespace NoteEditor
                 if (track != null)
                 {
                     track.noteMapData = noteMapData;
+                    foreach (var nm in noteMapData)
+                    {
+                        Debug.Log(
+                            $"[SaveNoteMapAsync] Diffiulty : {nm.difficulty} , BeatsPerBar : {nm.noteMap.beatsPerBar}"
+                        );
+                    }
                 }
 
                 return true;

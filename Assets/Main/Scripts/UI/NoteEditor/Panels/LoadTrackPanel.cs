@@ -21,12 +21,12 @@ namespace NoteEditor
         public ButtonManager proceedButton;
         public ButtonManager deleteButton;
         public Animator trackInfoPanelAnimator;
-        public TMP_InputField bpmInputField;
-        public TMP_InputField trackNameInputField;
-        public TMP_InputField artistNameInputField;
-        public TMP_InputField albumNameInputField;
-        public TMP_InputField yearInputField;
-        public TMP_InputField genreInputField;
+        public TMP_InputField bpmInput;
+        public TMP_InputField trackNameInput;
+        public TMP_InputField artistNameInput;
+        public TMP_InputField albumNameInput;
+        public TMP_InputField yearInput;
+        public TMP_InputField genreInput;
         public BoxButtonManager loadAlbumArtButton;
         public ButtonManager difficulty_EasyButton;
         public ButtonManager difficulty_NormalButton;
@@ -59,12 +59,33 @@ namespace NoteEditor
                 trackButtons.Add(trackButton);
             }
             closeButton.onClick.AddListener(OnBackButtonClick);
+            bpmInput.contentType = TMP_InputField.ContentType.DecimalNumber;
+            yearInput.contentType = TMP_InputField.ContentType.IntegerNumber;
+            bpmInput.characterLimit = 5;
+            yearInput.characterLimit = 4;
+            trackNameInput.characterLimit = 70;
+            artistNameInput.characterLimit = 70;
+            albumNameInput.characterLimit = 70;
+            genreInput.characterLimit = 70;
+            bpmInput.text = "";
+            trackNameInput.text = "";
+            artistNameInput.text = "";
+            albumNameInput.text = "";
+            yearInput.text = "";
+            genreInput.text = "";
         }
 
         private void OnBPMInputChanged(string value)
         {
-            selectedTrack.bpm = float.Parse(value);
-            EditorManager.Instance.UpdateTrackInfo(selectedTrack, bpm: value);
+            if (UIManager.Instance.IsValidBPM(value, out float bpmValue))
+            {
+                selectedTrack.bpm = bpmValue;
+                EditorManager.Instance.UpdateTrackInfo(selectedTrack, bpm: value);
+            }
+            else
+            {
+                bpmInput.text = selectedTrack.bpm.ToString();
+            }
         }
 
         private void OnTrackNameInputChanged(string value)
@@ -147,22 +168,22 @@ namespace NoteEditor
         {
             CleanUpListners();
             selectedTrack = track;
-            bpmInputField.text = selectedTrack.bpm.ToString();
-            trackNameInputField.text = selectedTrack.trackName;
-            artistNameInputField.text = selectedTrack.artistName;
-            albumNameInputField.text = selectedTrack.albumName;
-            yearInputField.text = selectedTrack.year.ToString();
-            genreInputField.text = selectedTrack.genre;
+            bpmInput.text = selectedTrack.bpm.ToString();
+            trackNameInput.text = selectedTrack.trackName;
+            artistNameInput.text = selectedTrack.artistName;
+            albumNameInput.text = selectedTrack.albumName;
+            yearInput.text = selectedTrack.year.ToString();
+            genreInput.text = selectedTrack.genre;
             easyButtonBG.color = disabledColor;
             normalButtonBG.color = disabledColor;
             hardButtonBG.color = disabledColor;
             loadAlbumArtButton.onClick.AddListener(OnLoadAlbumArtButtonClick);
-            bpmInputField.onValueChanged.AddListener(OnBPMInputChanged);
-            trackNameInputField.onValueChanged.AddListener(OnTrackNameInputChanged);
-            artistNameInputField.onValueChanged.AddListener(OnArtistNameInputChanged);
-            albumNameInputField.onValueChanged.AddListener(OnAlbumNameInputChanged);
-            yearInputField.onValueChanged.AddListener(OnYearInputChanged);
-            genreInputField.onValueChanged.AddListener(OnGenreInputChanged);
+            bpmInput.onValueChanged.AddListener(OnBPMInputChanged);
+            trackNameInput.onValueChanged.AddListener(OnTrackNameInputChanged);
+            artistNameInput.onValueChanged.AddListener(OnArtistNameInputChanged);
+            albumNameInput.onValueChanged.AddListener(OnAlbumNameInputChanged);
+            yearInput.onValueChanged.AddListener(OnYearInputChanged);
+            genreInput.onValueChanged.AddListener(OnGenreInputChanged);
             difficulty_EasyButton.onClick.AddListener(() => SetNoteMapData(Difficulty.Easy));
             difficulty_NormalButton.onClick.AddListener(() => SetNoteMapData(Difficulty.Normal));
             difficulty_HardButton.onClick.AddListener(() => SetNoteMapData(Difficulty.Hard));
@@ -285,12 +306,12 @@ namespace NoteEditor
             loadAlbumArtButton.SetBackground(UIManager.Instance.defaultAlbumArt);
             loadAlbumArtButton.buttonTitle = null;
             loadAlbumArtButton.UpdateUI();
-            bpmInputField.text = "";
-            trackNameInputField.text = "";
-            artistNameInputField.text = "";
-            albumNameInputField.text = "";
-            yearInputField.text = "";
-            genreInputField.text = "";
+            bpmInput.text = "";
+            trackNameInput.text = "";
+            artistNameInput.text = "";
+            albumNameInput.text = "";
+            yearInput.text = "";
+            genreInput.text = "";
             selectedTrack = null;
             trackInfoPanelAnimator.SetBool("isOpen", false);
             base.Close(objActive);
@@ -300,13 +321,13 @@ namespace NoteEditor
         {
             loadAlbumArtButton.onClick.RemoveListener(OnLoadAlbumArtButtonClick);
             proceedButton.onClick.RemoveAllListeners();
-            trackNameInputField.onValueChanged.RemoveAllListeners();
-            artistNameInputField.onValueChanged.RemoveAllListeners();
-            albumNameInputField.onValueChanged.RemoveAllListeners();
-            yearInputField.onValueChanged.RemoveAllListeners();
-            genreInputField.onValueChanged.RemoveAllListeners();
+            trackNameInput.onValueChanged.RemoveAllListeners();
+            artistNameInput.onValueChanged.RemoveAllListeners();
+            albumNameInput.onValueChanged.RemoveAllListeners();
+            yearInput.onValueChanged.RemoveAllListeners();
+            genreInput.onValueChanged.RemoveAllListeners();
             deleteButton.onClick.RemoveAllListeners();
-            bpmInputField.onValueChanged.RemoveAllListeners();
+            bpmInput.onValueChanged.RemoveAllListeners();
             difficulty_EasyButton.onClick.RemoveAllListeners();
             difficulty_NormalButton.onClick.RemoveAllListeners();
             difficulty_HardButton.onClick.RemoveAllListeners();

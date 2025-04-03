@@ -68,6 +68,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         {
             SetScore(100, NoteRatings.Perfect);
         }
+
         if (Input.GetKeyDown(KeyCode.W))
         {
             SetScore(100, NoteRatings.Good);
@@ -103,7 +104,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             for (int i = 0; i < scoreSettingData.engagementThreshold.Count; i++)
             {
                 bandEngagementType.Add(scoreSettingData.engagementThreshold[i], (Engagement)i);
-                bandActiveMember.Add((Engagement)i, scoreSettingData.bandActiveMembers[i]);
+                bandActiveMember.Add((Engagement)i, scoreSettingData.engagementMemberThreshold[i]);
             }
             for (int i = 0; i < scoreSettingData.multiplierScore.Count; i++)
             {
@@ -181,7 +182,6 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
     private void SetSpectatorEngagement()
     {
-        print($"totalNoteCount: {totalNoteCount}");
         SpectatorEventThreshold newThreshold =
             scoreSettingData.sectatorEventThreshold.LastOrDefault(threshold =>
                 CheckEngagement(threshold, totalNoteCount)

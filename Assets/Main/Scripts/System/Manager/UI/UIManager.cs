@@ -59,6 +59,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
         {
             PanelPrefabs = Resources.LoadAll<Panel>("Prefabs/UI/Panels/Stage").ToList();
             PanelPrefabs.AddRange(Resources.LoadAll<Panel>("Prefabs/UI/Panels/NoteEditor"));
+            PanelPrefabs.AddRange(Resources.LoadAll<Panel>("Prefabs/UI/Panels"));
         }
         if (popUpWindow == null)
         {
@@ -155,5 +156,21 @@ public class UIManager : Singleton<UIManager>, IInitializable
         {
             popUpWindow.CloseWindow();
         }
+    }
+
+    public bool IsValidBPM(string value, out float bpmValue)
+    {
+        bpmValue = 0f;
+
+        if (string.IsNullOrEmpty(value))
+            return false;
+
+        if (!float.TryParse(value, out bpmValue))
+            return false;
+
+        if (bpmValue <= 0 || bpmValue >= 500)
+            return false;
+
+        return true;
     }
 }

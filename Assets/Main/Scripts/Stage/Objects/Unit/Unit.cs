@@ -6,10 +6,8 @@ public class Unit : MonoBehaviour
 {
     protected Animator animator;
     protected AnimationSystem unitAnimationSystem;
-    protected Coroutine animChangeCoroutine;
     protected bool isAnimating = false;
 
-    protected Queue<AnimationClip> animationQueue = new Queue<AnimationClip>();
 
     protected virtual IEnumerator Start()
     {
