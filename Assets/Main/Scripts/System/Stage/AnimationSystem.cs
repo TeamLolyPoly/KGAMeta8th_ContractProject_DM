@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -20,6 +21,17 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
 
+    public IEnumerator InitializeRoutine()
+    {
+        yield return new WaitUntil(
+            () =>
+                GameManager.Instance.ScoreSystem != null
+                && GameManager.Instance.ScoreSystem.IsInitialized
+        );
+
+        Initialize();
+    }
+
     public void Initialize()
     {
         AnimData = Resources.Load<AnimData>("SO/BandAnimData");
@@ -35,7 +47,8 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         }
 
         GameManager.Instance.ScoreSystem.onBandEngagementChange += BandAnimationClipChange;
-        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange += SpectatorAnimationClipChange;
+        GameManager.Instance.ScoreSystem.onSpectatorEngagementChange +=
+            SpectatorAnimationClipChange;
 
         isInitialized = true;
     }
@@ -133,7 +146,12 @@ public class AnimationSystem : MonoBehaviour, IInitializable
                 int a = ints[Random.Range(0, ints.Count)];
                 ints.RemoveAt(a);
 
-                if (bandAnimators.TryGetValue(bands[a].bandType, out BandAnimationData animationData))
+                if (
+                    bandAnimators.TryGetValue(
+                        bands[a].bandType,
+                        out BandAnimationData animationData
+                    )
+                )
                 {
                     if ((int)engagement >= animationData.animationClip.Length)
                         continue;
