@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,11 +12,25 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         new Dictionary<BandType, BandAnimationData>();
 
     //씬위에 올라와있는 밴드와 관객
-    private List<Band> Bands = new List<Band>();
+    private List<Band> bands = new List<Band>();
     private List<Spectator> spectators = new List<Spectator>();
+
+    //디폴트 호응도
+    private Engagement? defaultEngagement;
 
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
+
+    public IEnumerator InitializeRoutine()
+    {
+        yield return new WaitUntil(
+            () =>
+                GameManager.Instance.ScoreSystem != null
+                && GameManager.Instance.ScoreSystem.IsInitialized
+        );
+
+        Initialize();
+    }
 
     public void Initialize()
     {
@@ -42,7 +57,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     {
         if (unit is Band band)
         {
-            Bands.Add(band);
+            bands.Add(band);
         }
         else if (unit is Spectator spectator)
         {
@@ -54,7 +69,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     {
         if (unit is Band band)
         {
-            Bands.Remove(band);
+            bands.Remove(band);
         }
         else if (unit is Spectator spectator)
         {
@@ -99,19 +114,58 @@ public class AnimationSystem : MonoBehaviour, IInitializable
     /// <param name="numberOfUnits"></param>
     public void BandAnimationClipChange(Engagement engagement, int numberOfUnits = 0)
     {
-        foreach (Band band in Bands)
+        if (defaultEngagement == null)
         {
-            if (bandAnimators.TryGetValue(band.bandType, out BandAnimationData animationData))
-            {
-                if ((int)engagement >= animationData.animationClip.Length)
-                    continue;
-                AnimationClip animationClip = animationData.animationClip[(int)engagement];
+            defaultEngagement = engagement;
+        }
+        print($"defaultEngagement : {defaultEngagement.Value}");
+        if (bands == null || bands.Count == 0)
+            return;
 
-                if (animationClip == null)
-                    continue;
-                band.SetAnimationClip(animationClip, "Usual");
+        foreach (Band band in bands)
+        {
+            ChangeAnimation(band, defaultEngagement.Value);
+        }
+
+        //var indices = Enumerable.Range(0, bands.Count).ToList();
+        List<int> randomBand = new List<int>();
+        if (numberOfUnits > 0)
+        {
+            for (int i = 0; i < bands.Count; i++)
+            {
+                randomBand.Add(i);
+            }
+
+            for (int i = 0; i < numberOfUnits && randomBand.Count > 0; i++)
+            {
+                int randomIndex = Random.Range(0, randomBand.Count);
+                int selectedBandIndex = randomBand[randomIndex];
+                randomBand.RemoveAt(randomIndex);
+                ChangeAnimation(bands[selectedBandIndex], engagement);
             }
         }
+        else if (numberOfUnits == 0)
+        {
+            foreach (Band band in bands)
+            {
+                ChangeAnimation(band, engagement);
+            }
+        }
+    }
+
+    public void ChangeAnimation(Band band, Engagement engagement)
+    {
+        if (!bandAnimators.TryGetValue(band.bandType, out BandAnimationData animationData))
+            return;
+
+        if ((int)engagement >= animationData.animationClip.Length)
+            return;
+
+        AnimationClip animationClip = animationData.animationClip[(int)engagement];
+        if (animationClip == null)
+            return;
+
+        band.SetAnimationClip(animationClip, "Usual");
     }
 
     public void SpectatorAnimationClipChange(Engagement engagement)
@@ -129,5 +183,22 @@ public class AnimationSystem : MonoBehaviour, IInitializable
                 continue;
             spectator.SetAnimationClip(animationClip, "Usual");
         }
+    }
+
+    private void OnDestroy()
+    {
+        CleanUp();
+    }
+
+    private void CleanUp()
+    {
+        var scoreSystem = GameManager.Instance.ScoreSystem;
+        if (scoreSystem != null)
+        {
+            scoreSystem.onBandEngagementChange -= BandAnimationClipChange;
+            scoreSystem.onSpectatorEngagementChange -= SpectatorAnimationClipChange;
+        }
+
+        Destroy(this.gameObject);
     }
 }

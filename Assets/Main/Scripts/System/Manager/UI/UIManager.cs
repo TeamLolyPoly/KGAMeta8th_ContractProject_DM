@@ -59,6 +59,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
         {
             PanelPrefabs = Resources.LoadAll<Panel>("Prefabs/UI/Panels/Stage").ToList();
             PanelPrefabs.AddRange(Resources.LoadAll<Panel>("Prefabs/UI/Panels/NoteEditor"));
+            PanelPrefabs.AddRange(Resources.LoadAll<Panel>("Prefabs/UI/Panels"));
         }
         if (popUpWindow == null)
         {

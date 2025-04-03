@@ -62,29 +62,30 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     public NoteRatings LastRating => lastRating;
 
     //테스트용 코드
-    // void Update()
-    // {
-    //     if (Input.GetKeyDown(KeyCode.Q))
-    //     {
-    //         SetScore(100, NoteRatings.Perfect);
-    //     }
-    //     if (Input.GetKeyDown(KeyCode.W))
-    //     {
-    //         SetScore(100, NoteRatings.Good);
-    //     }
-    //     if (Input.GetKeyDown(KeyCode.E))
-    //     {
-    //         SetScore(0, NoteRatings.Miss);
-    //     }
-    //     if (Input.GetKeyDown(KeyCode.R))
-    //     {
-    //         print(
-    //             $"\nGood: {ratingCount[NoteRatings.Good]}"
-    //                 + $"\nMiss: {ratingCount[NoteRatings.Miss]}"
-    //                 + $"\n게임랭크: {GetGameRank()}"
-    //         );
-    //     }
-    // }
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            SetScore(100, NoteRatings.Perfect);
+        }
+
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            SetScore(100, NoteRatings.Good);
+        }
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            SetScore(0, NoteRatings.Miss);
+        }
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            print(
+                $"\nGood: {ratingCount[NoteRatings.Good]}"
+                    + $"\nMiss: {ratingCount[NoteRatings.Miss]}"
+                    + $"\n게임랭크: {GetGameRank()}"
+            );
+        }
+    }
 
     public void Initialize()
     {
@@ -250,5 +251,16 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             return combo >= num;
         else
             return combo <= num;
+    }
+    private void CleanUp()
+    {
+        onBandEngagementChange = null;
+        onSpectatorEngagementChange = null;
+
+        Destroy(this.gameObject);
+    }
+    private void OnDestroy()
+    {
+        CleanUp();
     }
 }
