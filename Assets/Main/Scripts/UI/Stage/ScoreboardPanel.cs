@@ -24,6 +24,24 @@ public class ScoreboardPanel : Panel
 
     private void Start()
     {
+        // GameManager가 초기화될 때까지 대기
+        StartCoroutine(WaitForGameManager());
+    }
+
+    private IEnumerator WaitForGameManager()
+    {
+        // GameManager가 초기화될 때까지 대기
+        while (GameManager.Instance == null || !GameManager.Instance.IsInitialized)
+        {
+            yield return null;
+        }
+
+        // ScoreSystem이 초기화될 때까지 대기
+        while (GameManager.Instance.ScoreSystem == null)
+        {
+            yield return null;
+        }
+
         scoreSystem = GameManager.Instance.ScoreSystem;
 
         // 초기값 설정

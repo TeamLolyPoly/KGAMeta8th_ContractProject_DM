@@ -112,34 +112,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
             return;
         }
         ResetGameState();
-        GameObject RenderCanvas = GameObject.Find("RenderCanvas");
-        if (RenderCanvas == null)
-        {
-            Debug.LogError("RenderCanvas 찾을 수 없습니다!");
-            return;
-        }
-        Transform rendererObject = RenderCanvas.transform.Find("Renderer");
-        if (rendererObject == null)
-        {
-            Debug.LogError("Renderer 찾을 수 없습니다!");
-            return;
-        }
-
         InitializeSystem();
-        GameObject scoreboard = Resources.Load<GameObject>(
-            "Prefabs/UI/Panels/Stage/UI_Panel_ScorePanel"
-        );
-        if (scoreboard != null)
-        {
-            GameObject scoreboardInstance = Instantiate(scoreboard, rendererObject);
-            Debug.Log("ScoreboardPanel이 성공적으로 생성되었습니다.");
-        }
-        else
-        {
-            Debug.LogError("ScoreboardPanel 프리팹을 찾을 수 없습니다!");
-            return;
-        }
-
         StartCoroutine(StageRoutine());
     }
 
