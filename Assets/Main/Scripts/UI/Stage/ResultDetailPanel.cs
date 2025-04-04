@@ -9,20 +9,11 @@ public class ResultDetailPanel : Panel
 {
     public override PanelType PanelType => PanelType.ResultDetail;
 
-    public override void Open()
-    {
-        backButton.onClick.AddListener(OnBackButtonClick);
-        base.Open();
-    }
-
-    public override void Close(bool objActive = false)
-    {
-        backButton.onClick.RemoveListener(OnBackButtonClick);
-        base.Close(objActive);
-    }
+    [SerializeField]
+    private ButtonManager roomButton;
 
     [SerializeField]
-    private PanelButton backButton;
+    private ButtonManager robyButton;
 
     private void OnBackButtonClick()
     {
