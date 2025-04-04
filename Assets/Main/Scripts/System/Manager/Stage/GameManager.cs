@@ -1,9 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
-using JetBrains.Annotations;
-using Michsky.UI.Heat;
+using Photon.Pun;
+using Photon.Realtime;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -22,7 +21,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
     private PlayerSystem playerSystem;
     private ScoreSystem scoreSystem;
 
-    [SerializeField]
     private StageUIManager stageUIManager;
     public StageUIManager StageUIManager => stageUIManager;
 
@@ -33,6 +31,11 @@ public class GameManager : Singleton<GameManager>, IInitializable
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
     private bool isPlaying = false;
+    public bool IsPlaying => isPlaying;
+
+    public bool isEditMode = false;
+
+    List<Func<IEnumerator>> initOperations = new List<Func<IEnumerator>>();
 
     private void Start()
     {
@@ -41,48 +44,60 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     public void Initialize()
     {
-        StartCoroutine(InitializeAsync());
+        StartCoroutine(InitializeRoutine());
     }
 
-    public IEnumerator InitializeAsync()
+    private IEnumerator InitializeRoutine()
     {
-        if (stageUIManager == null)
+        stageUIManager = Instantiate(
+            Resources.Load<StageUIManager>("Prefabs/Stage/System/StageUIManager")
+        );
+        if (!PhotonNetwork.IsConnected)
         {
-            stageUIManager = Instantiate(
-                Resources.Load<StageUIManager>("Prefabs/Stage/System/StageUIManager")
-            );
+            PhotonNetwork.ConnectUsingSettings();
         }
-        yield return null;
 
         playerSystem = new GameObject("PlayerSystem").AddComponent<PlayerSystem>();
-        StageLoadingManager.Instance.SetLoadingText("시스템 초기화중...");
 
-        List<Func<IEnumerator>> initOperations = new List<Func<IEnumerator>>();
+        StartCoroutine(playerSystem.InitializeRoutine());
+        yield return new WaitUntil(() => playerSystem.IsInitialized);
 
-        Action onInitComplete = () =>
+        initOperations.Add(DataManager.Instance.LoadTrackDataList);
+
+        initOperations.Add(DataManager.Instance.LoadTrackAudioCoroutine);
+
+        Action AfterInit = () =>
         {
-            Debug.Log("모든 초기화 작업이 완료되었습니다!");
-            isInitialized = true;
+            if (isEditMode)
+            {
+                InitializeEditorCam();
+            }
+            else
+            {
+                InitializeEditorCam();
+                playerSystem.SpawnPlayer(Vector3.zero, false);
+                playerSystem.XRPlayer.FadeIn(3f);
+            }
         };
 
-        if (!DataManager.Instance.IsInitialized)
-        {
-            StageLoadingManager.Instance.SetLoadingText("트랙 메타데이터 로딩중...");
-
-            initOperations = DataManager.Instance.GetInitializationOperations();
-
-            StageLoadingManager.Instance.LoadScene(
-                SceneManager.GetActiveScene().name,
-                initOperations,
-                onInitComplete
-            );
-        }
-        else
-        {
-            onInitComplete?.Invoke();
-        }
+        StageLoadingManager.Instance.LoadScene(
+            SceneManager.GetActiveScene().name,
+            initOperations,
+            AfterInit
+        );
 
         musicSource = new GameObject("MusicSource").AddComponent<AudioSource>();
+    }
+
+    private void InitializeEditorCam()
+    {
+        Camera mainCamera = Camera.main;
+
+        if (mainCamera != null)
+        {
+            StageUIManager.Instance.MainCanvas.worldCamera = mainCamera;
+            StageUIManager.Instance.EditorCanvas.worldCamera = mainCamera;
+        }
     }
 
     public void InitializeStage()

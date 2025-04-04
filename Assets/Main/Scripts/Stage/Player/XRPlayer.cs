@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 
@@ -9,28 +10,38 @@ public class XRPlayer : MonoBehaviour
     [SerializeField]
     private ActionBasedController rightController;
 
+    [SerializeField]
+    private Renderer fadeRenderer;
+
     private ActionBasedContinuousMoveProvider continuousMoveProvider;
     private ActionBasedSnapTurnProvider snapTurnProvider;
     private GrabMoveProvider grabMoveProvider;
     public ActionBasedController LeftController => leftController;
     public ActionBasedController RightController => rightController;
 
-    private void Awake()
+    public void FadeIn(float duration)
     {
-        continuousMoveProvider = GetComponent<ActionBasedContinuousMoveProvider>();
-        if (continuousMoveProvider != null)
+        StartCoroutine(Fade(0, 1, duration));
+    }
+
+    public void FadeOut(float duration)
+    {
+        StartCoroutine(Fade(1, 0, duration));
+    }
+
+    private IEnumerator Fade(float alphaIn, float alphaOut, float duration)
+    {
+        float time = 0;
+        while (time < duration)
         {
-            continuousMoveProvider.enabled = false;
-        }
-        snapTurnProvider = GetComponent<ActionBasedSnapTurnProvider>();
-        if (snapTurnProvider != null)
-        {
-            snapTurnProvider.enabled = false;
-        }
-        grabMoveProvider = GetComponent<GrabMoveProvider>();
-        if (grabMoveProvider != null)
-        {
-            grabMoveProvider.enabled = false;
+            fadeRenderer.material.color = new Color(
+                0,
+                0,
+                0,
+                Mathf.Lerp(alphaIn, alphaOut, time / duration)
+            );
+            time += Time.deltaTime;
+            yield return null;
         }
     }
 }

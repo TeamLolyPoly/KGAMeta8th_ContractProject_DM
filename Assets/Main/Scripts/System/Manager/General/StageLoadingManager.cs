@@ -7,8 +7,8 @@ using UnityEngine.SceneManagement;
 
 public class StageLoadingManager : Singleton<StageLoadingManager>
 {
-    public const string LOADING_SCENE_NAME = "Loading_Stage";
-    public float minimumLoadingTime = 0.5f;
+    private const string LOADING_SCENE_NAME = "Loading_Stage";
+    private const float MINIMUM_LOADING_TIME = 1.5f;
 
     private StageLoadingPanel loadingUI;
     public StageLoadingPanel LoadingUI => loadingUI;
@@ -125,7 +125,7 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
 
             UpdateProgress(progress);
 
-            if (progress >= 1.0f && (Time.time - startTime) >= minimumLoadingTime)
+            if (progress >= 1.0f && (Time.time - startTime) >= MINIMUM_LOADING_TIME)
             {
                 loadTargetScene.allowSceneActivation = true;
             }
@@ -174,9 +174,9 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
         }
 
         float elapsedTime = Time.time - startTime;
-        if (elapsedTime < minimumLoadingTime)
+        if (elapsedTime < MINIMUM_LOADING_TIME)
         {
-            yield return new WaitForSeconds(minimumLoadingTime - elapsedTime);
+            yield return new WaitForSeconds(MINIMUM_LOADING_TIME - elapsedTime);
         }
 
         loadTargetScene.allowSceneActivation = true;
@@ -206,46 +206,45 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
         loadTargetSceneAsync.allowSceneActivation = false;
 
         float startTime = Time.time;
-        bool allOperationsComplete = false;
 
-        while (!allOperationsComplete)
+        float totalOperations = operations.Count;
+        float accumulatedProgress = 0f;
+
+        for (int i = 0; i < operations.Count; i++)
         {
-            float totalProgress = 0f;
+            var operation = operations[i];
+            var operationCoroutine = operation();
 
-            foreach (Func<IEnumerator> operation in operations)
+            float baseProgress = i / totalOperations;
+            float operationWeight = 1f / totalOperations;
+
+            while (operationCoroutine.MoveNext())
             {
-                var operationCoroutine = operation();
-
-                while (operationCoroutine.MoveNext())
+                if (operationCoroutine.Current is float progressValue)
                 {
-                    if (operationCoroutine.Current is float progressValue)
-                    {
-                        totalProgress += progressValue;
-                        float averageProgress = totalProgress / operations.Count;
-                        UpdateProgress(averageProgress);
-                    }
-                    yield return operationCoroutine.Current;
+                    float scaledProgress = baseProgress + (progressValue * operationWeight);
+                    UpdateProgress(scaledProgress);
                 }
+                yield return operationCoroutine.Current;
             }
 
-            if (allOperationsComplete && (Time.time - startTime) < minimumLoadingTime)
-            {
-                allOperationsComplete = false;
-            }
-
-            loadTargetSceneAsync.allowSceneActivation = true;
-
-            yield return new WaitUntil(() => loadTargetSceneAsync.isDone);
-
-            allOperationsComplete = true;
+            accumulatedProgress = (i + 1) / totalOperations;
+            UpdateProgress(accumulatedProgress);
         }
 
-        isLoading = false;
+        float elapsedTime = Time.time - startTime;
+        if (elapsedTime < MINIMUM_LOADING_TIME)
+        {
+            yield return new WaitForSeconds(MINIMUM_LOADING_TIME - elapsedTime);
+        }
+
+        UpdateProgress(1.0f);
 
         loadTargetSceneAsync.allowSceneActivation = true;
 
         yield return new WaitUntil(() => loadTargetSceneAsync.isDone);
 
+        isLoading = false;
         loadingUI.Close();
 
         onComplete?.Invoke();

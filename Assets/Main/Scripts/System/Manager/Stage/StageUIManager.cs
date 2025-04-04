@@ -27,6 +27,13 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
     [SerializeField]
     private Canvas mainCanvas;
 
+    public Canvas MainCanvas => mainCanvas;
+
+    [SerializeField]
+    private Canvas editorCanvas;
+
+    public Canvas EditorCanvas => editorCanvas;
+
     [SerializeField]
     private ButtonManager logSystemButton;
 
@@ -52,6 +59,10 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
         if (defaultAlbumArt == null)
         {
             defaultAlbumArt = Resources.Load<Sprite>("Textures/DefaultAlbumArt");
+        }
+        if (logSystemButton != null)
+        {
+            logSystemButton.onClick.AddListener(ToggleLogSystem);
         }
     }
 
