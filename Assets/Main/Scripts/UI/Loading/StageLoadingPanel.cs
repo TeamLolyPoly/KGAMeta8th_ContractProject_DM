@@ -3,15 +3,16 @@ using Michsky.UI.Heat;
 using ProjectDM.UI;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class StageLoadingPanel : Panel
 {
     public override PanelType PanelType => PanelType.Loading;
 
-    [Header("참조")]
     [SerializeField]
     private ProgressBar progressBar;
+
+    [SerializeField]
+    private RectTransform barRect;
 
     [SerializeField]
     private TextMeshProUGUI loadingText;
@@ -20,21 +21,25 @@ public class StageLoadingPanel : Panel
     private RectTransform loadingIcon;
 
     [SerializeField]
-    private Image backgroundImage;
+    private RectTransform handleParticle;
 
     [SerializeField]
-    private Sprite[] backgroundImages;
-
-    [SerializeField]
-    private bool randomizeBackground = true;
+    private float particleOffset = 20f;
 
     private bool isFirstText = true;
     private float currentProgress = 0f;
     private float targetProgress = 0f;
     private const float SMOOTH_SPEED = 5f;
+    private Vector2 particleStartPos;
+    private float progressBarWidth;
 
     public override void Open()
     {
+        if (StageLoadingManager.Instance != null)
+        {
+            StageLoadingManager.Instance.OnProgressUpdated += UpdateProgress;
+        }
+
         if (progressBar != null)
         {
             progressBar.minValue = 0;
@@ -43,35 +48,24 @@ public class StageLoadingPanel : Panel
             progressBar.UpdateUI();
         }
 
-        if (backgroundImage != null && backgroundImages != null && backgroundImages.Length > 0)
-        {
-            if (randomizeBackground)
-            {
-                backgroundImage.sprite = backgroundImages[Random.Range(0, backgroundImages.Length)];
-            }
-            else
-            {
-                backgroundImage.sprite = backgroundImages[0];
-            }
-        }
-
+        InitializeParticlePosition();
         StartCoroutine(CycleLoadingIcon());
+    }
+
+    private void InitializeParticlePosition()
+    {
+        if (handleParticle != null && progressBar != null && progressBar.barImage != null)
+        {
+            RectTransform barRect = progressBar.barImage.rectTransform;
+            progressBarWidth = barRect.rect.width;
+            particleStartPos = handleParticle.anchoredPosition;
+        }
     }
 
     public override void Close(bool objActive = true)
     {
         StageUIManager.Instance.Panels.Remove(this);
         Destroy(gameObject);
-    }
-
-    private void Start()
-    {
-        if (StageLoadingManager.Instance != null)
-        {
-            StageLoadingManager.Instance.OnProgressUpdated += UpdateProgress;
-        }
-
-        StartCoroutine(CycleLoadingIcon());
     }
 
     private void OnDestroy()
@@ -101,7 +95,19 @@ public class StageLoadingPanel : Panel
             {
                 progressBar.currentValue = currentProgress * 100f;
                 progressBar.UpdateUI();
+                UpdateParticlePosition();
             }
+        }
+    }
+
+    private void UpdateParticlePosition()
+    {
+        if (handleParticle != null && progressBar != null)
+        {
+            float progress = currentProgress;
+
+            float xPos = particleStartPos.x + (progressBarWidth * progress) + particleOffset;
+            handleParticle.anchoredPosition = new Vector2(xPos, particleStartPos.y);
         }
     }
 

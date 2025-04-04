@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Photon.Pun;
-using Photon.Realtime;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -52,15 +50,14 @@ public class GameManager : Singleton<GameManager>, IInitializable
         stageUIManager = Instantiate(
             Resources.Load<StageUIManager>("Prefabs/Stage/System/StageUIManager")
         );
-        if (!PhotonNetwork.IsConnected)
-        {
-            PhotonNetwork.ConnectUsingSettings();
-        }
 
         playerSystem = new GameObject("PlayerSystem").AddComponent<PlayerSystem>();
 
         StartCoroutine(playerSystem.InitializeRoutine());
         yield return new WaitUntil(() => playerSystem.IsInitialized);
+
+        playerSystem.XRPlayer.FadeOut(1.5f);
+        yield return new WaitForSeconds(1.5f);
 
         initOperations.Add(DataManager.Instance.LoadTrackDataList);
 
@@ -75,8 +72,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
             else
             {
                 InitializeEditorCam();
-                playerSystem.SpawnPlayer(Vector3.zero, false);
-                playerSystem.XRPlayer.FadeIn(3f);
+                StartCoroutine(playerSystem.SpawnPlayer(Vector3.zero, false));
             }
         };
 

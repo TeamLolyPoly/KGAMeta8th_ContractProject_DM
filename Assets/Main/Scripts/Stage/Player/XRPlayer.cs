@@ -13,18 +13,15 @@ public class XRPlayer : MonoBehaviour
     [SerializeField]
     private Renderer fadeRenderer;
 
-    private ActionBasedContinuousMoveProvider continuousMoveProvider;
-    private ActionBasedSnapTurnProvider snapTurnProvider;
-    private GrabMoveProvider grabMoveProvider;
     public ActionBasedController LeftController => leftController;
     public ActionBasedController RightController => rightController;
 
-    public void FadeIn(float duration)
+    public void FadeOut(float duration)
     {
         StartCoroutine(Fade(0, 1, duration));
     }
 
-    public void FadeOut(float duration)
+    public void FadeIn(float duration)
     {
         StartCoroutine(Fade(1, 0, duration));
     }

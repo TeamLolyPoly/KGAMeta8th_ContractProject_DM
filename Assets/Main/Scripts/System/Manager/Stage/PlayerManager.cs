@@ -24,7 +24,7 @@ public class PlayerSystem : MonoBehaviourPunCallbacks
             PhotonNetwork.ConnectUsingSettings();
         }
 
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        SceneManager.sceneUnloaded += OnSceneUnloaded;
 
         yield return new WaitUntil(() => PhotonNetwork.InRoom);
         StartCoroutine(SpawnPlayer(Vector3.zero, false));
@@ -34,7 +34,7 @@ public class PlayerSystem : MonoBehaviourPunCallbacks
 
     private void OnDestroy()
     {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneUnloaded -= OnSceneUnloaded;
     }
 
     public override void OnConnectedToMaster()
@@ -53,24 +53,21 @@ public class PlayerSystem : MonoBehaviourPunCallbacks
         Debug.Log("[SpawnTest] 방 입장 완료");
     }
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    private void OnSceneUnloaded(Scene scene)
     {
-        if (PhotonNetwork.InRoom)
-        {
-            StartCoroutine(SpawnPlayer(Vector3.zero, false));
-        }
+        XRPlayer = null;
     }
 
     public IEnumerator SpawnPlayer(Vector3 spawnPosition, bool isStage)
     {
-        yield return new WaitForSeconds(3f);
         GameObject player = PhotonNetwork.Instantiate(
             isStage ? STAGE_PLAYER_PREFAB : LOBBY_PLAYER_PREFAB,
             spawnPosition + new Vector3(0, YSpawnOffset, 0),
             Quaternion.identity
         );
         XRPlayer = player.GetComponent<XRPlayer>();
-        XRPlayer.FadeIn(3f);
+        XRPlayer.FadeIn(1.5f);
+        yield return new WaitForSeconds(1.5f);
         isSpawned = true;
     }
 }
