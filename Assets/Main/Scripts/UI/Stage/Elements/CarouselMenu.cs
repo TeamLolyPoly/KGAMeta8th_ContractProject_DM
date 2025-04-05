@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Michsky.UI.Heat;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,12 +8,6 @@ using UnityEngine.InputSystem;
 public class CarouselMenu : MonoBehaviour
 {
     private List<BoxButtonManager> instantiatedItems = new List<BoxButtonManager>();
-
-    [SerializeField]
-    private ButtonManager leftButton;
-
-    [SerializeField]
-    private ButtonManager rightButton;
 
     [SerializeField]
     private float spacing = 200f;
@@ -38,22 +33,20 @@ public class CarouselMenu : MonoBehaviour
     private Transform contentParent;
 
     [SerializeField]
-    private int itemCount = 5;
-
-    [SerializeField]
     private Vector2 itemSize = new Vector2(200, 200);
 
-    [SerializeField]
     private XRPlayer xrPlayer;
 
     private bool isMoving = false;
     private float joystickCooldown = 0.3f;
     private float lastJoystickTime;
 
-    void Start()
+    public void Initialize(Dictionary<string, List<TrackData>> albumDataList)
     {
         InitializeCarousel();
-        CreateMenuItems();
+        CreateMenuItems(albumDataList);
+
+        xrPlayer = GameManager.Instance.PlayerSystem.XRPlayer;
 
         if (xrPlayer != null)
         {
@@ -67,9 +60,25 @@ public class CarouselMenu : MonoBehaviour
             currentPosition = 0;
             StartCoroutine(InitialAnimation());
         }
+    }
 
-        leftButton.onClick.AddListener(SelectPrevious);
-        rightButton.onClick.AddListener(SelectNext);
+    public void CleanUp()
+    {
+        if (currentMoveCoroutine != null)
+        {
+            StopCoroutine(currentMoveCoroutine);
+        }
+
+        if (xrPlayer != null)
+        {
+            xrPlayer.LeftController.rotateAnchorAction.action.performed -= HandleJoystickMovement;
+        }
+
+        foreach (var item in instantiatedItems)
+        {
+            Destroy(item.gameObject);
+        }
+        instantiatedItems.Clear();
     }
 
     private void HandleJoystickMovement(InputAction.CallbackContext context)
@@ -89,21 +98,31 @@ public class CarouselMenu : MonoBehaviour
         lastJoystickTime = Time.time;
     }
 
-    private void CreateMenuItems()
+    private void CreateMenuItems(Dictionary<string, List<TrackData>> albumDataList)
     {
         foreach (var item in instantiatedItems)
         {
             Destroy(item.gameObject);
         }
         instantiatedItems.Clear();
-
-        for (int i = 0; i < itemCount; i++)
+        foreach (var albumData in albumDataList)
         {
             BoxButtonManager item = Instantiate(menuItemPrefab, contentParent);
             item.GetComponent<RectTransform>().sizeDelta = itemSize;
+            if (albumData.Value.First().AlbumArt != null)
+            {
+                item.SetBackground(albumData.Value.First().AlbumArt);
+            }
+            item.SetText($"{albumData.Key}");
             AddItem(item);
             item.SetInteractable(false);
+            item.onClick.AddListener(() => OnItemClick(albumData.Key, albumData.Value));
         }
+    }
+
+    private void OnItemClick(string albumName, List<TrackData> albumTracks)
+    {
+        StageUIManager.Instance.OpenPanel(PanelType.DifficultySelect);
     }
 
     private void UpdateItemSelected()
@@ -247,25 +266,6 @@ public class CarouselMenu : MonoBehaviour
         {
             instantiatedItems.Remove(item);
             InitializeCarousel();
-        }
-    }
-
-    public void ReloadItems(int newItemCount)
-    {
-        itemCount = newItemCount;
-        CreateMenuItems();
-    }
-
-    private void OnDestroy()
-    {
-        if (currentMoveCoroutine != null)
-        {
-            StopCoroutine(currentMoveCoroutine);
-        }
-
-        if (xrPlayer != null)
-        {
-            xrPlayer.LeftController.rotateAnchorAction.action.performed -= HandleJoystickMovement;
         }
     }
 

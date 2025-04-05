@@ -35,7 +35,10 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
     public Canvas EditorCanvas => editorCanvas;
 
     [SerializeField]
-    private ButtonManager logSystemButton;
+    public List<Animator> debugPanels = new List<Animator>();
+
+    [SerializeField]
+    private ButtonManager debugButton;
 
     public void Initialize()
     {
@@ -59,10 +62,6 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
         if (defaultAlbumArt == null)
         {
             defaultAlbumArt = Resources.Load<Sprite>("Textures/DefaultAlbumArt");
-        }
-        if (logSystemButton != null)
-        {
-            logSystemButton.onClick.AddListener(ToggleLogSystem);
         }
     }
 
@@ -131,8 +130,17 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
         }
     }
 
-    public void ToggleLogSystem()
+    public void EnableDebugMode()
     {
-        logSystemAnimator.SetBool("isOpen", !logSystemAnimator.GetBool("isOpen"));
+        debugButton.gameObject.SetActive(true);
+        debugButton.onClick.AddListener(ToggleDebugUI);
+    }
+
+    public void ToggleDebugUI()
+    {
+        foreach (var panel in debugPanels)
+        {
+            panel.SetBool("isOpen", !panel.GetBool("isOpen"));
+        }
     }
 }

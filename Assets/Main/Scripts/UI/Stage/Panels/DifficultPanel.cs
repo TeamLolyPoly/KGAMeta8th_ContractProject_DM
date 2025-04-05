@@ -1,11 +1,10 @@
 using Michsky.UI.Heat;
 using ProjectDM.UI;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class DifficultPanel : Panel
 {
-    public override PanelType PanelType => PanelType.Difficult;
+    public override PanelType PanelType => PanelType.DifficultySelect;
 
     public override void Open()
     {

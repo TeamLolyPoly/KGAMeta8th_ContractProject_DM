@@ -7,38 +7,46 @@ public class ModePanel : Panel
     public override PanelType PanelType => PanelType.Mode;
 
     [SerializeField]
-    private BoxButtonManager singleButton;
+    private BoxButtonManager singleModeButton;
 
     [SerializeField]
-    private BoxButtonManager multiButton;
+    private BoxButtonManager multiModeButton;
 
     [SerializeField]
-    private BoxButtonManager backButton;
+    private ButtonManager closeButton;
 
     public override void Open()
     {
-        backButton.onClick.AddListener(OnBackButtonClick);
-        singleButton.onClick.AddListener(OnSingleButtonClick);
-        multiButton.onClick.AddListener(OnMultiButtonClick);
+        closeButton.onClick.AddListener(OnCloseButtonClick);
+        singleModeButton.onClick.AddListener(OnSingleModeButtonClick);
+        multiModeButton.onClick.AddListener(OnMultiModeButtonClick);
         base.Open();
     }
 
     public override void Close(bool objActive = false)
     {
-        backButton.onClick.RemoveListener(OnBackButtonClick);
-        singleButton.onClick.RemoveListener(OnSingleButtonClick);
-        multiButton.onClick.RemoveListener(OnMultiButtonClick);
+        closeButton.onClick.RemoveListener(OnCloseButtonClick);
+        singleModeButton.onClick.RemoveListener(OnSingleModeButtonClick);
+        multiModeButton.onClick.RemoveListener(OnMultiModeButtonClick);
         base.Close(objActive);
     }
 
-    private void OnBackButtonClick() { }
+    private void OnCloseButtonClick()
+    {
+        Close(true);
+        StageUIManager.Instance.OpenPanel(PanelType.Title);
+    }
 
-    private void OnSingleButtonClick() { }
+    private void OnSingleModeButtonClick()
+    {
+        Close(true);
+        StageUIManager.Instance.OpenPanel(PanelType.Album);
+    }
 
-    private void OnMultiButtonClick()
+    private void OnMultiModeButtonClick()
     {
         //todo : 멀티모드 구현해야함  기획서 참고! 일단 비활성화 처리
-        multiButton.isInteractable = false;
-        multiButton.UpdateUI();
+        multiModeButton.isInteractable = false;
+        multiModeButton.UpdateUI();
     }
 }

@@ -35,17 +35,11 @@ public class StageLoadingPanel : Panel
 
     public override void Open()
     {
+        base.Open();
+
         if (StageLoadingManager.Instance != null)
         {
             StageLoadingManager.Instance.OnProgressUpdated += UpdateProgress;
-        }
-
-        if (progressBar != null)
-        {
-            progressBar.minValue = 0;
-            progressBar.maxValue = 100;
-            progressBar.currentValue = 0;
-            progressBar.UpdateUI();
         }
 
         InitializeParticlePosition();
@@ -64,8 +58,17 @@ public class StageLoadingPanel : Panel
 
     public override void Close(bool objActive = true)
     {
-        StageUIManager.Instance.Panels.Remove(this);
-        Destroy(gameObject);
+        StopCoroutine(CycleLoadingIcon());
+
+        progressBar.minValue = 0;
+        progressBar.maxValue = 100;
+        progressBar.currentValue = 0;
+        progressBar.UpdateUI();
+
+        loadingText.text = "";
+        isFirstText = false;
+        animator.SetBool("isOpen", false);
+        base.Close(objActive);
     }
 
     private void OnDestroy()

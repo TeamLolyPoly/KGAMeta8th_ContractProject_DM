@@ -18,6 +18,16 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
 
     public event Action<float> OnProgressUpdated;
 
+    public void Initialize()
+    {
+        if (loadingUI == null)
+        {
+            loadingUI = StageUIManager.Instance.OpenPanel(PanelType.Loading) as StageLoadingPanel;
+        }
+
+        loadingUI.Close(false);
+    }
+
     /// <summary>
     /// 씬을 로딩합니다.
     /// </summary>
@@ -35,7 +45,7 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
             StageUIManager.Instance.Initialize();
         }
 
-        loadingUI = StageUIManager.Instance.OpenPanel(PanelType.Loading) as StageLoadingPanel;
+        StageUIManager.Instance.CloseAllPanels();
 
         StartCoroutine(LoadSceneRoutine(sceneName, onComplete));
     }
@@ -56,12 +66,7 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
 
         isLoading = true;
 
-        if (!StageUIManager.Instance.IsInitialized)
-        {
-            StageUIManager.Instance.Initialize();
-        }
-
-        loadingUI = StageUIManager.Instance.OpenPanel(PanelType.Loading) as StageLoadingPanel;
+        StageUIManager.Instance.CloseAllPanels();
 
         StartCoroutine(LoadOperations(targetSceneName, operations, onComplete));
     }
@@ -90,29 +95,28 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
 
         StageUIManager.Instance.CloseAllPanels();
 
-        loadingUI = StageUIManager.Instance.OpenPanel(PanelType.Loading) as StageLoadingPanel;
-
-        if (asyncOperation != null)
-        {
-            StartCoroutine(LoadOpertion(targetSceneName, asyncOperation, onComplete));
-        }
-        else
-        {
-            SceneManager.LoadScene(targetSceneName);
-        }
+        StartCoroutine(LoadOpertion(targetSceneName, asyncOperation, onComplete));
     }
 
     private IEnumerator LoadSceneRoutine(string targetSceneName, Action onComplete)
     {
+        GameManager.Instance.PlayerSystem.DespawnPlayer();
+
+        yield return new WaitUntil(() => !GameManager.Instance.PlayerSystem.IsSpawned);
+
         AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
-        while (!loadLoadingScene.isDone)
-        {
-            yield return null;
-        }
+
+        yield return new WaitUntil(() => loadLoadingScene.isDone);
+
+        GameManager.Instance.PlayerSystem.SpawnPlayer(Vector3.zero, false);
+
+        yield return new WaitUntil(() => GameManager.Instance.PlayerSystem.IsSpawned);
 
         AsyncOperation loadTargetScene = SceneManager.LoadSceneAsync(targetSceneName);
 
         loadTargetScene.allowSceneActivation = false;
+
+        loadingUI.Open();
 
         float startTime = Time.time;
         float progress = 0;
@@ -135,11 +139,15 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
 
         isLoading = false;
 
+        GameManager.Instance.PlayerSystem.DespawnPlayer();
+
+        yield return new WaitUntil(() => !GameManager.Instance.PlayerSystem.IsSpawned);
+
         loadTargetScene.allowSceneActivation = true;
 
         yield return new WaitUntil(() => loadTargetScene.isDone);
 
-        loadingUI.Close();
+        loadingUI.Close(false);
 
         onComplete?.Invoke();
     }
@@ -150,11 +158,17 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
         Action onComplete = null
     )
     {
+        GameManager.Instance.PlayerSystem.DespawnPlayer();
+
+        yield return new WaitUntil(() => !GameManager.Instance.PlayerSystem.IsSpawned);
+
         AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
-        while (!loadLoadingScene.isDone)
-        {
-            yield return null;
-        }
+
+        yield return new WaitUntil(() => loadLoadingScene.isDone);
+
+        GameManager.Instance.PlayerSystem.SpawnPlayer(Vector3.zero, false);
+
+        yield return new WaitUntil(() => GameManager.Instance.PlayerSystem.IsSpawned);
 
         AsyncOperation loadTargetScene = SceneManager.LoadSceneAsync(targetSceneName);
 
@@ -179,11 +193,15 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
             yield return new WaitForSeconds(MINIMUM_LOADING_TIME - elapsedTime);
         }
 
+        GameManager.Instance.PlayerSystem.DespawnPlayer();
+
+        yield return new WaitUntil(() => !GameManager.Instance.PlayerSystem.IsSpawned);
+
         loadTargetScene.allowSceneActivation = true;
 
         yield return new WaitUntil(() => loadTargetScene.isDone);
 
-        loadingUI.Close();
+        loadingUI.Close(false);
 
         isLoading = false;
 
@@ -196,14 +214,25 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
         Action onComplete
     )
     {
-        AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
-        while (!loadLoadingScene.isDone)
+        if (GameManager.Instance.PlayerSystem.XRPlayer != null)
         {
-            yield return null;
+            GameManager.Instance.PlayerSystem.DespawnPlayer();
         }
+
+        yield return new WaitUntil(() => !GameManager.Instance.PlayerSystem.IsSpawned);
+
+        AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
+
+        yield return new WaitUntil(() => loadLoadingScene.isDone);
+
+        GameManager.Instance.PlayerSystem.SpawnPlayer(Vector3.zero, false);
+
+        yield return new WaitUntil(() => GameManager.Instance.PlayerSystem.IsSpawned);
 
         AsyncOperation loadTargetSceneAsync = SceneManager.LoadSceneAsync(targetSceneName);
         loadTargetSceneAsync.allowSceneActivation = false;
+
+        loadingUI.Open();
 
         float startTime = Time.time;
 
@@ -240,12 +269,17 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
 
         UpdateProgress(1.0f);
 
+        GameManager.Instance.PlayerSystem.DespawnPlayer();
+
+        yield return new WaitUntil(() => !GameManager.Instance.PlayerSystem.IsSpawned);
+
         loadTargetSceneAsync.allowSceneActivation = true;
 
         yield return new WaitUntil(() => loadTargetSceneAsync.isDone);
 
         isLoading = false;
-        loadingUI.Close();
+
+        loadingUI.Close(false);
 
         onComplete?.Invoke();
     }

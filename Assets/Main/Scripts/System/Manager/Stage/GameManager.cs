@@ -1,8 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Photon.Pun;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class GameManager : Singleton<GameManager>, IInitializable
 {
@@ -11,29 +11,28 @@ public class GameManager : Singleton<GameManager>, IInitializable
     private float startDelay = 1f;
     private double startDspTime;
 
-    private AudioSource musicSource;
-    private NoteMap noteMap;
-    public NoteMap NoteMap => noteMap;
-    private NoteSpawner noteSpawner;
-    private GridGenerator gridGenerator;
+    private NetworkSystem networkSystem;
     private PlayerSystem playerSystem;
+    private GridGenerator gridGenerator;
     private ScoreSystem scoreSystem;
-
-    private StageUIManager stageUIManager;
-    public StageUIManager StageUIManager => stageUIManager;
-
-    public PlayerSystem PlayerSystem => playerSystem;
-    public ScoreSystem ScoreSystem => scoreSystem;
+    private NoteSpawner noteSpawner;
     private AnimationSystem unitAnimationManager;
+    private NoteMap noteMap;
+    private AudioSource musicSource;
+
+    public NetworkSystem NetworkSystem => networkSystem;
+    public PlayerSystem PlayerSystem => playerSystem;
+    public NoteMap NoteMap => noteMap;
+    public ScoreSystem ScoreSystem => scoreSystem;
     public AnimationSystem UnitAnimationSystem => unitAnimationManager;
+
     private bool isInitialized = false;
-    public bool IsInitialized => isInitialized;
     private bool isPlaying = false;
+
+    public bool IsInitialized => isInitialized;
     public bool IsPlaying => isPlaying;
 
     public bool isEditMode = false;
-
-    List<Func<IEnumerator>> initOperations = new List<Func<IEnumerator>>();
 
     private void Start()
     {
@@ -47,53 +46,41 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     private IEnumerator InitializeRoutine()
     {
-        stageUIManager = Instantiate(
+        StageUIManager stageUIManager = Instantiate(
             Resources.Load<StageUIManager>("Prefabs/Stage/System/StageUIManager")
         );
+        if (isEditMode)
+        {
+            stageUIManager.EnableDebugMode();
+        }
+
+        PoolManager.Instance.Initialize();
+        StageLoadingManager.Instance.Initialize();
+
+        networkSystem = new GameObject("NetworkSystem").AddComponent<NetworkSystem>();
+        networkSystem.Initialize();
+        networkSystem.gameObject.transform.SetParent(transform);
+        yield return new WaitUntil(() => PhotonNetwork.InRoom);
 
         playerSystem = new GameObject("PlayerSystem").AddComponent<PlayerSystem>();
+        playerSystem.gameObject.transform.SetParent(transform);
 
-        StartCoroutine(playerSystem.InitializeRoutine());
-        yield return new WaitUntil(() => playerSystem.IsInitialized);
-
-        playerSystem.XRPlayer.FadeOut(1.5f);
-        yield return new WaitForSeconds(1.5f);
-
-        initOperations.Add(DataManager.Instance.LoadTrackDataList);
-
-        initOperations.Add(DataManager.Instance.LoadTrackAudioCoroutine);
+        List<Func<IEnumerator>> initOperations = new List<Func<IEnumerator>>
+        {
+            DataManager.Instance.LoadTrackDataList,
+            DataManager.Instance.LoadTrackAudioCoroutine,
+        };
 
         Action AfterInit = () =>
         {
-            if (isEditMode)
-            {
-                InitializeEditorCam();
-            }
-            else
-            {
-                InitializeEditorCam();
-                StartCoroutine(playerSystem.SpawnPlayer(Vector3.zero, false));
-            }
+            playerSystem.SpawnPlayer(Vector3.zero, false);
+            StageUIManager.Instance.OpenPanel(PanelType.Title);
         };
 
-        StageLoadingManager.Instance.LoadScene(
-            SceneManager.GetActiveScene().name,
-            initOperations,
-            AfterInit
-        );
+        StageLoadingManager.Instance.LoadScene("Test_Editor", initOperations, AfterInit);
 
         musicSource = new GameObject("MusicSource").AddComponent<AudioSource>();
-    }
-
-    private void InitializeEditorCam()
-    {
-        Camera mainCamera = Camera.main;
-
-        if (mainCamera != null)
-        {
-            StageUIManager.Instance.MainCanvas.worldCamera = mainCamera;
-            StageUIManager.Instance.EditorCanvas.worldCamera = mainCamera;
-        }
+        musicSource.gameObject.transform.SetParent(transform);
     }
 
     public void InitializeStage()
@@ -115,6 +102,11 @@ public class GameManager : Singleton<GameManager>, IInitializable
         scoreSystem.Initialize();
 
         noteSpawner.Initialize(gridGenerator, noteMap);
+    }
+
+    public void StartGame()
+    {
+        StartCoroutine(StageRoutine());
     }
 
     public void Cleanup()
@@ -205,30 +197,34 @@ public class GameManager : Singleton<GameManager>, IInitializable
         float noteTravelTime = distance / noteSpeed;
 
         Debug.Log(
-            $"노트 속도 계산: BPM={noteMap.bpm}, 거리={distance:F2}, 이동 시간={noteTravelTime:F3}초"
+            $"[GameManager] 노트 속도 계산: BPM={noteMap.bpm}, 거리={distance:F2}, 이동 시간={noteTravelTime:F3}초"
         );
 
         float preRollTime = noteTravelTime;
 
         double musicStartTime = startDspTime + preRollTime;
 
-        Debug.Log($"노트 스폰 시작: DSP 시간={startDspTime:F3}, 프리롤={preRollTime:F3}초");
+        Debug.Log(
+            $"[GameManager] 노트 스폰 시작: DSP 시간={startDspTime:F3}, 프리롤={preRollTime:F3}초"
+        );
         noteSpawner.StartSpawn(startDspTime, preRollTime);
 
         if (musicSource != null && musicSource.clip != null)
         {
             musicSource.PlayScheduled(musicStartTime);
             Debug.Log(
-                $"음악 시작 예약: DSP 시간 {musicStartTime:F3}, 현재 시간: {AudioSettings.dspTime:F3}, 간격: {musicStartTime - AudioSettings.dspTime:F3}초"
+                $"[GameManager] 음악 시작 예약: DSP 시간 {musicStartTime:F3}, 현재 시간: {AudioSettings.dspTime:F3}, 간격: {musicStartTime - AudioSettings.dspTime:F3}초"
             );
-            Debug.Log($"비트당 시간: {secondsPerBeat:F3}초 (BPM {noteMap.bpm})");
+            Debug.Log($"[GameManager] 비트당 시간: {secondsPerBeat:F3}초 (BPM {noteMap.bpm})");
         }
         else
         {
-            Debug.LogWarning("음악 소스나 클립이 설정되지 않았습니다. 노트만 생성됩니다.");
+            Debug.LogWarning(
+                "[GameManager] 음악 소스나 클립이 설정되지 않았습니다. 노트만 생성됩니다."
+            );
         }
 
-        Debug.Log("게임 시작!");
+        Debug.Log("[GameManager] 게임 시작!");
     }
 
     public void StopGame()
@@ -245,7 +241,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
             musicSource.Stop();
         }
 
-        Debug.Log("게임 중지");
+        Debug.Log("[GameManager] 게임 중지");
     }
 
     private void OnGUI()

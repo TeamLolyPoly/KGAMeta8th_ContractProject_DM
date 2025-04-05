@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using NoteEditor;
 using UnityEngine;
@@ -11,17 +12,21 @@ public class DataManager : Singleton<DataManager>
     private List<TrackData> trackDataList = new List<TrackData>();
     public List<TrackData> TrackDataList => trackDataList;
 
+    public Dictionary<string, List<TrackData>> AlbumDataList;
+
     public bool IsInitialized { get; private set; }
+
+    private YieldInstruction wait = new WaitForSeconds(0.35f);
 
     public IEnumerator LoadTrackDataList()
     {
-        List<TrackData> loadedTracks = new List<TrackData>();
         float progress = 0f;
         float progressStep = 0.1f;
 
         StageLoadingManager.Instance.SetLoadingText("트랙 데이터 로드 중...");
 
         yield return progress;
+        yield return wait;
 
         if (!File.Exists(ResourcePath.TRACK_METADATA_PATH))
         {
@@ -44,7 +49,7 @@ public class DataManager : Singleton<DataManager>
 
         progress += progressStep;
         yield return progress;
-
+        yield return wait;
         List<string> guidStrings = new List<string>();
         try
         {
@@ -71,6 +76,7 @@ public class DataManager : Singleton<DataManager>
 
         progress += progressStep;
         yield return progress;
+        yield return wait;
 
         TrackDataList wrapper = null;
         try
@@ -87,7 +93,7 @@ public class DataManager : Singleton<DataManager>
 
         progress += progressStep;
         yield return progress;
-
+        yield return wait;
         if (wrapper?.tracks == null)
         {
             trackDataList = new List<TrackData>();
@@ -104,7 +110,7 @@ public class DataManager : Singleton<DataManager>
 
         progress += progressStep;
         yield return progress;
-
+        yield return wait;
         trackDataList.Clear();
 
         float trackProgressStep =
@@ -139,7 +145,12 @@ public class DataManager : Singleton<DataManager>
 
             progress += trackProgressStep;
             yield return progress;
+            yield return wait;
         }
+
+        SortTracksByAlbum(trackDataList);
+
+        yield return wait;
 
         yield return 1.0f;
     }
@@ -329,6 +340,12 @@ public class DataManager : Singleton<DataManager>
             {
                 Debug.LogWarning($"[TrackDataManager] 오디오 파일이 없습니다: {audioPath}");
             }
+            else
+            {
+                Debug.Log(
+                    $"[TrackDataManager] 오디오 파일 존재 확인: {track.trackName} \n 경로 : {audioPath}"
+                );
+            }
 
             progress = (i + 1) * progressPerTrack;
             yield return progress;
@@ -400,6 +417,23 @@ public class DataManager : Singleton<DataManager>
         }
 
         onComplete?.Invoke(audioClip);
+    }
+
+    public void SortTracksByAlbum(List<TrackData> trackDataList)
+    {
+        AlbumDataList = new Dictionary<string, List<TrackData>>();
+        var albumGroups = trackDataList.GroupBy(track => track.albumName);
+        foreach (var albumGroup in albumGroups)
+        {
+            string albumName = albumGroup.Key;
+            List<TrackData> albumTracks = new List<TrackData>();
+            foreach (var track in albumGroup)
+            {
+                albumTracks.Add(track);
+            }
+
+            AlbumDataList.Add(albumName, albumTracks);
+        }
     }
 
     public void UnloadTrackAudio(Guid trackId)
