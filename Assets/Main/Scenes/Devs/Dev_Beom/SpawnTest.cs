@@ -1,11 +1,11 @@
-using UnityEngine;
-using Photon.Pun;
-using UnityEngine.XR;
-using Photon.Realtime;
-using UnityEngine.SceneManagement;
-using UnityEngine.XR.Management;
 using System.Collections;
 using System.Collections.Generic;
+using Photon.Pun;
+using Photon.Realtime;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.XR;
+using UnityEngine.XR.Management;
 
 public class SpawnTest : MonoBehaviourPunCallbacks
 {

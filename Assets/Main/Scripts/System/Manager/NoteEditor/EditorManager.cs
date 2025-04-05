@@ -34,24 +34,24 @@ namespace NoteEditor
 
         public void Initialize()
         {
-            LoadingManager.Instance.LoadScene(
+            EditorLoadingManager.Instance.LoadScene(
                 "Editor_Start",
                 InitializeAsync,
                 () =>
                 {
-                    UIManager.Instance.OpenPanel(PanelType.EditorStart);
+                    EditorUIManager.Instance.OpenPanel(PanelType.EditorStart);
                 }
             );
         }
 
         public void BackToMain()
         {
-            LoadingManager.Instance.LoadScene(
+            EditorLoadingManager.Instance.LoadScene(
                 "Editor_Start",
                 Clear,
                 () =>
                 {
-                    UIManager.Instance.OpenPanel(PanelType.EditorStart);
+                    EditorUIManager.Instance.OpenPanel(PanelType.EditorStart);
                 }
             );
         }
@@ -64,28 +64,28 @@ namespace NoteEditor
                 actionMap.Disable();
             }
             CurrentNoteMap = null;
-            LoadingManager.Instance.SetLoadingText("트랙 초기화 중...");
+            EditorLoadingManager.Instance.SetLoadingText("트랙 초기화 중...");
             CurrentTrack = null;
             CurrentNoteMapData = null;
             AudioManager.Instance.Stop();
             AudioManager.Instance.currentAudioSource.clip = null;
             yield return 0.2f;
             yield return new WaitForSeconds(0.3f);
-            LoadingManager.Instance.SetLoadingText("셀 초기화 중...");
+            EditorLoadingManager.Instance.SetLoadingText("셀 초기화 중...");
             if (cellController != null)
             {
                 cellController.Cleanup();
             }
             yield return 0.4f;
             yield return new WaitForSeconds(0.3f);
-            LoadingManager.Instance.SetLoadingText("레일 초기화 중...");
+            EditorLoadingManager.Instance.SetLoadingText("레일 초기화 중...");
             if (railController != null)
             {
                 railController.Cleanup();
             }
             yield return 0.6f;
             yield return new WaitForSeconds(0.3f);
-            LoadingManager.Instance.SetLoadingText("노트 에디터 초기화 중...");
+            EditorLoadingManager.Instance.SetLoadingText("노트 에디터 초기화 중...");
             if (noteEditor != null)
             {
                 noteEditor.Cleanup();
@@ -106,12 +106,12 @@ namespace NoteEditor
             };
             yield return new WaitForSeconds(0.3f);
 
-            LoadingManager.Instance.SetLoadingText("오디오 시스템 초기화 중...");
+            EditorLoadingManager.Instance.SetLoadingText("오디오 시스템 초기화 중...");
             AudioManager.Instance.Initialize();
             yield return 0.5f;
             yield return new WaitForSeconds(1f);
 
-            LoadingManager.Instance.SetLoadingText("데이터 시스템 초기화 중...");
+            EditorLoadingManager.Instance.SetLoadingText("데이터 시스템 초기화 중...");
             EditorDataManager.Instance.Initialize();
             yield return 0.8f;
             yield return new WaitForSeconds(1f);
@@ -160,14 +160,15 @@ namespace NoteEditor
 
             CurrentNoteMap = noteMapData.noteMap;
 
-            LoadingManager.Instance.LoadScene(
+            EditorLoadingManager.Instance.LoadScene(
                 "Editor_Main",
                 InitializeEditorAsync,
                 () =>
                 {
                     cameraController.Initialize();
 
-                    editorPanel = UIManager.Instance.OpenPanel(PanelType.NoteEditor) as EditorPanel;
+                    editorPanel =
+                        EditorUIManager.Instance.OpenPanel(PanelType.NoteEditor) as EditorPanel;
 
                     Debug.Log(
                         $"트랙 선택됨: {CurrentTrack.trackName}, BPM: {CurrentTrack.bpm}, 길이: {CurrentTrack.TrackAudio.length}초"
@@ -181,37 +182,37 @@ namespace NoteEditor
             yield return 0;
             yield return new WaitForSeconds(0.3f);
 
-            LoadingManager.Instance.SetLoadingText("컨트롤러 생성 중...");
+            EditorLoadingManager.Instance.SetLoadingText("컨트롤러 생성 중...");
             InstantiateControllers();
             yield return 0.1f;
             yield return new WaitForSeconds(1f);
 
-            LoadingManager.Instance.SetLoadingText("레일 초기화 중...");
+            EditorLoadingManager.Instance.SetLoadingText("레일 초기화 중...");
             railController.Initialize();
             yield return 0.2f;
             yield return new WaitUntil(() => railController.IsInitialized);
 
-            LoadingManager.Instance.SetLoadingText("셀 초기화 중...");
+            EditorLoadingManager.Instance.SetLoadingText("셀 초기화 중...");
             cellController.Initialize();
             yield return 0.3f;
             yield return new WaitUntil(() => cellController.IsInitialized);
 
-            LoadingManager.Instance.SetLoadingText("노트 에디터 초기화 중...");
+            EditorLoadingManager.Instance.SetLoadingText("노트 에디터 초기화 중...");
             noteEditor.Initialize();
             yield return 0.4f;
             yield return new WaitUntil(() => noteEditor.IsInitialized);
 
-            LoadingManager.Instance.SetLoadingText("트랙 설정 중...");
+            EditorLoadingManager.Instance.SetLoadingText("트랙 설정 중...");
             AudioManager.Instance.SetTrack(CurrentTrack.TrackAudio);
             yield return 0.5f;
             yield return new WaitForSeconds(1f);
 
-            LoadingManager.Instance.SetLoadingText("입력 설정 중...");
+            EditorLoadingManager.Instance.SetLoadingText("입력 설정 중...");
             SetupInputActions();
             yield return 0.7f;
             yield return new WaitForSeconds(1f);
 
-            LoadingManager.Instance.SetLoadingText("노트 에디터 트랙 설정 중...");
+            EditorLoadingManager.Instance.SetLoadingText("노트 에디터 트랙 설정 중...");
             noteEditor.SetTrack();
             yield return 0.8f;
             yield return new WaitForSeconds(1f);
@@ -254,7 +255,8 @@ namespace NoteEditor
                     var SettingsAction = actionMap.FindAction("Setting");
                     if (SettingsAction != null)
                     {
-                        SettingsAction.performed += ctx => UIManager.Instance.ToggleSettignsPanel();
+                        SettingsAction.performed += ctx =>
+                            EditorUIManager.Instance.ToggleSettignsPanel();
                     }
 
                     actionMap.Enable();
@@ -299,7 +301,11 @@ namespace NoteEditor
                 }
             );
 
-            LoadingManager.Instance.LoadScene(currentSceneName, LoadTrackProcess, OnTrackLoaded);
+            EditorLoadingManager.Instance.LoadScene(
+                currentSceneName,
+                LoadTrackProcess,
+                OnTrackLoaded
+            );
         }
 
         public void SetAlbumArt(string filePath, TrackData track, Action onLoaded = null)
@@ -309,7 +315,7 @@ namespace NoteEditor
 
             pendingAlbumArtFilePath = filePath;
 
-            LoadingManager.Instance.LoadScene(
+            EditorLoadingManager.Instance.LoadScene(
                 currentSceneName,
                 () => LoadAlbumArtProcess(track),
                 onLoaded
@@ -320,7 +326,7 @@ namespace NoteEditor
         {
             if (string.IsNullOrEmpty(pendingAudioFilePath))
             {
-                LoadingManager.Instance.LoadScene(currentSceneName);
+                EditorLoadingManager.Instance.LoadScene(currentSceneName);
                 yield break;
             }
 
@@ -328,7 +334,7 @@ namespace NoteEditor
 
             IProgress<float> progress = new Progress<float>(p =>
             {
-                LoadingManager.Instance.UpdateProgress(p);
+                EditorLoadingManager.Instance.UpdateProgress(p);
             });
 
             var addTrackTask = EditorDataManager.Instance.AddTrackAsync(
@@ -367,11 +373,11 @@ namespace NoteEditor
             if (CurrentTrack == null)
             {
                 pendingAudioFilePath = null;
-                LoadingManager.Instance.LoadScene(
+                EditorLoadingManager.Instance.LoadScene(
                     currentSceneName,
                     () =>
                     {
-                        UIManager.Instance.OpenPopUp("오류", "트랙 추가 실패");
+                        EditorUIManager.Instance.OpenPopUp("오류", "트랙 추가 실패");
                     }
                 );
                 yield break;
@@ -390,15 +396,15 @@ namespace NoteEditor
                 yield break;
             }
 
-            Action<float> updateProgress = LoadingManager.Instance.UpdateProgress;
+            Action<float> updateProgress = EditorLoadingManager.Instance.UpdateProgress;
 
             updateProgress(0.2f);
-            LoadingManager.Instance.SetLoadingText("앨범 아트 로드 중...");
+            EditorLoadingManager.Instance.SetLoadingText("앨범 아트 로드 중...");
 
             yield return new WaitForSeconds(0.2f);
 
             updateProgress(0.4f);
-            LoadingManager.Instance.SetLoadingText("이미지 파일 처리 중...");
+            EditorLoadingManager.Instance.SetLoadingText("이미지 파일 처리 중...");
 
             string trackName = track.trackName;
 
@@ -429,7 +435,7 @@ namespace NoteEditor
             }
 
             updateProgress(0.9f);
-            LoadingManager.Instance.SetLoadingText("앨범 아트 적용 중...");
+            EditorLoadingManager.Instance.SetLoadingText("앨범 아트 적용 중...");
             yield return new WaitForSeconds(0.2f);
 
             updateProgress(1.0f);
@@ -440,11 +446,11 @@ namespace NoteEditor
         {
             if (currentSceneName == "Editor_Start")
             {
-                UIManager.Instance.OpenPanel(PanelType.EditorStart);
-                UIManager.Instance.ClosePanel(PanelType.EditorStart);
-                UIManager.Instance.OpenPanel(PanelType.NewTrack);
+                EditorUIManager.Instance.OpenPanel(PanelType.EditorStart);
+                EditorUIManager.Instance.ClosePanel(PanelType.EditorStart);
+                EditorUIManager.Instance.OpenPanel(PanelType.NewTrack);
                 NewTrackPanel newTrackPanel =
-                    UIManager.Instance.GetPanel(PanelType.NewTrack) as NewTrackPanel;
+                    EditorUIManager.Instance.GetPanel(PanelType.NewTrack) as NewTrackPanel;
                 newTrackPanel.SetInfo(CurrentTrack);
                 EditorDataManager.Instance.TmpTrack = CurrentTrack;
             }

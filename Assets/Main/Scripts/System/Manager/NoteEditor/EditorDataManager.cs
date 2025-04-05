@@ -175,7 +175,6 @@ namespace NoteEditor
                 TrackData newTrack = result.trackData;
 
                 newTrack.TrackAudio = result.clip;
-                newTrack.noteMapData = new List<NoteMapData>();
                 newTrack.noteMapData.Add(
                     new NoteMapData()
                     {

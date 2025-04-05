@@ -1,5 +1,4 @@
 using Michsky.UI.Heat;
-using Ookii.Dialogs;
 using ProjectDM.UI;
 using SFB;
 using TMPro;
@@ -60,7 +59,7 @@ namespace NoteEditor
         public override void Close(bool objActive = false)
         {
             loadTrackButton.SetText("새 트랙");
-            loadTrackButton.SetBackground(UIManager.Instance.defaultAlbumArt);
+            loadTrackButton.SetBackground(EditorUIManager.Instance.defaultAlbumArt);
             trackNameInput.text = "";
             artistNameInput.text = "";
             albumNameInput.text = "";
@@ -158,11 +157,14 @@ namespace NoteEditor
             }
             else if (EditorManager.Instance.CurrentTrack == null)
             {
-                UIManager.Instance.OpenPopUp("오류", "오디오 파일을 로드하지 않았습니다");
+                EditorUIManager.Instance.OpenPopUp("오류", "오디오 파일을 로드하지 않았습니다");
             }
             else
             {
-                UIManager.Instance.OpenPopUp("오류", "BPM , 트랙명 , 아티스트명은 필수 정보입니다");
+                EditorUIManager.Instance.OpenPopUp(
+                    "오류",
+                    "BPM , 트랙명 , 아티스트명은 필수 정보입니다"
+                );
             }
         }
 
@@ -173,13 +175,13 @@ namespace NoteEditor
                 EditorManager.Instance.RemoveTrack(EditorDataManager.Instance.TmpTrack);
                 EditorDataManager.Instance.TmpTrack = null;
             }
-            UIManager.Instance.OpenPanel(PanelType.EditorStart);
+            EditorUIManager.Instance.OpenPanel(PanelType.EditorStart);
             Close(true);
         }
 
         private void OnBPMInputChanged(string value)
         {
-            if (UIManager.Instance.IsValidBPM(value, out float bpmValue))
+            if (EditorUIManager.Instance.IsValidBPM(value, out float bpmValue))
             {
                 bpmInput.text = bpmValue.ToString();
             }
