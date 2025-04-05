@@ -326,7 +326,7 @@ namespace NoteEditor
                 UpdateStatusText("<color=red>BPM을 입력하세요.</color>");
                 return;
             }
-            if (!UIManager.Instance.IsValidBPM(value, out float bpm))
+            if (!EditorUIManager.Instance.IsValidBPM(value, out float bpm))
             {
                 UpdateStatusText("<color=red>유효한 숫자를 입력하세요.</color>");
                 return;

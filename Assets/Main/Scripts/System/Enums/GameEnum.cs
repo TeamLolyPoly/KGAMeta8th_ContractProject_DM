@@ -85,7 +85,7 @@ public enum PanelType
     Mode,
     Album,
     Music,
-    Difficult,
+    DifficultySelect,
     ResultDetail,
     Result,
     Option,

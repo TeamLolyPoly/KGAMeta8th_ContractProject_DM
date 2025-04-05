@@ -23,13 +23,13 @@ public class EditorStartPanel : Panel
 
     private void OnNewTrackButtonClick()
     {
-        UIManager.Instance.OpenPanel(PanelType.NewTrack);
+        EditorUIManager.Instance.OpenPanel(PanelType.NewTrack);
         Close(true);
     }
 
     private void OnLoadTrackButtonClick()
     {
-        UIManager.Instance.OpenPanel(PanelType.LoadTrack);
+        EditorUIManager.Instance.OpenPanel(PanelType.LoadTrack);
         Close(true);
     }
 }
