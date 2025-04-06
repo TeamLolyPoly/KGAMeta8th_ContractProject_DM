@@ -34,7 +34,7 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
         string originalName = prefab.name;
         T spawnedObj;
 
-        if (isNetworked && PhotonNetwork.IsConnected)
+        if (isNetworked && PhotonNetwork.InRoom)
         {
             GameObject networkedObj = PhotonNetwork.Instantiate(
                 $"Items/{originalName}",

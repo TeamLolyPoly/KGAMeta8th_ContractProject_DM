@@ -49,6 +49,9 @@ public class GameManager : Singleton<GameManager>, IInitializable
         StageUIManager stageUIManager = Instantiate(
             Resources.Load<StageUIManager>("Prefabs/Stage/System/StageUIManager")
         );
+
+        stageUIManager.Initialize();
+
         if (isEditMode)
         {
             stageUIManager.EnableDebugMode();
@@ -58,12 +61,12 @@ public class GameManager : Singleton<GameManager>, IInitializable
         StageLoadingManager.Instance.Initialize();
 
         networkSystem = new GameObject("NetworkSystem").AddComponent<NetworkSystem>();
-        networkSystem.Initialize();
         networkSystem.gameObject.transform.SetParent(transform);
-        yield return new WaitUntil(() => PhotonNetwork.InRoom);
 
         playerSystem = new GameObject("PlayerSystem").AddComponent<PlayerSystem>();
         playerSystem.gameObject.transform.SetParent(transform);
+        playerSystem.Initialize();
+        yield return new WaitUntil(() => playerSystem.IsInitialized);
 
         List<Func<IEnumerator>> initOperations = new List<Func<IEnumerator>>
         {

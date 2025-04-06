@@ -40,9 +40,13 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
     [SerializeField]
     private ButtonManager debugButton;
 
+    [SerializeField]
+    private LogSystem logSystem;
+
     public void Initialize()
     {
         LoadResources();
+        logSystem.Initialize();
         isInitialized = true;
     }
 

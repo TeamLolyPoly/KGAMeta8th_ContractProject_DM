@@ -167,6 +167,15 @@ public class TrackDataList
 }
 
 [Serializable]
+public class RankData
+{
+    public string nickName;
+    public Sprite profileImage;
+    public int score;
+    public int rank;
+}
+
+[Serializable]
 public class NoteMapDataList
 {
     public List<NoteMapData> noteMaps;

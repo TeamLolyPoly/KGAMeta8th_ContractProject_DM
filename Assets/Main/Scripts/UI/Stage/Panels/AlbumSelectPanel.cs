@@ -2,9 +2,9 @@ using Michsky.UI.Heat;
 using ProjectDM.UI;
 using UnityEngine;
 
-public class AlbumPanel : Panel
+public class AlbumSelectPanel : Panel
 {
-    public override PanelType PanelType => PanelType.Album;
+    public override PanelType PanelType => PanelType.AlbumSelect;
 
     [SerializeField]
     private CarouselMenu carouselMenu;

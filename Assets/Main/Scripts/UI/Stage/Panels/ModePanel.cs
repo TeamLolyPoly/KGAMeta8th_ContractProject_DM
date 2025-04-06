@@ -40,7 +40,7 @@ public class ModePanel : Panel
     private void OnSingleModeButtonClick()
     {
         Close(true);
-        StageUIManager.Instance.OpenPanel(PanelType.Album);
+        StageUIManager.Instance.OpenPanel(PanelType.AlbumSelect);
     }
 
     private void OnMultiModeButtonClick()

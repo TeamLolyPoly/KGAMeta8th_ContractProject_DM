@@ -2,20 +2,31 @@ using System.Collections;
 using Photon.Pun;
 using UnityEngine;
 
-public class PlayerSystem : MonoBehaviourPunCallbacks
+public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 {
     public const string STAGE_PLAYER_PREFAB = "Prefabs/Stage/Player/StagePlayer";
 
     public const string LOBBY_PLAYER_PREFAB = "Prefabs/Stage/Player/LobbyPlayer";
 
+    private XRPlayer stagePlayerPrefab;
+    private XRPlayer lobbyPlayerPrefab;
+
     public XRPlayer XRPlayer { get; private set; }
-    public bool IsInitialized { get; private set; } = false;
+    private bool isInitialized = false;
+    public bool IsInitialized => isInitialized;
 
     private bool isSpawned = false;
 
     public bool IsSpawned => isSpawned;
 
     public float fadeTime = 3f;
+
+    public void Initialize()
+    {
+        stagePlayerPrefab = Resources.Load<XRPlayer>(STAGE_PLAYER_PREFAB);
+        lobbyPlayerPrefab = Resources.Load<XRPlayer>(LOBBY_PLAYER_PREFAB);
+        isInitialized = true;
+    }
 
     public void SpawnPlayer(Vector3 spawnPosition, bool isStage)
     {
@@ -26,13 +37,13 @@ public class PlayerSystem : MonoBehaviourPunCallbacks
     {
         Debug.Log("[PlayerSystem] 플레이어 스폰");
 
-        GameObject player = PhotonNetwork.Instantiate(
-            isStage ? STAGE_PLAYER_PREFAB : LOBBY_PLAYER_PREFAB,
+        XRPlayer player = Instantiate(
+            isStage ? stagePlayerPrefab : lobbyPlayerPrefab,
             spawnPosition,
             Quaternion.identity
         );
 
-        XRPlayer = player.GetComponent<XRPlayer>();
+        XRPlayer = player;
         yield return new WaitForSeconds(2f);
         XRPlayer.FadeIn(fadeTime);
         yield return new WaitForSeconds(fadeTime);
@@ -52,7 +63,7 @@ public class PlayerSystem : MonoBehaviourPunCallbacks
         XRPlayer.RightRayInteractor.enabled = false;
         XRPlayer.FadeOut(fadeTime);
         yield return new WaitForSeconds(fadeTime + 2f);
-        PhotonNetwork.Destroy(XRPlayer.gameObject);
+        Destroy(XRPlayer.gameObject);
         XRPlayer = null;
         isSpawned = false;
     }

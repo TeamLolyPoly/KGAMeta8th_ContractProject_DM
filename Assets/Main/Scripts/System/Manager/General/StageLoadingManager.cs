@@ -40,11 +40,6 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
 
         isLoading = true;
 
-        if (!StageUIManager.Instance.IsInitialized)
-        {
-            StageUIManager.Instance.Initialize();
-        }
-
         StageUIManager.Instance.CloseAllPanels();
 
         StartCoroutine(LoadSceneRoutine(sceneName, onComplete));
@@ -87,11 +82,6 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
             return;
 
         isLoading = true;
-
-        if (!EditorUIManager.Instance.IsInitialized)
-        {
-            StageUIManager.Instance.Initialize();
-        }
 
         StageUIManager.Instance.CloseAllPanels();
 
