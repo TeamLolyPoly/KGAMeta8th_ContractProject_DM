@@ -236,3 +236,16 @@ public class MultiplierScore
     public int ratingScore = 0;
 }
 #endregion
+[Serializable]
+public class VrMap
+{
+    public Transform vrTarget;
+    public Transform ikTarget;
+    public Vector3 trackingPositionOffset;
+    public Vector3 trackingRotationOffset;
+    public void Map()
+    {
+        ikTarget.position = vrTarget.TransformPoint(trackingPositionOffset);
+        ikTarget.rotation = vrTarget.rotation * Quaternion.Euler(trackingRotationOffset);
+    }
+}
