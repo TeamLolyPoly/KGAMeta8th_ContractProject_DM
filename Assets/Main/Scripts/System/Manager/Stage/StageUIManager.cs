@@ -46,10 +46,17 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
     [SerializeField]
     private LogSystem logSystem;
 
+    public LogSystem LogSystem => logSystem;
+
     public void Initialize()
     {
         LoadResources();
         logSystem.Initialize();
+        foreach (var panel in debugPanels)
+        {
+            panel.SetBool("subOpen", false);
+        }
+
         isInitialized = true;
     }
 
@@ -147,7 +154,7 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
     {
         foreach (var panel in debugPanels)
         {
-            panel.SetBool("isOpen", !panel.GetBool("isOpen"));
+            panel.SetBool("subOpen", !panel.GetBool("subOpen"));
         }
     }
 }

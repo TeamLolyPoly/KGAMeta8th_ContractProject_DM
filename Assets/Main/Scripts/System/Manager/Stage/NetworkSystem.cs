@@ -2,11 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
-using Random = UnityEngine.Random;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class NetworkSystem : MonoBehaviourPunCallbacks
@@ -16,7 +14,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         public const string IsSpawned = "IsSpawned";
     }
 
-    private bool isMultiplayer = false;
     private bool isPlaying = true;
     private Dictionary<int, bool> playerReadyStatus = new Dictionary<int, bool>();
 
@@ -204,6 +201,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     {
         StageLoadingManager.Instance.LoadScene(sceneName, operations, onComplete);
     }
+
     public void SetPlayerSpawned()
     {
         Hashtable props = new Hashtable { { Keys.IsSpawned, true } };
@@ -213,7 +211,9 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     public bool AreAllPlayersSpawned()
     {
         return PhotonNetwork.PlayerList.All(p =>
-            p.CustomProperties.ContainsKey(Keys.IsSpawned) && (bool)p.CustomProperties[Keys.IsSpawned]);
+            p.CustomProperties.ContainsKey(Keys.IsSpawned)
+            && (bool)p.CustomProperties[Keys.IsSpawned]
+        );
     }
 
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)

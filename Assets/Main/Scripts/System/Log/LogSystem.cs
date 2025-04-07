@@ -101,6 +101,8 @@ public class LogSystem : MonoBehaviour, IInitializable
         logEntries.Add(entry);
 
         CreateLogBox(entry.GetDisplayLog(), type);
+
+        SaveLogs();
     }
 
     private void CreateLogBox(string message, LogType type)
