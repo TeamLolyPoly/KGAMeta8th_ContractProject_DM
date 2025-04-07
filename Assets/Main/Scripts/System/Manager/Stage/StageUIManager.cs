@@ -4,19 +4,22 @@ using System.Linq;
 using Michsky.UI.Heat;
 using ProjectDM.UI;
 using UnityEngine;
+using UnityEngine.Android;
 
 public class StageUIManager : Singleton<StageUIManager>, IInitializable
 {
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
 
-    [SerializeField]
     private List<Panel> PanelPrefabs = new List<Panel>();
 
-    public List<Panel> Panels = new List<Panel>();
+    private List<Panel> panels = new List<Panel>();
+    public List<Panel> Panels => panels;
 
     [SerializeField]
     private Sprite defaultAlbumArt;
+
+    public Sprite DefaultAlbumArt => defaultAlbumArt;
 
     [SerializeField]
     private ModalWindowManager popUpWindow;

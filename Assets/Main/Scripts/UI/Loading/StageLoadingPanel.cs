@@ -35,7 +35,14 @@ public class StageLoadingPanel : Panel
 
     public override void Open()
     {
+        animator.SetBool("isOpen", false);
+
         base.Open();
+
+        currentProgress = 0f;
+        targetProgress = 0f;
+        progressBar.currentValue = currentProgress;
+        progressBar.UpdateUI();
 
         if (StageLoadingManager.Instance != null)
         {
@@ -58,25 +65,14 @@ public class StageLoadingPanel : Panel
 
     public override void Close(bool objActive = true)
     {
-        StopCoroutine(CycleLoadingIcon());
-
-        progressBar.minValue = 0;
-        progressBar.maxValue = 100;
-        progressBar.currentValue = 0;
-        progressBar.UpdateUI();
-
-        loadingText.text = "";
-        isFirstText = false;
-        animator.SetBool("isOpen", false);
-        base.Close(objActive);
-    }
-
-    private void OnDestroy()
-    {
         if (StageLoadingManager.Instance != null)
         {
             StageLoadingManager.Instance.OnProgressUpdated -= UpdateProgress;
         }
+
+        StopCoroutine(CycleLoadingIcon());
+
+        base.Close(objActive);
     }
 
     private void Update()

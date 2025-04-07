@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -185,18 +184,13 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         }
     }
 
-    private void OnDestroy()
-    {
-        CleanUp();
-    }
-
     private void CleanUp()
     {
-        var scoreSystem = GameManager.Instance.ScoreSystem;
-        if (scoreSystem != null)
+        if (GameManager.Instance.ScoreSystem != null)
         {
-            scoreSystem.onBandEngagementChange -= BandAnimationClipChange;
-            scoreSystem.onSpectatorEngagementChange -= SpectatorAnimationClipChange;
+            GameManager.Instance.ScoreSystem.onBandEngagementChange -= BandAnimationClipChange;
+            GameManager.Instance.ScoreSystem.onSpectatorEngagementChange -=
+                SpectatorAnimationClipChange;
         }
 
         Destroy(this.gameObject);

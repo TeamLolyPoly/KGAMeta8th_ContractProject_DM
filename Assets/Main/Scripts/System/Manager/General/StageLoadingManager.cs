@@ -98,6 +98,8 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
 
         yield return new WaitUntil(() => loadLoadingScene.isDone);
 
+        StageUIManager.Instance.OpenPanel(PanelType.Loading);
+
         GameManager.Instance.PlayerSystem.SpawnPlayer(Vector3.zero, false);
 
         yield return new WaitUntil(() => GameManager.Instance.PlayerSystem.IsSpawned);
@@ -151,6 +153,8 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
         GameManager.Instance.PlayerSystem.DespawnPlayer();
 
         yield return new WaitUntil(() => !GameManager.Instance.PlayerSystem.IsSpawned);
+
+        StageUIManager.Instance.OpenPanel(PanelType.Loading);
 
         AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
 
@@ -214,6 +218,8 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
         AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
 
         yield return new WaitUntil(() => loadLoadingScene.isDone);
+
+        StageUIManager.Instance.OpenPanel(PanelType.Loading);
 
         GameManager.Instance.PlayerSystem.SpawnPlayer(Vector3.zero, false);
 

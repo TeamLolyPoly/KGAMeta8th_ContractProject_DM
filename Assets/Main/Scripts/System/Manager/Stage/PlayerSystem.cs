@@ -35,8 +35,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
     private IEnumerator SpawnPlayerRoutine(Vector3 spawnPosition, bool isStage)
     {
-        Debug.Log("[PlayerSystem] 플레이어 스폰");
-
         XRPlayer player = Instantiate(
             isStage ? stagePlayerPrefab : lobbyPlayerPrefab,
             spawnPosition,
@@ -47,9 +45,16 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
         yield return new WaitForSeconds(2f);
         XRPlayer.FadeIn(fadeTime);
         yield return new WaitForSeconds(fadeTime);
-        XRPlayer.LeftRayInteractor.enabled = true;
-        XRPlayer.RightRayInteractor.enabled = true;
+        if (XRPlayer.LeftRayInteractor != null)
+        {
+            XRPlayer.LeftRayInteractor.enabled = true;
+        }
+        if (XRPlayer.RightRayInteractor != null)
+        {
+            XRPlayer.RightRayInteractor.enabled = true;
+        }
         isSpawned = true;
+        GameManager.Instance.NetworkSystem.SetPlayerSpawned();
     }
 
     public void DespawnPlayer()
@@ -59,8 +64,14 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
     public IEnumerator DespawnPlayerRoutine()
     {
-        XRPlayer.LeftRayInteractor.enabled = false;
-        XRPlayer.RightRayInteractor.enabled = false;
+        if (XRPlayer.LeftRayInteractor != null)
+        {
+            XRPlayer.LeftRayInteractor.enabled = false;
+        }
+        if (XRPlayer.RightRayInteractor != null)
+        {
+            XRPlayer.RightRayInteractor.enabled = false;
+        }
         XRPlayer.FadeOut(fadeTime);
         yield return new WaitForSeconds(fadeTime + 2f);
         Destroy(XRPlayer.gameObject);

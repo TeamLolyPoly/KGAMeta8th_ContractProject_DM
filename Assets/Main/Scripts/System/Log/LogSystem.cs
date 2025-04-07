@@ -57,7 +57,6 @@ public class LogSystem : MonoBehaviour, IInitializable
         {
             SubscribeToLogs();
             isInitialized = true;
-            Debug.Log("LogManager: Initialized");
             saveLogButton.onClick.AddListener(SaveLogs);
         }
     }
