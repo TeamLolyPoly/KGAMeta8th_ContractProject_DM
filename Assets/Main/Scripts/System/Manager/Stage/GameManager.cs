@@ -35,10 +35,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     public bool isEditMode = false;
 
-    // private void Start()
-    // {
-    //     Initialize();
-    // }
+    private void Start()
+    {
+        Initialize();
+    }
 
     public void Initialize()
     {
