@@ -160,6 +160,18 @@ public class NoteMapData
     public NoteMap noteMap;
 }
 
+[Serializable]
+public class TrackDataList
+{
+    public List<TrackData> tracks;
+}
+
+[Serializable]
+public class NoteMapDataList
+{
+    public List<NoteMapData> noteMaps;
+}
+
 #endregion
 
 #region NoteEditor
@@ -174,8 +186,14 @@ public class TrackData
     public string genre;
     public float duration;
     public float bpm = 120f;
+
+    [JsonIgnore]
     public List<NoteMapData> noteMapData { get; set; }
+
+    [JsonIgnore]
     public Sprite AlbumArt { get; set; }
+
+    [JsonIgnore]
     public AudioClip TrackAudio { get; set; }
 }
 

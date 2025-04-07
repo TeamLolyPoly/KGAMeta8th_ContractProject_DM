@@ -1,52 +1,28 @@
 using System.Collections;
 using Photon.Pun;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PoolManager : Singleton<PoolManager>, IInitializable
 {
     public bool IsInitialized { get; private set; }
     private static ObjectPool objectPool;
-    private PhotonView photonView;
-
-    protected override void Awake()
-    {
-        base.Awake();
-        photonView = gameObject.AddComponent<PhotonView>();
-    }
 
     public void Initialize()
     {
-        try
-        {
-            InitializePool();
-            IsInitialized = true;
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"Error initializing PoolManager: {e.Message}");
-            IsInitialized = false;
-        }
+        objectPool = new GameObject("ObjectPool").AddComponent<ObjectPool>();
+        DontDestroyOnLoad(objectPool);
+
+        SceneManager.sceneUnloaded += OnSceneUnloaded;
+
+        IsInitialized = true;
     }
 
-    private void InitializePool()
+    private void OnSceneUnloaded(Scene scene)
     {
-        if (objectPool == null)
-        {
-            GameObject poolObj = GameObject.Find("ObjectPool");
-            if (poolObj == null)
-            {
-                poolObj = new GameObject("ObjectPool");
-                DontDestroyOnLoad(poolObj);
-            }
-            objectPool = poolObj.GetComponent<ObjectPool>();
-            if (objectPool == null)
-            {
-                objectPool = poolObj.AddComponent<ObjectPool>();
-            }
-        }
+        ClearAllPools();
     }
 
-    // isNetworked가 true일 경우 PhotonNetwork를 사용하여 네트워크 오브젝트 생성
     public T Spawn<T>(
         GameObject prefab,
         Vector3 position,
@@ -60,7 +36,6 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
 
         if (isNetworked && PhotonNetwork.IsConnected)
         {
-            // 네트워크 오브젝트 생성
             GameObject networkedObj = PhotonNetwork.Instantiate(
                 $"Items/{originalName}",
                 position,
@@ -88,9 +63,9 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
 
         if (isNetworked && PhotonNetwork.IsConnected)
         {
-            if (obj.GetComponent<PhotonView>().IsMine) // 자신의 객체만 삭제 가능
+            if (obj.GetComponent<PhotonView>().IsMine)
             {
-                PhotonNetwork.Destroy(obj.gameObject);
+                objectPool.Despawn(obj);
             }
         }
         else

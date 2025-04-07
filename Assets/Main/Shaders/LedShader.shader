@@ -51,7 +51,7 @@ Shader "Unlit/LedShader"
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
-			
+            
             fixed4 frag (v2f i) : SV_Target
             {
 				float4 c = tex2D(_MainTex, float2(_OffsetX,_OffsetY) + (floor(i.uv*_Tiling)/ (_Tiling)));

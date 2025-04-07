@@ -77,7 +77,7 @@ namespace NoteEditor
 
         private void OnBPMInputChanged(string value)
         {
-            if (UIManager.Instance.IsValidBPM(value, out float bpmValue))
+            if (EditorUIManager.Instance.IsValidBPM(value, out float bpmValue))
             {
                 selectedTrack.bpm = bpmValue;
                 EditorManager.Instance.UpdateTrackInfo(selectedTrack, bpm: value);
@@ -121,7 +121,7 @@ namespace NoteEditor
         private void OnBackButtonClick()
         {
             Close(true);
-            UIManager.Instance.OpenPanel(PanelType.EditorStart);
+            EditorUIManager.Instance.OpenPanel(PanelType.EditorStart);
         }
 
         private void OnLoadAlbumArtButtonClick()
@@ -151,9 +151,9 @@ namespace NoteEditor
                             currentTrack,
                             () =>
                             {
-                                UIManager.Instance.OpenPanel(PanelType.EditorStart);
-                                UIManager.Instance.ClosePanel(PanelType.EditorStart);
-                                UIManager.Instance.OpenPanel(PanelType.LoadTrack);
+                                EditorUIManager.Instance.OpenPanel(PanelType.EditorStart);
+                                EditorUIManager.Instance.ClosePanel(PanelType.EditorStart);
+                                EditorUIManager.Instance.OpenPanel(PanelType.LoadTrack);
 
                                 SelectTrack(currentTrack);
                             }
@@ -197,7 +197,7 @@ namespace NoteEditor
             }
             else
             {
-                loadAlbumArtButton.SetBackground(UIManager.Instance.defaultAlbumArt);
+                loadAlbumArtButton.SetBackground(EditorUIManager.Instance.defaultAlbumArt);
             }
             loadAlbumArtButton.buttonTitle = track.trackName;
             loadAlbumArtButton.UpdateUI();
@@ -277,7 +277,7 @@ namespace NoteEditor
 
         private void OnDeleteButtonClick()
         {
-            UIManager.Instance.OpenPopUp(
+            EditorUIManager.Instance.OpenPopUp(
                 "삭제",
                 "트랙에 관련된 모든 파일이 삭제됩니다. 삭제하시겠습니까?",
                 () =>
@@ -303,7 +303,7 @@ namespace NoteEditor
         {
             CleanUpListners();
             closeButton.onClick.RemoveAllListeners();
-            loadAlbumArtButton.SetBackground(UIManager.Instance.defaultAlbumArt);
+            loadAlbumArtButton.SetBackground(EditorUIManager.Instance.defaultAlbumArt);
             loadAlbumArtButton.buttonTitle = null;
             loadAlbumArtButton.UpdateUI();
             bpmInput.text = "";

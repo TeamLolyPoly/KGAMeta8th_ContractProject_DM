@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using ExitGames.Client.Photon;
 using UnityEngine;
 
 public class NoteSpawner : MonoBehaviour
@@ -102,7 +104,7 @@ public class NoteSpawner : MonoBehaviour
             );
         }
 
-        Debug.Log($"원형 경로 생성 완료: {segmentCount}개의 포인트");
+        Debug.Log($"[NoteSpawner] 원형 경로 생성 완료: {segmentCount}개의 포인트");
     }
 
     private void CalculateNoteSpeed()
@@ -120,7 +122,7 @@ public class NoteSpawner : MonoBehaviour
     {
         if (noteMap == null || noteMap.notes == null || noteMap.notes.Count == 0)
         {
-            Debug.LogError("노트 맵이 비어있습니다!");
+            Debug.LogError("[NoteSpawner] 노트 맵이 비어있습니다!");
             return;
         }
 
@@ -138,7 +140,7 @@ public class NoteSpawner : MonoBehaviour
     {
         if (noteMap == null || noteMap.notes.Count == 0)
         {
-            Debug.LogError("노트맵이 비어있습니다!");
+            Debug.LogError("[NoteSpawner] 노트맵이 비어있습니다!");
             yield break;
         }
 
@@ -153,6 +155,7 @@ public class NoteSpawner : MonoBehaviour
         );
 
         float secondsPerBeat = 60f / noteMap.bpm;
+
         float noteTravelTime = gridGenerator.GridDistance / noteSpeed;
 
         double musicStartTime = startDspTime + preRollTime;
@@ -182,7 +185,7 @@ public class NoteSpawner : MonoBehaviour
     {
         if (noteData == null)
         {
-            Debug.LogError("노트 데이터가 null입니다!");
+            Debug.LogError("[NoteSpawner] 노트 데이터가 null입니다!");
             return;
         }
 
@@ -198,7 +201,7 @@ public class NoteSpawner : MonoBehaviour
                 SpawnLongNote(noteData);
                 break;
             default:
-                Debug.LogError($"지원하지 않는 노트 타입: {noteData.noteType}");
+                Debug.LogError($"[NoteSpawner] 지원하지 않는 노트 타입: {noteData.noteType}");
                 break;
         }
     }
@@ -210,7 +213,13 @@ public class NoteSpawner : MonoBehaviour
             noteData.TargetCell = noteData.StartCell;
         }
 
-        Note noteObj = Note.CreateNote(noteData, shortNotePrefab, longNotePrefab);
+        ShortNote noteObj = PoolManager.Instance.Spawn<ShortNote>(
+            shortNotePrefab.gameObject,
+            noteData.GetStartPosition(),
+            Quaternion.identity
+        );
+
+        noteObj.Initialize(noteData);
 
         if (noteObj != null)
         {
@@ -227,7 +236,7 @@ public class NoteSpawner : MonoBehaviour
     {
         if (noteData.noteType != NoteType.Long)
         {
-            Debug.LogError("롱노트가 아닌 데이터로 롱노트 생성 시도");
+            Debug.LogError("[NoteSpawner] 롱노트가 아닌 데이터로 롱노트 생성 시도");
             return;
         }
 
@@ -295,7 +304,7 @@ public class NoteSpawner : MonoBehaviour
     {
         if (arcLength <= 0)
         {
-            Debug.LogError($"유효하지 않은 경로 길이: {arcLength}");
+            Debug.LogError($"[NoteSpawner] 유효하지 않은 경로 길이: {arcLength}");
             yield break;
         }
 
@@ -361,8 +370,8 @@ public class NoteSpawner : MonoBehaviour
 
             try
             {
-                LongNote segment = Instantiate(
-                    longNotePrefab,
+                LongNote segment = PoolManager.Instance.Spawn<LongNote>(
+                    longNotePrefab.gameObject,
                     sourcePos,
                     Quaternion.Euler(90, 0, 0)
                 );
@@ -381,14 +390,14 @@ public class NoteSpawner : MonoBehaviour
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"세그먼트 생성 중 오류 발생: {e.Message}");
+                Debug.LogError($"[NoteSpawner] 세그먼트 생성 중 오류 발생: {e.Message}");
             }
 
             yield return new WaitForSeconds(segmentInterval);
         }
 
         Debug.Log(
-            $"세그먼트 생성 완료: 총 {pathIndices.Count}개, 대칭={isSymmetric}, 색상={segmentColor}"
+            $"[NoteSpawner] 세그먼트 생성 완료: 총 {pathIndices.Count}개, 대칭={isSymmetric}, 색상={segmentColor}"
         );
     }
 
