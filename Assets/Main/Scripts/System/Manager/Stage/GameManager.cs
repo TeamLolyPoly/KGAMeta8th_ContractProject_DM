@@ -229,10 +229,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
     public void AllPlayersSpawned()
     {
         Debug.Log("[GameManager] 모든 플레이어 스폰 완료 확인됨. 게임 시작 가능.");
-        StartGame();
+        // StartGame();
     }
 
-    public void StartGame(NoteMap map)
+    public void StartGame(TrackData track, NoteMap map)
     {
         currentTrack = track;
 
