@@ -114,7 +114,7 @@ public class TrackSelectPanel : Panel
         openRankButton.UpdateUI();
 
         startButton.Interactable(false);
-        trackInfoPanel.SetBool("isOpen", true);
+        trackInfoPanel.SetBool("subOpen", true);
     }
 
     private void CheckNoteMapData()
@@ -211,8 +211,8 @@ public class TrackSelectPanel : Panel
         selectedTrack = null;
         selectedNoteMapData = null;
         selectedNoteMap = null;
-        rankPanel.SetBool("isOpen", false);
-        trackInfoPanel.SetBool("isOpen", false);
+        rankPanel.SetBool("subOpen", false);
+        trackInfoPanel.SetBool("subOpen", false);
         base.Close(objActive);
     }
 }

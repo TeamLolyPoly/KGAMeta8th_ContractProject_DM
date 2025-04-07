@@ -180,13 +180,6 @@ public class NoteSpawner : MonoBehaviour
 
             SpawnNote(note);
 
-            count--;
-
-            if (count == 0)
-            {
-                GameManager.Instance.StopGame();
-            }
-
             yield return new WaitForSecondsRealtime(0.01f);
         }
     }

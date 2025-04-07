@@ -24,7 +24,9 @@ public class StageLoadingPanel : Panel
     private RectTransform handleParticle;
 
     [SerializeField]
-    private float particleOffset = 20f;
+    private Animator textBoxAnimator;
+
+    private float particleOffset = 10f;
 
     private bool isFirstText = true;
     private float currentProgress = 0f;
@@ -35,10 +37,6 @@ public class StageLoadingPanel : Panel
 
     public override void Open()
     {
-        animator.SetBool("isOpen", false);
-
-        base.Open();
-
         currentProgress = 0f;
         targetProgress = 0f;
         progressBar.currentValue = currentProgress;
@@ -50,6 +48,8 @@ public class StageLoadingPanel : Panel
         }
 
         InitializeParticlePosition();
+
+        base.Open();
         StartCoroutine(CycleLoadingIcon());
     }
 
@@ -59,6 +59,7 @@ public class StageLoadingPanel : Panel
         {
             RectTransform barRect = progressBar.barImage.rectTransform;
             progressBarWidth = barRect.rect.width;
+            handleParticle.anchoredPosition = new Vector2(0, handleParticle.anchoredPosition.y);
             particleStartPos = handleParticle.anchoredPosition;
         }
     }
@@ -71,6 +72,8 @@ public class StageLoadingPanel : Panel
         }
 
         StopCoroutine(CycleLoadingIcon());
+        isFirstText = true;
+        textBoxAnimator.SetBool("subOpen", false);
 
         base.Close(objActive);
     }
@@ -123,7 +126,7 @@ public class StageLoadingPanel : Panel
         }
         if (isFirstText)
         {
-            animator.SetBool("isOpen", true);
+            textBoxAnimator.SetBool("subOpen", true);
             isFirstText = false;
         }
     }

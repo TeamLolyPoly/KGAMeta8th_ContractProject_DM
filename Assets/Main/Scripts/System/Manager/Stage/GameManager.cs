@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Photon.Pun;
 using UnityEngine;
 
 public class GameManager : Singleton<GameManager>, IInitializable
@@ -205,6 +204,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
             double currentDspTime = AudioSettings.dspTime;
             float currentTime = (float)(currentDspTime - startDspTime);
             UpdateBarAndBeat(currentTime);
+            if (currentTime >= musicSource.clip.length)
+            {
+                StopGame();
+            }
         }
     }
 
@@ -229,7 +232,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
     public void AllPlayersSpawned()
     {
         Debug.Log("[GameManager] 모든 플레이어 스폰 완료 확인됨. 게임 시작 가능.");
-        // StartGame();
     }
 
     public void StartGame(TrackData track, NoteMap map)
@@ -256,8 +258,8 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     private IEnumerator StageRoutine()
     {
-        // PlayerSystem.SpawnPlayer(new Vector3(0, 0, 1), true);
-        // yield return new WaitUntil(() => PlayerSystem.IsSpawned);
+        PlayerSystem.SpawnPlayer(new Vector3(0, 0, 1), true);
+        yield return new WaitUntil(() => PlayerSystem.IsSpawned);
 
         yield return new WaitForSeconds(startDelay);
 

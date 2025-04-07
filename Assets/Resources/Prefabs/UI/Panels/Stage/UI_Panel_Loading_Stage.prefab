@@ -2175,6 +2175,8 @@ GameObject:
   - component: {fileID: 2065251172856604927}
   - component: {fileID: 2065251172856604925}
   - component: {fileID: 7193008453002970501}
+  - component: {fileID: 4089771069104659196}
+  - component: {fileID: 4758500424384103356}
   m_Layer: 5
   m_Name: UI_Panel_Loading_Stage
   m_TagString: Untagged
@@ -2222,13 +2224,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4dc30ccca53b7a543bb1f35723c9a670, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 8718385379588786745}
+  animator: {fileID: 4089771069104659196}
   progressBar: {fileID: 2065251172707780308}
   barRect: {fileID: 2065251171931724492}
   loadingText: {fileID: 6915823914487336445}
   loadingIcon: {fileID: 2065251173102437752}
   handleParticle: {fileID: 996660175667209761}
-  particleOffset: 10
+  textBoxAnimator: {fileID: 8718385379588786745}
+--- !u!95 &4089771069104659196
+Animator:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2065251172856604912}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 7eeb187d9b34fcb4d9e7f54e6319c1c6, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
+--- !u!225 &4758500424384103356
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2065251172856604912}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &2065251172941012696
 GameObject:
   m_ObjectHideFlags: 0
@@ -2925,7 +2958,7 @@ Animator:
   m_GameObject: {fileID: 5644837017938455832}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 7eeb187d9b34fcb4d9e7f54e6319c1c6, type: 2}
+  m_Controller: {fileID: 9100000, guid: c1ebf953f2238f54084454b901af62df, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -3066,7 +3099,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &5511123378270580423
 RectTransform:
   m_ObjectHideFlags: 0
