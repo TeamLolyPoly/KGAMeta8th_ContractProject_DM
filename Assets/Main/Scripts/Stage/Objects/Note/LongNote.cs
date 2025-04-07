@@ -29,7 +29,7 @@ public class LongNote : Note, IPoolable
 
         transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
 
-        if (progress >= 1.0f && !isHit)
+        if (progress >= 1.0f)
         {
             Miss();
         }
@@ -48,6 +48,6 @@ public class LongNote : Note, IPoolable
     protected override void Miss()
     {
         base.Miss();
-        Destroy(gameObject);
+        PoolManager.Instance.Despawn(this);
     }
 }

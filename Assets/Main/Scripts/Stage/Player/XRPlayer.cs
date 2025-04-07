@@ -29,14 +29,21 @@ public class XRPlayer : MonoBehaviour
 
     public void Start()
     {
-        LeftController.uiPressAction.action.performed += (ctx) =>
+        if (LeftController != null)
         {
-            leftController.SendHapticImpulse(0.7f, 0.2f);
-        };
-        RightController.uiPressAction.action.performed += (ctx) =>
+            LeftController.uiPressAction.action.performed += (ctx) =>
+            {
+                leftController.SendHapticImpulse(0.7f, 0.2f);
+            };
+        }
+
+        if (RightController != null)
         {
-            rightController.SendHapticImpulse(0.7f, 0.2f);
-        };
+            RightController.uiPressAction.action.performed += (ctx) =>
+            {
+                rightController.SendHapticImpulse(0.7f, 0.2f);
+            };
+        }
     }
 
     public void FadeOut(float duration)
