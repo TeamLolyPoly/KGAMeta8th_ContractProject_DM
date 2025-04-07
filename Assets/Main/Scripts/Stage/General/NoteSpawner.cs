@@ -161,6 +161,8 @@ public class NoteSpawner : MonoBehaviour
 
         double musicStartTime = startDspTime + preRollTime;
 
+        int count = sortedNotes.Count;
+
         foreach (NoteData note in sortedNotes)
         {
             float targetHitTime = (note.bar * noteMap.beatsPerBar + note.beat) * secondsPerBeat;
@@ -177,6 +179,13 @@ public class NoteSpawner : MonoBehaviour
             }
 
             SpawnNote(note);
+
+            count--;
+
+            if (count == 0)
+            {
+                GameManager.Instance.StopGame();
+            }
 
             yield return new WaitForSecondsRealtime(0.01f);
         }
@@ -389,17 +398,13 @@ public class NoteSpawner : MonoBehaviour
                     }
                 }
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogError($"[NoteSpawner] 세그먼트 생성 중 오류 발생: {e.Message}");
             }
 
             yield return new WaitForSeconds(segmentInterval);
         }
-
-        Debug.Log(
-            $"[NoteSpawner] 세그먼트 생성 완료: 총 {pathIndices.Count}개, 대칭={isSymmetric}, 색상={segmentColor}"
-        );
     }
 
     private void OnDrawGizmos()

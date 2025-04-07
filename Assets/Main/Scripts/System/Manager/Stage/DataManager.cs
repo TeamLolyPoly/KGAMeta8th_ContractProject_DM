@@ -148,6 +148,8 @@ public class DataManager : Singleton<DataManager>
             yield return wait;
         }
 
+        yield return LoadNoteMapCoroutine();
+
         SortTracksByAlbum(trackDataList);
 
         yield return wait;
@@ -160,6 +162,9 @@ public class DataManager : Singleton<DataManager>
         float progress = 0f;
         int totalTracks = trackDataList.Count;
         StageLoadingManager.Instance.SetLoadingText($"노트맵 로드 중... ");
+
+        yield return progress;
+        yield return wait;
 
         if (totalTracks <= 0)
         {
@@ -204,6 +209,7 @@ public class DataManager : Singleton<DataManager>
 
             progress = (i + 0.5f) * progressPerTrack;
             yield return progress;
+            yield return wait;
 
             NoteMapDataList wrapper = null;
             skipTrack = false;
@@ -217,6 +223,12 @@ public class DataManager : Singleton<DataManager>
                 skipTrack = true;
             }
 
+            if (wrapper == null || wrapper.noteMaps == null)
+            {
+                Debug.LogError("[TrackDataManager] 파싱된 노트맵 데이터가 null입니다.");
+                skipTrack = true;
+            }
+
             if (skipTrack)
             {
                 progress = (i + 1) * progressPerTrack;
@@ -224,10 +236,34 @@ public class DataManager : Singleton<DataManager>
                 continue;
             }
 
-            track.noteMapData = wrapper?.noteMaps;
+            List<NoteMapData> noteMapDataList = new List<NoteMapData>();
+
+            foreach (var noteMap in wrapper.noteMaps)
+            {
+                if (noteMap == null || noteMap.noteMap == null || noteMap.noteMap.notes == null)
+                {
+                    Debug.LogWarning(
+                        "[TrackDataManager] 노트맵 데이터가 불완전합니다. 건너뜁니다."
+                    );
+                    continue;
+                }
+                JsonNoteMap individualJsonNoteMap = new JsonNoteMap();
+                individualJsonNoteMap.notes = noteMap.noteMap.notes;
+                individualJsonNoteMap.bpm = noteMap.noteMap.bpm;
+                individualJsonNoteMap.beatsPerBar = noteMap.noteMap.beatsPerBar;
+
+                NoteMap individualNoteMap = NoteMapConverter.ConvertNoteMap(individualJsonNoteMap);
+                NoteMapData noteMapData = new NoteMapData();
+                noteMapData.difficulty = (Difficulty)noteMap.difficulty;
+                noteMapData.noteMap = individualNoteMap;
+                noteMapDataList.Add(noteMapData);
+            }
+
+            track.noteMapData = noteMapDataList;
 
             progress = (i + 1) * progressPerTrack;
             yield return progress;
+            yield return wait;
         }
 
         yield return 1.0f;
@@ -384,8 +420,6 @@ public class DataManager : Singleton<DataManager>
             yield break;
         }
 
-        Debug.Log($"[TrackDataManager] 오디오 파일 로드 시작: {track.trackName}");
-
         yield return null;
 
         byte[] bytes = null;
@@ -407,7 +441,6 @@ public class DataManager : Singleton<DataManager>
         {
             audioClip = WavUtility.ToAudioClip(bytes, track.trackName);
             track.TrackAudio = audioClip;
-            Debug.Log($"[TrackDataManager] 오디오 파일 생성 완료: {audioClip.name}");
         }
         catch (Exception ex)
         {

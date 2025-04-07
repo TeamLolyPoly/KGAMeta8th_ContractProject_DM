@@ -122,7 +122,9 @@ public class CarouselMenu : MonoBehaviour
 
     private void OnItemClick(string albumName, List<TrackData> albumTracks)
     {
-        StageUIManager.Instance.OpenPanel(PanelType.DifficultySelect);
+        TrackSelectPanel trackSelectPanel =
+            StageUIManager.Instance.OpenPanel(PanelType.TrackSelect) as TrackSelectPanel;
+        trackSelectPanel.Initialize(albumTracks);
     }
 
     private void UpdateItemSelected()

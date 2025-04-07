@@ -23,28 +23,13 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
         ClearAllPools();
     }
 
-    public T Spawn<T>(
-        GameObject prefab,
-        Vector3 position,
-        Quaternion rotation,
-        bool isNetworked = false
-    )
+    public T Spawn<T>(GameObject prefab, Vector3 position, Quaternion rotation)
         where T : Component
     {
         string originalName = prefab.name;
         T spawnedObj;
 
-        if (isNetworked && PhotonNetwork.InRoom)
-        {
-            GameObject networkedObj = PhotonNetwork.Instantiate(
-                $"Items/{originalName}",
-                position,
-                rotation
-            );
-            spawnedObj = networkedObj.GetComponent<T>();
-        }
-        else
-            spawnedObj = objectPool.Spawn<T>(prefab, position, rotation);
+        spawnedObj = objectPool.Spawn<T>(prefab, position, rotation);
 
         if (spawnedObj != null)
             spawnedObj.gameObject.name = originalName;
@@ -52,7 +37,7 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
         return spawnedObj;
     }
 
-    public void Despawn<T>(T obj, bool isNetworked = false)
+    public void Despawn<T>(T obj)
         where T : Component
     {
         if (!IsInitialized || obj == null)
@@ -61,18 +46,10 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
             return;
         }
 
-        if (isNetworked && PhotonNetwork.IsConnected)
-        {
-            if (obj.GetComponent<PhotonView>().IsMine)
-            {
-                objectPool.Despawn(obj);
-            }
-        }
-        else
-            objectPool.Despawn(obj);
+        objectPool.Despawn(obj);
     }
 
-    public void Despawn<T>(T obj, float delay, bool isNetworked = false)
+    public void Despawn<T>(T obj, float delay)
         where T : Component
     {
         if (!IsInitialized || obj == null)
@@ -83,21 +60,21 @@ public class PoolManager : Singleton<PoolManager>, IInitializable
 
         if (delay > 0)
         {
-            StartCoroutine(DespawnCoroutine(obj, delay, isNetworked));
+            StartCoroutine(DespawnCoroutine(obj, delay));
         }
         else
         {
-            Despawn(obj, isNetworked);
+            Despawn(obj);
         }
     }
 
-    private IEnumerator DespawnCoroutine<T>(T obj, float delay, bool isNetworked)
+    private IEnumerator DespawnCoroutine<T>(T obj, float delay)
         where T : Component
     {
         yield return new WaitForSeconds(delay);
         if (obj != null)
         {
-            Despawn(obj, isNetworked);
+            Despawn(obj);
         }
     }
 

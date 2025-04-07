@@ -93,6 +93,7 @@ GameObject:
   - component: {fileID: 7538738323609459747}
   - component: {fileID: 3367068541486931733}
   - component: {fileID: 7859959590146462949}
+  - component: {fileID: -4858230053373226448}
   m_Layer: 2
   m_Name: StagePlayer
   m_TagString: Untagged
@@ -172,6 +173,23 @@ MonoBehaviour:
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
+--- !u!114 &-4858230053373226448
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8003587677344619938}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf4a43e7d4afb4140b975523892bebc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  leftController: {fileID: 0}
+  rightController: {fileID: 0}
+  leftRayInteractor: {fileID: 0}
+  rightRayInteractor: {fileID: 0}
+  fadeRenderer: {fileID: 5285862535295831361}
 --- !u!1 &8702381663735735424
 GameObject:
   m_ObjectHideFlags: 0
