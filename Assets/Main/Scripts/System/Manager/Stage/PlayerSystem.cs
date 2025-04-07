@@ -39,6 +39,7 @@ public class PlayerSystem : MonoBehaviourPunCallbacks
         XRPlayer.LeftRayInteractor.enabled = true;
         XRPlayer.RightRayInteractor.enabled = true;
         isSpawned = true;
+        GameManager.Instance.NetworkSystem.SetPlayerSpawned();
     }
 
     public void DespawnPlayer()
