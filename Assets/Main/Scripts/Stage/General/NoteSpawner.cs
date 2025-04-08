@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using ExitGames.Client.Photon;
+using Photon.Pun;
 using UnityEngine;
 
 public class NoteSpawner : MonoBehaviour
@@ -159,6 +160,8 @@ public class NoteSpawner : MonoBehaviour
         float noteTravelTime = gridGenerator.GridDistance / noteSpeed;
 
         double musicStartTime = startDspTime + preRollTime;
+
+        int count = sortedNotes.Count;
 
         foreach (NoteData note in sortedNotes)
         {
@@ -388,17 +391,13 @@ public class NoteSpawner : MonoBehaviour
                     }
                 }
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogError($"[NoteSpawner] 세그먼트 생성 중 오류 발생: {e.Message}");
             }
 
             yield return new WaitForSeconds(segmentInterval);
         }
-
-        Debug.Log(
-            $"[NoteSpawner] 세그먼트 생성 완료: 총 {pathIndices.Count}개, 대칭={isSymmetric}, 색상={segmentColor}"
-        );
     }
 
     private void OnDrawGizmos()

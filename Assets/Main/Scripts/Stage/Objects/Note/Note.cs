@@ -4,6 +4,7 @@ public class Note : MonoBehaviour, IInitializable
 {
     [SerializeField, Header("노트 점수")]
     protected int noteScore = 100;
+
     protected NoteData noteData;
     protected double spawnDspTime;
     protected GameObject hitFX;
@@ -112,18 +113,18 @@ public class Note : MonoBehaviour, IInitializable
 
     protected virtual void Miss()
     {
-        if (!isHit)
-        {
-            isHit = true;
-            if (scoreSystem == null)
-            {
-                scoreSystem = GameManager.Instance.ScoreSystem;
-            }
-            if (scoreSystem != null)
-            {
-                scoreSystem.SetScore(0, NoteRatings.Miss);
-            }
-        }
+        // if (!isHit)
+        // {
+        //     isHit = true;
+        //     if (scoreSystem == null)
+        //     {
+        //         scoreSystem = GameManager.Instance.ScoreSystem;
+        //     }
+        //     if (scoreSystem != null)
+        //     {
+        //         scoreSystem.SetScore(0, NoteRatings.Miss);
+        //     }
+        // }
 
         PoolManager.Instance.Despawn(this);
     }

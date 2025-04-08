@@ -1,8 +1,7 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.UI;
 
 public class XRPlayer : MonoBehaviour
 {
@@ -29,14 +28,38 @@ public class XRPlayer : MonoBehaviour
 
     public void Start()
     {
-        LeftController.uiPressAction.action.performed += (ctx) =>
+        if (LeftController != null)
         {
-            leftController.SendHapticImpulse(0.7f, 0.2f);
-        };
-        RightController.uiPressAction.action.performed += (ctx) =>
+            LeftController.uiPressAction.action.performed += leftHaptic;
+        }
+
+        if (RightController != null)
         {
-            rightController.SendHapticImpulse(0.7f, 0.2f);
-        };
+            RightController.uiPressAction.action.performed += rightHaptic;
+        }
+    }
+
+    void leftHaptic(InputAction.CallbackContext ctx)
+    {
+        leftController.SendHapticImpulse(0.7f, 0.2f);
+    }
+
+    void rightHaptic(InputAction.CallbackContext ctx)
+    {
+        rightController.SendHapticImpulse(0.7f, 0.2f);
+    }
+
+    void OnDestroy()
+    {
+        if (LeftController != null)
+        {
+            LeftController.uiPressAction.action.performed -= leftHaptic;
+        }
+
+        if (RightController != null)
+        {
+            RightController.uiPressAction.action.performed -= rightHaptic;
+        }
     }
 
     public void FadeOut(float duration)

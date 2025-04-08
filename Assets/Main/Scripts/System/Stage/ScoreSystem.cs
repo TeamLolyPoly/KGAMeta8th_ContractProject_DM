@@ -91,7 +91,9 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     {
         scoreSettingData = Resources.Load<ScoreSettingData>("SO/ScoreSettingData");
 
-        totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
+        // totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
+
+        totalNoteCount = GameManager.Instance.NoteMap.notes.Count;
 
         ratingCount.Clear();
 
@@ -123,7 +125,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     public void SetScore(float score, NoteRatings ratings)
     {
         ratingCount[ratings] += 1;
-        lastRating = ratings; // 최근 판정 업데이트
+        lastRating = ratings;
 
         if (ratings == NoteRatings.Miss)
         {
@@ -139,24 +141,12 @@ public class ScoreSystem : MonoBehaviour, IInitializable
                 highCombo = combo;
             }
             int ratingScore = GetRatingScore(ratings);
-            print($"ratingScore: {ratingScore}");
             multiplier = SetMultiplier();
 
             currentScore += (score * multiplier) + ratingScore;
         }
         SetBandEngagement();
         SetSpectatorEngagement();
-
-        print(
-            $"=============노트 타격===============\n"
-                + $"현재총점수: {currentScore}"
-                + $"\n랭크: {ratings}"
-                + $"\n노트점수: {score}"
-                + $"\n최고 콤보: {highCombo}"
-                + $"\n점수 배율{multiplier}"
-                + $"\n현재 콤보: {combo}"
-                + $"\n노트파괴수: {noteHitCount}"
-        );
     }
 
     private int SetMultiplier()
@@ -217,7 +207,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         {
             print($"밴드 이벤트 발생: {newEngagement}");
             currentBandEngagement = newEngagement;
-            onBandEngagementChange.Invoke(
+            onBandEngagementChange?.Invoke(
                 currentBandEngagement,
                 bandActiveMember[currentBandEngagement]
             );
@@ -252,6 +242,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         else
             return combo <= num;
     }
+
     private void CleanUp()
     {
         onBandEngagementChange = null;
@@ -259,6 +250,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
         Destroy(this.gameObject);
     }
+
     private void OnDestroy()
     {
         CleanUp();
