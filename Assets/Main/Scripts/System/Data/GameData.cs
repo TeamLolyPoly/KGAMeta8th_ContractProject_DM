@@ -13,10 +13,10 @@ public class NoteData
     public NoteAxis noteAxis = NoteAxis.PZ;
 
     [JsonIgnore]
-    public Vector2Int StartCell;
+    public Vector2Int StartCell = Vector2Int.zero;
 
     [JsonIgnore]
-    public Vector2Int TargetCell;
+    public Vector2Int TargetCell = Vector2Int.zero;
 
     public int StartCellX
     {
@@ -104,10 +104,6 @@ public class NoteData
         calculatedArcLength = Mathf.Max(1, calculatedArcLength);
         calculatedArcLength = Mathf.Min(calculatedArcLength, segmentCount - 1);
 
-        Debug.Log(
-            $"롱노트 길이 계산: 지속 시간 {totalDurationSeconds:F3}초 ({durationBars}마디 {durationBeats}비트) = {calculatedArcLength}개 세그먼트 (간격: {spawnInterval:F3}초)"
-        );
-
         return calculatedArcLength;
     }
 }
@@ -160,6 +156,71 @@ public class NoteMapData
     public NoteMap noteMap;
 }
 
+[Serializable]
+public class JsonNoteData
+{
+    public int noteType;
+    public int noteColor;
+    public int direction;
+    public int noteAxis;
+    public int bar;
+    public int beat;
+    public int startIndex;
+    public int endIndex;
+    public bool isSymmetric;
+    public bool isClockwise;
+    public int durationBars;
+    public int durationBeats;
+    public int StartCellX;
+    public int StartCellY;
+    public int TargetCellX;
+    public int TargetCellY;
+}
+
+[Serializable]
+public class JsonNoteMap
+{
+    public List<JsonNoteData> notes;
+    public float bpm;
+    public int beatsPerBar;
+}
+
+[Serializable]
+public class TrackDataList
+{
+    public List<TrackData> tracks;
+}
+
+[Serializable]
+public class RankData
+{
+    public string nickName;
+    public Sprite profileImage;
+    public int score;
+    public int rank;
+}
+
+[Serializable]
+public class NoteMapDataList
+{
+    public List<JsonNoteMapWrapper> noteMaps;
+}
+
+[Serializable]
+public class JsonNoteMapWrapper
+{
+    public int difficulty;
+    public JsonNoteMapContent noteMap;
+}
+
+[Serializable]
+public class JsonNoteMapContent
+{
+    public List<JsonNoteData> notes;
+    public float bpm;
+    public int beatsPerBar;
+}
+
 #endregion
 
 #region NoteEditor
@@ -174,8 +235,14 @@ public class TrackData
     public string genre;
     public float duration;
     public float bpm = 120f;
-    public List<NoteMapData> noteMapData { get; set; }
+
+    [JsonIgnore]
+    public List<NoteMapData> noteMapData = new List<NoteMapData>();
+
+    [JsonIgnore]
     public Sprite AlbumArt { get; set; }
+
+    [JsonIgnore]
     public AudioClip TrackAudio { get; set; }
 }
 

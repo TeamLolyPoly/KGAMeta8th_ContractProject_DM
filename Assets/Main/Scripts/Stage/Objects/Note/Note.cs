@@ -1,10 +1,10 @@
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
 
 public class Note : MonoBehaviour, IInitializable
 {
     [SerializeField, Header("노트 점수")]
     protected int noteScore = 100;
+
     protected NoteData noteData;
     protected double spawnDspTime;
     protected GameObject hitFX;
@@ -12,8 +12,6 @@ public class Note : MonoBehaviour, IInitializable
     protected Vector3 startPosition;
     protected Vector3 targetPosition;
     public GameObject Rim;
-    public XRBaseController leftController;
-    public XRBaseController rightController;
 
     protected bool isInitialized = false;
     protected bool isHit = false;
@@ -73,30 +71,6 @@ public class Note : MonoBehaviour, IInitializable
         spawnDspTime = AudioSettings.dspTime;
     }
 
-    public static Note CreateNote(NoteData data, Note shortNotePrefab, Note longNotePrefab)
-    {
-        Note notePrefab;
-
-        switch (data.noteType)
-        {
-            case NoteType.Short:
-                notePrefab = shortNotePrefab;
-                break;
-            case NoteType.Long:
-                notePrefab = longNotePrefab;
-                break;
-            default:
-                Debug.LogError($"Unsupported note type: {data.noteType}");
-                return null;
-        }
-
-        Vector3 spawnPosition = data.GetStartPosition();
-        Note noteInstance = Instantiate(notePrefab, spawnPosition, Quaternion.identity);
-        noteInstance.Initialize(data);
-
-        return noteInstance;
-    }
-
     protected virtual void OnCollisionEnter(Collision other)
     {
         if (!isInitialized)
@@ -121,28 +95,38 @@ public class Note : MonoBehaviour, IInitializable
 
         if (hitFX != null)
         {
-            Instantiate(hitFX, transform.position, Quaternion.identity);
+            ParticleSystem hitFXInstance = PoolManager.Instance.Spawn<ParticleSystem>(
+                hitFX.gameObject,
+                transform.position,
+                Quaternion.identity
+            );
+
+            hitFXInstance.Play();
+
+            PoolManager.Instance.Despawn(hitFXInstance, 2.0f);
         }
 
         scoreSystem.SetScore(noteScore, NoteRatings.Success);
 
-        Destroy(gameObject);
+        PoolManager.Instance.Despawn(this);
     }
 
     protected virtual void Miss()
     {
-        if (!isHit)
-        {
-            isHit = true;
-            if (scoreSystem == null)
-            {
-                scoreSystem = GameManager.Instance.ScoreSystem;
-            }
-            if (scoreSystem != null)
-            {
-                scoreSystem.SetScore(0, NoteRatings.Miss);
-            }
-        }
+        // if (!isHit)
+        // {
+        //     isHit = true;
+        //     if (scoreSystem == null)
+        //     {
+        //         scoreSystem = GameManager.Instance.ScoreSystem;
+        //     }
+        //     if (scoreSystem != null)
+        //     {
+        //         scoreSystem.SetScore(0, NoteRatings.Miss);
+        //     }
+        // }
+
+        PoolManager.Instance.Despawn(this);
     }
 
     public void SetHitFX(GameObject effect)

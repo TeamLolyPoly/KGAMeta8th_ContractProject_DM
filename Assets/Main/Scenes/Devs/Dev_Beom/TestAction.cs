@@ -6,7 +6,7 @@ public class TestAction : MonoBehaviourPun
     [PunRPC]
     public void TakeDamage(int damage)
     {
-        Debug.Log("�÷��̾ " + damage + " ���ظ� ����");
+        Debug.Log("플레이어가 " + damage + " 데미지를 입었습니다.");
     }
 
     void Update()
@@ -15,6 +15,5 @@ public class TestAction : MonoBehaviourPun
         {
             photonView.RPC("TakeDamage", RpcTarget.All, 10);
         }
-
     }
 }

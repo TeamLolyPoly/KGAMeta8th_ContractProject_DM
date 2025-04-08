@@ -83,9 +83,9 @@ public enum PanelType
 {
     Title,
     Mode,
-    Album,
-    Music,
-    Difficult,
+    AlbumSelect,
+    TrackSelect,
+    DifficultySelect,
     ResultDetail,
     Result,
     Option,

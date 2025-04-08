@@ -50,14 +50,14 @@ public class GridGenerator : MonoBehaviour, IInitializable
         GameObject sourceObj = new GameObject("SourceGrid");
         sourceOrigin = sourceObj.transform;
         sourceOrigin.parent = transform;
-        sourceOrigin.localPosition = new Vector3(0, 3.5f, gridDistance);
+        sourceOrigin.localPosition = new Vector3(0, 1.5f, gridDistance);
         sourceOrigin.localRotation = Quaternion.Euler(0, 0, 0);
         CreateGrid(sourceOrigin);
 
         GameObject targetObj = new GameObject("TargetGrid");
         targetOrigin = targetObj.transform;
         targetOrigin.parent = transform;
-        targetOrigin.localPosition = new Vector3(0, 3.5f, 0);
+        targetOrigin.localPosition = new Vector3(0, 1.5f, 0);
         targetOrigin.localRotation = Quaternion.Euler(0, 0, 0);
         CreateGrid(targetOrigin);
     }

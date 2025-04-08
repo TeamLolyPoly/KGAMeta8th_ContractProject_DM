@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ShortNote : Note
+public class ShortNote : Note, IPoolable
 {
     [SerializeField, Header("블럭 타격 오차범위")]
     protected float directionalRange = 50f;
@@ -15,7 +15,6 @@ public class ShortNote : Note
     protected Vector3 noteUpDirection;
     protected float noteDistance;
     private float EnterAngle;
-    private float ExitAngle;
     private float hitdis;
 
     private Collider noteCollider;
@@ -94,7 +93,7 @@ public class ShortNote : Note
 
         transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
 
-        if (progress >= 1f && !isHit)
+        if (progress >= 1f)
         {
             Miss();
         }
@@ -197,8 +196,8 @@ public class ShortNote : Note
         {
             ratings = NoteRatings.Good;
         }
-        scoreSystem.SetScore(score, ratings);
-        Destroy(gameObject);
+        scoreSystem?.SetScore(score, ratings);
+        PoolManager.Instance.Despawn(this);
     }
 
     private void SetNoteDisTance()
@@ -222,54 +221,29 @@ public class ShortNote : Note
 
                 if (EnterAngle <= directionalRange)
                 {
-                    Instantiate(hitFX, transform.position, Quaternion.identity);
-                    print("타격 성공");
+                    ParticleSystem hitFXInstance = PoolManager.Instance.Spawn<ParticleSystem>(
+                        hitFX.gameObject,
+                        transform.position,
+                        Quaternion.identity
+                    );
+                    hitFXInstance.Play();
+                    PoolManager.Instance.Despawn(hitFXInstance, 2.0f);
+
                     noteInteractor.SendImpulse();
                     HitScore(hitdis);
                 }
                 else
                 {
-                    print("이상한 방향을 타격함");
                     Miss();
                 }
             }
             else
             {
-                print("HitObject 타입이 다름");
+                print($"[ShortNote] HitObject 타입이 다름 : {other.gameObject.name}");
                 Miss();
             }
         }
     }
-
-    // private void OnCollisionExit(Collision other)
-    // {
-    //     if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
-    //     {
-    //         if (noteInteractor.noteColor == noteData.noteColor)
-    //         {
-    //             Vector3 ExitPoint = (transform.position - other.transform.position).normalized;
-    //             ExitAngle = Vector3.Angle(ExitPoint, noteUpDirection);
-
-    //             Debug.DrawRay(transform.position, ExitPoint, Color.red, 0.5f);
-
-    //             if (EnterAngle <= directionalRange && ExitAngle <= directionalRange)
-    //             {
-    //                 HitScore(hitdis);
-    //                 noteInteractor.SendImpulse();
-    //             }
-    //             else
-    //             {
-    //                 print("이상한 방향을 타격함");
-    //                 Miss();
-    //             }
-    //         }
-    //         else
-    //         {
-    //             print("HitObject 타입이 다름");
-    //             Miss();
-    //         }
-    //     }
-    // }
 
     private float HitPoint(Collision other)
     {
@@ -278,9 +252,13 @@ public class ShortNote : Note
         return Vector3.Distance(hitPoint, notePos);
     }
 
-    protected override void Miss()
+    public void OnSpawnFromPool()
     {
-        base.Miss();
-        Destroy(gameObject);
+        isInitialized = false;
+    }
+
+    public void OnReturnToPool()
+    {
+        isInitialized = false;
     }
 }

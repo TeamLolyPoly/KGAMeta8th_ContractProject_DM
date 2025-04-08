@@ -105,7 +105,7 @@ namespace NoteEditor
         {
             string trackName = Path.GetFileNameWithoutExtension(filePath);
 
-            LoadingManager.Instance.SetLoadingText($"오디오 경로 로드 중... {trackName}");
+            EditorLoadingManager.Instance.SetLoadingText($"오디오 경로 로드 중... {trackName}");
             progress?.Report(0.1f);
 
             try
@@ -124,7 +124,7 @@ namespace NoteEditor
 
                     var operation = www.SendWebRequest();
 
-                    LoadingManager.Instance.SetLoadingText($"오디오 파일 로드 중...");
+                    EditorLoadingManager.Instance.SetLoadingText($"오디오 파일 로드 중...");
                     while (!operation.isDone)
                     {
                         progress?.Report(0.1f + 0.6f * www.downloadProgress);
@@ -133,7 +133,7 @@ namespace NoteEditor
 
                     if (www.result == UnityWebRequest.Result.Success)
                     {
-                        LoadingManager.Instance.SetLoadingText($"오디오 파일 저장 중... ");
+                        EditorLoadingManager.Instance.SetLoadingText($"오디오 파일 저장 중... ");
                         AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
 
                         TrackData trackData = new TrackData
@@ -711,6 +711,85 @@ namespace NoteEditor
 
             if (!Directory.Exists(NOTEMAP_PATH))
                 Directory.CreateDirectory(NOTEMAP_PATH);
+        }
+    }
+
+    public static class WavUtility
+    {
+        public static AudioClip ToAudioClip(byte[] wavData, string name)
+        {
+            using (MemoryStream stream = new MemoryStream(wavData))
+            using (BinaryReader reader = new BinaryReader(stream))
+            {
+                if (new string(reader.ReadChars(4)) != "RIFF")
+                {
+                    Debug.LogError("WAV 파일이 아닙니다.");
+                    return null;
+                }
+
+                reader.ReadInt32();
+                if (new string(reader.ReadChars(4)) != "WAVE")
+                {
+                    Debug.LogError("WAV 포맷이 아닙니다.");
+                    return null;
+                }
+
+                while (new string(reader.ReadChars(4)) != "fmt ")
+                {
+                    int chunkSize = reader.ReadInt32();
+                    reader.BaseStream.Position += chunkSize;
+                }
+
+                reader.ReadInt32();
+                int audioFormat = reader.ReadInt16();
+                int numChannels = reader.ReadInt16();
+                int sampleRate = reader.ReadInt32();
+                reader.ReadInt32();
+                reader.ReadInt16();
+                int bitsPerSample = reader.ReadInt16();
+
+                while (new string(reader.ReadChars(4)) != "data")
+                {
+                    int chunkSize = reader.ReadInt32();
+                    reader.BaseStream.Position += chunkSize;
+                }
+
+                int dataSize = reader.ReadInt32();
+                byte[] data = reader.ReadBytes(dataSize);
+
+                float[] samples = ConvertWavToFloat(data, bitsPerSample);
+                AudioClip audioClip = AudioClip.Create(
+                    name,
+                    samples.Length,
+                    numChannels,
+                    sampleRate,
+                    false
+                );
+                audioClip.SetData(samples, 0);
+                return audioClip;
+            }
+        }
+
+        private static float[] ConvertWavToFloat(byte[] wavData, int bitsPerSample)
+        {
+            int bytesPerSample = bitsPerSample / 8;
+            int sampleCount = wavData.Length / bytesPerSample;
+            float[] samples = new float[sampleCount];
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                if (bitsPerSample == 16)
+                {
+                    short sample = BitConverter.ToInt16(wavData, i * 2);
+                    samples[i] = sample / 32768f;
+                }
+                else if (bitsPerSample == 8)
+                {
+                    samples[i] = (wavData[i] - 128) / 128f;
+                }
+            }
+
+            return samples;
         }
     }
 }

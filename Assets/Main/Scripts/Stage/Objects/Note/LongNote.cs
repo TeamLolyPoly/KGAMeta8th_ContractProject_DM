@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class LongNote : Note
+public class LongNote : Note, IPoolable
 {
     public override void Initialize(NoteData data)
     {
@@ -29,15 +29,25 @@ public class LongNote : Note
 
         transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
 
-        if (progress >= 1.0f && !isHit)
+        if (progress >= 1.0f)
         {
             Miss();
         }
     }
 
+    public void OnSpawnFromPool()
+    {
+        isInitialized = false;
+    }
+
+    public void OnReturnToPool()
+    {
+        isInitialized = false;
+    }
+
     protected override void Miss()
     {
         base.Miss();
-        Destroy(gameObject);
+        PoolManager.Instance.Despawn(this);
     }
 }
