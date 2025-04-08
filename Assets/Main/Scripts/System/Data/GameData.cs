@@ -285,3 +285,26 @@ public class MultiplierScore
     public int ratingScore = 0;
 }
 #endregion
+[Serializable]
+public class VrMap
+{
+    public bool isTransformPoint = true;
+    public Transform vrTarget;
+    public Transform ikTarget;
+    public Vector3 trackingPositionOffset;
+    public Vector3 trackingRotationOffset;
+
+    public void Map()
+    {
+        if (isTransformPoint)
+        {
+            ikTarget.position = vrTarget.TransformPoint(trackingPositionOffset);
+        }
+        else
+        {
+            ikTarget.position = vrTarget.position + trackingPositionOffset;
+        }
+        if (Mathf.Abs(vrTarget.rotation.x) < 89f)
+            ikTarget.rotation = vrTarget.rotation * Quaternion.Euler(trackingRotationOffset);
+    }
+}
