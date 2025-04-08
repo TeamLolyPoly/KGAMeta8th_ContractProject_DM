@@ -2,9 +2,41 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class ScoreSystem : MonoBehaviour, IInitializable
 {
+    public class ScoreData
+    {
+        public int Score = 0;
+        public int Combo = 0;
+        public int HighCombo = 0;
+        public int NoteHitCount = 0;
+        public int totalNoteCount = 0;
+        public Dictionary<NoteRatings, int> RatingCount = new Dictionary<NoteRatings, int>();
+
+        public ScoreData(
+            int totalScore,
+            int highCombo,
+            int noteHitCount,
+            int totalNoteCount,
+            int missCount,
+            int goodCount,
+            int greatCount,
+            int perfectCount
+        )
+        {
+            this.Score = totalScore;
+            this.HighCombo = highCombo;
+            this.NoteHitCount = noteHitCount;
+            this.totalNoteCount = totalNoteCount;
+            RatingCount.Add(NoteRatings.Miss, missCount);
+            RatingCount.Add(NoteRatings.Good, goodCount);
+            RatingCount.Add(NoteRatings.Great, greatCount);
+            RatingCount.Add(NoteRatings.Perfect, perfectCount);
+        }
+    }
+
     private ScoreSettingData scoreSettingData;
 
     //정확도별 추가점수
@@ -61,39 +93,11 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     private NoteRatings lastRating = NoteRatings.None;
     public NoteRatings LastRating => lastRating;
 
-    //테스트용 코드
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            SetScore(100, NoteRatings.Perfect);
-        }
-
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            SetScore(100, NoteRatings.Good);
-        }
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            SetScore(0, NoteRatings.Miss);
-        }
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            print(
-                $"\nGood: {ratingCount[NoteRatings.Good]}"
-                    + $"\nMiss: {ratingCount[NoteRatings.Miss]}"
-                    + $"\n게임랭크: {GetGameRank()}"
-            );
-        }
-    }
-
     public void Initialize()
     {
         scoreSettingData = Resources.Load<ScoreSettingData>("SO/ScoreSettingData");
 
-        // totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
-
-        totalNoteCount = GameManager.Instance.NoteMap.notes.Count;
+        totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
 
         ratingCount.Clear();
 

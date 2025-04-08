@@ -110,6 +110,12 @@ public class GameManager : Singleton<GameManager>, IInitializable
         scoreSystem.Initialize();
         noteSpawner.Initialize(gridGenerator, noteMap);
 
+        unitAnimationManager = new GameObject(
+            "unitAnimationManager"
+        ).AddComponent<AnimationSystem>();
+        unitAnimationManager.transform.SetParent(transform);
+        unitAnimationManager.Initialize();
+
         StartCoroutine(StageRoutine());
     }
 
@@ -128,17 +134,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         StageLoadingManager.Instance.SetLoadingText("게임 초기화 중...");
 
-        yield return progress;
-        yield return new WaitForSeconds(1f);
-
-        StageLoadingManager.Instance.SetLoadingText("노트 스폰 초기화 중...");
-
-        progress += progressStep;
-        yield return progress;
-        yield return new WaitForSeconds(1f);
-
-        StageLoadingManager.Instance.SetLoadingText("그리드 생성 중...");
-
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(1f);
@@ -146,16 +141,16 @@ public class GameManager : Singleton<GameManager>, IInitializable
         noteSpawner = new GameObject("NoteSpawner").AddComponent<NoteSpawner>();
         noteSpawner.transform.SetParent(transform);
 
+        StageLoadingManager.Instance.SetLoadingText("그리드 생성 중...");
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(1f);
-
-        StageLoadingManager.Instance.SetLoadingText("그리드 생성 중...");
 
         gridGenerator = new GameObject("GridGenerator").AddComponent<GridGenerator>();
         gridGenerator.transform.SetParent(transform);
         gridGenerator.Initialize();
 
+        StageLoadingManager.Instance.SetLoadingText("점수 시스템 초기화 중...");
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(1f);
@@ -163,6 +158,11 @@ public class GameManager : Singleton<GameManager>, IInitializable
         scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
         scoreSystem.transform.SetParent(transform);
         scoreSystem.Initialize();
+
+        StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
 
         unitAnimationManager = new GameObject(
             "unitAnimationManager"
@@ -173,11 +173,8 @@ public class GameManager : Singleton<GameManager>, IInitializable
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(1f);
-
         noteSpawner.Initialize(gridGenerator, noteMap);
-
         StageLoadingManager.Instance.SetLoadingText("게임 시작 준비 중...");
-
         yield return new WaitForSeconds(1f);
     }
 
@@ -258,7 +255,8 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     private IEnumerator StageRoutine()
     {
-        PlayerSystem.SpawnPlayer(new Vector3(0, 0, 1), true);
+        gridGenerator.SetCellVisible(true);
+        PlayerSystem.SpawnPlayer(new Vector3(0, 2.1f, 0.58f), true);
         yield return new WaitUntil(() => PlayerSystem.IsSpawned);
 
         yield return new WaitForSeconds(startDelay);

@@ -1,4 +1,3 @@
-
 public class Band : Unit
 {
     public BandType bandType;
@@ -9,6 +8,8 @@ public class Band : Unit
 
         unitAnimationSystem.BandDefaultAnimationChange(this, SetAnimationClip);
 
-        unitAnimationSystem.BandAnimationClipChange(GameManager.Instance.ScoreSystem.currentBandEngagement);
+        unitAnimationSystem.BandAnimationClipChange(
+            GameManager.Instance.ScoreSystem.currentBandEngagement
+        );
     }
 }

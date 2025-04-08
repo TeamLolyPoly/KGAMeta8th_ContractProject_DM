@@ -4,15 +4,13 @@ using ProjectDM.UI;
 using TMPro;
 using UnityEngine;
 
-public class ScoreboardPanel : Panel
+public class Scoreboard : MonoBehaviour
 {
-    public override PanelType PanelType => PanelType.Scoreboard;
-
     [SerializeField]
     private TextMeshProUGUI scoreText;
 
     [SerializeField]
-    private TextMeshProUGUI rateText;
+    private TextMeshProUGUI ratingText;
 
     [SerializeField]
     private TextMeshProUGUI comboText;
@@ -22,25 +20,16 @@ public class ScoreboardPanel : Panel
     private int lastCombo;
     private NoteRatings lastRating;
 
-    private void Start()
+    private void Awake()
     {
-        // GameManager가 초기화될 때까지 대기
         StartCoroutine(WaitForGameManager());
     }
 
     private IEnumerator WaitForGameManager()
     {
-        // GameManager가 초기화될 때까지 대기
-        while (GameManager.Instance == null || !GameManager.Instance.IsInitialized)
-        {
-            yield return null;
-        }
-
-        // ScoreSystem이 초기화될 때까지 대기
-        while (GameManager.Instance.ScoreSystem == null)
-        {
-            yield return null;
-        }
+        yield return new WaitUntil(
+            () => GameManager.Instance != null && GameManager.Instance.ScoreSystem != null
+        );
 
         scoreSystem = GameManager.Instance.ScoreSystem;
 
@@ -56,9 +45,9 @@ public class ScoreboardPanel : Panel
         {
             comboText.text = "0";
         }
-        if (rateText != null)
+        if (ratingText != null)
         {
-            rateText.text = lastRating.ToString();
+            ratingText.text = lastRating.ToString();
         }
     }
 
@@ -73,24 +62,22 @@ public class ScoreboardPanel : Panel
             if (scoreText != null)
             {
                 scoreText.text = lastScore.ToString("N0");
-                Debug.Log($"점수 업데이트: {lastScore:N0}");
             }
         }
 
         if (lastRating != scoreSystem.LastRating)
         {
             lastRating = scoreSystem.LastRating;
-            if (rateText != null)
+            if (ratingText != null)
             {
                 if (lastRating == NoteRatings.Success)
                 {
-                    rateText.text = "Perfect";
+                    ratingText.text = "Perfect";
                 }
                 else
                 {
-                    rateText.text = lastRating.ToString();
+                    ratingText.text = lastRating.ToString();
                 }
-                Debug.Log($"정확도 업데이트: {lastRating}");
             }
         }
 
@@ -107,7 +94,6 @@ public class ScoreboardPanel : Panel
                 {
                     comboText.text = "0";
                 }
-                Debug.Log($"콤보 업데이트: {lastCombo}");
             }
         }
     }
