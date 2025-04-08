@@ -2,55 +2,38 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
-using Random = UnityEngine.Random;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
-public class NetworkSystem : MonoBehaviourPunCallbacks, IInitializable
+public class NetworkSystem : MonoBehaviourPunCallbacks
 {
     public static class Keys
     {
         public const string IsSpawned = "IsSpawned";
     }
 
-    private bool isMultiplayer = false;
     private bool isPlaying = true;
     private Dictionary<int, bool> playerReadyStatus = new Dictionary<int, bool>();
 
     public bool IsInitialized { get; private set; } = false;
 
-    public void Initialize()
+    public void StartMultiplayer()
     {
         PhotonNetwork.AutomaticallySyncScene = true;
         PhotonNetwork.ConnectUsingSettings();
         IsInitialized = true;
     }
 
-    public override void OnConnectedToMaster()
-    {
-        PhotonNetwork.JoinLobby();
-    }
-
     public override void OnJoinedLobby()
     {
-        Debug.Log("[NetworkSystem] | Joined Lobby | Single Player Start");
-        CreateSinglePlayerRoom();
-    }
-
-    public void CreateSinglePlayerRoom()
-    {
-        isMultiplayer = false;
-        RoomOptions options = new RoomOptions { MaxPlayers = 1 };
-        PhotonNetwork.CreateRoom("SingleRoom_" + Random.Range(0, 10000), options);
+        Debug.Log("[NetworkSystem] | Joined Lobby");
+        CreateOrJoinMultiplayerRoom();
     }
 
     public void CreateOrJoinMultiplayerRoom()
     {
-        isMultiplayer = true;
-
         Debug.Log("[NetworkSystem] Multiplayer Start");
 
         if (PhotonNetwork.InRoom)
@@ -58,6 +41,16 @@ public class NetworkSystem : MonoBehaviourPunCallbacks, IInitializable
             PhotonNetwork.LeaveRoom();
             return;
         }
+
+        if (!isPlaying || !PhotonNetwork.IsConnectedAndReady)
+            return;
+
+        PhotonNetwork.JoinRandomRoom();
+    }
+
+    public override void OnJoinRandomFailed(short returnCode, string message)
+    {
+        PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = 2 });
     }
 
     public override void OnLeftRoom()
@@ -65,22 +58,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks, IInitializable
         if (!isPlaying || !PhotonNetwork.IsConnectedAndReady)
             return;
 
-        if (isMultiplayer)
-        {
-            PhotonNetwork.JoinRandomRoom();
-        }
-        else
-        {
-            PhotonNetwork.CreateRoom(
-                "SingleRoom_" + Random.Range(0, 10000),
-                new RoomOptions { MaxPlayers = 1 }
-            );
-        }
-    }
-
-    public override void OnJoinRandomFailed(short returnCode, string message)
-    {
-        PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = 2 });
+        PhotonNetwork.JoinRandomRoom();
     }
 
     public override void OnJoinedRoom()
@@ -223,6 +201,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks, IInitializable
     {
         StageLoadingManager.Instance.LoadScene(sceneName, operations, onComplete);
     }
+
     public void SetPlayerSpawned()
     {
         Hashtable props = new Hashtable { { Keys.IsSpawned, true } };
@@ -232,7 +211,9 @@ public class NetworkSystem : MonoBehaviourPunCallbacks, IInitializable
     public bool AreAllPlayersSpawned()
     {
         return PhotonNetwork.PlayerList.All(p =>
-            p.CustomProperties.ContainsKey(Keys.IsSpawned) && (bool)p.CustomProperties[Keys.IsSpawned]);
+            p.CustomProperties.ContainsKey(Keys.IsSpawned)
+            && (bool)p.CustomProperties[Keys.IsSpawned]
+        );
     }
 
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)

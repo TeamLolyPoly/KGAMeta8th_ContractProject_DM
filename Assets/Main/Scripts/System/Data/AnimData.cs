@@ -8,9 +8,11 @@ public class AnimData : ScriptableObject
 {
     [SerializeField]
     public RuntimeAnimatorController UnitAnimator;
+
     [SerializeField]
     public List<BandAnimationData> bandAnimationDatas = new List<BandAnimationData>();
     public SpectatorAnimData spectatorAnimationData;
+
     private void OnValidate()
     {
         Array dataCount = Enum.GetValues(typeof(BandType));

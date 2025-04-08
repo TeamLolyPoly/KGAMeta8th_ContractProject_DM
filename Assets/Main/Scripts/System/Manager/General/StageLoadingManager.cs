@@ -40,11 +40,6 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
 
         isLoading = true;
 
-        if (!StageUIManager.Instance.IsInitialized)
-        {
-            StageUIManager.Instance.Initialize();
-        }
-
         StageUIManager.Instance.CloseAllPanels();
 
         StartCoroutine(LoadSceneRoutine(sceneName, onComplete));
@@ -88,11 +83,6 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
 
         isLoading = true;
 
-        if (!EditorUIManager.Instance.IsInitialized)
-        {
-            StageUIManager.Instance.Initialize();
-        }
-
         StageUIManager.Instance.CloseAllPanels();
 
         StartCoroutine(LoadOpertion(targetSceneName, asyncOperation, onComplete));
@@ -107,6 +97,8 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
         AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
 
         yield return new WaitUntil(() => loadLoadingScene.isDone);
+
+        StageUIManager.Instance.OpenPanel(PanelType.Loading);
 
         GameManager.Instance.PlayerSystem.SpawnPlayer(Vector3.zero, false);
 
@@ -161,6 +153,8 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
         GameManager.Instance.PlayerSystem.DespawnPlayer();
 
         yield return new WaitUntil(() => !GameManager.Instance.PlayerSystem.IsSpawned);
+
+        StageUIManager.Instance.OpenPanel(PanelType.Loading);
 
         AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
 
@@ -224,6 +218,8 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
         AsyncOperation loadLoadingScene = SceneManager.LoadSceneAsync(LOADING_SCENE_NAME);
 
         yield return new WaitUntil(() => loadLoadingScene.isDone);
+
+        StageUIManager.Instance.OpenPanel(PanelType.Loading);
 
         GameManager.Instance.PlayerSystem.SpawnPlayer(Vector3.zero, false);
 
