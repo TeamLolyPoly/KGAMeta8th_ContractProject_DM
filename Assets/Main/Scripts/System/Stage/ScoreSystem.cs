@@ -6,37 +6,6 @@ using UnityEngine.SocialPlatforms.Impl;
 
 public class ScoreSystem : MonoBehaviour, IInitializable
 {
-    public class ScoreData
-    {
-        public int Score = 0;
-        public int Combo = 0;
-        public int HighCombo = 0;
-        public int NoteHitCount = 0;
-        public int totalNoteCount = 0;
-        public Dictionary<NoteRatings, int> RatingCount = new Dictionary<NoteRatings, int>();
-
-        public ScoreData(
-            int totalScore,
-            int highCombo,
-            int noteHitCount,
-            int totalNoteCount,
-            int missCount,
-            int goodCount,
-            int greatCount,
-            int perfectCount
-        )
-        {
-            this.Score = totalScore;
-            this.HighCombo = highCombo;
-            this.NoteHitCount = noteHitCount;
-            this.totalNoteCount = totalNoteCount;
-            RatingCount.Add(NoteRatings.Miss, missCount);
-            RatingCount.Add(NoteRatings.Good, goodCount);
-            RatingCount.Add(NoteRatings.Great, greatCount);
-            RatingCount.Add(NoteRatings.Perfect, perfectCount);
-        }
-    }
-
     private ScoreSettingData scoreSettingData;
 
     //정확도별 추가점수
@@ -235,6 +204,20 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => "C",
             _ => "C",
         };
+    }
+
+    public ScoreData GetScoreData()
+    {
+        return new ScoreData(
+            (int)currentScore,
+            highCombo,
+            noteHitCount,
+            totalNoteCount,
+            ratingCount[NoteRatings.Miss],
+            ratingCount[NoteRatings.Good],
+            ratingCount[NoteRatings.Great],
+            ratingCount[NoteRatings.Perfect]
+        );
     }
 
     private bool IsPlus(int num) => num >= 0;

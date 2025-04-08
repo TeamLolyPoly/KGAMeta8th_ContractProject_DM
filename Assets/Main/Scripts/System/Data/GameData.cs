@@ -308,3 +308,33 @@ public class VrMap
             ikTarget.rotation = vrTarget.rotation * Quaternion.Euler(trackingRotationOffset);
     }
 }
+
+public class ScoreData
+{
+    public int Score = 0;
+    public int HighCombo = 0;
+    public int NoteHitCount = 0;
+    public int totalNoteCount = 0;
+    public Dictionary<NoteRatings, int> RatingCount = new Dictionary<NoteRatings, int>();
+
+    public ScoreData(
+        int totalScore,
+        int highCombo,
+        int noteHitCount,
+        int totalNoteCount,
+        int missCount,
+        int goodCount,
+        int greatCount,
+        int perfectCount
+    )
+    {
+        this.Score = totalScore;
+        this.HighCombo = highCombo;
+        this.NoteHitCount = noteHitCount;
+        this.totalNoteCount = totalNoteCount;
+        RatingCount.Add(NoteRatings.Miss, missCount);
+        RatingCount.Add(NoteRatings.Good, goodCount);
+        RatingCount.Add(NoteRatings.Great, greatCount);
+        RatingCount.Add(NoteRatings.Perfect, perfectCount);
+    }
+}

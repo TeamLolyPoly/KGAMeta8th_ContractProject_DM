@@ -45,6 +45,12 @@ public class GridGenerator : MonoBehaviour, IInitializable
         isInitialized = true;
     }
 
+    private void CleanUp()
+    {
+        Destroy(sourceOrigin.gameObject);
+        Destroy(targetOrigin.gameObject);
+    }
+
     private void CreateGrids(Vector3 sourcePosition, Vector3 targetPosition)
     {
         GameObject sourceObj = new GameObject("SourceGrid");
@@ -154,5 +160,10 @@ public class GridGenerator : MonoBehaviour, IInitializable
         int centerY = VerticalCells / 2;
 
         return GetCellPosition(gridTransform, centerX, centerY);
+    }
+
+    private void OnDestroy()
+    {
+        CleanUp();
     }
 }
