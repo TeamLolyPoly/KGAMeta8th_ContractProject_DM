@@ -1,4 +1,4 @@
-Shader "UI/UI_Gloss_FX"
+Shader "Anxi/UI_Gloss_FX"
 {
 	Properties
 	{

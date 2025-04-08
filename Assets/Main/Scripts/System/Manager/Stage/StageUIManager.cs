@@ -25,17 +25,9 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
     private ModalWindowManager popUpWindow;
 
     [SerializeField]
-    private Animator logSystemAnimator;
-
-    [SerializeField]
     private Canvas mainCanvas;
 
     public Canvas MainCanvas => mainCanvas;
-
-    [SerializeField]
-    private Canvas editorCanvas;
-
-    public Canvas EditorCanvas => editorCanvas;
 
     [SerializeField]
     public List<Animator> debugPanels = new List<Animator>();
