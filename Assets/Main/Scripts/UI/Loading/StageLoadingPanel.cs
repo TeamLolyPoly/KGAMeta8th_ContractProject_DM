@@ -24,7 +24,9 @@ public class StageLoadingPanel : Panel
     private RectTransform handleParticle;
 
     [SerializeField]
-    private float particleOffset = 20f;
+    private Animator textBoxAnimator;
+
+    private float particleOffset = 10f;
 
     private bool isFirstText = true;
     private float currentProgress = 0f;
@@ -35,7 +37,10 @@ public class StageLoadingPanel : Panel
 
     public override void Open()
     {
-        base.Open();
+        currentProgress = 0f;
+        targetProgress = 0f;
+        progressBar.currentValue = currentProgress;
+        progressBar.UpdateUI();
 
         if (StageLoadingManager.Instance != null)
         {
@@ -43,6 +48,8 @@ public class StageLoadingPanel : Panel
         }
 
         InitializeParticlePosition();
+
+        base.Open();
         StartCoroutine(CycleLoadingIcon());
     }
 
@@ -52,31 +59,23 @@ public class StageLoadingPanel : Panel
         {
             RectTransform barRect = progressBar.barImage.rectTransform;
             progressBarWidth = barRect.rect.width;
+            handleParticle.anchoredPosition = new Vector2(0, handleParticle.anchoredPosition.y);
             particleStartPos = handleParticle.anchoredPosition;
         }
     }
 
     public override void Close(bool objActive = true)
     {
-        StopCoroutine(CycleLoadingIcon());
-
-        progressBar.minValue = 0;
-        progressBar.maxValue = 100;
-        progressBar.currentValue = 0;
-        progressBar.UpdateUI();
-
-        loadingText.text = "";
-        isFirstText = false;
-        animator.SetBool("isOpen", false);
-        base.Close(objActive);
-    }
-
-    private void OnDestroy()
-    {
         if (StageLoadingManager.Instance != null)
         {
             StageLoadingManager.Instance.OnProgressUpdated -= UpdateProgress;
         }
+
+        StopCoroutine(CycleLoadingIcon());
+        isFirstText = true;
+        textBoxAnimator.SetBool("subOpen", false);
+
+        base.Close(objActive);
     }
 
     private void Update()
@@ -127,7 +126,7 @@ public class StageLoadingPanel : Panel
         }
         if (isFirstText)
         {
-            animator.SetBool("isOpen", true);
+            textBoxAnimator.SetBool("subOpen", true);
             isFirstText = false;
         }
     }

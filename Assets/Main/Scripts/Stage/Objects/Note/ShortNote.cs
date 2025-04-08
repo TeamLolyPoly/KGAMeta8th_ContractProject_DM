@@ -15,7 +15,6 @@ public class ShortNote : Note, IPoolable
     protected Vector3 noteUpDirection;
     protected float noteDistance;
     private float EnterAngle;
-    private float ExitAngle;
     private float hitdis;
 
     private Collider noteCollider;
@@ -94,7 +93,7 @@ public class ShortNote : Note, IPoolable
 
         transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
 
-        if (progress >= 1f && !isHit)
+        if (progress >= 1f)
         {
             Miss();
         }
@@ -197,8 +196,8 @@ public class ShortNote : Note, IPoolable
         {
             ratings = NoteRatings.Good;
         }
-        scoreSystem.SetScore(score, ratings);
-        Destroy(gameObject);
+        scoreSystem?.SetScore(score, ratings);
+        PoolManager.Instance.Despawn(this);
     }
 
     private void SetNoteDisTance()
@@ -230,13 +229,11 @@ public class ShortNote : Note, IPoolable
                     hitFXInstance.Play();
                     PoolManager.Instance.Despawn(hitFXInstance, 2.0f);
 
-                    print($"[ShortNote] 타격 성공 : {hitdis}");
                     noteInteractor.SendImpulse();
                     HitScore(hitdis);
                 }
                 else
                 {
-                    print($"[ShortNote] 이상한 방향을 타격함 : {EnterAngle}");
                     Miss();
                 }
             }

@@ -57,7 +57,6 @@ public class LogSystem : MonoBehaviour, IInitializable
         {
             SubscribeToLogs();
             isInitialized = true;
-            Debug.Log("LogManager: Initialized");
             saveLogButton.onClick.AddListener(SaveLogs);
         }
     }
@@ -102,6 +101,8 @@ public class LogSystem : MonoBehaviour, IInitializable
         logEntries.Add(entry);
 
         CreateLogBox(entry.GetDisplayLog(), type);
+
+        SaveLogs();
     }
 
     private void CreateLogBox(string message, LogType type)
