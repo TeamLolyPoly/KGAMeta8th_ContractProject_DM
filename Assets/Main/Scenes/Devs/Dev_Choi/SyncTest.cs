@@ -14,7 +14,7 @@ public class SyncTest : MonoBehaviourPunCallbacks
     public override void OnConnectedToMaster()
     {
         Debug.Log("[SyncTest] | Connected to Master");
-        CreateOrJoinMultiplayerRoom();
+        PhotonNetwork.JoinLobby();
     }
 
     public override void OnJoinedLobby()
@@ -43,24 +43,17 @@ public class SyncTest : MonoBehaviourPunCallbacks
     {
         PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = 2 });
     }
-
     public override void OnJoinedRoom()
     {
         Debug.Log("[SyncTest] Room joined: " + PhotonNetwork.CurrentRoom.Name);
-        if (PhotonNetwork.LocalPlayer.IsMasterClient)
-        {
-            PhotonNetwork.Instantiate("Player", transform.position, transform.rotation);
-        }
-        if (!PhotonNetwork.LocalPlayer.IsMasterClient)
-        {
-            PhotonNetwork.Instantiate("Player", new Vector3(5, 0, 0), transform.rotation);
-        }
+
+        Vector3 spawnPos = PhotonNetwork.IsMasterClient ? new Vector3(0, 0, 0) : new Vector3(3, 0, 0);
+        PhotonNetwork.Instantiate("Player", spawnPos, Quaternion.identity);
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
         Debug.Log("[SyncTest] Player joined: " + newPlayer.NickName);
-        PhotonNetwork.Instantiate("RemotePlayer", transform.position, transform.rotation);
     }
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
