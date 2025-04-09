@@ -4,9 +4,7 @@ using UnityEngine;
 
 public class SyncTest : MonoBehaviourPunCallbacks
 {
-    [Header("프리팹 이름 설정")]
-    public string localPlayerPrefabName = "Player";
-    public string remotePlayerPrefabName = "RemotePlayer";
+    public readonly string LOCAL_PLAYER_PREFAB_NAME = "MultiPlayer";
 
     [Header("스폰 위치")]
     public Vector3 masterSpawnPos = new Vector3(0, 0, 0);
@@ -55,7 +53,7 @@ public class SyncTest : MonoBehaviourPunCallbacks
 
         Vector3 spawnPos = PhotonNetwork.IsMasterClient ? masterSpawnPos : clientSpawnPos;
 
-        GameObject player = PhotonNetwork.Instantiate(localPlayerPrefabName, spawnPos, Quaternion.identity);
+        PhotonNetwork.Instantiate(LOCAL_PLAYER_PREFAB_NAME, spawnPos, Quaternion.identity);
 
         SpawnRemotePlayersForOthers();
     }
