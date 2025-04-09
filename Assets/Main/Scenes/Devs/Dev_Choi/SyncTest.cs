@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class SyncTest : MonoBehaviourPunCallbacks
 {
-    public readonly string LOCAL_PLAYER_PREFAB_NAME = "MultiPlayer";
+    public readonly string LOCAL_PLAYER_PREFAB_NAME = "Prefabs/Stage/Player/MultiPlayer";
 
     [Header("스폰 위치")]
     public Vector3 masterSpawnPos = new Vector3(0, 0, 0);
