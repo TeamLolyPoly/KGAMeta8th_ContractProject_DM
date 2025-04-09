@@ -2538,8 +2538,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d79fe140c00bddc4b9dd91cf6154fb1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  turnSmoothness: 0.1
-  CameraPositionOffset: {x: 0, y: 0, z: -0.15}
   head:
     isTransformPoint: 0
     vrTarget: {fileID: 3445204040867868229}
@@ -2558,6 +2556,8 @@ MonoBehaviour:
     ikTarget: {fileID: 3445204040075811520}
     trackingPositionOffset: {x: 0, y: 0, z: 0}
     trackingRotationOffset: {x: 150, y: 90, z: 45}
+  cameraOffset: {x: 0, y: 0, z: 0}
+  turnSmoothness: 0.1
 --- !u!1 &6498678204174298320
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,6 +1,6 @@
-using UnityEngine;
-using Photon.Pun;
 using System;
+using Photon.Pun;
+using UnityEngine;
 
 public class PlayerVrRig : MonoBehaviourPun, IPunObservable
 {
@@ -14,8 +14,12 @@ public class PlayerVrRig : MonoBehaviourPun, IPunObservable
     public float turnSmoothness = 0.1f;
 
     // 리모트용 변수
-    private Vector3 headPos, leftPos, rightPos;
-    private Quaternion headRot, leftRot, rightRot;
+    private Vector3 headPos,
+        leftPos,
+        rightPos;
+    private Quaternion headRot,
+        leftRot,
+        rightRot;
 
     void LateUpdate()
     {
@@ -41,14 +45,38 @@ public class PlayerVrRig : MonoBehaviourPun, IPunObservable
         else
         {
             // 리모트 플레이어 위치 업데이트
-            head.ikTarget.position = Vector3.Lerp(head.ikTarget.position, headPos, Time.deltaTime * 10f);
-            head.ikTarget.rotation = Quaternion.Slerp(head.ikTarget.rotation, headRot, Time.deltaTime * 10f);
+            head.ikTarget.position = Vector3.Lerp(
+                head.ikTarget.position,
+                headPos,
+                Time.deltaTime * 10f
+            );
+            head.ikTarget.rotation = Quaternion.Slerp(
+                head.ikTarget.rotation,
+                headRot,
+                Time.deltaTime * 10f
+            );
 
-            leftHand.ikTarget.position = Vector3.Lerp(leftHand.ikTarget.position, leftPos, Time.deltaTime * 10f);
-            leftHand.ikTarget.rotation = Quaternion.Slerp(leftHand.ikTarget.rotation, leftRot, Time.deltaTime * 10f);
+            leftHand.ikTarget.position = Vector3.Lerp(
+                leftHand.ikTarget.position,
+                leftPos,
+                Time.deltaTime * 10f
+            );
+            leftHand.ikTarget.rotation = Quaternion.Slerp(
+                leftHand.ikTarget.rotation,
+                leftRot,
+                Time.deltaTime * 10f
+            );
 
-            rightHand.ikTarget.position = Vector3.Lerp(rightHand.ikTarget.position, rightPos, Time.deltaTime * 10f);
-            rightHand.ikTarget.rotation = Quaternion.Slerp(rightHand.ikTarget.rotation, rightRot, Time.deltaTime * 10f);
+            rightHand.ikTarget.position = Vector3.Lerp(
+                rightHand.ikTarget.position,
+                rightPos,
+                Time.deltaTime * 10f
+            );
+            rightHand.ikTarget.rotation = Quaternion.Slerp(
+                rightHand.ikTarget.rotation,
+                rightRot,
+                Time.deltaTime * 10f
+            );
         }
     }
 
