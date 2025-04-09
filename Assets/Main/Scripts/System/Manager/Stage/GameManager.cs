@@ -250,15 +250,13 @@ public class GameManager : Singleton<GameManager>, IInitializable
             float currentTime = (float)(currentDspTime - startDspTime);
             UpdateBarAndBeat(currentTime);
 
-            // 실제 음악 길이를 기준으로 체크
             if (
                 musicSource != null
                 && musicSource.clip != null
                 && musicSource.isPlaying
-                && currentTime >= 20f
+                && currentTime >= currentTrack.duration
             )
             {
-                Debug.Log("Stopping game due to music end condition met!");
                 StopGame();
             }
         }
