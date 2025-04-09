@@ -192,7 +192,10 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             GameManager.Instance.ScoreSystem.onSpectatorEngagementChange -=
                 SpectatorAnimationClipChange;
         }
+    }
 
-        Destroy(this.gameObject);
+    private void OnDestroy()
+    {
+        CleanUp();
     }
 }

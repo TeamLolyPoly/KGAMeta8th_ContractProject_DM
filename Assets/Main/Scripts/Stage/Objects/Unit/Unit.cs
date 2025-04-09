@@ -8,15 +8,12 @@ public class Unit : MonoBehaviour
     protected AnimationSystem unitAnimationSystem;
     protected bool isAnimating = false;
 
-
     protected virtual IEnumerator Start()
     {
         yield return new WaitUntil(() => GameManager.Instance.UnitAnimationSystem != null);
         unitAnimationSystem = GameManager.Instance.UnitAnimationSystem;
         Initialize();
     }
-
-
 
     protected virtual void Initialize()
     {
@@ -41,6 +38,7 @@ public class Unit : MonoBehaviour
         }
         overrideController[targetClipName] = clip;
     }
+
     public void OnAnimationComplete()
     {
         isAnimating = true;

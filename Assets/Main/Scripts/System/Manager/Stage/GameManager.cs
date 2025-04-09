@@ -9,7 +9,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
     public int currentBeat { get; private set; } = 0;
     private float startDelay = 1f;
     private double startDspTime;
-
     private NetworkSystem networkSystem;
     private PlayerSystem playerSystem;
     private GridGenerator gridGenerator;
@@ -25,6 +24,8 @@ public class GameManager : Singleton<GameManager>, IInitializable
     public NoteMap NoteMap => noteMap;
     public ScoreSystem ScoreSystem => scoreSystem;
     public AnimationSystem UnitAnimationSystem => unitAnimationManager;
+
+    public ProceedDrum proceedDrum;
 
     private bool isInitialized = false;
     private bool isPlaying = false;
@@ -110,6 +111,12 @@ public class GameManager : Singleton<GameManager>, IInitializable
         scoreSystem.Initialize();
         noteSpawner.Initialize(gridGenerator, noteMap);
 
+        unitAnimationManager = new GameObject(
+            "unitAnimationManager"
+        ).AddComponent<AnimationSystem>();
+        unitAnimationManager.transform.SetParent(transform);
+        unitAnimationManager.Initialize();
+
         StartCoroutine(StageRoutine());
     }
 
@@ -128,17 +135,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         StageLoadingManager.Instance.SetLoadingText("게임 초기화 중...");
 
-        yield return progress;
-        yield return new WaitForSeconds(1f);
-
-        StageLoadingManager.Instance.SetLoadingText("노트 스폰 초기화 중...");
-
-        progress += progressStep;
-        yield return progress;
-        yield return new WaitForSeconds(1f);
-
-        StageLoadingManager.Instance.SetLoadingText("그리드 생성 중...");
-
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(1f);
@@ -146,16 +142,16 @@ public class GameManager : Singleton<GameManager>, IInitializable
         noteSpawner = new GameObject("NoteSpawner").AddComponent<NoteSpawner>();
         noteSpawner.transform.SetParent(transform);
 
+        StageLoadingManager.Instance.SetLoadingText("그리드 생성 중...");
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(1f);
-
-        StageLoadingManager.Instance.SetLoadingText("그리드 생성 중...");
 
         gridGenerator = new GameObject("GridGenerator").AddComponent<GridGenerator>();
         gridGenerator.transform.SetParent(transform);
         gridGenerator.Initialize();
 
+        StageLoadingManager.Instance.SetLoadingText("점수 시스템 초기화 중...");
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(1f);
@@ -163,6 +159,11 @@ public class GameManager : Singleton<GameManager>, IInitializable
         scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
         scoreSystem.transform.SetParent(transform);
         scoreSystem.Initialize();
+
+        StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
 
         unitAnimationManager = new GameObject(
             "unitAnimationManager"
@@ -173,20 +174,45 @@ public class GameManager : Singleton<GameManager>, IInitializable
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(1f);
-
         noteSpawner.Initialize(gridGenerator, noteMap);
-
+        StageUIManager.Instance.transform.position = new Vector3(0, 2, 0);
         StageLoadingManager.Instance.SetLoadingText("게임 시작 준비 중...");
-
         yield return new WaitForSeconds(1f);
     }
 
-    public void Cleanup()
+    public IEnumerator Cleanup()
     {
+        float progress = 0f;
+        float progressStep = 0.2f;
+
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("게임 초기화 중...");
         Destroy(noteSpawner.gameObject);
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+
         Destroy(gridGenerator.gameObject);
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("점수 시스템 초기화 중...");
+
         Destroy(scoreSystem.gameObject);
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
+
         Destroy(unitAnimationManager.gameObject);
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("데이터 초기화중...");
 
         currentBar = 0;
         currentBeat = 0;
@@ -195,6 +221,25 @@ public class GameManager : Singleton<GameManager>, IInitializable
         gridGenerator = null;
         scoreSystem = null;
         unitAnimationManager = null;
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("게임 초기화 완료");
+    }
+
+    public void BackToTitle()
+    {
+        StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
+        StageLoadingManager.Instance.LoadScene(
+            "Test_Editor",
+            Cleanup,
+            () =>
+            {
+                PlayerSystem.SpawnPlayer(Vector3.zero, false);
+                StageUIManager.Instance.OpenPanel(PanelType.AlbumSelect);
+            }
+        );
     }
 
     private void Update()
@@ -204,8 +249,16 @@ public class GameManager : Singleton<GameManager>, IInitializable
             double currentDspTime = AudioSettings.dspTime;
             float currentTime = (float)(currentDspTime - startDspTime);
             UpdateBarAndBeat(currentTime);
-            if (currentTime >= musicSource.clip.length)
+
+            // 실제 음악 길이를 기준으로 체크
+            if (
+                musicSource != null
+                && musicSource.clip != null
+                && musicSource.isPlaying
+                && currentTime >= 20f
+            )
             {
+                Debug.Log("Stopping game due to music end condition met!");
                 StopGame();
             }
         }
@@ -258,7 +311,8 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     private IEnumerator StageRoutine()
     {
-        PlayerSystem.SpawnPlayer(new Vector3(0, 0, 1), true);
+        gridGenerator.SetCellVisible(true);
+        PlayerSystem.SpawnPlayer(new Vector3(0, 2.1f, 0.58f), true);
         yield return new WaitUntil(() => PlayerSystem.IsSpawned);
 
         yield return new WaitForSeconds(startDelay);
@@ -306,7 +360,9 @@ public class GameManager : Singleton<GameManager>, IInitializable
             musicSource.Stop();
         }
 
-        Debug.Log("[GameManager] 게임 중지");
+        ResultDetailPanel resultDetailPanel =
+            StageUIManager.Instance.OpenPanel(PanelType.ResultDetail) as ResultDetailPanel;
+        resultDetailPanel.Initialize(scoreSystem.GetScoreData());
     }
 
     private void OnGUI()

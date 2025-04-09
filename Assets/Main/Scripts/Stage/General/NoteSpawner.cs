@@ -41,11 +41,14 @@ public class NoteSpawner : MonoBehaviour
 
     public void Initialize(GridGenerator gridGen, NoteMap noteMap)
     {
-        SetPrefabs();
+        if (!isInitialized)
+        {
+            SetPrefabs();
+            isInitialized = true;
+        }
         SetGrids(gridGen, noteMap);
         GenerateCirclePoints();
         CalculateNoteSpeed();
-        isInitialized = true;
     }
 
     private void SetPrefabs()
