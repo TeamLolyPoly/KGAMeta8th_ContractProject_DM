@@ -204,6 +204,8 @@ namespace NoteEditor
 
             EditorLoadingManager.Instance.SetLoadingText("트랙 설정 중...");
             AudioManager.Instance.SetTrack(CurrentTrack.TrackAudio);
+            CurrentTrack.duration = CurrentTrack.TrackAudio.length;
+            UpdateTrack(CurrentTrack);
             yield return 0.5f;
             yield return new WaitForSeconds(1f);
 
@@ -222,6 +224,11 @@ namespace NoteEditor
 
             yield return 1f;
             yield return new WaitForSeconds(1f);
+        }
+
+        private async void UpdateTrack(TrackData track)
+        {
+            await EditorDataManager.Instance.UpdateSingleTrackAsync(track);
         }
 
         private void SetupInputActions()

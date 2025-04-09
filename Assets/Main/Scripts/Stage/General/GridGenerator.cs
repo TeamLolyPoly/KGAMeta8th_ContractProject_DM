@@ -41,25 +41,33 @@ public class GridGenerator : MonoBehaviour, IInitializable
         LeftGridMaterial = Resources.Load<Material>("Materials/Stage/LeftGrid");
         RightGridMaterial = Resources.Load<Material>("Materials/Stage/RightGrid");
         OverlapGridMaterial = Resources.Load<Material>("Materials/Stage/OverlapGrid");
-        CreateGrids();
+        CreateGrids(new Vector3(0, 2.9f, gridDistance), new Vector3(0, 2.9f, 0));
         isInitialized = true;
     }
 
-    private void CreateGrids()
+    private void CleanUp()
+    {
+        Destroy(sourceOrigin.gameObject);
+        Destroy(targetOrigin.gameObject);
+    }
+
+    private void CreateGrids(Vector3 sourcePosition, Vector3 targetPosition)
     {
         GameObject sourceObj = new GameObject("SourceGrid");
         sourceOrigin = sourceObj.transform;
         sourceOrigin.parent = transform;
-        sourceOrigin.localPosition = new Vector3(0, 1.5f, gridDistance);
+        sourceOrigin.localPosition = sourcePosition;
         sourceOrigin.localRotation = Quaternion.Euler(0, 0, 0);
         CreateGrid(sourceOrigin);
 
         GameObject targetObj = new GameObject("TargetGrid");
         targetOrigin = targetObj.transform;
         targetOrigin.parent = transform;
-        targetOrigin.localPosition = new Vector3(0, 1.5f, 0);
+        targetOrigin.localPosition = targetPosition;
         targetOrigin.localRotation = Quaternion.Euler(0, 0, 0);
         CreateGrid(targetOrigin);
+
+        SetCellVisible(false);
     }
 
     private void CreateGrid(Transform gridParent)
@@ -111,6 +119,12 @@ public class GridGenerator : MonoBehaviour, IInitializable
         cellInfo.Initialize(x, y, IsLeftHand(x), IsRightHand(x));
     }
 
+    public void SetCellVisible(bool visible)
+    {
+        targetOrigin.gameObject.SetActive(visible);
+        sourceOrigin.gameObject.SetActive(visible);
+    }
+
     public bool IsLeftHand(int x)
     {
         return x < leftGridSize;
@@ -146,5 +160,10 @@ public class GridGenerator : MonoBehaviour, IInitializable
         int centerY = VerticalCells / 2;
 
         return GetCellPosition(gridTransform, centerX, centerY);
+    }
+
+    private void OnDestroy()
+    {
+        CleanUp();
     }
 }

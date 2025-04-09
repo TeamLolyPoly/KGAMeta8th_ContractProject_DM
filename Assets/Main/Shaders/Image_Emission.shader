@@ -1,4 +1,4 @@
-Shader "Anxi/UI/Emission_Image"
+Shader "Anxi/Emission_Image"
 {
     Properties
     {
