@@ -29,9 +29,6 @@ namespace NoteEditor
         public async Task LoadAllTracksAsync()
         {
             var metadata = await ResourceIO.LoadMetadataAsync();
-            Debug.Log(
-                $"[EditorDataManager] 메타데이터에서 {metadata.Count}개의 트랙 정보를 로드했습니다."
-            );
 
             tracks.Clear();
 
@@ -117,7 +114,6 @@ namespace NoteEditor
                     if (albumArtCoroutine.Current != null)
                     {
                         track.AlbumArt = albumArtCoroutine.Current;
-                        Debug.Log($"앨범 아트 로드 성공: {track.trackName}");
                         break;
                     }
                     await Task.Yield();
@@ -291,12 +287,6 @@ namespace NoteEditor
                     {
                         Debug.LogError(
                             $"트랙 오디오 로드 실패: {track.trackName} - 파일이 존재하지 않거나 형식이 잘못되었을 수 있습니다."
-                        );
-                    }
-                    else
-                    {
-                        Debug.Log(
-                            $"트랙 오디오 로드 성공: {track.trackName}, 길이: {track.TrackAudio.length}초"
                         );
                     }
                 }

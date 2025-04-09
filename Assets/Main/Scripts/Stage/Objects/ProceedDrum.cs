@@ -8,6 +8,7 @@ public class ProceedDrum : MonoBehaviour
     {
         if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
         {
+            noteInteractor.SendImpulse();
             GameManager.Instance.BackToTitle();
         }
     }
