@@ -1,9 +1,10 @@
 using System.Collections;
+using Photon.Pun;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit;
 
-public class XRPlayer : MonoBehaviour
+public class XRPlayer : MonoBehaviourPun
 {
     [SerializeField]
     private ActionBasedController leftController;
@@ -26,16 +27,115 @@ public class XRPlayer : MonoBehaviour
     public XRRayInteractor LeftRayInteractor => leftRayInteractor;
     public XRRayInteractor RightRayInteractor => rightRayInteractor;
 
-    public void Start()
-    {
-        if (LeftController != null)
-        {
-            LeftController.uiPressAction.action.performed += leftHaptic;
-        }
+    public GameObject xrOrigin;
 
-        if (RightController != null)
+    public MonoBehaviour[] localOnlyScripts;
+    public GameObject[] localOnlyObjects;
+
+    public GameObject[] remoteOnlyObjects;
+
+    public void Initialize(bool isStage)
+    {
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            RightController.uiPressAction.action.performed += rightHaptic;
+            if (photonView.IsMine)
+            {
+                xrOrigin.SetActive(true);
+
+                foreach (var script in localOnlyScripts)
+                {
+                    script.enabled = true;
+                }
+
+                foreach (var obj in localOnlyObjects)
+                {
+                    obj.SetActive(true);
+                }
+
+                foreach (var obj in remoteOnlyObjects)
+                {
+                    obj.SetActive(false);
+                }
+
+                if (!isStage)
+                {
+                    LeftRayInteractor.enabled = true;
+                    RightRayInteractor.enabled = true;
+                }
+                else
+                {
+                    LeftRayInteractor.enabled = false;
+                    RightRayInteractor.enabled = false;
+                }
+                if (LeftController != null)
+                {
+                    LeftController.uiPressAction.action.performed += leftHaptic;
+                }
+
+                if (RightController != null)
+                {
+                    RightController.uiPressAction.action.performed += rightHaptic;
+                }
+
+                gameObject.name = "LocalPlayer";
+            }
+            else
+            {
+                xrOrigin.SetActive(false);
+
+                foreach (var script in localOnlyScripts)
+                {
+                    script.enabled = false;
+                }
+
+                foreach (var obj in remoteOnlyObjects)
+                {
+                    obj.SetActive(true);
+                }
+
+                gameObject.name = "RemotePlayer";
+            }
+        }
+        else
+        {
+            xrOrigin.SetActive(true);
+
+            foreach (var script in localOnlyScripts)
+            {
+                script.enabled = true;
+            }
+
+            foreach (var obj in localOnlyObjects)
+            {
+                obj.SetActive(true);
+            }
+
+            foreach (var obj in remoteOnlyObjects)
+            {
+                obj.SetActive(false);
+            }
+
+            if (!isStage)
+            {
+                LeftRayInteractor.enabled = true;
+                RightRayInteractor.enabled = true;
+            }
+            else
+            {
+                LeftRayInteractor.enabled = false;
+                RightRayInteractor.enabled = false;
+            }
+            if (LeftController != null)
+            {
+                LeftController.uiPressAction.action.performed += leftHaptic;
+            }
+
+            if (RightController != null)
+            {
+                RightController.uiPressAction.action.performed += rightHaptic;
+            }
+
+            gameObject.name = "LocalPlayer";
         }
     }
 
@@ -51,14 +151,32 @@ public class XRPlayer : MonoBehaviour
 
     void OnDestroy()
     {
-        if (LeftController != null)
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            LeftController.uiPressAction.action.performed -= leftHaptic;
-        }
+            if (photonView.IsMine)
+            {
+                if (LeftController != null)
+                {
+                    LeftController.uiPressAction.action.performed -= leftHaptic;
+                }
 
-        if (RightController != null)
+                if (RightController != null)
+                {
+                    RightController.uiPressAction.action.performed -= rightHaptic;
+                }
+            }
+        }
+        else
         {
-            RightController.uiPressAction.action.performed -= rightHaptic;
+            if (LeftController != null)
+            {
+                LeftController.uiPressAction.action.performed -= leftHaptic;
+            }
+
+            if (RightController != null)
+            {
+                RightController.uiPressAction.action.performed -= rightHaptic;
+            }
         }
     }
 

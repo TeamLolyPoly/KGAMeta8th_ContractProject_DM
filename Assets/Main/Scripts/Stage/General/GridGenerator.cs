@@ -41,7 +41,7 @@ public class GridGenerator : MonoBehaviour, IInitializable
         LeftGridMaterial = Resources.Load<Material>("Materials/Stage/LeftGrid");
         RightGridMaterial = Resources.Load<Material>("Materials/Stage/RightGrid");
         OverlapGridMaterial = Resources.Load<Material>("Materials/Stage/OverlapGrid");
-        CreateGrids(new Vector3(0, 2.9f, gridDistance), new Vector3(0, 2.9f, 0));
+        CreateGrids(new Vector3(0, 3.3f, gridDistance), new Vector3(0, 3.3f, 0));
         isInitialized = true;
     }
 

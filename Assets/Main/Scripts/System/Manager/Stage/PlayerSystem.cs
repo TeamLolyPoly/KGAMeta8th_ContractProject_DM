@@ -4,12 +4,7 @@ using UnityEngine;
 
 public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 {
-    public const string STAGE_PLAYER_PREFAB = "Prefabs/Stage/Player/StagePlayer";
-
-    public const string LOBBY_PLAYER_PREFAB = "Prefabs/Stage/Player/LobbyPlayer";
-
-    private XRPlayer stagePlayerPrefab;
-    private XRPlayer lobbyPlayerPrefab;
+    public const string PLAYER_PREFAB = "Prefabs/Stage/Player/Player";
 
     public XRPlayer XRPlayer { get; private set; }
     private bool isInitialized = false;
@@ -19,12 +14,12 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
     public bool IsSpawned => isSpawned;
 
-    public float fadeTime = 3f;
+    public float fadeTime = 2f;
+
+    private void Start() { }
 
     public void Initialize()
     {
-        stagePlayerPrefab = Resources.Load<XRPlayer>(STAGE_PLAYER_PREFAB);
-        lobbyPlayerPrefab = Resources.Load<XRPlayer>(LOBBY_PLAYER_PREFAB);
         isInitialized = true;
     }
 
@@ -35,25 +30,46 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
     private IEnumerator SpawnPlayerRoutine(Vector3 spawnPosition, bool isStage)
     {
-        XRPlayer player = Instantiate(
-            isStage ? stagePlayerPrefab : lobbyPlayerPrefab,
-            spawnPosition,
-            Quaternion.identity
-        );
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        {
+            XRPlayer multiPlayer = PhotonNetwork
+                .Instantiate(PLAYER_PREFAB, spawnPosition, Quaternion.identity)
+                .GetComponent<XRPlayer>();
+            if (photonView.IsMine)
+            {
+                multiPlayer.Initialize(isStage);
+                multiPlayer.FadeIn(fadeTime);
+                yield return new WaitForSeconds(fadeTime);
+                XRPlayer = multiPlayer;
+                gameObject.name = "LocalPlayer";
+            }
+            else
+            {
+                multiPlayer.Initialize(isStage);
+                gameObject.name = "RemotePlayer";
+            }
+        }
+        else
+        {
+            XRPlayer localPlayer = Instantiate(
+                Resources.Load<XRPlayer>(PLAYER_PREFAB),
+                spawnPosition,
+                Quaternion.identity
+            );
 
-        XRPlayer = player;
-        yield return new WaitForSeconds(2f);
-        XRPlayer.FadeIn(fadeTime);
-        yield return new WaitForSeconds(fadeTime);
-        if (XRPlayer.LeftRayInteractor != null)
-        {
-            XRPlayer.LeftRayInteractor.enabled = true;
+            localPlayer.Initialize(isStage);
+            localPlayer.FadeIn(fadeTime);
+            yield return new WaitForSeconds(fadeTime);
+
+            gameObject.name = "LocalPlayer";
+
+            XRPlayer = localPlayer;
         }
-        if (XRPlayer.RightRayInteractor != null)
-        {
-            XRPlayer.RightRayInteractor.enabled = true;
-        }
+
+        yield return new WaitForSeconds(0.5f);
+
         isSpawned = true;
+
         GameManager.Instance.NetworkSystem.SetPlayerSpawned();
     }
 
@@ -64,17 +80,18 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
     public IEnumerator DespawnPlayerRoutine()
     {
-        if (XRPlayer.LeftRayInteractor != null)
-        {
-            XRPlayer.LeftRayInteractor.enabled = false;
-        }
-        if (XRPlayer.RightRayInteractor != null)
-        {
-            XRPlayer.RightRayInteractor.enabled = false;
-        }
+        XRPlayer.LeftRayInteractor.enabled = false;
+        XRPlayer.RightRayInteractor.enabled = false;
         XRPlayer.FadeOut(fadeTime);
         yield return new WaitForSeconds(fadeTime + 2f);
-        Destroy(XRPlayer.gameObject);
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        {
+            PhotonNetwork.Destroy(XRPlayer.gameObject);
+        }
+        else
+        {
+            Destroy(XRPlayer.gameObject);
+        }
         XRPlayer = null;
         isSpawned = false;
     }

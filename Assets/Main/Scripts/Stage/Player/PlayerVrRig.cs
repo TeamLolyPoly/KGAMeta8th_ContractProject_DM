@@ -13,7 +13,6 @@ public class PlayerVrRig : MonoBehaviourPun //, IPunObservable
     public Vector3 cameraOffset;
     public float turnSmoothness = 0.1f;
 
-    // 리모트용 변수
     private Vector3 headPos,
         leftPos,
         rightPos;
@@ -23,9 +22,64 @@ public class PlayerVrRig : MonoBehaviourPun //, IPunObservable
 
     void LateUpdate()
     {
-        if (photonView.IsMine)
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            //내 XR Origin을 기준으로 동작
+            if (photonView.IsMine)
+            {
+                Vector3 targetPos = head.vrTarget.position + cameraOffset;
+                targetPos.y += -1.45f;
+
+                transform.position = Vector3.Lerp(transform.position, targetPos, 0.05f);
+
+                float yaw = head.vrTarget.eulerAngles.y;
+                transform.rotation = Quaternion.Lerp(
+                    transform.rotation,
+                    Quaternion.Euler(0, yaw, 0),
+                    turnSmoothness
+                );
+
+                head.Map();
+                leftHand.Map();
+                rightHand.Map();
+            }
+            else
+            {
+                head.ikTarget.position = Vector3.Lerp(
+                    head.ikTarget.position,
+                    headPos,
+                    Time.deltaTime * 25f
+                );
+                head.ikTarget.rotation = Quaternion.Slerp(
+                    head.ikTarget.rotation,
+                    headRot,
+                    Time.deltaTime * 25f
+                );
+
+                leftHand.ikTarget.position = Vector3.Lerp(
+                    leftHand.ikTarget.position,
+                    leftPos,
+                    Time.deltaTime * 25f
+                );
+                leftHand.ikTarget.rotation = Quaternion.Slerp(
+                    leftHand.ikTarget.rotation,
+                    leftRot,
+                    Time.deltaTime * 25f
+                );
+
+                rightHand.ikTarget.position = Vector3.Lerp(
+                    rightHand.ikTarget.position,
+                    rightPos,
+                    Time.deltaTime * 25f
+                );
+                rightHand.ikTarget.rotation = Quaternion.Slerp(
+                    rightHand.ikTarget.rotation,
+                    rightRot,
+                    Time.deltaTime * 25f
+                );
+            }
+        }
+        else
+        {
             Vector3 targetPos = head.vrTarget.position + cameraOffset;
             targetPos.y += -1.45f;
 
@@ -41,42 +95,6 @@ public class PlayerVrRig : MonoBehaviourPun //, IPunObservable
             head.Map();
             leftHand.Map();
             rightHand.Map();
-        }
-        else
-        {
-            // 리모트 플레이어 위치 업데이트
-            head.ikTarget.position = Vector3.Lerp(
-                head.ikTarget.position,
-                headPos,
-                Time.deltaTime * 25f
-            );
-            head.ikTarget.rotation = Quaternion.Slerp(
-                head.ikTarget.rotation,
-                headRot,
-                Time.deltaTime * 25f
-            );
-
-            leftHand.ikTarget.position = Vector3.Lerp(
-                leftHand.ikTarget.position,
-                leftPos,
-                Time.deltaTime * 25f
-            );
-            leftHand.ikTarget.rotation = Quaternion.Slerp(
-                leftHand.ikTarget.rotation,
-                leftRot,
-                Time.deltaTime * 25f
-            );
-
-            rightHand.ikTarget.position = Vector3.Lerp(
-                rightHand.ikTarget.position,
-                rightPos,
-                Time.deltaTime * 25f
-            );
-            rightHand.ikTarget.rotation = Quaternion.Slerp(
-                rightHand.ikTarget.rotation,
-                rightRot,
-                Time.deltaTime * 25f
-            );
         }
     }
 

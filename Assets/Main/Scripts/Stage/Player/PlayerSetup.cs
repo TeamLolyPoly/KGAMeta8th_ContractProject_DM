@@ -6,10 +6,9 @@ public class PlayerSetup : MonoBehaviourPun
     [Header("XR Origin 포함 오브젝트")]
     public GameObject xrOrigin;
 
-    [Header("로컬 전용 컴포넌트")]
     public MonoBehaviour[] localOnlyScripts;
+    public GameObject[] localOnlyObjects;
 
-    [Header("원격 전용 오브젝트")]
     public GameObject[] remoteOnlyObjects;
 
     private void Start()
@@ -21,6 +20,11 @@ public class PlayerSetup : MonoBehaviourPun
             foreach (var script in localOnlyScripts)
             {
                 script.enabled = true;
+            }
+
+            foreach (var obj in localOnlyObjects)
+            {
+                obj.SetActive(true);
             }
 
             foreach (var obj in remoteOnlyObjects)
