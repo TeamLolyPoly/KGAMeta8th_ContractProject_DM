@@ -59,6 +59,20 @@ public class SpawnTest : MonoBehaviourPunCallbacks
     {
         Debug.Log("[SpawnTest] 방 입장 완료");
 
+        // 기존 플레이어들을 RemotePlayer로 변경
+        GameObject[] existingPlayers = GameObject.FindGameObjectsWithTag("Player");
+        foreach (GameObject player in existingPlayers)
+        {
+            if (player.GetComponent<PhotonView>().IsMine)
+            {
+                continue; // 내 플레이어는 건너뛰기
+            }
+
+            // RemotePlayer로 변경
+            player.tag = "RemotePlayer";
+            Debug.Log($"[SpawnTest] 플레이어 {player.name}를 RemotePlayer로 변경");
+        }
+
         if (SceneManager.GetActiveScene().name == "XRTest2")
         {
             StartCoroutine(InitXRAndSpawn());
