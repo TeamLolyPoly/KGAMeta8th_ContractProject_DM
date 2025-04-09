@@ -8,7 +8,9 @@ public class PlayerSetup : MonoBehaviourPun
 
     [Header("로컬 전용 컴포넌트")]
     public MonoBehaviour[] localOnlyScripts;
-    public GameObject[] localOnlyObjects;
+
+    [Header("원격 전용 오브젝트")]
+    public GameObject[] remoteOnlyObjects;
 
     private void Start()
     {
@@ -17,10 +19,14 @@ public class PlayerSetup : MonoBehaviourPun
             xrOrigin.SetActive(true);
 
             foreach (var script in localOnlyScripts)
+            {
                 script.enabled = true;
+            }
 
-            foreach (var obj in localOnlyObjects)
-                obj.SetActive(true);
+            foreach (var obj in remoteOnlyObjects)
+            {
+                obj.SetActive(false);
+            }
 
             gameObject.name = "LocalPlayer";
         }
@@ -29,10 +35,14 @@ public class PlayerSetup : MonoBehaviourPun
             xrOrigin.SetActive(false);
 
             foreach (var script in localOnlyScripts)
+            {
                 script.enabled = false;
+            }
 
-            foreach (var obj in localOnlyObjects)
-                obj.SetActive(false);
+            foreach (var obj in remoteOnlyObjects)
+            {
+                obj.SetActive(true);
+            }
 
             gameObject.name = "RemotePlayer";
         }
