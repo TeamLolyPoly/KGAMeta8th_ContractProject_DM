@@ -2,7 +2,7 @@ using System;
 using Photon.Pun;
 using UnityEngine;
 
-public class PlayerVrRig : MonoBehaviourPun, IPunObservable
+public class PlayerVrRig : MonoBehaviourPun //, IPunObservable
 {
     [Header("로컬/리모트 VR 대상")]
     public VrMap head;
@@ -25,7 +25,7 @@ public class PlayerVrRig : MonoBehaviourPun, IPunObservable
     {
         if (photonView.IsMine)
         {
-            // 내 XR Origin을 기준으로 동작
+            //내 XR Origin을 기준으로 동작
             Vector3 targetPos = head.vrTarget.position + cameraOffset;
             targetPos.y += -1.45f;
 
