@@ -45,7 +45,11 @@ public class PlayerVrRig : MonoBehaviourPun, IPunObservable
         else
         {
             // 리모트 플레이어 위치 업데이트
-            head.ikTarget.position = Vector3.Lerp(head.ikTarget.position, headPos, Time.deltaTime);
+            head.ikTarget.position = Vector3.Lerp(
+                head.ikTarget.position,
+                headPos,
+                Time.deltaTime * 25f
+            );
             head.ikTarget.rotation = Quaternion.Slerp(
                 head.ikTarget.rotation,
                 headRot,
