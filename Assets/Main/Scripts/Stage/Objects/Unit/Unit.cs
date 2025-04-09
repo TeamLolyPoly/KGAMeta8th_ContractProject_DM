@@ -46,6 +46,9 @@ public class Unit : MonoBehaviour
 
     protected void OnDisable()
     {
-        unitAnimationSystem.RemoveUnit(this);
+        if (unitAnimationSystem != null)
+        {
+            unitAnimationSystem.RemoveUnit(this);
+        }
     }
 }

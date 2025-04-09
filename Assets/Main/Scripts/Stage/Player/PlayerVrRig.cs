@@ -13,7 +13,7 @@ public class PlayerVrRig : MonoBehaviour
     {
         Vector3 pos = head.vrTarget.position;
         pos.z += CameraPositionOffset.z;
-        pos.y += -head.vrTarget.position.y + CameraPositionOffset.y;
+        pos.y += -1.45f + CameraPositionOffset.y;
         pos.x += CameraPositionOffset.x;
 
         transform.position = Vector3.Lerp(transform.position, pos, 0.05f);
