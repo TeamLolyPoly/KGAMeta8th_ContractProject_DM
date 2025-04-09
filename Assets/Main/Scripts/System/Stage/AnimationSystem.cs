@@ -186,7 +186,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
 
     private void CleanUp()
     {
-        if (GameManager.Instance.ScoreSystem != null)
+        if (GameManager.Instance != null && GameManager.Instance.ScoreSystem != null)
         {
             GameManager.Instance.ScoreSystem.onBandEngagementChange -= BandAnimationClipChange;
             GameManager.Instance.ScoreSystem.onSpectatorEngagementChange -=
