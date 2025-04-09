@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class ScoreSystem : MonoBehaviour, IInitializable
 {
@@ -61,39 +62,11 @@ public class ScoreSystem : MonoBehaviour, IInitializable
     private NoteRatings lastRating = NoteRatings.None;
     public NoteRatings LastRating => lastRating;
 
-    //테스트용 코드
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            SetScore(100, NoteRatings.Perfect);
-        }
-
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            SetScore(100, NoteRatings.Good);
-        }
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            SetScore(0, NoteRatings.Miss);
-        }
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            print(
-                $"\nGood: {ratingCount[NoteRatings.Good]}"
-                    + $"\nMiss: {ratingCount[NoteRatings.Miss]}"
-                    + $"\n게임랭크: {GetGameRank()}"
-            );
-        }
-    }
-
     public void Initialize()
     {
         scoreSettingData = Resources.Load<ScoreSettingData>("SO/ScoreSettingData");
 
-        // totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
-
-        totalNoteCount = GameManager.Instance.NoteMap.notes.Count;
+        totalNoteCount = GameManager.Instance.NoteMap.TotalNoteCount;
 
         ratingCount.Clear();
 
@@ -231,6 +204,20 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => "C",
             _ => "C",
         };
+    }
+
+    public ScoreData GetScoreData()
+    {
+        return new ScoreData(
+            (int)currentScore,
+            highCombo,
+            noteHitCount,
+            totalNoteCount,
+            ratingCount[NoteRatings.Miss],
+            ratingCount[NoteRatings.Good],
+            ratingCount[NoteRatings.Great],
+            ratingCount[NoteRatings.Perfect]
+        );
     }
 
     private bool IsPlus(int num) => num >= 0;
