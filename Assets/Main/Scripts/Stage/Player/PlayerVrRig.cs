@@ -48,34 +48,34 @@ public class PlayerVrRig : MonoBehaviourPun, IPunObservable
             head.ikTarget.position = Vector3.Lerp(
                 head.ikTarget.position,
                 headPos,
-                Time.deltaTime * 10f
+                Time.deltaTime * 25f
             );
             head.ikTarget.rotation = Quaternion.Slerp(
                 head.ikTarget.rotation,
                 headRot,
-                Time.deltaTime * 10f
+                Time.deltaTime * 25f
             );
 
             leftHand.ikTarget.position = Vector3.Lerp(
                 leftHand.ikTarget.position,
                 leftPos,
-                Time.deltaTime * 10f
+                Time.deltaTime * 25f
             );
             leftHand.ikTarget.rotation = Quaternion.Slerp(
                 leftHand.ikTarget.rotation,
                 leftRot,
-                Time.deltaTime * 10f
+                Time.deltaTime * 25f
             );
 
             rightHand.ikTarget.position = Vector3.Lerp(
                 rightHand.ikTarget.position,
                 rightPos,
-                Time.deltaTime * 10f
+                Time.deltaTime * 25f
             );
             rightHand.ikTarget.rotation = Quaternion.Slerp(
                 rightHand.ikTarget.rotation,
                 rightRot,
-                Time.deltaTime * 10f
+                Time.deltaTime * 25f
             );
         }
     }
