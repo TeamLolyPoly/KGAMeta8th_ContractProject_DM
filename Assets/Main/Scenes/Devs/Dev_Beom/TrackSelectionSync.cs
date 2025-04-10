@@ -7,8 +7,13 @@ using UnityEngine;
 public class TrackSelectionSync : MonoBehaviourPunCallbacks
 {
     public static TrackSelectionSync Instance;
+    public event Action<int, TrackData, Difficulty> OnTrackUpdated;
+    public event Action<TrackData, Difficulty> OnFinalTrackSelected;
 
-    public event Action<int, TrackData> OnTrackUpdated;
+    private const string TRACK_GUID_KEY = "SelectedTrackGUID";
+    private const string TRACK_DIFF_KEY = "SelectedTrackDiff";
+    private const string FINAL_TRACK_GUID_KEY = "FinalTrackGUID";
+    private const string FINAL_TRACK_DIFF_KEY = "FinalTrackDiff";
 
     private void Awake()
     {
@@ -17,46 +22,36 @@ public class TrackSelectionSync : MonoBehaviourPunCallbacks
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
 
-    private const string TRACK_GUID_KEY = "SelectedTrackGUID";
-
-    public void SelectTrack(Guid trackGuid)
+    public void SelectTrack(Guid trackGuid, Difficulty difficulty)
     {
-        string guidString = trackGuid.ToString();
+        string guidStr = trackGuid.ToString();
+        int diffInt = (int)difficulty;
 
-        Hashtable props = new Hashtable { { TRACK_GUID_KEY, guidString } };
+        Hashtable props = new Hashtable
+        {
+            { TRACK_GUID_KEY, guidStr },
+            { TRACK_DIFF_KEY, diffInt }
+        };
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
 
-        photonView.RPC(nameof(RPCSelectTrack), RpcTarget.Others, guidString);
+        photonView.RPC(nameof(RPCSelectTrack), RpcTarget.Others, guidStr, diffInt);
     }
 
     [PunRPC]
-    private void RPCSelectTrack(string guidStr, PhotonMessageInfo info)
+    private void RPCSelectTrack(string guidStr, int diffInt, PhotonMessageInfo info)
     {
         if (Guid.TryParse(guidStr, out Guid trackGuid))
         {
             TrackData track = DataManager.Instance.TrackDataList.Find(t => t.id == trackGuid);
             if (track != null)
             {
-                OnTrackUpdated?.Invoke(info.Sender.ActorNumber, track);
+                Difficulty difficulty = (Difficulty)diffInt;
+                OnTrackUpdated?.Invoke(info.Sender.ActorNumber, track, difficulty);
             }
-            else
-            {
-                Debug.LogWarning($"[TrackSelectionSync] GUID에 해당하는 트랙을 찾을 수 없습니다: {trackGuid}");
-            }
-        }
-    }
-
-    public void BroadcastAllTrackSelections()
-    {
-        foreach (var player in PhotonNetwork.PlayerList)
-        {
-            var track = GetTrackData(player);
-            OnTrackUpdated?.Invoke(player.ActorNumber, track);
         }
     }
 
@@ -72,12 +67,68 @@ public class TrackSelectionSync : MonoBehaviourPunCallbacks
         return null;
     }
 
+    public Difficulty GetDifficulty(Player player)
+    {
+        if (player.CustomProperties.TryGetValue(TRACK_DIFF_KEY, out object diffObj))
+        {
+            if (diffObj is int diffInt)
+            {
+                return (Difficulty)diffInt;
+            }
+        }
+        return Difficulty.Easy;
+    }
+
+    public void DecideRandomFinalTrack()
+    {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+
+        var players = PhotonNetwork.PlayerList;
+        if (players.Length < 2) return;
+
+        int randomIndex = UnityEngine.Random.Range(0, players.Length);
+        Player chosen = players[randomIndex];
+
+        TrackData chosenTrack = GetTrackData(chosen);
+        Difficulty chosenDiff = GetDifficulty(chosen);
+
+        if (chosenTrack == null) return;
+
+        Hashtable roomProps = new Hashtable
+        {
+            { FINAL_TRACK_GUID_KEY, chosenTrack.id.ToString() },
+            { FINAL_TRACK_DIFF_KEY, (int)chosenDiff }
+        };
+
+        PhotonNetwork.CurrentRoom.SetCustomProperties(roomProps);
+    }
+
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
     {
-        if (changedProps.ContainsKey(TRACK_GUID_KEY))
+        if (changedProps.ContainsKey(TRACK_GUID_KEY) || changedProps.ContainsKey(TRACK_DIFF_KEY))
         {
             var track = GetTrackData(targetPlayer);
-            OnTrackUpdated?.Invoke(targetPlayer.ActorNumber, track);
+            var diff = GetDifficulty(targetPlayer);
+            if (track != null)
+                OnTrackUpdated?.Invoke(targetPlayer.ActorNumber, track, diff);
+        }
+    }
+
+    public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
+    {
+        if (propertiesThatChanged.ContainsKey(FINAL_TRACK_GUID_KEY) &&
+            propertiesThatChanged.ContainsKey(FINAL_TRACK_DIFF_KEY))
+        {
+            string guidStr = (string)propertiesThatChanged[FINAL_TRACK_GUID_KEY];
+            int diffInt = (int)propertiesThatChanged[FINAL_TRACK_DIFF_KEY];
+
+            if (Guid.TryParse(guidStr, out Guid guid))
+            {
+                TrackData track = DataManager.Instance.TrackDataList.Find(t => t.id == guid);
+                Difficulty diff = (Difficulty)diffInt;
+                OnFinalTrackSelected?.Invoke(track, diff);
+            }
         }
     }
 }
