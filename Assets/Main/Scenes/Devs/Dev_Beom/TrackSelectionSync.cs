@@ -22,37 +22,35 @@ public class TrackSelectionSync : MonoBehaviourPunCallbacks
         DontDestroyOnLoad(gameObject);
     }
 
-    private const string TRACK_DATA_KEY = "SelectedTrack";
+    private const string TRACK_GUID_KEY = "SelectedTrackGUID";
 
-    /// <summary>
-    /// 트랙 정보를 JSON으로 변환해 CustomProperties에 저장
-    /// </summary>
-    public void SetSelectedTrack(TrackData track)
+    public void SelectTrack(Guid trackGuid)
     {
-        string json = JsonUtility.ToJson(track);
-        Hashtable props = new Hashtable { { TRACK_DATA_KEY, json } };
+        string guidString = trackGuid.ToString();
+
+        Hashtable props = new Hashtable { { TRACK_GUID_KEY, guidString } };
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+
+        photonView.RPC(nameof(RPCSelectTrack), RpcTarget.Others, guidString);
     }
 
-    /// <summary>
-    /// 특정 플레이어가 선택한 트랙을 가져옴
-    /// </summary>
-    public TrackData GetTrackData(Player player)
+    [PunRPC]
+    private void RPCSelectTrack(string guidStr, PhotonMessageInfo info)
     {
-        if (player.CustomProperties.TryGetValue(TRACK_DATA_KEY, out object jsonObj))
+        if (Guid.TryParse(guidStr, out Guid trackGuid))
         {
-            string json = jsonObj as string;
-            if (!string.IsNullOrEmpty(json))
+            TrackData track = DataManager.Instance.TrackDataList.Find(t => t.id == trackGuid);
+            if (track != null)
             {
-                return JsonUtility.FromJson<TrackData>(json);
+                OnTrackUpdated?.Invoke(info.Sender.ActorNumber, track);
+            }
+            else
+            {
+                Debug.LogWarning($"[TrackSelectionSync] GUID에 해당하는 트랙을 찾을 수 없습니다: {trackGuid}");
             }
         }
-        return null;
     }
 
-    /// <summary>
-    /// 모든 플레이어의 선택된 트랙 데이터를 가져옴
-    /// </summary>
     public void BroadcastAllTrackSelections()
     {
         foreach (var player in PhotonNetwork.PlayerList)
@@ -62,9 +60,21 @@ public class TrackSelectionSync : MonoBehaviourPunCallbacks
         }
     }
 
+    public TrackData GetTrackData(Player player)
+    {
+        if (player.CustomProperties.TryGetValue(TRACK_GUID_KEY, out object guidObj))
+        {
+            if (guidObj is string guidStr && Guid.TryParse(guidStr, out Guid trackGuid))
+            {
+                return DataManager.Instance.TrackDataList.Find(t => t.id == trackGuid);
+            }
+        }
+        return null;
+    }
+
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
     {
-        if (changedProps.ContainsKey(TRACK_DATA_KEY))
+        if (changedProps.ContainsKey(TRACK_GUID_KEY))
         {
             var track = GetTrackData(targetPlayer);
             OnTrackUpdated?.Invoke(targetPlayer.ActorNumber, track);
