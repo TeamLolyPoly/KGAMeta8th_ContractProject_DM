@@ -2358,7 +2358,7 @@ GameObject:
   - component: {fileID: 4403838858456216555}
   - component: {fileID: 718667482776343806}
   m_Layer: 0
-  m_Name: MultiPlayer
+  m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2397,6 +2397,10 @@ MonoBehaviour:
   leftRayInteractor: {fileID: 3555830216390857065}
   rightRayInteractor: {fileID: 3670024462043762146}
   fadeRenderer: {fileID: 0}
+  xrOrigin: {fileID: 2700565592071161667}
+  localOnlyScripts: []
+  localOnlyObjects: []
+  remoteOnlyObjects: []
 --- !u!114 &4403838858456216555
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2415,8 +2419,7 @@ MonoBehaviour:
   Synchronization: 3
   OwnershipTransfer: 0
   observableSearch: 2
-  ObservedComponents:
-  - {fileID: 5355536991228284748}
+  ObservedComponents: []
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
@@ -2435,6 +2438,7 @@ MonoBehaviour:
   xrOrigin: {fileID: 2700565592071161667}
   localOnlyScripts:
   - {fileID: 6631830043589303260}
+  localOnlyObjects: []
   remoteOnlyObjects:
   - {fileID: 7982380809949413559}
   - {fileID: 2310853415187969229}
