@@ -363,7 +363,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         }
 
         SingleResultPanel resultDetailPanel =
-            StageUIManager.Instance.OpenPanel(PanelType.SingleResult) as SingleResultPanel;
+            StageUIManager.Instance.OpenPanel(PanelType.Single_Result) as SingleResultPanel;
         resultDetailPanel.Initialize(scoreSystem.GetScoreData());
     }
 

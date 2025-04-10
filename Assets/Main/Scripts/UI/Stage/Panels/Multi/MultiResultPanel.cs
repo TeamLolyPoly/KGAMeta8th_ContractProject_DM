@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class MultiResultPanel : Panel
 {
-    public override PanelType PanelType => PanelType.MultiResult;
+    public override PanelType PanelType => PanelType.Multi_Result;
 
     public override void Open()
     {

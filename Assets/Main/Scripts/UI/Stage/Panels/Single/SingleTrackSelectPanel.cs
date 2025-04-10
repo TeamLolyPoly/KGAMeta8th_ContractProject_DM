@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class SingleTrackSelectPanel : Panel
 {
-    public override PanelType PanelType => PanelType.SingleTrackSelect;
+    public override PanelType PanelType => PanelType.Single_TrackSelect;
 
     private TrackData selectedTrack;
     private NoteMapData selectedNoteMapData;
@@ -17,7 +17,7 @@ public class SingleTrackSelectPanel : Panel
     private ButtonManager closeButton;
 
     [SerializeField]
-    private TrackSelectButton trackButtonPrefab;
+    private SingleTrackSelectButton trackButtonPrefab;
 
     [SerializeField]
     private Transform trackParent;
@@ -61,7 +61,7 @@ public class SingleTrackSelectPanel : Panel
     [SerializeField]
     private RankBox rankBoxPrefab;
 
-    private List<TrackSelectButton> trackButtons = new List<TrackSelectButton>();
+    private List<SingleTrackSelectButton> trackButtons = new List<SingleTrackSelectButton>();
 
     public override void Open()
     {
@@ -73,7 +73,7 @@ public class SingleTrackSelectPanel : Panel
     {
         foreach (var track in tracks)
         {
-            TrackSelectButton trackButton = Instantiate(trackButtonPrefab, trackParent);
+            SingleTrackSelectButton trackButton = Instantiate(trackButtonPrefab, trackParent);
             trackButton.Initialize(track, this);
             trackButtons.Add(trackButton);
         }

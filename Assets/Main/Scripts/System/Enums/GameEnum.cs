@@ -92,26 +92,28 @@ public enum PanelType
     #endregion
 
     #region 싱글전용
-    SingleTrackSelect,
-    SingleResult,
+    Single_TrackSelect,
+    Single_Result,
     #endregion
 
     #region 멀티전용
-    MultiWaiting,
-    MultiTrackSelect,
-    MultiRoom,
-    MultiResult,
-    MultiStatus,
+    Multi_Waiting,
+    Multi_TrackSelect,
+    Multi_Room,
+    Multi_Result,
+    Multi_Status,
+    Multi_TrackDecision,
     #endregion
 
     #endregion
 
-    // 에디터 전용
+    #region 에디터 전용
     NoteEditor,
     EditorStart,
     NewTrack,
     LoadTrack,
     EditorSettings,
+    #endregion
 }
 
 public enum Difficulty

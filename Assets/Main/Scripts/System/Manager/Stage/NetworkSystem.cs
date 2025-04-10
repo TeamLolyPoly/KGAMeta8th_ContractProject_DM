@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Photon.Pun;
 using Photon.Realtime;
-using ProjectDM.UI;
 using UnityEngine;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
@@ -20,16 +19,18 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     private MultiStatusPanel multiStatusPanel;
     private MultiWaitingPanel multiWaitingPanel;
+    private MultiRoomPanel multiRoomPanel;
 
     public bool IsInitialized { get; private set; } = false;
 
     public void StartMultiplayer()
     {
         multiStatusPanel =
-            StageUIManager.Instance.OpenPanel(PanelType.MultiStatus) as MultiStatusPanel;
+            StageUIManager.Instance.OpenPanel(PanelType.Multi_Status) as MultiStatusPanel;
         multiStatusPanel.Close(true);
         multiWaitingPanel =
-            StageUIManager.Instance.OpenPanel(PanelType.MultiWaiting) as MultiWaitingPanel;
+            StageUIManager.Instance.OpenPanel(PanelType.Multi_Waiting) as MultiWaitingPanel;
+        multiRoomPanel = StageUIManager.Instance.OpenPanel(PanelType.Multi_Room) as MultiRoomPanel;
         PhotonNetwork.AutomaticallySyncScene = true;
         PhotonNetwork.ConnectUsingSettings();
         IsInitialized = true;

@@ -1,12 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
 using ProjectDM.UI;
 using TMPro;
-using UnityEngine;
 
 public class MultiStatusPanel : Panel
 {
-    public override PanelType PanelType => PanelType.MultiStatus;
+    public override PanelType PanelType => PanelType.Multi_Status;
 
     public TextMeshProUGUI statusText;
 

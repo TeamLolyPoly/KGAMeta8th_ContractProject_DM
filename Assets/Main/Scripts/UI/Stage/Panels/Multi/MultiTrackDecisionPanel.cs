@@ -1,18 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+using ProjectDM.UI;
 
-public class MultiTrackDecisionPanel : MonoBehaviour
+public class MultiTrackDecisionPanel : Panel
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    public override PanelType PanelType => PanelType.Multi_TrackDecision;
 }
