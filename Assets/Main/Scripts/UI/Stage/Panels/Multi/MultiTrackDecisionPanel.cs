@@ -3,7 +3,6 @@ using Photon.Pun;
 using ProjectDM.UI;
 using TMPro;
 using UnityEngine;
-using UnityEngine.TestTools.Constraints;
 
 public class MultiTrackDecisionPanel : Panel
 {
@@ -14,12 +13,6 @@ public class MultiTrackDecisionPanel : Panel
 
     [SerializeField]
     private BoxButtonManager remoteTrackNameBox;
-
-    [SerializeField]
-    private TextMeshProUGUI localTrackNameText;
-
-    [SerializeField]
-    private TextMeshProUGUI remoteTrackNameText;
 
     [SerializeField]
     private GameObject[] localTrackDifficultyBox;
@@ -41,7 +34,6 @@ public class MultiTrackDecisionPanel : Panel
         );
         localTrackNameBox.SetText($"{localTrack.trackName}");
         localTrackDifficultyBox[(int)localDifficulty].SetActive(true);
-        localTrackNameText.text = $"{localTrack.trackName}";
         localTrackNameBox.SetBackground(localTrack.AlbumArt);
         foreach (var player in PhotonNetwork.PlayerList)
         {
@@ -52,7 +44,6 @@ public class MultiTrackDecisionPanel : Panel
             Difficulty remoteDifficulty = GameManager.Instance.NetworkSystem.GetDifficulty(player);
             remoteTrackNameBox.SetText($"{remoteTrack.trackName}");
             remoteTrackDifficultyBox[(int)remoteDifficulty].SetActive(true);
-            remoteTrackNameText.text = $"{remoteTrack.trackName}";
             remoteTrackNameBox.SetBackground(remoteTrack.AlbumArt);
         }
     }

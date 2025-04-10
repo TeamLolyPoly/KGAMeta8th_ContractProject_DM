@@ -127,9 +127,4 @@ public class SlotMachineEffect : MonoBehaviour
             panel.color = targetColor;
         }
     }
-
-    public bool IsSpinning()
-    {
-        return isSpinning;
-    }
 }

@@ -24,7 +24,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     private MultiWaitingPanel multiWaitingPanel;
     private MultiRoomPanel multiRoomPanel;
     public event Action<int, TrackData, Difficulty> OnTrackUpdated;
-    public event Action<TrackData, Difficulty> OnFinalTrackSelected;
     public event Action<Player> OnPlayerReadyStatusChanged;
     public event Action OnRemotePlayerJoined;
     public event Action OnRemotePlayerLeft;
