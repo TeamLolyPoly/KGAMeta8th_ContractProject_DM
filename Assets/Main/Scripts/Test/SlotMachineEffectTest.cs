@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class SlotMachineEffectTest : MonoBehaviour
 {
-    [SerializeField] private UISlotMachineEffect slotEffect;
+    [SerializeField]
+    private SlotMachineEffect slotEffect;
 
     private void Update()
     {

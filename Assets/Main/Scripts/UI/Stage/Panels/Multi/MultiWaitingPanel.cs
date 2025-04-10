@@ -22,7 +22,9 @@ public class MultiWaitingPanel : Panel
         findBox.SetBool("isOpen", true);
         yield return new WaitForSeconds(1f);
         Close(false);
-        StageUIManager.Instance.OpenPanel(PanelType.Multi_Room);
+        MultiRoomPanel multiRoomPanel =
+            StageUIManager.Instance.OpenPanel(PanelType.Multi_Room) as MultiRoomPanel;
+        multiRoomPanel.InitializeClient();
     }
 
     public IEnumerator OnSearchFailed()
@@ -31,7 +33,9 @@ public class MultiWaitingPanel : Panel
         failedBox.SetBool("isOpen", true);
         yield return new WaitForSeconds(1f);
         Close(false);
-        StageUIManager.Instance.OpenPanel(PanelType.Multi_Room);
+        MultiRoomPanel multiRoomPanel =
+            StageUIManager.Instance.OpenPanel(PanelType.Multi_Room) as MultiRoomPanel;
+        multiRoomPanel.InitializeHost();
     }
 
     public override void Close(bool objActive = true)

@@ -118,8 +118,7 @@ public enum PanelType
 
 public enum Difficulty
 {
-    None,
-    Easy,
-    Normal,
-    Hard,
+    Easy = 0,
+    Normal = 1,
+    Hard = 2,
 }

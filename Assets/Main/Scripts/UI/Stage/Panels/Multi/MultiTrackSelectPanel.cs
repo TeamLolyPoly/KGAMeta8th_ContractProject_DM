@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Michsky.UI.Heat;
@@ -11,7 +12,8 @@ public class MultiTrackSelectPanel : Panel
 
     private TrackData selectedTrack;
     private NoteMapData selectedNoteMapData;
-    private NoteMap selectedNoteMap;
+
+    public event Action<TrackData, Difficulty> OnTrackSelected;
 
     [SerializeField]
     private ButtonManager closeButton;
@@ -74,7 +76,6 @@ public class MultiTrackSelectPanel : Panel
     private void OnCloseButtonClick()
     {
         Close(true);
-        StageUIManager.Instance.OpenPanel(PanelType.AlbumSelect);
     }
 
     public void SelectTrack(TrackData track)
@@ -87,7 +88,7 @@ public class MultiTrackSelectPanel : Panel
         difficulty_EasyButton.onClick.AddListener(() => SetNoteMapData(Difficulty.Easy));
         difficulty_NormalButton.onClick.AddListener(() => SetNoteMapData(Difficulty.Normal));
         difficulty_HardButton.onClick.AddListener(() => SetNoteMapData(Difficulty.Hard));
-        selectButton.onClick.AddListener(OnStartButtonClick);
+        selectButton.onClick.AddListener(OnSelecteButtonClick);
         selectButton.Interactable(false);
 
         CheckNoteMapData();
@@ -173,12 +174,12 @@ public class MultiTrackSelectPanel : Panel
         selectButton.Interactable(true);
     }
 
-    private void OnStartButtonClick()
+    private void OnSelecteButtonClick()
     {
         if (selectedNoteMapData != null)
         {
-            selectedNoteMap = selectedNoteMapData.noteMap;
-            GameManager.Instance.StartGame(selectedTrack, selectedNoteMap);
+            OnTrackSelected?.Invoke(selectedTrack, selectedNoteMapData.difficulty);
+            Close(true);
         }
     }
 
@@ -201,7 +202,6 @@ public class MultiTrackSelectPanel : Panel
         trackButtons.Clear();
         selectedTrack = null;
         selectedNoteMapData = null;
-        selectedNoteMap = null;
         trackInfoPanel.SetBool("subOpen", false);
         base.Close(objActive);
     }

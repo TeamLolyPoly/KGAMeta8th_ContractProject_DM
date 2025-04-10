@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Photon.Pun;
+using Photon.Realtime;
 using UnityEngine;
 
 public class GameManager : Singleton<GameManager>, IInitializable
@@ -284,11 +286,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         }
     }
 
-    public void AllPlayersSpawned()
-    {
-        Debug.Log("[GameManager] 모든 플레이어 스폰 완료 확인됨. 게임 시작 가능.");
-    }
-
     public void StartGame(TrackData track, NoteMap map)
     {
         currentTrack = track;
@@ -380,5 +377,161 @@ public class GameManager : Singleton<GameManager>, IInitializable
         GUILayout.Label($"콤보: {scoreSystem.combo}");
         GUILayout.Label($"최고 콤보: {scoreSystem.highCombo}");
         GUILayout.EndArea();
+    }
+
+    public void StartMultiplayer()
+    {
+        if (networkSystem == null)
+        {
+            Debug.LogError("[GameManager] NetworkSystem is not initialized");
+            return;
+        }
+
+        networkSystem.StartMultiplayer();
+    }
+
+    public void StartMultiplayerGame(TrackData track, NoteMap map)
+    {
+        currentTrack = track;
+        noteMap = map;
+
+        if (noteMap == null)
+        {
+            Debug.LogError("[GameManager] 노트맵이 설정되지 않았습니다!");
+            return;
+        }
+
+        List<Func<IEnumerator>> operations = new List<Func<IEnumerator>>
+        {
+            InitializeMultiplayerStageRoutine,
+        };
+
+        networkSystem.LoadSceneMaster(
+            "Test_Stage",
+            operations,
+            () =>
+            {
+                StartCoroutine(MultiplayerStageRoutine());
+            }
+        );
+    }
+
+    public IEnumerator InitializeMultiplayerStageRoutine()
+    {
+        float progress = 0f;
+        float progressStep = 0.2f;
+
+        DataManager.Instance.LoadTrackAudio(
+            currentTrack.id,
+            (audioClip) =>
+            {
+                musicSource.clip = audioClip;
+            }
+        );
+
+        StageLoadingManager.Instance.SetLoadingText("게임 초기화 중...");
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(0.5f);
+
+        noteSpawner = new GameObject("NoteSpawner").AddComponent<NoteSpawner>();
+        noteSpawner.transform.SetParent(transform);
+
+        StageLoadingManager.Instance.SetLoadingText("그리드 생성 중...");
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(0.5f);
+
+        gridGenerator = new GameObject("GridGenerator").AddComponent<GridGenerator>();
+        gridGenerator.transform.SetParent(transform);
+        gridGenerator.Initialize();
+
+        StageLoadingManager.Instance.SetLoadingText("점수 시스템 초기화 중...");
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(0.5f);
+
+        scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
+        scoreSystem.transform.SetParent(transform);
+        scoreSystem.Initialize();
+
+        StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(0.5f);
+
+        // unitAnimationManager = new GameObject(
+        //     "unitAnimationManager"
+        // ).AddComponent<AnimationSystem>();
+        // unitAnimationManager.transform.SetParent(transform);
+        // unitAnimationManager.Initialize();
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(0.5f);
+
+        noteSpawner.Initialize(gridGenerator, noteMap);
+        StageUIManager.Instance.transform.position = new Vector3(0, 2, 0);
+        StageLoadingManager.Instance.SetLoadingText("게임 시작 준비 중...");
+        yield return new WaitForSeconds(0.5f);
+    }
+
+    private IEnumerator MultiplayerStageRoutine()
+    {
+        gridGenerator.SetCellVisible(true);
+
+        Vector3 spawnPosition = PhotonNetwork.IsMasterClient
+            ? MASTER_PLAYER_SPAWN_POSITION
+            : CLIENT_PLAYER_SPAWN_POSITION;
+        PlayerSystem.SpawnPlayer(spawnPosition, true);
+
+        yield return new WaitUntil(() => networkSystem.AreAllPlayersSpawned());
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            yield return new WaitForSeconds(startDelay);
+
+            startDspTime = AudioSettings.dspTime;
+
+            float secondsPerBeat = 60f / noteMap.bpm;
+            float distance = gridGenerator.GridDistance;
+            float targetHitTime = secondsPerBeat * noteMap.beatsPerBar;
+            float noteSpeed = distance / targetHitTime;
+            float noteTravelTime = distance / noteSpeed;
+
+            float preRollTime = noteTravelTime;
+            double musicStartTime = startDspTime + preRollTime;
+
+            networkSystem.photonView.RPC(
+                nameof(StartGamePlayback),
+                RpcTarget.All,
+                startDspTime,
+                preRollTime
+            );
+        }
+    }
+
+    [PunRPC]
+    public void StartGamePlayback(double startTime, float preRollTime)
+    {
+        startDspTime = startTime;
+        isPlaying = true;
+
+        noteSpawner.StartSpawn(startDspTime, preRollTime);
+
+        if (musicSource != null && musicSource.clip != null)
+        {
+            double musicStartTime = startDspTime + preRollTime;
+            musicSource.PlayScheduled(musicStartTime);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[GameManager] 음악 소스나 클립이 설정되지 않았습니다. 노트만 생성됩니다."
+            );
+        }
+
+        Debug.Log("[GameManager] 멀티플레이어 게임 시작!");
     }
 }

@@ -34,7 +34,7 @@ public class TrackSelectionSync : MonoBehaviourPunCallbacks
         Hashtable props = new Hashtable
         {
             { TRACK_GUID_KEY, guidStr },
-            { TRACK_DIFF_KEY, diffInt }
+            { TRACK_DIFF_KEY, diffInt },
         };
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
 
@@ -85,7 +85,8 @@ public class TrackSelectionSync : MonoBehaviourPunCallbacks
             return;
 
         var players = PhotonNetwork.PlayerList;
-        if (players.Length < 2) return;
+        if (players.Length < 2)
+            return;
 
         int randomIndex = UnityEngine.Random.Range(0, players.Length);
         Player chosen = players[randomIndex];
@@ -93,12 +94,13 @@ public class TrackSelectionSync : MonoBehaviourPunCallbacks
         TrackData chosenTrack = GetTrackData(chosen);
         Difficulty chosenDiff = GetDifficulty(chosen);
 
-        if (chosenTrack == null) return;
+        if (chosenTrack == null)
+            return;
 
         Hashtable roomProps = new Hashtable
         {
             { FINAL_TRACK_GUID_KEY, chosenTrack.id.ToString() },
-            { FINAL_TRACK_DIFF_KEY, (int)chosenDiff }
+            { FINAL_TRACK_DIFF_KEY, (int)chosenDiff },
         };
 
         PhotonNetwork.CurrentRoom.SetCustomProperties(roomProps);
@@ -117,8 +119,10 @@ public class TrackSelectionSync : MonoBehaviourPunCallbacks
 
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
-        if (propertiesThatChanged.ContainsKey(FINAL_TRACK_GUID_KEY) &&
-            propertiesThatChanged.ContainsKey(FINAL_TRACK_DIFF_KEY))
+        if (
+            propertiesThatChanged.ContainsKey(FINAL_TRACK_GUID_KEY)
+            && propertiesThatChanged.ContainsKey(FINAL_TRACK_DIFF_KEY)
+        )
         {
             string guidStr = (string)propertiesThatChanged[FINAL_TRACK_GUID_KEY];
             int diffInt = (int)propertiesThatChanged[FINAL_TRACK_DIFF_KEY];

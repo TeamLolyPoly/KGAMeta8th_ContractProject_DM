@@ -11,12 +11,8 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
     public bool IsInitialized => isInitialized;
 
     private bool isSpawned = false;
-
     public bool IsSpawned => isSpawned;
-
     public float fadeTime = 2f;
-
-    private void Start() { }
 
     public void Initialize()
     {
@@ -48,6 +44,8 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
                 multiPlayer.Initialize(isStage);
                 gameObject.name = "RemotePlayer";
             }
+
+            GameManager.Instance.NetworkSystem.SetPlayerSpawned();
         }
         else
         {
@@ -69,8 +67,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
         yield return new WaitForSeconds(0.5f);
 
         isSpawned = true;
-
-        GameManager.Instance.NetworkSystem.SetPlayerSpawned();
     }
 
     public void DespawnPlayer()
