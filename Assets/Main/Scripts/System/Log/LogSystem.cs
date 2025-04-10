@@ -143,7 +143,6 @@ public class LogSystem : MonoBehaviour, IInitializable
             }
 
             File.WriteAllText(logFilePath, sb.ToString());
-            Debug.Log($"로그가 저장되었습니다: {logFilePath}");
         }
         catch (System.Exception e)
         {

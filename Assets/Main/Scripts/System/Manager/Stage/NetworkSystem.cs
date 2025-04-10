@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Photon.Pun;
 using Photon.Realtime;
+using ProjectDM.UI;
 using UnityEngine;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
@@ -17,10 +18,18 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     private bool isPlaying = true;
     private Dictionary<int, bool> playerReadyStatus = new Dictionary<int, bool>();
 
+    private MultiStatusPanel multiStatusPanel;
+    private MultiWaitingPanel multiWaitingPanel;
+
     public bool IsInitialized { get; private set; } = false;
 
     public void StartMultiplayer()
     {
+        multiStatusPanel =
+            StageUIManager.Instance.OpenPanel(PanelType.MultiStatus) as MultiStatusPanel;
+        multiStatusPanel.Close(true);
+        multiWaitingPanel =
+            StageUIManager.Instance.OpenPanel(PanelType.MultiWaiting) as MultiWaitingPanel;
         PhotonNetwork.AutomaticallySyncScene = true;
         PhotonNetwork.ConnectUsingSettings();
         IsInitialized = true;
@@ -66,18 +75,14 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         playerReadyStatus.Clear();
 
         Debug.Log("[NetworkSystem] Room joined: " + PhotonNetwork.CurrentRoom.Name);
-
-        // if (!isMultiplayer)
-        // {
-        //     LoadMultiplayerScene("GameScene");
-        //     return;
-        // }
-
-        // if (PhotonNetwork.CurrentRoom.PlayerCount == 2 && PhotonNetwork.IsMasterClient)
-        // {
-        //     PhotonNetwork.AutomaticallySyncScene = true;
-        //     LoadMultiplayerScene("GameScene");
-        // }
+        if (PhotonNetwork.IsMasterClient)
+        {
+            StartCoroutine(multiWaitingPanel.OnSearchFailed());
+        }
+        else
+        {
+            StartCoroutine(multiWaitingPanel.OnRoomFound());
+        }
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
@@ -89,19 +94,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     {
         playerReadyStatus.Remove(otherPlayer.ActorNumber);
         Debug.Log("[NetworkSystem] Player left: " + otherPlayer.NickName);
-    }
-
-    private Transform GetSpawnPoint()
-    {
-        // 간단한 예: Photon Player ID로 두 개 위치 고정
-        // GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
-
-        // if (spawnPoints.Length >= PhotonNetwork.CurrentRoom.PlayerCount)
-        // {
-        //     int index = PhotonNetwork.LocalPlayer.ActorNumber % spawnPoints.Length;
-        //     return spawnPoints[index].transform;
-        // }
-        return transform;
     }
 
     public void OnReadyButtonClicked()

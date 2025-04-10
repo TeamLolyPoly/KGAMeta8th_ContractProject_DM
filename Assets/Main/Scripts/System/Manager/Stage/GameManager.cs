@@ -35,6 +35,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     public bool isEditMode = false;
 
+    private readonly Vector3 SINGLE_PLAYER_SPAWN_POSITION = new Vector3(0, 2.1f, 0.58f);
+    private readonly Vector3 MASTER_PLAYER_SPAWN_POSITION = new Vector3(0, 2.1f, 0.58f);
+    private readonly Vector3 CLIENT_PLAYER_SPAWN_POSITION = new Vector3(15f, 2.1f, -0.58f);
+
     private void Start()
     {
         Initialize();
@@ -117,10 +121,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
         unitAnimationManager.transform.SetParent(transform);
         unitAnimationManager.Initialize();
 
-        StartCoroutine(StageRoutine());
+        StartCoroutine(SingleStageRoutine());
     }
 
-    public IEnumerator InitializeStageRoutine()
+    public IEnumerator InitializeSingleStageRoutine()
     {
         float progress = 0f;
         float progressStep = 0.2f;
@@ -299,18 +303,18 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         StageLoadingManager.Instance.LoadScene(
             "Test_Stage",
-            InitializeStageRoutine,
+            InitializeSingleStageRoutine,
             () =>
             {
-                StartCoroutine(StageRoutine());
+                StartCoroutine(SingleStageRoutine());
             }
         );
     }
 
-    private IEnumerator StageRoutine()
+    private IEnumerator SingleStageRoutine()
     {
         gridGenerator.SetCellVisible(true);
-        PlayerSystem.SpawnPlayer(new Vector3(0, 2.1f, 0.58f), true);
+        PlayerSystem.SpawnPlayer(SINGLE_PLAYER_SPAWN_POSITION, true);
         yield return new WaitUntil(() => PlayerSystem.IsSpawned);
 
         yield return new WaitForSeconds(startDelay);
@@ -358,8 +362,8 @@ public class GameManager : Singleton<GameManager>, IInitializable
             musicSource.Stop();
         }
 
-        ResultDetailPanel resultDetailPanel =
-            StageUIManager.Instance.OpenPanel(PanelType.ResultDetail) as ResultDetailPanel;
+        SingleResultPanel resultDetailPanel =
+            StageUIManager.Instance.OpenPanel(PanelType.SingleResult) as SingleResultPanel;
         resultDetailPanel.Initialize(scoreSystem.GetScoreData());
     }
 

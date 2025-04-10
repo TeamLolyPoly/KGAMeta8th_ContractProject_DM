@@ -6,9 +6,9 @@ using ProjectDM.UI;
 using TMPro;
 using UnityEngine;
 
-public class ResultDetailPanel : Panel
+public class SingleResultPanel : Panel
 {
-    public override PanelType PanelType => PanelType.ResultDetail;
+    public override PanelType PanelType => PanelType.SingleResult;
 
     public TextMeshProUGUI totalScoreText;
 

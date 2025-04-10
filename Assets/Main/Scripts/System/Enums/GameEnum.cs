@@ -81,17 +81,30 @@ public enum Engagement
 
 public enum PanelType
 {
+    #region 스테이지 전용
+
+    #region 공용
     Title,
+    Loading,
+    Option,
     Mode,
     AlbumSelect,
-    TrackSelect,
-    DifficultySelect,
-    ResultDetail,
-    Result,
-    Option,
-    Scoreboard,
-    Loading,
-    PopUp,
+    #endregion
+
+    #region 싱글전용
+    SingleTrackSelect,
+    SingleResult,
+    #endregion
+
+    #region 멀티전용
+    MultiWaiting,
+    MultiTrackSelect,
+    MultiRoom,
+    MultiResult,
+    MultiStatus,
+    #endregion
+
+    #endregion
 
     // 에디터 전용
     NoteEditor,

@@ -5,9 +5,9 @@ using ProjectDM.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TrackSelectPanel : Panel
+public class MultiTrackSelectPanel : Panel
 {
-    public override PanelType PanelType => PanelType.TrackSelect;
+    public override PanelType PanelType => PanelType.MultiTrackSelect;
 
     private TrackData selectedTrack;
     private NoteMapData selectedNoteMapData;
@@ -74,7 +74,7 @@ public class TrackSelectPanel : Panel
         foreach (var track in tracks)
         {
             TrackSelectButton trackButton = Instantiate(trackButtonPrefab, trackParent);
-            trackButton.Initialize(track, this);
+            //trackButton.Initialize(track, this);
             trackButtons.Add(trackButton);
         }
         closeButton.onClick.AddListener(OnCloseButtonClick);

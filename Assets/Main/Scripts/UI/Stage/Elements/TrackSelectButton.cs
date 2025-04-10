@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class TrackSelectButton : MonoBehaviour
 {
-    private TrackSelectPanel trackSelectPanel;
+    private SingleTrackSelectPanel trackSelectPanel;
 
     [SerializeField]
     private ShopButtonManager trackButton;
@@ -21,7 +21,7 @@ public class TrackSelectButton : MonoBehaviour
 
     public TrackData Track => track;
 
-    public void Initialize(TrackData track, TrackSelectPanel trackSelectPanel)
+    public void Initialize(TrackData track, SingleTrackSelectPanel trackSelectPanel)
     {
         this.track = track;
         this.trackSelectPanel = trackSelectPanel;
