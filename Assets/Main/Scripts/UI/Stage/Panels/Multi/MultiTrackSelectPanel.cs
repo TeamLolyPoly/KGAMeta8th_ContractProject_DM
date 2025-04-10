@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class MultiTrackSelectPanel : Panel
 {
-    public override PanelType PanelType => PanelType.MultiTrackSelect;
+    public override PanelType PanelType => PanelType.Multi_TrackSelect;
 
     private TrackData selectedTrack;
     private NoteMapData selectedNoteMapData;
@@ -17,7 +17,7 @@ public class MultiTrackSelectPanel : Panel
     private ButtonManager closeButton;
 
     [SerializeField]
-    private TrackSelectButton trackButtonPrefab;
+    private MultiTrackSelectButton trackButtonPrefab;
 
     [SerializeField]
     private Transform trackParent;
@@ -44,24 +44,15 @@ public class MultiTrackSelectPanel : Panel
     private Image hardButtonBG;
 
     [SerializeField]
-    private BoxButtonManager openRankButton;
+    private ButtonManager selectButton;
 
     [SerializeField]
-    private ButtonManager startButton;
+    private BoxButtonManager albumArtButton;
 
     [SerializeField]
     private Color disabledColor;
 
-    [SerializeField]
-    private Animator rankPanel;
-
-    [SerializeField]
-    private ButtonManager rankCloseButton;
-
-    [SerializeField]
-    private RankBox rankBoxPrefab;
-
-    private List<TrackSelectButton> trackButtons = new List<TrackSelectButton>();
+    private List<MultiTrackSelectButton> trackButtons = new List<MultiTrackSelectButton>();
 
     public override void Open()
     {
@@ -73,8 +64,8 @@ public class MultiTrackSelectPanel : Panel
     {
         foreach (var track in tracks)
         {
-            TrackSelectButton trackButton = Instantiate(trackButtonPrefab, trackParent);
-            //trackButton.Initialize(track, this);
+            MultiTrackSelectButton trackButton = Instantiate(trackButtonPrefab, trackParent);
+            trackButton.Initialize(track, this);
             trackButtons.Add(trackButton);
         }
         closeButton.onClick.AddListener(OnCloseButtonClick);
@@ -96,24 +87,25 @@ public class MultiTrackSelectPanel : Panel
         difficulty_EasyButton.onClick.AddListener(() => SetNoteMapData(Difficulty.Easy));
         difficulty_NormalButton.onClick.AddListener(() => SetNoteMapData(Difficulty.Normal));
         difficulty_HardButton.onClick.AddListener(() => SetNoteMapData(Difficulty.Hard));
-        startButton.onClick.AddListener(OnStartButtonClick);
-        startButton.Interactable(false);
+        selectButton.onClick.AddListener(OnStartButtonClick);
+        selectButton.Interactable(false);
 
         CheckNoteMapData();
 
         if (selectedTrack.AlbumArt != null)
         {
-            openRankButton.SetBackground(selectedTrack.AlbumArt);
+            albumArtButton.SetBackground(selectedTrack.AlbumArt);
         }
         else
         {
-            openRankButton.SetBackground(StageUIManager.Instance.DefaultAlbumArt);
+            albumArtButton.SetBackground(StageUIManager.Instance.DefaultAlbumArt);
         }
 
-        openRankButton.buttonTitle = track.trackName;
-        openRankButton.UpdateUI();
+        albumArtButton.buttonTitle = track.trackName;
+        albumArtButton.UpdateUI();
+        albumArtButton.SetInteractable(false);
 
-        startButton.Interactable(false);
+        selectButton.Interactable(false);
         trackInfoPanel.SetBool("subOpen", true);
     }
 
@@ -178,7 +170,7 @@ public class MultiTrackSelectPanel : Panel
                 break;
         }
 
-        startButton.Interactable(true);
+        selectButton.Interactable(true);
     }
 
     private void OnStartButtonClick()
@@ -195,9 +187,8 @@ public class MultiTrackSelectPanel : Panel
         difficulty_EasyButton.onClick.RemoveAllListeners();
         difficulty_NormalButton.onClick.RemoveAllListeners();
         difficulty_HardButton.onClick.RemoveAllListeners();
-        openRankButton.onClick.RemoveAllListeners();
         closeButton.onClick.RemoveAllListeners();
-        startButton.onClick.RemoveAllListeners();
+        selectButton.onClick.RemoveAllListeners();
     }
 
     public override void Close(bool objActive = true)
@@ -211,7 +202,6 @@ public class MultiTrackSelectPanel : Panel
         selectedTrack = null;
         selectedNoteMapData = null;
         selectedNoteMap = null;
-        rankPanel.SetBool("subOpen", false);
         trackInfoPanel.SetBool("subOpen", false);
         base.Close(objActive);
     }

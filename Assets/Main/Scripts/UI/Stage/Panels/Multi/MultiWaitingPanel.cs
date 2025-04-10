@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MultiWaitingPanel : Panel
 {
-    public override PanelType PanelType => PanelType.MultiWaiting;
+    public override PanelType PanelType => PanelType.Multi_Waiting;
 
     public Animator failedBox;
     public Animator waitingBox;
@@ -22,8 +22,7 @@ public class MultiWaitingPanel : Panel
         findBox.SetBool("isOpen", true);
         yield return new WaitForSeconds(1f);
         Close(false);
-        StageUIManager.Instance.OpenPanel(PanelType.MultiStatus);
-        StageUIManager.Instance.OpenPanel(PanelType.MultiRoom);
+        StageUIManager.Instance.OpenPanel(PanelType.Multi_Room);
     }
 
     public IEnumerator OnSearchFailed()
@@ -32,8 +31,7 @@ public class MultiWaitingPanel : Panel
         failedBox.SetBool("isOpen", true);
         yield return new WaitForSeconds(1f);
         Close(false);
-        StageUIManager.Instance.OpenPanel(PanelType.MultiStatus);
-        StageUIManager.Instance.OpenPanel(PanelType.MultiRoom);
+        StageUIManager.Instance.OpenPanel(PanelType.Multi_Room);
     }
 
     public override void Close(bool objActive = true)

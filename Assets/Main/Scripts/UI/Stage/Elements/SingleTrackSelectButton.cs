@@ -1,10 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using Michsky.UI.Heat;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TrackSelectButton : MonoBehaviour
+public class SingleTrackSelectButton : MonoBehaviour
 {
     private SingleTrackSelectPanel trackSelectPanel;
 

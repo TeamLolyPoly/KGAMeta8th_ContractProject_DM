@@ -8,7 +8,7 @@ using UnityEngine;
 
 public class SingleResultPanel : Panel
 {
-    public override PanelType PanelType => PanelType.SingleResult;
+    public override PanelType PanelType => PanelType.Single_Result;
 
     public TextMeshProUGUI totalScoreText;
 

@@ -123,7 +123,7 @@ public class CarouselMenu : MonoBehaviour
     private void OnItemClick(string albumName, List<TrackData> albumTracks)
     {
         SingleTrackSelectPanel trackSelectPanel =
-            StageUIManager.Instance.OpenPanel(PanelType.SingleTrackSelect)
+            StageUIManager.Instance.OpenPanel(PanelType.Single_TrackSelect)
             as SingleTrackSelectPanel;
         trackSelectPanel.Initialize(albumTracks);
 
