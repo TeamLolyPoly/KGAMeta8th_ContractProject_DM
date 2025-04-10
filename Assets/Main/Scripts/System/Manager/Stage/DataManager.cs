@@ -290,8 +290,6 @@ public class DataManager : Singleton<DataManager>
 
             if (!File.Exists(albumArtPath))
             {
-                Debug.LogWarning($"[TrackDataManager] 앨범 아트 파일이 없습니다: {albumArtPath}");
-                progress = (i + 1) * progressPerTrack;
                 yield return progress;
                 continue;
             }
