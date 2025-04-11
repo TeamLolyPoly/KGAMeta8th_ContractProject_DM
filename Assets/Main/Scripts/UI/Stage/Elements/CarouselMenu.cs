@@ -129,7 +129,9 @@ public class CarouselMenu : MonoBehaviour
                 StageUIManager.Instance.OpenPanel(PanelType.Multi_TrackSelect)
                 as MultiTrackSelectPanel;
             trackSelectPanel.Initialize(albumTracks);
-
+            MultiRoomPanel multiRoomPanel =
+                StageUIManager.Instance.GetPanel(PanelType.Multi_Room) as MultiRoomPanel;
+            trackSelectPanel.OnTrackSelected += multiRoomPanel.OnLocalTrackSelected;
             StageUIManager.Instance.ClosePanel(PanelType.AlbumSelect);
         }
         else

@@ -88,7 +88,7 @@ public class MultiTrackSelectPanel : Panel
         difficulty_EasyButton.onClick.AddListener(() => SetNoteMapData(Difficulty.Easy));
         difficulty_NormalButton.onClick.AddListener(() => SetNoteMapData(Difficulty.Normal));
         difficulty_HardButton.onClick.AddListener(() => SetNoteMapData(Difficulty.Hard));
-        selectButton.onClick.AddListener(OnSelecteButtonClick);
+        selectButton.onClick.AddListener(OnSelectButtonClick);
         selectButton.Interactable(false);
 
         CheckNoteMapData();
@@ -174,7 +174,7 @@ public class MultiTrackSelectPanel : Panel
         selectButton.Interactable(true);
     }
 
-    private void OnSelecteButtonClick()
+    private void OnSelectButtonClick()
     {
         if (selectedNoteMapData != null)
         {

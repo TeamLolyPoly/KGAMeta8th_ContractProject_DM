@@ -128,7 +128,7 @@ public class MultiRoomPanel : Panel
         StageUIManager.Instance.OpenPanel(PanelType.Title);
     }
 
-    private void OnLocalTrackSelected(TrackData track, Difficulty difficulty)
+    public void OnLocalTrackSelected(TrackData track, Difficulty difficulty)
     {
         print($"OnLocalTrackSelected: {track.trackName} , {difficulty}");
         localSelectedTrack = track;
