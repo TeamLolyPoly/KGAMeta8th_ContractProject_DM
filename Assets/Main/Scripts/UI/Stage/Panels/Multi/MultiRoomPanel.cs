@@ -39,7 +39,13 @@ public class MultiRoomPanel : Panel
     private ButtonManager TrackSelectButton;
 
     [SerializeField]
+    private Animator TrackSelectButtonAnimator;
+
+    [SerializeField]
     private ButtonManager ReadyButton;
+
+    [SerializeField]
+    private Animator ReadyButtonAnimator;
 
     [Header("============Remote Player============")]
     [SerializeField]
@@ -141,11 +147,14 @@ public class MultiRoomPanel : Panel
         {
             LocalPlayerSelectedDifficulty[i].SetActive(i == (int)difficulty);
         }
-
+        TrackSelectButtonAnimator.SetBool("subOpen", false);
         TrackSelectButton.gameObject.SetActive(false);
-        ReadyButton.Interactable(true);
+        ReadyButton.gameObject.SetActive(true);
+        ReadyButtonAnimator.SetBool("subOpen", true);
 
         networkSystem.SelectTrack(track.id, difficulty);
+
+        Open();
     }
 
     private void OnTrackUpdated(int actorNumber, TrackData track, Difficulty difficulty)
@@ -210,6 +219,7 @@ public class MultiRoomPanel : Panel
         RemotePlayerSelectingBox.SetActive(true);
         PlayerButtonBox.SetActive(true);
         TrackSelectButton.gameObject.SetActive(true);
+        TrackSelectButtonAnimator.SetBool("subOpen", true);
     }
 
     public void OnRemotePlayerLeft()

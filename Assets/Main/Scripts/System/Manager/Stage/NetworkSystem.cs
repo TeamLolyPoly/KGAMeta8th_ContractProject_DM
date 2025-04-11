@@ -282,15 +282,18 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         if (isPlaying)
         {
             Debug.LogWarning($"[NetworkSystem] Server disconnected: {cause}");
-            StageUIManager.Instance.CloseAllPanels();
-            StageUIManager.Instance.OpenPopUp(
-                "네트워크 오류",
-                "서버와 연결이 끊어졌습니다. 다시 시도해주세요.",
-                () =>
-                {
-                    StageUIManager.Instance.OpenPanel(PanelType.Mode);
-                }
-            );
+            if (StageUIManager.Instance != null)
+            {
+                StageUIManager.Instance.CloseAllPanels();
+                StageUIManager.Instance.OpenPopUp(
+                    "네트워크 오류",
+                    "서버와 연결이 끊어졌습니다. 다시 시도해주세요.",
+                    () =>
+                    {
+                        StageUIManager.Instance.OpenPanel(PanelType.Mode);
+                    }
+                );
+            }
         }
     }
 
