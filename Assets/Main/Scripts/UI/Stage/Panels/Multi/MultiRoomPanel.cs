@@ -139,7 +139,7 @@ public class MultiRoomPanel : Panel
     {
         localSelectedTrack = track;
 
-        LocalPlayerTrackNameText.text = track.trackName;
+        LocalPlayerTrackNameText.text = $"{track.artistName} - {track.trackName}";
         LocalTrackNameBox.SetActive(true);
         LocalTrackDifficultyBox.SetActive(true);
 
