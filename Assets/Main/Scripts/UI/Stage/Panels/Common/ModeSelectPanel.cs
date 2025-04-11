@@ -2,7 +2,7 @@ using Michsky.UI.Heat;
 using ProjectDM.UI;
 using UnityEngine;
 
-public class ModePanel : Panel
+public class ModeSelectPanel : Panel
 {
     public override PanelType PanelType => PanelType.Mode;
 
@@ -45,8 +45,7 @@ public class ModePanel : Panel
 
     private void OnMultiModeButtonClick()
     {
-        //todo : 멀티모드 구현해야함  기획서 참고! 일단 비활성화 처리
-        multiModeButton.isInteractable = false;
-        multiModeButton.UpdateUI();
+        Close(true);
+        GameManager.Instance.StartMultiplayer();
     }
 }

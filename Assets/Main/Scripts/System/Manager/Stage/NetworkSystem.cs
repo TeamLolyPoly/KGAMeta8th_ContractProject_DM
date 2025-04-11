@@ -9,18 +9,31 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class NetworkSystem : MonoBehaviourPunCallbacks
 {
-    public static class Keys
+    public static class LobbyData
     {
         public const string IS_SPAWNED = "IsSpawned";
+        public const string IS_PLAYER_READY = "IsPlayerReady";
         public const string TRACK_GUID = "SelectedTrackGUID";
         public const string TRACK_DIFFICULTY = "SelectedTrackDiff";
         public const string FINAL_TRACK_GUID = "FinalTrackGUID";
         public const string FINAL_TRACK_DIFFICULTY = "FinalTrackDiff";
+        public const string READY_TO_LOAD_GAME = "ReadyToLoadGame";
+    }
+
+    public static class GameResultData
+    {
+        public const string SCORE = "Score";
+        public const string HIGH_COMBO = "HighCombo";
+        public const string NOTE_HIT_COUNT = "NoteHitCount";
+        public const string TOTAL_NOTE_COUNT = "TotalNoteCount";
+        public const string MISS_COUNT = "MissCount";
+        public const string GOOD_COUNT = "GoodCount";
+        public const string GREAT_COUNT = "GreatCount";
+        public const string PERFECT_COUNT = "PerfectCount";
     }
 
     private bool isPlaying = true;
     public bool IsInitialized { get; private set; } = false;
-    private Dictionary<int, bool> playerReadyStatus = new Dictionary<int, bool>();
     private MultiWaitingPanel multiWaitingPanel;
     private MultiRoomPanel multiRoomPanel;
     public event Action<int, TrackData, Difficulty> OnTrackUpdated;
@@ -34,6 +47,11 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             StageUIManager.Instance.OpenPanel(PanelType.Multi_Waiting) as MultiWaitingPanel;
         PhotonNetwork.ConnectUsingSettings();
         IsInitialized = true;
+    }
+
+    public void SetMultiRoomPanel(MultiRoomPanel panel)
+    {
+        multiRoomPanel = panel;
     }
 
     public override void OnJoinedLobby()
@@ -72,8 +90,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        playerReadyStatus.Clear();
-
         Debug.Log("[NetworkSystem] Room joined: " + PhotonNetwork.CurrentRoom.Name);
         if (PhotonNetwork.IsMasterClient)
         {
@@ -97,7 +113,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
-        playerReadyStatus.Remove(otherPlayer.ActorNumber);
         Debug.Log("[NetworkSystem] Player left: " + otherPlayer.NickName);
 
         OnRemotePlayerLeft?.Invoke();
@@ -115,31 +130,15 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
         Hashtable props = new Hashtable
         {
-            { Keys.TRACK_GUID, guidStr },
-            { Keys.TRACK_DIFFICULTY, diffInt },
+            { LobbyData.TRACK_GUID, guidStr },
+            { LobbyData.TRACK_DIFFICULTY, diffInt },
         };
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
-
-        photonView.RPC(nameof(RPCSelectTrack), RpcTarget.Others, guidStr, diffInt);
-    }
-
-    [PunRPC]
-    private void RPCSelectTrack(string guidStr, int diffInt, PhotonMessageInfo info)
-    {
-        if (Guid.TryParse(guidStr, out Guid trackGuid))
-        {
-            TrackData track = DataManager.Instance.TrackDataList.Find(t => t.id == trackGuid);
-            if (track != null)
-            {
-                Difficulty difficulty = (Difficulty)diffInt;
-                OnTrackUpdated?.Invoke(info.Sender.ActorNumber, track, difficulty);
-            }
-        }
     }
 
     public TrackData GetTrackData(Player player)
     {
-        if (player.CustomProperties.TryGetValue(Keys.TRACK_GUID, out object guidObj))
+        if (player.CustomProperties.TryGetValue(LobbyData.TRACK_GUID, out object guidObj))
         {
             if (guidObj is string guidStr && Guid.TryParse(guidStr, out Guid trackGuid))
             {
@@ -151,7 +150,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public Difficulty GetDifficulty(Player player)
     {
-        if (player.CustomProperties.TryGetValue(Keys.TRACK_DIFFICULTY, out object diffObj))
+        if (player.CustomProperties.TryGetValue(LobbyData.TRACK_DIFFICULTY, out object diffObj))
         {
             if (diffObj is int diffInt)
             {
@@ -177,31 +176,44 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         TrackData chosenTrack = GetTrackData(chosen);
         Difficulty chosenDiff = GetDifficulty(chosen);
 
-        bool isLocalTrackSelected = chosen == PhotonNetwork.LocalPlayer;
-
         if (chosenTrack == null)
             return;
 
         Hashtable roomProps = new Hashtable
         {
-            { Keys.FINAL_TRACK_GUID, chosenTrack.id.ToString() },
-            { Keys.FINAL_TRACK_DIFFICULTY, (int)chosenDiff },
+            { LobbyData.FINAL_TRACK_GUID, chosenTrack.id.ToString() },
+            { LobbyData.FINAL_TRACK_DIFFICULTY, (int)chosenDiff },
+            { "SelectedPlayerID", chosen.ActorNumber },
         };
 
         PhotonNetwork.CurrentRoom.SetCustomProperties(roomProps);
-
-        photonView.RPC(nameof(NotfyFinalTrack), RpcTarget.All, isLocalTrackSelected);
     }
 
-    [PunRPC]
-    private void NotfyFinalTrack(bool isLocalTrackSelected)
+    public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
-        if (isLocalTrackSelected)
+        if (
+            propertiesThatChanged.ContainsKey(LobbyData.FINAL_TRACK_GUID)
+            || propertiesThatChanged.ContainsKey(LobbyData.FINAL_TRACK_DIFFICULTY)
+        )
         {
+            int selectedPlayerID = 0;
+            if (propertiesThatChanged.ContainsKey("SelectedPlayerID"))
+            {
+                selectedPlayerID = (int)propertiesThatChanged["SelectedPlayerID"];
+            }
+            else if (PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("SelectedPlayerID"))
+            {
+                selectedPlayerID = (int)
+                    PhotonNetwork.CurrentRoom.CustomProperties["SelectedPlayerID"];
+            }
+
+            bool isLocalTrackSelected = selectedPlayerID == PhotonNetwork.LocalPlayer.ActorNumber;
+
             MultiTrackDecisionPanel multiTrackDecisionPanel =
                 StageUIManager.Instance.OpenPanel(PanelType.Multi_TrackDecision)
                 as MultiTrackDecisionPanel;
-            multiTrackDecisionPanel.StartSpinning(isLocalTrackSelected);
+
+            StartCoroutine(multiTrackDecisionPanel.StartSpinning(isLocalTrackSelected));
         }
     }
 
@@ -209,40 +221,18 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.InRoom)
         {
-            photonView.RPC(
-                nameof(RPCPlayerReady),
-                RpcTarget.Others,
-                PhotonNetwork.LocalPlayer.ActorNumber
-            );
-        }
-    }
-
-    [PunRPC]
-    private void RPCPlayerReady(int actorNumber)
-    {
-        Player player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
-        if (player != null)
-        {
-            playerReadyStatus[actorNumber] = true;
-            OnPlayerReadyStatusChanged?.Invoke(player);
-
-            if (multiRoomPanel != null)
-            {
-                multiRoomPanel.OnRemotePlayerReady();
-            }
-
-            if (PhotonNetwork.IsMasterClient && AreAllPlayersReady())
-            {
-                DecideFinalTrack();
-                photonView.RPC(nameof(StartGame), RpcTarget.All);
-            }
+            Hashtable props = new Hashtable { { LobbyData.IS_PLAYER_READY, true } };
+            PhotonNetwork.LocalPlayer.SetCustomProperties(props);
         }
     }
 
     private bool AreAllPlayersReady()
     {
-        return playerReadyStatus.Count == PhotonNetwork.CurrentRoom.PlayerCount
-            && playerReadyStatus.All(status => status.Value);
+        return PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.PlayerList.Length
+            && PhotonNetwork.PlayerList.All(p =>
+                p.CustomProperties.ContainsKey(LobbyData.IS_PLAYER_READY)
+                && (bool)p.CustomProperties[LobbyData.IS_PLAYER_READY] == true
+            );
     }
 
     [PunRPC]
@@ -250,11 +240,11 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     {
         if (
             PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(
-                Keys.FINAL_TRACK_GUID,
+                LobbyData.FINAL_TRACK_GUID,
                 out object guidObj
             )
             && PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(
-                Keys.FINAL_TRACK_DIFFICULTY,
+                LobbyData.FINAL_TRACK_DIFFICULTY,
                 out object diffObj
             )
         )
@@ -359,25 +349,39 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         StageLoadingManager.Instance.LoadScene(sceneName, operations, onComplete);
     }
 
+    public void SetPlayerReadyToLoadGame()
+    {
+        Hashtable props = new Hashtable { { LobbyData.READY_TO_LOAD_GAME, true } };
+        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+    }
+
     public void SetPlayerSpawned()
     {
-        Hashtable props = new Hashtable { { Keys.IS_SPAWNED, true } };
+        Hashtable props = new Hashtable { { LobbyData.IS_SPAWNED, true } };
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+    }
+
+    public bool AreAllPlayersReadyToStartGame()
+    {
+        return PhotonNetwork.PlayerList.All(p =>
+            p.CustomProperties.ContainsKey(LobbyData.READY_TO_LOAD_GAME)
+            && (bool)p.CustomProperties[LobbyData.READY_TO_LOAD_GAME] == true
+        );
     }
 
     public bool AreAllPlayersSpawned()
     {
         return PhotonNetwork.PlayerList.All(p =>
-            p.CustomProperties.ContainsKey(Keys.IS_SPAWNED)
-            && (bool)p.CustomProperties[Keys.IS_SPAWNED]
+            p.CustomProperties.ContainsKey(LobbyData.IS_SPAWNED)
+            && (bool)p.CustomProperties[LobbyData.IS_SPAWNED] == true
         );
     }
 
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
     {
         if (
-            changedProps.ContainsKey(Keys.TRACK_GUID)
-            || changedProps.ContainsKey(Keys.TRACK_DIFFICULTY)
+            changedProps.ContainsKey(LobbyData.TRACK_GUID)
+            || changedProps.ContainsKey(LobbyData.TRACK_DIFFICULTY)
         )
         {
             var track = GetTrackData(targetPlayer);
@@ -385,6 +389,33 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             if (track != null)
             {
                 OnTrackUpdated?.Invoke(targetPlayer.ActorNumber, track, diff);
+            }
+        }
+        if (changedProps.ContainsKey(LobbyData.IS_PLAYER_READY))
+        {
+            if (changedProps[LobbyData.IS_PLAYER_READY] is bool isReady && isReady)
+            {
+                OnPlayerReadyStatusChanged?.Invoke(targetPlayer);
+
+                if (multiRoomPanel != null && targetPlayer != PhotonNetwork.LocalPlayer)
+                {
+                    multiRoomPanel.OnRemotePlayerReady();
+                }
+            }
+
+            if (AreAllPlayersReady())
+            {
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    DecideFinalTrack();
+                }
+            }
+        }
+        if (changedProps.ContainsKey(LobbyData.READY_TO_LOAD_GAME))
+        {
+            if (AreAllPlayersReadyToStartGame())
+            {
+                photonView.RPC(nameof(StartGame), RpcTarget.All);
             }
         }
     }

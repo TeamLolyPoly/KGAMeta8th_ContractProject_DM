@@ -77,6 +77,7 @@ public class MultiRoomPanel : Panel
 
         if (networkSystem != null)
         {
+            networkSystem.SetMultiRoomPanel(this);
             networkSystem.OnTrackUpdated += OnTrackUpdated;
             networkSystem.OnRemotePlayerJoined += OnRemotePlayerJoined;
             networkSystem.OnRemotePlayerLeft += OnRemotePlayerLeft;

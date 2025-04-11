@@ -37,9 +37,10 @@ public class SlotMachineEffect : MonoBehaviour
 
     private bool isSpinning = false;
     private bool currentPanel = true;
+    private bool isFinished = false;
+    public bool IsFinished => isFinished;
     private Color localPanelOriginalColor;
     private Color remotePlayerOriginalColor;
-    private bool finalSelection;
 
     private void Start()
     {
@@ -53,14 +54,14 @@ public class SlotMachineEffect : MonoBehaviour
     {
         if (!isSpinning)
         {
-            finalSelection = selectLocal;
-            StartCoroutine(SpinEffect());
+            StartCoroutine(SpinEffect(selectLocal));
         }
     }
 
-    private IEnumerator SpinEffect()
+    private IEnumerator SpinEffect(bool selectLocal)
     {
         isSpinning = true;
+        isFinished = false;
         float elapsedTime = 0f;
         float progress;
         float currentInterval;
@@ -95,19 +96,20 @@ public class SlotMachineEffect : MonoBehaviour
             yield return new WaitForSeconds(currentInterval);
         }
 
-        SetPanelColor(localPlayerBG, finalSelection ? localPanelOriginalColor : blinkColor);
-        SetPanelColor(remotePlayerBG, finalSelection ? blinkColor : remotePlayerOriginalColor);
+        SetPanelColor(localPlayerBG, selectLocal ? localPanelOriginalColor : blinkColor);
+        SetPanelColor(remotePlayerBG, selectLocal ? blinkColor : remotePlayerOriginalColor);
 
-        SpawnSelectionParticle();
+        SpawnSelectionParticle(selectLocal);
 
         isSpinning = false;
+        isFinished = true;
     }
 
-    private void SpawnSelectionParticle()
+    private void SpawnSelectionParticle(bool selectLocal)
     {
         if (particlePrefab != null)
         {
-            RectTransform selectedPanel = finalSelection
+            RectTransform selectedPanel = selectLocal
                 ? localPlayerBG.rectTransform
                 : remotePlayerBG.rectTransform;
 

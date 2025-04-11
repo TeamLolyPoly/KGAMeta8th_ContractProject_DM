@@ -486,7 +486,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
             : CLIENT_PLAYER_SPAWN_POSITION;
         PlayerSystem.SpawnPlayer(spawnPosition, true);
 
-        yield return new WaitUntil(() => networkSystem.AreAllPlayersSpawned());
+        while (!networkSystem.AreAllPlayersSpawned())
+        {
+            yield return null;
+        }
 
         if (PhotonNetwork.IsMasterClient)
         {

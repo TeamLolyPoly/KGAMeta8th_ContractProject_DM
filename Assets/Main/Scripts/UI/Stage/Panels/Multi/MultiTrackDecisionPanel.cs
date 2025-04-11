@@ -1,3 +1,4 @@
+using System.Collections;
 using Michsky.UI.Heat;
 using Photon.Pun;
 using ProjectDM.UI;
@@ -25,7 +26,6 @@ public class MultiTrackDecisionPanel : Panel
 
     public override void Open()
     {
-        base.Open();
         TrackData localTrack = GameManager.Instance.NetworkSystem.GetTrackData(
             PhotonNetwork.LocalPlayer
         );
@@ -46,10 +46,13 @@ public class MultiTrackDecisionPanel : Panel
             remoteTrackDifficultyBox[(int)remoteDifficulty].SetActive(true);
             remoteTrackNameBox.SetBackground(remoteTrack.AlbumArt);
         }
+        base.Open();
     }
 
-    public void StartSpinning(bool isLocalTrackSelected)
+    public IEnumerator StartSpinning(bool isLocalTrackSelected)
     {
         slotEffect.StartSpinningWithResult(isLocalTrackSelected);
+        yield return new WaitUntil(() => slotEffect.IsFinished);
+        GameManager.Instance.NetworkSystem.SetPlayerReadyToLoadGame();
     }
 }

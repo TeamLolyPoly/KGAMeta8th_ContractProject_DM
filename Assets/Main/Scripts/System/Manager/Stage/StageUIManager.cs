@@ -11,7 +11,7 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
 
-    private List<Panel> PanelPrefabs = new List<Panel>();
+    private List<Panel> panelPrefabs = new List<Panel>();
 
     private List<Panel> panels = new List<Panel>();
     public List<Panel> Panels => panels;
@@ -54,9 +54,15 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
 
     private void LoadResources()
     {
-        if (PanelPrefabs.Count == 0)
+        if (panelPrefabs.Count == 0)
         {
-            PanelPrefabs = Resources.LoadAll<Panel>("Prefabs/UI/Panels/Stage").ToList();
+            panelPrefabs = Resources.LoadAll<Panel>("Prefabs/UI/Panels/Stage/Single").ToList();
+            panelPrefabs.AddRange(
+                Resources.LoadAll<Panel>("Prefabs/UI/Panels/Stage/Multi").ToList()
+            );
+            panelPrefabs.AddRange(
+                Resources.LoadAll<Panel>("Prefabs/UI/Panels/Stage/Common").ToList()
+            );
         }
         if (popUpWindow == null)
         {
@@ -81,7 +87,7 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
         }
         else
         {
-            Panel prefab = PanelPrefabs.Find(p => p.PanelType == panelType);
+            Panel prefab = panelPrefabs.Find(p => p.PanelType == panelType);
             if (prefab != null)
             {
                 Panel instance = Instantiate(prefab, mainCanvas.transform);
