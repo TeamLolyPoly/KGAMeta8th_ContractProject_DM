@@ -9,7 +9,6 @@ public class SlotMachineEffectTest : MonoBehaviour
 
     private void Update()
     {
-        // 1키를 누르면 첫 번째 패널 선택
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             if (slotEffect != null)
@@ -17,7 +16,6 @@ public class SlotMachineEffectTest : MonoBehaviour
                 slotEffect.StartSpinningWithResult(true);
             }
         }
-        // 2키를 누르면 두 번째 패널 선택
         else if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             if (slotEffect != null)

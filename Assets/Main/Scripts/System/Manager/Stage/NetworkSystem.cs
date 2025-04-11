@@ -41,13 +41,45 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     public event Action OnRemotePlayerJoined;
     public event Action OnRemotePlayerLeft;
 
+    public void Initialize()
+    {
+        if (photonView == null)
+        {
+            PhotonView view = gameObject.AddComponent<PhotonView>();
+            view.ViewID = 1;
+            view.Synchronization = ViewSynchronization.Off;
+            view.OwnershipTransfer = OwnershipOption.Fixed;
+        }
+    }
+
     public void StartMultiplayer()
     {
         multiWaitingPanel =
             StageUIManager.Instance.OpenPanel(PanelType.Multi_Waiting) as MultiWaitingPanel;
-        gameObject.AddComponent<PhotonView>();
-        PhotonNetwork.ConnectUsingSettings();
+
+        if (!PhotonNetwork.IsConnected)
+        {
+            PhotonNetwork.ConnectUsingSettings();
+        }
+        else
+        {
+            PhotonNetwork.Disconnect();
+            StartCoroutine(ReconnectAfterDisconnect());
+        }
+
         IsInitialized = true;
+    }
+
+    private IEnumerator ReconnectAfterDisconnect()
+    {
+        while (PhotonNetwork.IsConnected)
+        {
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.5f);
+
+        PhotonNetwork.ConnectUsingSettings();
     }
 
     public override void OnConnectedToMaster()
@@ -347,13 +379,24 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                 }
             );
 
-            photonView.RPC(
-                nameof(LoadSceneClient),
-                RpcTarget.Others,
-                sceneName,
-                operations,
-                onComplete
-            );
+            // Check if photonView is valid
+            if (photonView != null && photonView.ViewID > 0)
+            {
+                photonView.RPC(
+                    nameof(LoadSceneClient),
+                    RpcTarget.Others,
+                    sceneName,
+                    operations,
+                    onComplete
+                );
+            }
+            else
+            {
+                Debug.LogError(
+                    "[NetworkSystem] Invalid PhotonView when trying to call LoadSceneClient RPC. ViewID: "
+                        + (photonView != null ? photonView.ViewID.ToString() : "null")
+                );
+            }
         }
     }
 
@@ -433,15 +476,18 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         {
             if (AreAllPlayersReadyToStartGame())
             {
-                if (photonView != null)
+                if (photonView != null && photonView.ViewID > 0)
                 {
                     photonView.RPC(nameof(StartGame), RpcTarget.All);
                 }
                 else
                 {
                     Debug.LogError(
-                        "[NetworkSystem] photonView is null when trying to call StartGame RPC"
+                        "[NetworkSystem] Invalid PhotonView when trying to call StartGame RPC. ViewID: "
+                            + (photonView != null ? photonView.ViewID.ToString() : "null")
                     );
+
+                    StartGame();
                 }
             }
         }

@@ -70,6 +70,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         networkSystem = new GameObject("NetworkSystem").AddComponent<NetworkSystem>();
         networkSystem.gameObject.transform.SetParent(transform);
+        networkSystem.Initialize();
 
         playerSystem = new GameObject("PlayerSystem").AddComponent<PlayerSystem>();
         playerSystem.gameObject.transform.SetParent(transform);
