@@ -93,8 +93,6 @@ public class MultiRoomPanel : Panel
         TrackSelectButton.onClick.AddListener(OnTrackSelectButtonClicked);
         ReadyButton.onClick.AddListener(OnReadyButtonClicked);
         CloseButton.onClick.AddListener(OnCloseButtonClicked);
-
-        localSelectedTrack = null;
     }
 
     private void OnTrackSelectButtonClicked()
@@ -137,6 +135,7 @@ public class MultiRoomPanel : Panel
 
     private void OnLocalTrackSelected(TrackData track, Difficulty difficulty)
     {
+        print($"OnLocalTrackSelected: {track.trackName} , {difficulty}");
         localSelectedTrack = track;
 
         LocalPlayerTrackNameText.text = $"{track.artistName} - {track.trackName}";
@@ -226,7 +225,15 @@ public class MultiRoomPanel : Panel
     public void OnRemotePlayerLeft()
     {
         RemotePlayerBox.SetBool("subOpen", false);
+        RemotePlayerSelectingBox.SetActive(false);
+        RemotePlayerOnReadyBox.SetActive(false);
+        RemoteTrackNameBox.SetActive(false);
+        RemoteTrackDifficultyBox.SetActive(false);
         WaitingRemotePlayerBox.SetBool("subOpen", true);
+        TrackSelectButtonAnimator.SetBool("subOpen", false);
+        TrackSelectButton.gameObject.SetActive(false);
+        ReadyButtonAnimator.SetBool("subOpen", false);
+        ReadyButton.gameObject.SetActive(false);
     }
 
     public override void Close(bool objActive = true)
@@ -242,6 +249,8 @@ public class MultiRoomPanel : Panel
         TrackSelectButton.onClick.RemoveAllListeners();
         ReadyButton.onClick.RemoveAllListeners();
         CloseButton.onClick.RemoveAllListeners();
+
+        localSelectedTrack = null;
 
         base.Close(objActive);
     }

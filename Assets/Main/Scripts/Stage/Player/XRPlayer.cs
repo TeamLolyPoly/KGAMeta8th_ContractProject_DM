@@ -151,22 +151,21 @@ public class XRPlayer : MonoBehaviourPun
 
     void OnDestroy()
     {
-        if (
-            PhotonNetwork.IsConnected
-            && PhotonNetwork.InRoom
-            && GameManager.Instance.IsInMultiStage
-        )
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            if (photonView.IsMine)
+            if (GameManager.Instance.IsInMultiStage)
             {
-                if (LeftController != null)
+                if (photonView.IsMine)
                 {
-                    LeftController.uiPressAction.action.performed -= leftHaptic;
-                }
+                    if (LeftController != null)
+                    {
+                        LeftController.uiPressAction.action.performed -= leftHaptic;
+                    }
 
-                if (RightController != null)
-                {
-                    RightController.uiPressAction.action.performed -= rightHaptic;
+                    if (RightController != null)
+                    {
+                        RightController.uiPressAction.action.performed -= rightHaptic;
+                    }
                 }
             }
         }
