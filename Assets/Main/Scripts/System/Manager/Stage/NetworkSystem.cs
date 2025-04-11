@@ -364,19 +364,16 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public void LoadScene(string sceneName)
     {
-        if (PhotonNetwork.IsMasterClient)
+        if (photonView != null && photonView.ViewID > 0)
         {
-            if (photonView != null && photonView.ViewID > 0)
-            {
-                photonView.RPC(nameof(LoadSceneRPC), RpcTarget.All, sceneName);
-            }
-            else
-            {
-                Debug.LogError(
-                    "[NetworkSystem] Invalid PhotonView when trying to call LoadSceneClient RPC. ViewID: "
-                        + (photonView != null ? photonView.ViewID.ToString() : "null")
-                );
-            }
+            photonView.RPC(nameof(LoadSceneRPC), RpcTarget.All, sceneName);
+        }
+        else
+        {
+            Debug.LogError(
+                "[NetworkSystem] Invalid PhotonView when trying to call LoadSceneClient RPC. ViewID: "
+                    + (photonView != null ? photonView.ViewID.ToString() : "null")
+            );
         }
     }
 
