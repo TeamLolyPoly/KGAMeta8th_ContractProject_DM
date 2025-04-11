@@ -458,7 +458,14 @@ public class GameManager : Singleton<GameManager>, IInitializable
         currentTrack = track;
         this.noteMap = noteMap;
 
-        StartCoroutine(MultiplayerStageRoutine());
+        StageLoadingManager.Instance.LoadScene(
+            "Test_Stage",
+            InitializeMultiplayerStageRoutine,
+            () =>
+            {
+                StartCoroutine(MultiplayerStageRoutine());
+            }
+        );
     }
 
     public IEnumerator MultiplayerStageRoutine()
