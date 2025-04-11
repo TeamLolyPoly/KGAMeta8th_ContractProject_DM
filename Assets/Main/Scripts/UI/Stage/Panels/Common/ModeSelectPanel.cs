@@ -46,6 +46,6 @@ public class ModeSelectPanel : Panel
     private void OnMultiModeButtonClick()
     {
         Close(true);
-        GameManager.Instance.StartMultiplayer();
+        GameManager.Instance.SetMultiMode();
     }
 }

@@ -26,7 +26,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
     public NoteMap NoteMap => noteMap;
     public ScoreSystem ScoreSystem => scoreSystem;
     public AnimationSystem UnitAnimationSystem => unitAnimationManager;
-
     public ProceedDrum proceedDrum;
 
     private bool isInitialized = false;
@@ -42,6 +41,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
     private readonly Vector3 MASTER_PLAYER_SPAWN_POSITION = new Vector3(0, 2.1f, 0.58f);
     private readonly Vector3 CLIENT_PLAYER_SPAWN_POSITION = new Vector3(15f, 2.1f, -0.58f);
 
+    #region Common
     private void Start()
     {
         Initialize();
@@ -95,37 +95,158 @@ public class GameManager : Singleton<GameManager>, IInitializable
         StageLoadingManager.Instance.LoadScene("Test_Editor", initOperations, AfterInit);
     }
 
-    public void TestStage(AudioClip audioClip, NoteMap noteMap)
+    public IEnumerator Single_Cleanup()
     {
-        PoolManager.Instance.Initialize();
+        float progress = 0f;
+        float progressStep = 0.2f;
 
-        GameObject musicSourceObj = new GameObject("MusicSource");
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("게임 초기화 중...");
+        Destroy(noteSpawner.gameObject);
 
-        musicSource = musicSourceObj.AddComponent<AudioSource>();
-        musicSource.gameObject.transform.SetParent(transform);
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
 
-        this.noteMap = noteMap;
-        musicSource.clip = audioClip;
+        Destroy(gridGenerator.gameObject);
 
-        noteSpawner = new GameObject("NoteSpawner").AddComponent<NoteSpawner>();
-        noteSpawner.transform.SetParent(transform);
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("점수 시스템 초기화 중...");
 
-        gridGenerator = new GameObject("GridGenerator").AddComponent<GridGenerator>();
-        gridGenerator.transform.SetParent(transform);
-        gridGenerator.Initialize();
+        Destroy(scoreSystem.gameObject);
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
 
-        scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
-        scoreSystem.transform.SetParent(transform);
-        scoreSystem.Initialize();
-        noteSpawner.Initialize(gridGenerator, noteMap);
+        Destroy(unitAnimationManager.gameObject);
 
-        unitAnimationManager = new GameObject(
-            "unitAnimationManager"
-        ).AddComponent<AnimationSystem>();
-        unitAnimationManager.transform.SetParent(transform);
-        unitAnimationManager.Initialize();
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("데이터 초기화중...");
 
-        StartCoroutine(SingleStageRoutine());
+        currentBar = 0;
+        currentBeat = 0;
+        musicSource.clip = null;
+        noteSpawner = null;
+        gridGenerator = null;
+        scoreSystem = null;
+        unitAnimationManager = null;
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("게임 초기화 완료");
+    }
+
+    private void Update()
+    {
+        if (isPlaying)
+        {
+            double currentDspTime = AudioSettings.dspTime;
+            float currentTime = (float)(currentDspTime - startDspTime);
+            UpdateBarAndBeat(currentTime);
+
+            if (
+                musicSource != null
+                && musicSource.clip != null
+                && musicSource.isPlaying
+                && currentTime >= currentTrack.duration
+            )
+            {
+                StopGame();
+            }
+        }
+    }
+
+    public void StopGame()
+    {
+        if (!isPlaying)
+            return;
+
+        isPlaying = false;
+
+        noteSpawner.StopSpawning();
+
+        if (musicSource != null)
+        {
+            musicSource.Stop();
+        }
+
+        SingleResultPanel resultDetailPanel =
+            StageUIManager.Instance.OpenPanel(PanelType.Single_Result) as SingleResultPanel;
+        resultDetailPanel.Initialize(scoreSystem.GetScoreData());
+    }
+
+    public void StartGamePlayback(double startTime, float preRollTime)
+    {
+        startDspTime = startTime;
+        isPlaying = true;
+
+        if (noteSpawner != null)
+        {
+            noteSpawner.StartSpawn(startDspTime, preRollTime);
+        }
+
+        if (musicSource != null && musicSource.clip != null)
+        {
+            double musicStartTime = startDspTime + preRollTime;
+            musicSource.PlayScheduled(musicStartTime);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[GameManager] 음악 소스나 클립이 설정되지 않았습니다. 노트만 생성됩니다."
+            );
+        }
+    }
+
+    private void UpdateBarAndBeat(float currentTime)
+    {
+        if (noteMap == null)
+            return;
+
+        float secondsPerBeat = 60f / noteMap.bpm;
+        float totalBeats = currentTime / secondsPerBeat;
+
+        int newBar = Mathf.FloorToInt(totalBeats / noteMap.beatsPerBar);
+        int newBeat = Mathf.FloorToInt(totalBeats % noteMap.beatsPerBar);
+
+        if (newBar != currentBar || newBeat != currentBeat)
+        {
+            currentBar = newBar;
+            currentBeat = newBeat;
+        }
+    }
+
+    #endregion
+
+    #region Single Stage
+
+    public void StartGame(TrackData track, NoteMap map)
+    {
+        currentTrack = track;
+
+        noteMap = map;
+
+        if (noteMap == null)
+        {
+            Debug.LogError("노트맵이 설정되지 않았습니다!");
+            return;
+        }
+
+        StageLoadingManager.Instance.LoadScene(
+            "Test_Stage",
+            InitializeSingleStageRoutine,
+            () =>
+            {
+                StartCoroutine(SingleStageRoutine());
+            }
+        );
     }
 
     public IEnumerator InitializeSingleStageRoutine()
@@ -188,132 +309,12 @@ public class GameManager : Singleton<GameManager>, IInitializable
         yield return new WaitForSeconds(1f);
     }
 
-    public IEnumerator Cleanup()
-    {
-        float progress = 0f;
-        float progressStep = 0.2f;
-
-        yield return progress;
-        yield return new WaitForSeconds(1f);
-        StageLoadingManager.Instance.SetLoadingText("게임 초기화 중...");
-        Destroy(noteSpawner.gameObject);
-
-        progress += progressStep;
-        yield return progress;
-        yield return new WaitForSeconds(1f);
-
-        Destroy(gridGenerator.gameObject);
-
-        progress += progressStep;
-        yield return progress;
-        yield return new WaitForSeconds(1f);
-        StageLoadingManager.Instance.SetLoadingText("점수 시스템 초기화 중...");
-
-        Destroy(scoreSystem.gameObject);
-        progress += progressStep;
-        yield return progress;
-        yield return new WaitForSeconds(1f);
-        StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
-
-        Destroy(unitAnimationManager.gameObject);
-
-        progress += progressStep;
-        yield return progress;
-        yield return new WaitForSeconds(1f);
-        StageLoadingManager.Instance.SetLoadingText("데이터 초기화중...");
-
-        currentBar = 0;
-        currentBeat = 0;
-        musicSource.clip = null;
-        noteSpawner = null;
-        gridGenerator = null;
-        scoreSystem = null;
-        unitAnimationManager = null;
-
-        progress += progressStep;
-        yield return progress;
-        yield return new WaitForSeconds(1f);
-        StageLoadingManager.Instance.SetLoadingText("게임 초기화 완료");
-    }
-
-    public void BackToTitle()
-    {
-        StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
-        StageLoadingManager.Instance.LoadScene(
-            "Test_Editor",
-            Cleanup,
-            () =>
-            {
-                PlayerSystem.SpawnPlayer(Vector3.zero, false);
-                StageUIManager.Instance.OpenPanel(PanelType.AlbumSelect);
-            }
-        );
-    }
-
-    private void Update()
-    {
-        if (isPlaying)
-        {
-            double currentDspTime = AudioSettings.dspTime;
-            float currentTime = (float)(currentDspTime - startDspTime);
-            UpdateBarAndBeat(currentTime);
-
-            if (
-                musicSource != null
-                && musicSource.clip != null
-                && musicSource.isPlaying
-                && currentTime >= currentTrack.duration
-            )
-            {
-                StopGame();
-            }
-        }
-    }
-
-    private void UpdateBarAndBeat(float currentTime)
-    {
-        if (noteMap == null)
-            return;
-
-        float secondsPerBeat = 60f / noteMap.bpm;
-        float totalBeats = currentTime / secondsPerBeat;
-
-        int newBar = Mathf.FloorToInt(totalBeats / noteMap.beatsPerBar);
-        int newBeat = Mathf.FloorToInt(totalBeats % noteMap.beatsPerBar);
-
-        if (newBar != currentBar || newBeat != currentBeat)
-        {
-            currentBar = newBar;
-            currentBeat = newBeat;
-        }
-    }
-
-    public void StartGame(TrackData track, NoteMap map)
-    {
-        currentTrack = track;
-
-        noteMap = map;
-
-        if (noteMap == null)
-        {
-            Debug.LogError("노트맵이 설정되지 않았습니다!");
-            return;
-        }
-
-        StageLoadingManager.Instance.LoadScene(
-            "Test_Stage",
-            InitializeSingleStageRoutine,
-            () =>
-            {
-                StartCoroutine(SingleStageRoutine());
-            }
-        );
-    }
-
     private IEnumerator SingleStageRoutine()
     {
         gridGenerator.SetCellVisible(true);
+
         PlayerSystem.SpawnPlayer(SINGLE_PLAYER_SPAWN_POSITION, true);
+
         yield return new WaitUntil(() => PlayerSystem.IsSpawned);
 
         yield return new WaitForSeconds(startDelay);
@@ -329,67 +330,43 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         float preRollTime = noteTravelTime;
 
-        double musicStartTime = startDspTime + preRollTime;
-
-        noteSpawner.StartSpawn(startDspTime, preRollTime);
-
-        if (musicSource != null && musicSource.clip != null)
-        {
-            musicSource.PlayScheduled(musicStartTime);
-        }
-        else
-        {
-            Debug.LogWarning(
-                "[GameManager] 음악 소스나 클립이 설정되지 않았습니다. 노트만 생성됩니다."
-            );
-        }
-
-        Debug.Log("[GameManager] 게임 시작!");
+        StartGamePlayback(startDspTime, preRollTime);
     }
 
-    public void StopGame()
+    public void Single_BackToTitle()
     {
-        if (!isPlaying)
-            return;
-
-        isPlaying = false;
-
-        noteSpawner.StopSpawning();
-
-        if (musicSource != null)
-        {
-            musicSource.Stop();
-        }
-
-        SingleResultPanel resultDetailPanel =
-            StageUIManager.Instance.OpenPanel(PanelType.Single_Result) as SingleResultPanel;
-        resultDetailPanel.Initialize(scoreSystem.GetScoreData());
+        StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
+        StageLoadingManager.Instance.LoadScene(
+            "Test_Editor",
+            Single_Cleanup,
+            () =>
+            {
+                PlayerSystem.SpawnPlayer(Vector3.zero, false);
+                StageUIManager.Instance.OpenPanel(PanelType.AlbumSelect);
+            }
+        );
     }
+    #endregion
 
-    private void OnGUI()
+    #region Multiplayer
+    public void SetMultiMode()
     {
-        if (!isPlaying)
-            return;
-
-        double currentDspTime = AudioSettings.dspTime;
-        GUILayout.BeginArea(new Rect(10, 10, 300, 150));
-        GUILayout.Label($"현재 위치: 마디 {currentBar + 1}, 비트 {currentBeat + 1}");
-        GUILayout.Label($"DSP 경과 시간: {(currentDspTime - startDspTime):F3}초");
-        GUILayout.Label($"현재 점수: {scoreSystem.currentScore}");
-        GUILayout.Label($"콤보: {scoreSystem.combo}");
-        GUILayout.Label($"최고 콤보: {scoreSystem.highCombo}");
-        GUILayout.EndArea();
-    }
-
-    public void StartMultiplayer()
-    {
-        if (networkSystem == null)
-        {
-            Debug.LogError("[GameManager] NetworkSystem is not initialized");
-            return;
-        }
-
         networkSystem.StartMultiplayer();
+    }
+
+    public void StartMultiPlayerStage(NoteMap noteMap, TrackData track)
+    {
+        currentTrack = track;
+        this.noteMap = noteMap;
+
+        StageLoadingManager.Instance.LoadScene(
+            "Test_Stage",
+            InitializeMultiplayerStageRoutine,
+            () =>
+            {
+                StartCoroutine(MultiplayerStageRoutine());
+            }
+        );
     }
 
     public IEnumerator InitializeMultiplayerStageRoutine()
@@ -397,24 +374,11 @@ public class GameManager : Singleton<GameManager>, IInitializable
         float progress = 0f;
         float progressStep = 0.2f;
 
-        Debug.Log(
-            $"[GameManager] InitializeMultiplayerStageRoutine - Track: {currentTrack.trackName}, NoteMap: {(noteMap != null ? "Valid" : "Null")}"
-        );
-        if (noteMap != null)
-        {
-            Debug.Log(
-                $"[GameManager] NoteMap Details in Init - BPM: {noteMap.bpm}, BeatsPerBar: {noteMap.beatsPerBar}, Notes: {(noteMap.notes != null ? noteMap.notes.Count : 0)}"
-            );
-        }
-
         DataManager.Instance.LoadTrackAudio(
             currentTrack.id,
             (audioClip) =>
             {
                 musicSource.clip = audioClip;
-                Debug.Log(
-                    $"[GameManager] Track Audio Loaded: {(audioClip != null ? "Success" : "Failed")}"
-                );
             }
         );
 
@@ -466,31 +430,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         yield return new WaitForSeconds(0.5f);
     }
 
-    public void StartMultiPlayerStage(NoteMap noteMap, TrackData track)
-    {
-        currentTrack = track;
-        this.noteMap = noteMap;
-
-        Debug.Log(
-            $"[GameManager] StartMultiPlayerStage - Track: {track.trackName}, NoteMap: {(noteMap != null ? "Valid" : "Null")}"
-        );
-        if (noteMap != null)
-        {
-            Debug.Log(
-                $"[GameManager] NoteMap Details - BPM: {noteMap.bpm}, BeatsPerBar: {noteMap.beatsPerBar}, Notes: {(noteMap.notes != null ? noteMap.notes.Count : 0)}"
-            );
-        }
-
-        StageLoadingManager.Instance.LoadScene(
-            "Test_Stage",
-            InitializeMultiplayerStageRoutine,
-            () =>
-            {
-                StartCoroutine(MultiplayerStageRoutine());
-            }
-        );
-    }
-
     public IEnumerator MultiplayerStageRoutine()
     {
         gridGenerator.SetCellVisible(true);
@@ -507,7 +446,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
             yield return null;
         }
 
-        // 각 클라이언트가 모두 스폰되면 로컬에서 독립적으로 게임 시작
         yield return new WaitForSeconds(startDelay);
 
         startDspTime = AudioSettings.dspTime;
@@ -519,58 +457,58 @@ public class GameManager : Singleton<GameManager>, IInitializable
         float noteTravelTime = distance / noteSpeed;
 
         float preRollTime = noteTravelTime;
-        double musicStartTime = startDspTime + preRollTime;
 
-        // 로컬에서 게임 시작
-        Debug.Log("[GameManager] Starting game locally on all clients");
         StartGamePlayback(startDspTime, preRollTime);
     }
+    #endregion
 
-    public void StartGamePlayback(double startTime, float preRollTime)
+    #region Debug
+    public void TestStage(AudioClip audioClip, NoteMap noteMap)
     {
-        startDspTime = startTime;
-        isPlaying = true;
+        PoolManager.Instance.Initialize();
 
-        Debug.Log(
-            $"[GameManager] StartGamePlayback Called \n"
-                + $"NoteMap : {(noteMap != null ? "Valid" : "Null")} \n"
-                + $"Track : {currentTrack.trackName} \n"
-                + $"StartTime : {startTime} \n"
-                + $"PreRollTime : {preRollTime}"
-        );
+        GameObject musicSourceObj = new GameObject("MusicSource");
 
-        if (noteMap != null)
-        {
-            Debug.Log(
-                $"[GameManager] NoteMap Details before StartSpawn - BPM: {noteMap.bpm}, BeatsPerBar: {noteMap.beatsPerBar}, Notes: {(noteMap.notes != null ? noteMap.notes.Count : 0)}"
-            );
-        }
-        else
-        {
-            Debug.LogError("[GameManager] NoteMap is null when trying to start game playback!");
-        }
+        musicSource = musicSourceObj.AddComponent<AudioSource>();
+        musicSource.gameObject.transform.SetParent(transform);
 
-        if (noteSpawner != null)
-        {
-            noteSpawner.StartSpawn(startDspTime, preRollTime);
-        }
-        else
-        {
-            Debug.LogError("[GameManager] NoteSpawner is null when trying to start spawn!");
-        }
+        this.noteMap = noteMap;
+        musicSource.clip = audioClip;
 
-        if (musicSource != null && musicSource.clip != null)
-        {
-            double musicStartTime = startDspTime + preRollTime;
-            musicSource.PlayScheduled(musicStartTime);
-        }
-        else
-        {
-            Debug.LogWarning(
-                "[GameManager] 음악 소스나 클립이 설정되지 않았습니다. 노트만 생성됩니다."
-            );
-        }
+        noteSpawner = new GameObject("NoteSpawner").AddComponent<NoteSpawner>();
+        noteSpawner.transform.SetParent(transform);
 
-        Debug.Log("[GameManager] 멀티플레이어 게임 시작!");
+        gridGenerator = new GameObject("GridGenerator").AddComponent<GridGenerator>();
+        gridGenerator.transform.SetParent(transform);
+        gridGenerator.Initialize();
+
+        scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
+        scoreSystem.transform.SetParent(transform);
+        scoreSystem.Initialize();
+        noteSpawner.Initialize(gridGenerator, noteMap);
+
+        unitAnimationManager = new GameObject(
+            "unitAnimationManager"
+        ).AddComponent<AnimationSystem>();
+        unitAnimationManager.transform.SetParent(transform);
+        unitAnimationManager.Initialize();
+
+        StartCoroutine(SingleStageRoutine());
     }
+
+    private void OnGUI()
+    {
+        if (!isPlaying)
+            return;
+
+        double currentDspTime = AudioSettings.dspTime;
+        GUILayout.BeginArea(new Rect(10, 10, 300, 150));
+        GUILayout.Label($"현재 위치: 마디 {currentBar + 1}, 비트 {currentBeat + 1}");
+        GUILayout.Label($"DSP 경과 시간: {(currentDspTime - startDspTime):F3}초");
+        GUILayout.Label($"현재 점수: {scoreSystem.currentScore}");
+        GUILayout.Label($"콤보: {scoreSystem.combo}");
+        GUILayout.Label($"최고 콤보: {scoreSystem.highCombo}");
+        GUILayout.EndArea();
+    }
+    #endregion
 }

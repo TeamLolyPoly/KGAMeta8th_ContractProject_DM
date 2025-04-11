@@ -99,8 +99,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public void CreateOrJoinMultiplayerRoom()
     {
-        Debug.Log("[NetworkSystem] Multiplayer Start");
-
         if (PhotonNetwork.InRoom)
         {
             PhotonNetwork.LeaveRoom();
@@ -116,14 +114,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
         PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = 2 });
-    }
-
-    public override void OnLeftRoom()
-    {
-        if (!isPlaying || !PhotonNetwork.IsConnectedAndReady)
-            return;
-
-        PhotonNetwork.JoinRandomRoom();
     }
 
     public override void OnJoinedRoom()
@@ -151,8 +141,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
-        Debug.Log("[NetworkSystem] Player left: " + otherPlayer.NickName);
-
         OnRemotePlayerLeft?.Invoke();
 
         if (PhotonNetwork.IsMasterClient && multiRoomPanel != null)
@@ -294,16 +282,10 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             string guidStr = (string)guidObj;
             int diffInt = (int)diffObj;
 
-            Debug.Log($"[NetworkSystem] Track GUID: {guidStr}, Difficulty: {diffInt}");
-
             if (Guid.TryParse(guidStr, out Guid guid))
             {
                 TrackData track = DataManager.Instance.TrackDataList.Find(t => t.id == guid);
                 Difficulty diff = (Difficulty)diffInt;
-
-                Debug.Log(
-                    $"[NetworkSystem] Found track: {(track != null ? track.trackName : "null")}"
-                );
 
                 if (track != null)
                 {
@@ -311,17 +293,9 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                         n.difficulty == diff
                     );
 
-                    Debug.Log(
-                        $"[NetworkSystem] NoteMapData: {(noteMapData != null ? "Valid" : "null")} for difficulty {diff}"
-                    );
-
                     if (noteMapData != null)
                     {
                         NoteMap noteMap = noteMapData.noteMap;
-
-                        Debug.Log(
-                            $"[NetworkSystem] NoteMap: {(noteMap != null ? "Valid" : "null")}, BPM: {(noteMap != null ? noteMap.bpm.ToString() : "unknown")}"
-                        );
 
                         if (noteMap != null)
                         {
@@ -334,26 +308,8 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                             );
                         }
                     }
-                    else
-                    {
-                        Debug.LogError(
-                            $"[NetworkSystem] No NoteMapData found for track {track.trackName} at difficulty {diff}"
-                        );
-                    }
-                }
-                else
-                {
-                    Debug.LogError($"[NetworkSystem] Track not found for GUID {guid}");
                 }
             }
-            else
-            {
-                Debug.LogError($"[NetworkSystem] Failed to parse GUID: {guidStr}");
-            }
-        }
-        else
-        {
-            Debug.LogError("[NetworkSystem] Room properties missing final track info");
         }
     }
 
@@ -361,7 +317,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     {
         if (isPlaying)
         {
-            Debug.LogWarning($"[NetworkSystem] Server disconnected: {cause}");
             if (StageUIManager.Instance != null)
             {
                 StageUIManager.Instance.CloseAllPanels();
