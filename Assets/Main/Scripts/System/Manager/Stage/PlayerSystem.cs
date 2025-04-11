@@ -26,45 +26,100 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
     private IEnumerator SpawnPlayerRoutine(Vector3 spawnPosition, bool isStage)
     {
+        Debug.Log(
+            $"[PlayerSystem] SpawnPlayerRoutine called at position {spawnPosition}, isStage={isStage}, IsConnected={PhotonNetwork.IsConnected}, IsInRoom={PhotonNetwork.InRoom}, IsMasterClient={PhotonNetwork.IsMasterClient}"
+        );
+
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
             if (GameManager.Instance.IsInMultiStage)
             {
+                Debug.Log(
+                    $"[PlayerSystem] Creating multiplayer player via PhotonNetwork.Instantiate"
+                );
+
                 GameObject playerObj = PhotonNetwork.Instantiate(
                     PLAYER_PREFAB,
                     spawnPosition,
                     Quaternion.identity
                 );
+
                 XRPlayer multiPlayer = playerObj.GetComponent<XRPlayer>();
                 PhotonView playerPhotonView = playerObj.GetComponent<PhotonView>();
 
+                // Log detailed PhotonView information
+                Debug.Log(
+                    $"[PlayerSystem] Player instantiated with ViewID={playerPhotonView.ViewID}, OwnerID={playerPhotonView.OwnerActorNr}, IsMine={playerPhotonView.IsMine}, Local Player ID={PhotonNetwork.LocalPlayer.ActorNumber}"
+                );
+
                 if (playerPhotonView.IsMine)
                 {
+                    playerObj.name = "LocalPlayer";
+                    Debug.Log(
+                        $"[PlayerSystem] This is MY player! Setting up as local player at {spawnPosition}"
+                    );
+
                     multiPlayer.Initialize(isStage);
                     multiPlayer.FadeIn(fadeTime);
                     yield return new WaitForSeconds(fadeTime);
                     XRPlayer = multiPlayer;
-                    playerObj.name = "LocalPlayer";
+
+                    if (PhotonNetwork.IsMasterClient)
+                    {
+                        Vector3 masterPos = new Vector3(0, 2.1f, 0.58f);
+                        playerObj.transform.position = masterPos;
+                        Debug.Log($"[PlayerSystem] Set master position to {masterPos}");
+                    }
+                    else
+                    {
+                        Vector3 clientPos = new Vector3(15f, 2.1f, -0.58f);
+                        playerObj.transform.position = clientPos;
+                        Debug.Log($"[PlayerSystem] Set client position to {clientPos}");
+                    }
                 }
                 else
                 {
-                    multiPlayer.Initialize(isStage);
                     playerObj.name = "RemotePlayer";
+                    Debug.Log(
+                        $"[PlayerSystem] This is a REMOTE player! Setting up as remote player at {spawnPosition}"
+                    );
+
+                    multiPlayer.Initialize(isStage);
+
+                    if (PhotonNetwork.IsMasterClient)
+                    {
+                        Vector3 clientPos = new Vector3(15f, 2.1f, -0.58f);
+                        playerObj.transform.position = clientPos;
+                        Debug.Log(
+                            $"[PlayerSystem] Set remote player (seen by master) to {clientPos}"
+                        );
+                    }
+                    else
+                    {
+                        Vector3 masterPos = new Vector3(0, 2.1f, 0.58f);
+                        playerObj.transform.position = masterPos;
+                        Debug.Log(
+                            $"[PlayerSystem] Set remote player (seen by client) to {masterPos}"
+                        );
+                    }
                 }
             }
             else
             {
+                Debug.Log($"[PlayerSystem] Creating single player in non-multi mode");
+
                 XRPlayer localPlayer = Instantiate(
                     Resources.Load<XRPlayer>(PLAYER_PREFAB),
                     spawnPosition,
                     Quaternion.identity
                 );
 
+                localPlayer.gameObject.name = "LocalPlayer";
+                Debug.Log($"[PlayerSystem] Created local player (non-multi) at {spawnPosition}");
+
                 localPlayer.Initialize(isStage);
                 localPlayer.FadeIn(fadeTime);
                 yield return new WaitForSeconds(fadeTime);
-
-                localPlayer.gameObject.name = "LocalPlayer";
 
                 XRPlayer = localPlayer;
             }
@@ -72,17 +127,20 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
         }
         else
         {
+            Debug.Log($"[PlayerSystem] Creating offline player via Instantiate");
+
             XRPlayer localPlayer = Instantiate(
                 Resources.Load<XRPlayer>(PLAYER_PREFAB),
                 spawnPosition,
                 Quaternion.identity
             );
 
+            localPlayer.gameObject.name = "LocalPlayer";
+            Debug.Log($"[PlayerSystem] Created local player (offline) at {spawnPosition}");
+
             localPlayer.Initialize(isStage);
             localPlayer.FadeIn(fadeTime);
             yield return new WaitForSeconds(fadeTime);
-
-            localPlayer.gameObject.name = "LocalPlayer";
 
             XRPlayer = localPlayer;
         }
@@ -90,6 +148,7 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
         yield return new WaitForSeconds(0.5f);
 
         isSpawned = true;
+        Debug.Log($"[PlayerSystem] Player spawn complete, isSpawned set to {isSpawned}");
     }
 
     public void DespawnPlayer()

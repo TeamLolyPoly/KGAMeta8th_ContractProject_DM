@@ -38,8 +38,21 @@ public class XRPlayer : MonoBehaviourPun
     {
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
+            PhotonView pv = GetComponent<PhotonView>();
+            int viewID = pv != null ? pv.ViewID : -1;
+            int ownerID = pv != null ? pv.OwnerActorNr : -1;
+            bool isMine = pv != null ? pv.IsMine : false;
+
+            Debug.Log(
+                $"[XRPlayer] Initialize: ViewID={viewID}, OwnerID={ownerID}, IsMine={isMine}, IsConnected={PhotonNetwork.IsConnected}, IsInRoom={PhotonNetwork.InRoom}, LocalPlayerID={PhotonNetwork.LocalPlayer.ActorNumber}"
+            );
+
             if (photonView.IsMine)
             {
+                Debug.Log(
+                    $"[XRPlayer] This is MY player! Setting up local player components. IsStage={isStage}"
+                );
+
                 xrOrigin.SetActive(true);
 
                 foreach (var script in localOnlyScripts)
@@ -55,6 +68,7 @@ public class XRPlayer : MonoBehaviourPun
                 foreach (var obj in remoteOnlyObjects)
                 {
                     obj.SetActive(false);
+                    Debug.Log($"[XRPlayer] Disabled remote-only object: {obj.name}");
                 }
 
                 if (!isStage)
@@ -78,26 +92,48 @@ public class XRPlayer : MonoBehaviourPun
                 }
 
                 gameObject.name = "LocalPlayer";
+                Debug.Log(
+                    $"[XRPlayer] Local player initialized at position {transform.position}, name set to: {gameObject.name}"
+                );
             }
             else
             {
+                Debug.Log(
+                    $"[XRPlayer] This is a REMOTE player! Setting up remote player components."
+                );
+
                 xrOrigin.SetActive(false);
 
                 foreach (var script in localOnlyScripts)
                 {
                     script.enabled = false;
+                    Debug.Log($"[XRPlayer] Disabled local-only script: {script.GetType().Name}");
+                }
+
+                foreach (var obj in localOnlyObjects)
+                {
+                    obj.SetActive(false);
+                    Debug.Log($"[XRPlayer] Disabled local-only object: {obj.name}");
                 }
 
                 foreach (var obj in remoteOnlyObjects)
                 {
                     obj.SetActive(true);
+                    Debug.Log($"[XRPlayer] Enabled remote-only object: {obj.name}");
                 }
 
                 gameObject.name = "RemotePlayer";
+                Debug.Log(
+                    $"[XRPlayer] Remote player initialized at position {transform.position}, name set to: {gameObject.name}"
+                );
             }
         }
         else
         {
+            Debug.Log(
+                $"[XRPlayer] Offline mode. Setting up single player components. IsStage={isStage}"
+            );
+
             xrOrigin.SetActive(true);
 
             foreach (var script in localOnlyScripts)
@@ -136,6 +172,9 @@ public class XRPlayer : MonoBehaviourPun
             }
 
             gameObject.name = "LocalPlayer";
+            Debug.Log(
+                $"[XRPlayer] Offline player initialized at position {transform.position}, name set to: {gameObject.name}"
+            );
         }
     }
 

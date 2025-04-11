@@ -178,7 +178,6 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
         if (currentBandEngagement != newEngagement)
         {
-            print($"밴드 이벤트 발생: {newEngagement}");
             currentBandEngagement = newEngagement;
             onBandEngagementChange?.Invoke(
                 currentBandEngagement,
