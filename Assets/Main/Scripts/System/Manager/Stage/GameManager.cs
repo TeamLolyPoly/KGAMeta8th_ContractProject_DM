@@ -510,6 +510,14 @@ public class GameManager : Singleton<GameManager>, IInitializable
         startDspTime = startTime;
         isPlaying = true;
 
+        print(
+            $"[GameManager] StartGamePlayback Called \n"
+                + $"NotMap : {noteMap} \n"
+                + $"Track : {currentTrack.trackName} \n"
+                + $"StartTime : {startTime} \n"
+                + $"PreRollTime : {preRollTime}"
+        );
+
         noteSpawner.StartSpawn(startDspTime, preRollTime);
 
         if (musicSource != null && musicSource.clip != null)

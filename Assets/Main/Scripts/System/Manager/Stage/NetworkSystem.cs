@@ -362,19 +362,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         }
     }
 
-    [PunRPC]
-    public void LoadSceneRPC(string sceneName)
-    {
-        StageLoadingManager.Instance.LoadScene(
-            sceneName,
-            GameManager.Instance.InitializeMultiplayerStageRoutine,
-            () =>
-            {
-                StartCoroutine(GameManager.Instance.MultiplayerStageRoutine());
-            }
-        );
-    }
-
     public void SetPlayerReadyToLoadGame()
     {
         Hashtable props = new Hashtable { { LobbyData.READY_TO_LOAD_GAME, true } };
