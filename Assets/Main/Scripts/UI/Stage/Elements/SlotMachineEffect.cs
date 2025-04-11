@@ -35,10 +35,14 @@ public class SlotMachineEffect : MonoBehaviour
     [SerializeField]
     private Vector3 particleOffset = new Vector3(0, 0, -1f);
 
+    [Header("화면 구조 설정")]
+    [SerializeField]
+    private bool isLocalPanelOnLeft = true; // ✅ 왼쪽이 로컬 플레이어인지 설정
+
     private bool isSpinning = false;
-    private bool currentPanel = true;
     private bool isFinished = false;
     public bool IsFinished => isFinished;
+
     private Color localPanelOriginalColor;
     private Color remotePlayerOriginalColor;
 
@@ -46,6 +50,7 @@ public class SlotMachineEffect : MonoBehaviour
     {
         if (localPlayerBG != null)
             localPanelOriginalColor = localPlayerBG.color;
+
         if (remotePlayerBG != null)
             remotePlayerOriginalColor = remotePlayerBG.color;
     }
@@ -63,62 +68,68 @@ public class SlotMachineEffect : MonoBehaviour
         isSpinning = true;
         isFinished = false;
         float elapsedTime = 0f;
-        float progress;
-        float currentInterval;
 
-        SetPanelColor(localPlayerBG, localPanelOriginalColor);
-        SetPanelColor(remotePlayerBG, blinkColor);
-        currentPanel = true;
+        // 🔁 패널을 위치 기준으로 고정
+        Image leftPanel = isLocalPanelOnLeft ? localPlayerBG : remotePlayerBG;
+        Image rightPanel = isLocalPanelOnLeft ? remotePlayerBG : localPlayerBG;
+
+        Color leftOriginal = isLocalPanelOnLeft ? localPanelOriginalColor : remotePlayerOriginalColor;
+        Color rightOriginal = isLocalPanelOnLeft ? remotePlayerOriginalColor : localPanelOriginalColor;
+
+        // 초기 설정
+        SetPanelColor(leftPanel, leftOriginal);
+        SetPanelColor(rightPanel, blinkColor);
+        bool currentSide = true;
 
         while (elapsedTime < totalDuration)
         {
-            progress = elapsedTime / totalDuration;
-            currentInterval = Mathf.Lerp(
-                initialInterval,
-                finalInterval,
-                slowdownCurve.Evaluate(progress)
-            );
+            float progress = elapsedTime / totalDuration;
+            float currentInterval = Mathf.Lerp(initialInterval, finalInterval, slowdownCurve.Evaluate(progress));
+            currentSide = !currentSide;
 
-            currentPanel = !currentPanel;
-
-            if (currentPanel)
+            if (currentSide)
             {
-                SetPanelColor(localPlayerBG, localPanelOriginalColor);
-                SetPanelColor(remotePlayerBG, blinkColor);
+                SetPanelColor(leftPanel, leftOriginal);
+                SetPanelColor(rightPanel, blinkColor);
             }
             else
             {
-                SetPanelColor(localPlayerBG, blinkColor);
-                SetPanelColor(remotePlayerBG, remotePlayerOriginalColor);
+                SetPanelColor(leftPanel, blinkColor);
+                SetPanelColor(rightPanel, rightOriginal);
             }
 
             elapsedTime += currentInterval;
             yield return new WaitForSeconds(currentInterval);
         }
 
-        SetPanelColor(localPlayerBG, selectLocal ? localPanelOriginalColor : blinkColor);
-        SetPanelColor(remotePlayerBG, selectLocal ? blinkColor : remotePlayerOriginalColor);
+        // 최종 선택 색상 고정
+        bool isLeftSelected = (selectLocal && isLocalPanelOnLeft) || (!selectLocal && !isLocalPanelOnLeft);
+        if (isLeftSelected)
+        {
+            SetPanelColor(leftPanel, leftOriginal);
+            SetPanelColor(rightPanel, blinkColor);
+        }
+        else
+        {
+            SetPanelColor(leftPanel, blinkColor);
+            SetPanelColor(rightPanel, rightOriginal);
+        }
 
-        SpawnSelectionParticle(selectLocal);
+        SpawnSelectionParticle(isLeftSelected);
 
         isSpinning = false;
         isFinished = true;
     }
 
-    private void SpawnSelectionParticle(bool selectLocal)
+    private void SpawnSelectionParticle(bool isLeftPanel)
     {
         if (particlePrefab != null)
         {
-            RectTransform selectedPanel = selectLocal
-                ? localPlayerBG.rectTransform
-                : remotePlayerBG.rectTransform;
+            RectTransform selectedPanel = isLeftPanel
+                ? (isLocalPanelOnLeft ? localPlayerBG.rectTransform : remotePlayerBG.rectTransform)
+                : (isLocalPanelOnLeft ? remotePlayerBG.rectTransform : localPlayerBG.rectTransform);
 
-            Instantiate(
-                particlePrefab,
-                selectedPanel.position + particleOffset,
-                Quaternion.identity,
-                transform
-            );
+            Instantiate(particlePrefab, selectedPanel.position + particleOffset, Quaternion.identity, transform);
         }
     }
 
