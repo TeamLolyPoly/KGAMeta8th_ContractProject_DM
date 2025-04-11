@@ -380,17 +380,14 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     [PunRPC]
     public void LoadSceneRPC(string sceneName)
     {
-        if (PhotonNetwork.IsMasterClient)
-        {
-            StageLoadingManager.Instance.LoadScene(
-                sceneName,
-                GameManager.Instance.InitializeMultiplayerStageRoutine,
-                () =>
-                {
-                    StartCoroutine(GameManager.Instance.MultiplayerStageRoutine());
-                }
-            );
-        }
+        StageLoadingManager.Instance.LoadScene(
+            sceneName,
+            GameManager.Instance.InitializeMultiplayerStageRoutine,
+            () =>
+            {
+                StartCoroutine(GameManager.Instance.MultiplayerStageRoutine());
+            }
+        );
     }
 
     [PunRPC]
