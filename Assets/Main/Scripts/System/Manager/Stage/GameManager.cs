@@ -471,6 +471,8 @@ public class GameManager : Singleton<GameManager>, IInitializable
     {
         gridGenerator.SetCellVisible(true);
 
+        isInMultiStage = true;
+
         Vector3 spawnPosition = PhotonNetwork.IsMasterClient
             ? MASTER_PLAYER_SPAWN_POSITION
             : CLIENT_PLAYER_SPAWN_POSITION;
@@ -480,8 +482,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         {
             yield return null;
         }
-
-        isInMultiStage = true;
 
         if (PhotonNetwork.IsMasterClient)
         {

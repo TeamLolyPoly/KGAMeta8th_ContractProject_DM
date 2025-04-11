@@ -28,23 +28,46 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
     {
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            XRPlayer multiPlayer = PhotonNetwork
-                .Instantiate(PLAYER_PREFAB, spawnPosition, Quaternion.identity)
-                .GetComponent<XRPlayer>();
-            if (photonView.IsMine)
+            if (GameManager.Instance.IsInMultiStage)
             {
-                multiPlayer.Initialize(isStage);
-                multiPlayer.FadeIn(fadeTime);
-                yield return new WaitForSeconds(fadeTime);
-                XRPlayer = multiPlayer;
-                gameObject.name = "LocalPlayer";
+                GameObject playerObj = PhotonNetwork.Instantiate(
+                    PLAYER_PREFAB,
+                    spawnPosition,
+                    Quaternion.identity
+                );
+                XRPlayer multiPlayer = playerObj.GetComponent<XRPlayer>();
+                PhotonView playerPhotonView = playerObj.GetComponent<PhotonView>();
+
+                if (playerPhotonView.IsMine)
+                {
+                    multiPlayer.Initialize(isStage);
+                    multiPlayer.FadeIn(fadeTime);
+                    yield return new WaitForSeconds(fadeTime);
+                    XRPlayer = multiPlayer;
+                    playerObj.name = "LocalPlayer";
+                }
+                else
+                {
+                    multiPlayer.Initialize(isStage);
+                    playerObj.name = "RemotePlayer";
+                }
             }
             else
             {
-                multiPlayer.Initialize(isStage);
-                gameObject.name = "RemotePlayer";
-            }
+                XRPlayer localPlayer = Instantiate(
+                    Resources.Load<XRPlayer>(PLAYER_PREFAB),
+                    spawnPosition,
+                    Quaternion.identity
+                );
 
+                localPlayer.Initialize(isStage);
+                localPlayer.FadeIn(fadeTime);
+                yield return new WaitForSeconds(fadeTime);
+
+                localPlayer.gameObject.name = "LocalPlayer";
+
+                XRPlayer = localPlayer;
+            }
             GameManager.Instance.NetworkSystem.SetPlayerSpawned();
         }
         else
@@ -59,7 +82,7 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
             localPlayer.FadeIn(fadeTime);
             yield return new WaitForSeconds(fadeTime);
 
-            gameObject.name = "LocalPlayer";
+            localPlayer.gameObject.name = "LocalPlayer";
 
             XRPlayer = localPlayer;
         }
@@ -82,7 +105,14 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
         yield return new WaitForSeconds(fadeTime + 2f);
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            PhotonNetwork.Destroy(XRPlayer.gameObject);
+            if (GameManager.Instance.IsInMultiStage)
+            {
+                PhotonNetwork.Destroy(XRPlayer.gameObject);
+            }
+            else
+            {
+                Destroy(XRPlayer.gameObject);
+            }
         }
         else
         {
