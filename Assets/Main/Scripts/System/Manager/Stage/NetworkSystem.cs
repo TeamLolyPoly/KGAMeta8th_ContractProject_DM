@@ -45,6 +45,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     {
         multiWaitingPanel =
             StageUIManager.Instance.OpenPanel(PanelType.Multi_Waiting) as MultiWaitingPanel;
+        gameObject.AddComponent<PhotonView>();
         PhotonNetwork.ConnectUsingSettings();
         IsInitialized = true;
     }
@@ -213,6 +214,8 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             }
 
             bool isLocalTrackSelected = selectedPlayerID == PhotonNetwork.LocalPlayer.ActorNumber;
+
+            StageUIManager.Instance.CloseAllPanels();
 
             MultiTrackDecisionPanel multiTrackDecisionPanel =
                 StageUIManager.Instance.OpenPanel(PanelType.Multi_TrackDecision)
@@ -394,6 +397,9 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
     {
+        if (targetPlayer == null || changedProps == null)
+            return;
+
         if (
             changedProps.ContainsKey(LobbyData.TRACK_GUID)
             || changedProps.ContainsKey(LobbyData.TRACK_DIFFICULTY)
@@ -418,19 +424,25 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                 }
             }
 
-            if (AreAllPlayersReady())
+            if (AreAllPlayersReady() && PhotonNetwork.IsMasterClient)
             {
-                if (PhotonNetwork.IsMasterClient)
-                {
-                    DecideFinalTrack();
-                }
+                DecideFinalTrack();
             }
         }
         if (changedProps.ContainsKey(LobbyData.READY_TO_LOAD_GAME))
         {
             if (AreAllPlayersReadyToStartGame())
             {
-                photonView.RPC(nameof(StartGame), RpcTarget.All);
+                if (photonView != null)
+                {
+                    photonView.RPC(nameof(StartGame), RpcTarget.All);
+                }
+                else
+                {
+                    Debug.LogError(
+                        "[NetworkSystem] photonView is null when trying to call StartGame RPC"
+                    );
+                }
             }
         }
     }
