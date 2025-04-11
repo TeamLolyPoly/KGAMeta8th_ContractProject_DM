@@ -403,19 +403,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
             return;
         }
 
-        List<Func<IEnumerator>> operations = new List<Func<IEnumerator>>
-        {
-            InitializeMultiplayerStageRoutine,
-        };
-
-        networkSystem.LoadSceneMaster(
-            "Test_Stage",
-            operations,
-            () =>
-            {
-                StartCoroutine(MultiplayerStageRoutine());
-            }
-        );
+        networkSystem.LoadScene("Test_Stage");
     }
 
     public IEnumerator InitializeMultiplayerStageRoutine()
@@ -479,7 +467,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         yield return new WaitForSeconds(0.5f);
     }
 
-    private IEnumerator MultiplayerStageRoutine()
+    public IEnumerator MultiplayerStageRoutine()
     {
         gridGenerator.SetCellVisible(true);
 

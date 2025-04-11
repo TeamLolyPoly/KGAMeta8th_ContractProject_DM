@@ -362,33 +362,13 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         }
     }
 
-    public void LoadSceneMaster(
-        string sceneName,
-        List<Func<IEnumerator>> operations,
-        Action onComplete = null
-    )
+    public void LoadScene(string sceneName)
     {
         if (PhotonNetwork.IsMasterClient)
         {
-            StageLoadingManager.Instance.LoadScene(
-                sceneName,
-                operations,
-                () =>
-                {
-                    onComplete?.Invoke();
-                }
-            );
-
-            // Check if photonView is valid
             if (photonView != null && photonView.ViewID > 0)
             {
-                photonView.RPC(
-                    nameof(LoadSceneClient),
-                    RpcTarget.Others,
-                    sceneName,
-                    operations,
-                    onComplete
-                );
+                photonView.RPC(nameof(LoadSceneRPC), RpcTarget.All, sceneName);
             }
             else
             {
@@ -397,6 +377,22 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                         + (photonView != null ? photonView.ViewID.ToString() : "null")
                 );
             }
+        }
+    }
+
+    [PunRPC]
+    public void LoadSceneRPC(string sceneName)
+    {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            StageLoadingManager.Instance.LoadScene(
+                sceneName,
+                GameManager.Instance.InitializeMultiplayerStageRoutine,
+                () =>
+                {
+                    StartCoroutine(GameManager.Instance.MultiplayerStageRoutine());
+                }
+            );
         }
     }
 
