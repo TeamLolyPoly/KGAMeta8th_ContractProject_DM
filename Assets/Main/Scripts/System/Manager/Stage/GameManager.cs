@@ -473,20 +473,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         isInMultiStage = true;
 
-        if (PhotonNetwork.IsMasterClient)
-        {
-            Debug.Log("[GameManager] Master client spawning players");
-
-            Vector3 masterPosition = MASTER_PLAYER_SPAWN_POSITION;
-            PlayerSystem.SpawnPlayer(masterPosition, true);
-        }
-        else
-        {
-            Debug.Log("[GameManager] Client spawning own player");
-
-            Vector3 clientPosition = CLIENT_PLAYER_SPAWN_POSITION;
-            PlayerSystem.SpawnPlayer(clientPosition, true);
-        }
+        PlayerSystem.SpawnPlayer(Vector3.zero, true);
 
         while (!networkSystem.AreAllPlayersSpawned())
         {
