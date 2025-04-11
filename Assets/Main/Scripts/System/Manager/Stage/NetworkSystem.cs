@@ -489,13 +489,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         }
     }
 
-    [PunRPC]
-    public void StartGamePlayback(double startTime, float preRollTime)
-    {
-        Debug.Log("[NetworkSystem] StartGamePlayback RPC called");
-        GameManager.Instance.StartGamePlayback(startTime, preRollTime);
-    }
-
     private void OnDestroy()
     {
         isPlaying = false;

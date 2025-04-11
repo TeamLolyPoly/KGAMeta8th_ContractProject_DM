@@ -507,28 +507,23 @@ public class GameManager : Singleton<GameManager>, IInitializable
             yield return null;
         }
 
-        if (PhotonNetwork.IsMasterClient)
-        {
-            yield return new WaitForSeconds(startDelay);
+        // 각 클라이언트가 모두 스폰되면 로컬에서 독립적으로 게임 시작
+        yield return new WaitForSeconds(startDelay);
 
-            startDspTime = AudioSettings.dspTime;
+        startDspTime = AudioSettings.dspTime;
 
-            float secondsPerBeat = 60f / noteMap.bpm;
-            float distance = gridGenerator.GridDistance;
-            float targetHitTime = secondsPerBeat * noteMap.beatsPerBar;
-            float noteSpeed = distance / targetHitTime;
-            float noteTravelTime = distance / noteSpeed;
+        float secondsPerBeat = 60f / noteMap.bpm;
+        float distance = gridGenerator.GridDistance;
+        float targetHitTime = secondsPerBeat * noteMap.beatsPerBar;
+        float noteSpeed = distance / targetHitTime;
+        float noteTravelTime = distance / noteSpeed;
 
-            float preRollTime = noteTravelTime;
-            double musicStartTime = startDspTime + preRollTime;
+        float preRollTime = noteTravelTime;
+        double musicStartTime = startDspTime + preRollTime;
 
-            networkSystem.photonView.RPC(
-                "StartGamePlayback",
-                RpcTarget.All,
-                musicStartTime,
-                preRollTime
-            );
-        }
+        // 로컬에서 게임 시작
+        Debug.Log("[GameManager] Starting game locally on all clients");
+        StartGamePlayback(startDspTime, preRollTime);
     }
 
     public void StartGamePlayback(double startTime, float preRollTime)
