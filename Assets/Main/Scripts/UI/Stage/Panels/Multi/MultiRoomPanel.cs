@@ -210,6 +210,7 @@ public class MultiRoomPanel : Panel
         RemotePlayerBox.SetBool("subOpen", true);
         PlayerButtonBox.SetActive(true);
         TrackSelectButton.gameObject.SetActive(true);
+        TrackSelectButtonAnimator.SetBool("subOpen", true);
     }
 
     public void OnRemotePlayerJoined()

@@ -151,7 +151,11 @@ public class XRPlayer : MonoBehaviourPun
 
     void OnDestroy()
     {
-        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        if (
+            PhotonNetwork.IsConnected
+            && PhotonNetwork.InRoom
+            && GameManager.Instance.IsInMultiStage
+        )
         {
             if (photonView.IsMine)
             {
