@@ -482,6 +482,12 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         }
     }
 
+    [PunRPC]
+    public void StartGamePlayback(double startTime, float preRollTime)
+    {
+        GameManager.Instance.StartGamePlayback(startTime, preRollTime);
+    }
+
     private void OnDestroy()
     {
         isPlaying = false;

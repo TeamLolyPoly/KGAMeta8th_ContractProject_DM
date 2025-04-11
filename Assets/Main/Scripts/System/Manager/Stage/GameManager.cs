@@ -499,7 +499,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
             double musicStartTime = startDspTime + preRollTime;
 
             networkSystem.photonView.RPC(
-                nameof(StartGamePlayback),
+                "StartGamePlayback",
                 RpcTarget.All,
                 startDspTime,
                 preRollTime
@@ -507,7 +507,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         }
     }
 
-    [PunRPC]
     public void StartGamePlayback(double startTime, float preRollTime)
     {
         startDspTime = startTime;
