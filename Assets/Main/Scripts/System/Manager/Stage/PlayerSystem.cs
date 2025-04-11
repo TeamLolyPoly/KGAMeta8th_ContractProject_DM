@@ -47,7 +47,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
                 XRPlayer multiPlayer = playerObj.GetComponent<XRPlayer>();
                 PhotonView playerPhotonView = playerObj.GetComponent<PhotonView>();
 
-                // Log detailed PhotonView information
                 Debug.Log(
                     $"[PlayerSystem] Player instantiated with ViewID={playerPhotonView.ViewID}, OwnerID={playerPhotonView.OwnerActorNr}, IsMine={playerPhotonView.IsMine}, Local Player ID={PhotonNetwork.LocalPlayer.ActorNumber}"
                 );
