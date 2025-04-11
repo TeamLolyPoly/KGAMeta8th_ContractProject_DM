@@ -34,19 +34,18 @@ public class XRPlayer : MonoBehaviourPun
 
     public GameObject[] remoteOnlyObjects;
 
+    private void Awake()
+    {
+        if (GameManager.Instance.IsInMultiStage)
+        {
+            Initialize(true);
+        }
+    }
+
     public void Initialize(bool isStage)
     {
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            PhotonView pv = GetComponent<PhotonView>();
-            int viewID = pv != null ? pv.ViewID : -1;
-            int ownerID = pv != null ? pv.OwnerActorNr : -1;
-            bool isMine = pv != null ? pv.IsMine : false;
-
-            Debug.Log(
-                $"[XRPlayer] Initialize: ViewID={viewID}, OwnerID={ownerID}, IsMine={isMine}, IsConnected={PhotonNetwork.IsConnected}, IsInRoom={PhotonNetwork.InRoom}, LocalPlayerID={PhotonNetwork.LocalPlayer.ActorNumber}"
-            );
-
             if (photonView.IsMine)
             {
                 Debug.Log(

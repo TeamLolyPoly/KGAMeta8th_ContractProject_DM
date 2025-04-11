@@ -45,63 +45,25 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
                 );
 
                 XRPlayer multiPlayer = playerObj.GetComponent<XRPlayer>();
-                PhotonView playerPhotonView = playerObj.GetComponent<PhotonView>();
 
-                Debug.Log(
-                    $"[PlayerSystem] Player instantiated with ViewID={playerPhotonView.ViewID}, OwnerID={playerPhotonView.OwnerActorNr}, IsMine={playerPhotonView.IsMine}, Local Player ID={PhotonNetwork.LocalPlayer.ActorNumber}"
-                );
+                multiPlayer.FadeIn(fadeTime);
+                yield return new WaitForSeconds(fadeTime);
+                XRPlayer = multiPlayer;
 
-                if (playerPhotonView.IsMine)
+                if (PhotonNetwork.IsMasterClient)
                 {
-                    playerObj.name = "LocalPlayer";
-                    Debug.Log(
-                        $"[PlayerSystem] This is MY player! Setting up as local player at {spawnPosition}"
-                    );
-
-                    multiPlayer.Initialize(isStage);
-                    multiPlayer.FadeIn(fadeTime);
-                    yield return new WaitForSeconds(fadeTime);
-                    XRPlayer = multiPlayer;
-
-                    if (PhotonNetwork.IsMasterClient)
-                    {
-                        Vector3 masterPos = new Vector3(0, 2.1f, 0.58f);
-                        playerObj.transform.position = masterPos;
-                        Debug.Log($"[PlayerSystem] Set master position to {masterPos}");
-                    }
-                    else
-                    {
-                        Vector3 clientPos = new Vector3(15f, 2.1f, -0.58f);
-                        playerObj.transform.position = clientPos;
-                        Debug.Log($"[PlayerSystem] Set client position to {clientPos}");
-                    }
+                    Vector3 masterPos = new Vector3(0, 2.1f, 0.58f);
+                    playerObj.transform.position = masterPos;
+                    Debug.Log($"[PlayerSystem] Set master position to {masterPos}");
                 }
                 else
                 {
-                    playerObj.name = "RemotePlayer";
-                    Debug.Log(
-                        $"[PlayerSystem] This is a REMOTE player! Setting up as remote player at {spawnPosition}"
-                    );
-
-                    multiPlayer.Initialize(isStage);
-
-                    if (PhotonNetwork.IsMasterClient)
-                    {
-                        Vector3 clientPos = new Vector3(15f, 2.1f, -0.58f);
-                        playerObj.transform.position = clientPos;
-                        Debug.Log(
-                            $"[PlayerSystem] Set remote player (seen by master) to {clientPos}"
-                        );
-                    }
-                    else
-                    {
-                        Vector3 masterPos = new Vector3(0, 2.1f, 0.58f);
-                        playerObj.transform.position = masterPos;
-                        Debug.Log(
-                            $"[PlayerSystem] Set remote player (seen by client) to {masterPos}"
-                        );
-                    }
+                    Vector3 clientPos = new Vector3(15f, 2.1f, -0.58f);
+                    playerObj.transform.position = clientPos;
+                    Debug.Log($"[PlayerSystem] Set client position to {clientPos}");
                 }
+
+                GameManager.Instance.NetworkSystem.SetPlayerSpawned();
             }
             else
             {
@@ -122,7 +84,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
                 XRPlayer = localPlayer;
             }
-            GameManager.Instance.NetworkSystem.SetPlayerSpawned();
         }
         else
         {
