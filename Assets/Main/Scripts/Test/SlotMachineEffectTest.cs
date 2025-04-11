@@ -9,14 +9,14 @@ public class SlotMachineEffectTest : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha1))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             if (slotEffect != null)
             {
                 slotEffect.StartSpinningWithResult(true);
             }
         }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
+        else if (Input.GetKeyDown(KeyCode.LeftControl))
         {
             if (slotEffect != null)
             {

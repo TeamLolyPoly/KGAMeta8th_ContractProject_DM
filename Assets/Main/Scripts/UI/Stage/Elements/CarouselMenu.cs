@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Michsky.UI.Heat;
+using Photon.Pun;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -122,12 +123,24 @@ public class CarouselMenu : MonoBehaviour
 
     private void OnItemClick(string albumName, List<TrackData> albumTracks)
     {
-        SingleTrackSelectPanel trackSelectPanel =
-            StageUIManager.Instance.OpenPanel(PanelType.Single_TrackSelect)
-            as SingleTrackSelectPanel;
-        trackSelectPanel.Initialize(albumTracks);
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        {
+            MultiTrackSelectPanel trackSelectPanel =
+                StageUIManager.Instance.OpenPanel(PanelType.Multi_TrackSelect)
+                as MultiTrackSelectPanel;
+            trackSelectPanel.Initialize(albumTracks);
 
-        StageUIManager.Instance.ClosePanel(PanelType.AlbumSelect);
+            StageUIManager.Instance.ClosePanel(PanelType.AlbumSelect);
+        }
+        else
+        {
+            SingleTrackSelectPanel trackSelectPanel =
+                StageUIManager.Instance.OpenPanel(PanelType.Single_TrackSelect)
+                as SingleTrackSelectPanel;
+            trackSelectPanel.Initialize(albumTracks);
+
+            StageUIManager.Instance.ClosePanel(PanelType.AlbumSelect);
+        }
     }
 
     private void UpdateItemSelected()

@@ -26,21 +26,24 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
     private IEnumerator SpawnPlayerRoutine(Vector3 spawnPosition, bool isStage)
     {
-        Debug.Log(
-            $"[PlayerSystem] SpawnPlayerRoutine called at position {spawnPosition}, isStage={isStage}, IsConnected={PhotonNetwork.IsConnected}, IsInRoom={PhotonNetwork.InRoom}, IsMasterClient={PhotonNetwork.IsMasterClient}"
-        );
-
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
             if (GameManager.Instance.IsInMultiStage)
             {
-                Debug.Log(
-                    $"[PlayerSystem] Creating multiplayer player via PhotonNetwork.Instantiate"
-                );
+                Vector3 SpawnPosition;
+
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    SpawnPosition = new Vector3(0, 2.1f, 0.58f);
+                }
+                else
+                {
+                    SpawnPosition = new Vector3(15f, 2.1f, -0.58f);
+                }
 
                 GameObject playerObj = PhotonNetwork.Instantiate(
                     PLAYER_PREFAB,
-                    spawnPosition,
+                    SpawnPosition,
                     Quaternion.identity
                 );
 
@@ -50,25 +53,10 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
                 yield return new WaitForSeconds(fadeTime);
                 XRPlayer = multiPlayer;
 
-                if (PhotonNetwork.IsMasterClient)
-                {
-                    Vector3 masterPos = new Vector3(0, 2.1f, 0.58f);
-                    playerObj.transform.position = masterPos;
-                    Debug.Log($"[PlayerSystem] Set master position to {masterPos}");
-                }
-                else
-                {
-                    Vector3 clientPos = new Vector3(15f, 2.1f, -0.58f);
-                    playerObj.transform.position = clientPos;
-                    Debug.Log($"[PlayerSystem] Set client position to {clientPos}");
-                }
-
                 GameManager.Instance.NetworkSystem.SetPlayerSpawned();
             }
             else
             {
-                Debug.Log($"[PlayerSystem] Creating single player in non-multi mode");
-
                 XRPlayer localPlayer = Instantiate(
                     Resources.Load<XRPlayer>(PLAYER_PREFAB),
                     spawnPosition,
@@ -76,7 +64,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
                 );
 
                 localPlayer.gameObject.name = "LocalPlayer";
-                Debug.Log($"[PlayerSystem] Created local player (non-multi) at {spawnPosition}");
 
                 localPlayer.Initialize(isStage);
                 localPlayer.FadeIn(fadeTime);

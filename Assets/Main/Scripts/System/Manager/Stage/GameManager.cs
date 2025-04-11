@@ -392,20 +392,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         networkSystem.StartMultiplayer();
     }
 
-    public void StartMultiplayerGame(TrackData track, NoteMap map)
-    {
-        currentTrack = track;
-        noteMap = map;
-
-        if (noteMap == null)
-        {
-            Debug.LogError("[GameManager] 노트맵이 설정되지 않았습니다!");
-            return;
-        }
-
-        networkSystem.LoadScene("Test_Stage");
-    }
-
     public IEnumerator InitializeMultiplayerStageRoutine()
     {
         float progress = 0f;
@@ -467,6 +453,14 @@ public class GameManager : Singleton<GameManager>, IInitializable
         yield return new WaitForSeconds(0.5f);
     }
 
+    public void StartMultiPlayerStage(NoteMap noteMap, TrackData track)
+    {
+        currentTrack = track;
+        this.noteMap = noteMap;
+
+        StartCoroutine(MultiplayerStageRoutine());
+    }
+
     public IEnumerator MultiplayerStageRoutine()
     {
         gridGenerator.SetCellVisible(true);
@@ -498,7 +492,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
             networkSystem.photonView.RPC(
                 "StartGamePlayback",
                 RpcTarget.All,
-                startDspTime,
+                musicStartTime,
                 preRollTime
             );
         }

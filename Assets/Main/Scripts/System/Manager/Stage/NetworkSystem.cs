@@ -305,7 +305,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                     if (noteMapData != null)
                     {
                         NoteMap noteMap = noteMapData.noteMap;
-                        GameManager.Instance.StartMultiplayerGame(track, noteMap);
+                        GameManager.Instance.StartMultiPlayerStage(noteMap, track);
                     }
                 }
             }
@@ -362,21 +362,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         }
     }
 
-    public void LoadScene(string sceneName)
-    {
-        if (photonView != null && photonView.ViewID > 0)
-        {
-            photonView.RPC(nameof(LoadSceneRPC), RpcTarget.All, sceneName);
-        }
-        else
-        {
-            Debug.LogError(
-                "[NetworkSystem] Invalid PhotonView when trying to call LoadSceneClient RPC. ViewID: "
-                    + (photonView != null ? photonView.ViewID.ToString() : "null")
-            );
-        }
-    }
-
     [PunRPC]
     public void LoadSceneRPC(string sceneName)
     {
@@ -388,16 +373,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                 StartCoroutine(GameManager.Instance.MultiplayerStageRoutine());
             }
         );
-    }
-
-    [PunRPC]
-    private void LoadSceneClient(
-        string sceneName,
-        List<Func<IEnumerator>> operations,
-        Action onComplete
-    )
-    {
-        StageLoadingManager.Instance.LoadScene(sceneName, operations, onComplete);
     }
 
     public void SetPlayerReadyToLoadGame()
@@ -485,6 +460,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     [PunRPC]
     public void StartGamePlayback(double startTime, float preRollTime)
     {
+        Debug.Log("[NetworkSystem] StartGamePlayback RPC called");
         GameManager.Instance.StartGamePlayback(startTime, preRollTime);
     }
 

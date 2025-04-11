@@ -75,6 +75,8 @@ public class MultiRoomPanel : Panel
     private NetworkSystem networkSystem;
     private TrackData localSelectedTrack;
 
+    private bool isTrackSelected = false;
+
     public override void Open()
     {
         base.Open();
@@ -98,14 +100,7 @@ public class MultiRoomPanel : Panel
     private void OnTrackSelectButtonClicked()
     {
         Close(true);
-        MultiTrackSelectPanel trackSelectPanel =
-            StageUIManager.Instance.OpenPanel(PanelType.Multi_TrackSelect) as MultiTrackSelectPanel;
-
-        if (trackSelectPanel != null)
-        {
-            trackSelectPanel.Initialize(DataManager.Instance.TrackDataList);
-            trackSelectPanel.OnTrackSelected += OnLocalTrackSelected;
-        }
+        StageUIManager.Instance.OpenPanel(PanelType.AlbumSelect);
     }
 
     private void OnReadyButtonClicked()
