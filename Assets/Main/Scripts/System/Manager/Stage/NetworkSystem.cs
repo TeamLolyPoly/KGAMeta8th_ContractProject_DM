@@ -49,14 +49,19 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         IsInitialized = true;
     }
 
-    public void SetMultiRoomPanel(MultiRoomPanel panel)
+    public override void OnConnectedToMaster()
     {
-        multiRoomPanel = panel;
+        PhotonNetwork.JoinLobby();
     }
 
     public override void OnJoinedLobby()
     {
         CreateOrJoinMultiplayerRoom();
+    }
+
+    public void SetMultiRoomPanel(MultiRoomPanel panel)
+    {
+        multiRoomPanel = panel;
     }
 
     public void CreateOrJoinMultiplayerRoom()
@@ -274,16 +279,19 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public override void OnDisconnected(DisconnectCause cause)
     {
-        Debug.LogWarning($"[NetworkSystem] Server disconnected: {cause}");
-        StageUIManager.Instance.CloseAllPanels();
-        StageUIManager.Instance.OpenPopUp(
-            "네트워크 오류",
-            "서버와 연결이 끊어졌습니다. 다시 시도해주세요.",
-            () =>
-            {
-                StageUIManager.Instance.OpenPanel(PanelType.Mode);
-            }
-        );
+        if (isPlaying)
+        {
+            Debug.LogWarning($"[NetworkSystem] Server disconnected: {cause}");
+            StageUIManager.Instance.CloseAllPanels();
+            StageUIManager.Instance.OpenPopUp(
+                "네트워크 오류",
+                "서버와 연결이 끊어졌습니다. 다시 시도해주세요.",
+                () =>
+                {
+                    StageUIManager.Instance.OpenPanel(PanelType.Mode);
+                }
+            );
+        }
     }
 
     public override void OnCreateRoomFailed(short returnCode, string message)
@@ -302,13 +310,17 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public void LeaveGame()
     {
-        if (PhotonNetwork.InRoom)
+        if (isPlaying)
         {
-            PhotonNetwork.LeaveRoom();
-        }
-        else
-        {
-            PhotonNetwork.Disconnect();
+            isPlaying = false;
+            if (PhotonNetwork.InRoom)
+            {
+                PhotonNetwork.LeaveRoom();
+            }
+            else
+            {
+                PhotonNetwork.Disconnect();
+            }
         }
     }
 

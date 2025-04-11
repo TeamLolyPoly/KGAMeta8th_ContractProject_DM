@@ -31,10 +31,11 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     private bool isInitialized = false;
     private bool isPlaying = false;
+    private bool isInMultiStage = false;
 
     public bool IsInitialized => isInitialized;
     public bool IsPlaying => isPlaying;
-
+    public bool IsInMultiStage => isInMultiStage;
     public bool isEditMode = false;
 
     private readonly Vector3 SINGLE_PLAYER_SPAWN_POSITION = new Vector3(0, 2.1f, 0.58f);
@@ -490,6 +491,8 @@ public class GameManager : Singleton<GameManager>, IInitializable
         {
             yield return null;
         }
+
+        isInMultiStage = true;
 
         if (PhotonNetwork.IsMasterClient)
         {

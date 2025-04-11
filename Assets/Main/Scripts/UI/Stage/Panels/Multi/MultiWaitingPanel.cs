@@ -13,13 +13,13 @@ public class MultiWaitingPanel : Panel
     public override void Open()
     {
         base.Open();
-        waitingBox.SetBool("isOpen", true);
+        waitingBox.SetBool("subOpen", true);
     }
 
     public IEnumerator OnRoomFound()
     {
-        waitingBox.SetBool("isOpen", false);
-        findBox.SetBool("isOpen", true);
+        waitingBox.SetBool("subOpen", false);
+        findBox.SetBool("subOpen", true);
         yield return new WaitForSeconds(1f);
         Close(false);
         MultiRoomPanel multiRoomPanel =
@@ -29,8 +29,8 @@ public class MultiWaitingPanel : Panel
 
     public IEnumerator OnSearchFailed()
     {
-        waitingBox.SetBool("isOpen", false);
-        failedBox.SetBool("isOpen", true);
+        waitingBox.SetBool("subOpen", false);
+        failedBox.SetBool("subOpen", true);
         yield return new WaitForSeconds(1f);
         Close(false);
         MultiRoomPanel multiRoomPanel =
@@ -41,8 +41,8 @@ public class MultiWaitingPanel : Panel
     public override void Close(bool objActive = true)
     {
         base.Close(objActive);
-        waitingBox.SetBool("isOpen", false);
-        findBox.SetBool("isOpen", false);
-        failedBox.SetBool("isOpen", false);
+        waitingBox.SetBool("subOpen", false);
+        findBox.SetBool("subOpen", false);
+        failedBox.SetBool("subOpen", false);
     }
 }

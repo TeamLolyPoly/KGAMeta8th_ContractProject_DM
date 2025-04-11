@@ -21,7 +21,11 @@ public class PlayerVrRig : MonoBehaviourPun
 
     void LateUpdate()
     {
-        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        if (
+            PhotonNetwork.IsConnected
+            && PhotonNetwork.InRoom
+            && GameManager.Instance.IsInMultiStage
+        )
         {
             if (photonView.IsMine)
             {
