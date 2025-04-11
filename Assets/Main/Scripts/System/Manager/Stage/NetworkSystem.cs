@@ -278,6 +278,8 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     [PunRPC]
     public void StartGame()
     {
+        Debug.Log("[NetworkSystem] StartGame RPC execution started");
+
         if (
             PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(
                 LobbyData.FINAL_TRACK_GUID,
@@ -292,23 +294,66 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             string guidStr = (string)guidObj;
             int diffInt = (int)diffObj;
 
+            Debug.Log($"[NetworkSystem] Track GUID: {guidStr}, Difficulty: {diffInt}");
+
             if (Guid.TryParse(guidStr, out Guid guid))
             {
                 TrackData track = DataManager.Instance.TrackDataList.Find(t => t.id == guid);
                 Difficulty diff = (Difficulty)diffInt;
+
+                Debug.Log(
+                    $"[NetworkSystem] Found track: {(track != null ? track.trackName : "null")}"
+                );
 
                 if (track != null)
                 {
                     NoteMapData noteMapData = track.noteMapData.FirstOrDefault(n =>
                         n.difficulty == diff
                     );
+
+                    Debug.Log(
+                        $"[NetworkSystem] NoteMapData: {(noteMapData != null ? "Valid" : "null")} for difficulty {diff}"
+                    );
+
                     if (noteMapData != null)
                     {
                         NoteMap noteMap = noteMapData.noteMap;
-                        GameManager.Instance.StartMultiPlayerStage(noteMap, track);
+
+                        Debug.Log(
+                            $"[NetworkSystem] NoteMap: {(noteMap != null ? "Valid" : "null")}, BPM: {(noteMap != null ? noteMap.bpm.ToString() : "unknown")}"
+                        );
+
+                        if (noteMap != null)
+                        {
+                            GameManager.Instance.StartMultiPlayerStage(noteMap, track);
+                        }
+                        else
+                        {
+                            Debug.LogError(
+                                "[NetworkSystem] noteMap is null, cannot start multiplayer stage"
+                            );
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError(
+                            $"[NetworkSystem] No NoteMapData found for track {track.trackName} at difficulty {diff}"
+                        );
                     }
                 }
+                else
+                {
+                    Debug.LogError($"[NetworkSystem] Track not found for GUID {guid}");
+                }
             }
+            else
+            {
+                Debug.LogError($"[NetworkSystem] Failed to parse GUID: {guidStr}");
+            }
+        }
+        else
+        {
+            Debug.LogError("[NetworkSystem] Room properties missing final track info");
         }
     }
 
@@ -386,7 +431,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     {
         return PhotonNetwork.PlayerList.All(p =>
             p.CustomProperties.ContainsKey(LobbyData.IS_SPAWNED)
-            && (bool)p.CustomProperties[LobbyData.IS_SPAWNED] == true
+            && (bool)p.CustomProperties[LobbyData.IS_SPAWNED]
         );
     }
 

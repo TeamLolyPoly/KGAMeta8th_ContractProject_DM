@@ -397,11 +397,24 @@ public class GameManager : Singleton<GameManager>, IInitializable
         float progress = 0f;
         float progressStep = 0.2f;
 
+        Debug.Log(
+            $"[GameManager] InitializeMultiplayerStageRoutine - Track: {currentTrack.trackName}, NoteMap: {(noteMap != null ? "Valid" : "Null")}"
+        );
+        if (noteMap != null)
+        {
+            Debug.Log(
+                $"[GameManager] NoteMap Details in Init - BPM: {noteMap.bpm}, BeatsPerBar: {noteMap.beatsPerBar}, Notes: {(noteMap.notes != null ? noteMap.notes.Count : 0)}"
+            );
+        }
+
         DataManager.Instance.LoadTrackAudio(
             currentTrack.id,
             (audioClip) =>
             {
                 musicSource.clip = audioClip;
+                Debug.Log(
+                    $"[GameManager] Track Audio Loaded: {(audioClip != null ? "Success" : "Failed")}"
+                );
             }
         );
 
@@ -458,6 +471,16 @@ public class GameManager : Singleton<GameManager>, IInitializable
         currentTrack = track;
         this.noteMap = noteMap;
 
+        Debug.Log(
+            $"[GameManager] StartMultiPlayerStage - Track: {track.trackName}, NoteMap: {(noteMap != null ? "Valid" : "Null")}"
+        );
+        if (noteMap != null)
+        {
+            Debug.Log(
+                $"[GameManager] NoteMap Details - BPM: {noteMap.bpm}, BeatsPerBar: {noteMap.beatsPerBar}, Notes: {(noteMap.notes != null ? noteMap.notes.Count : 0)}"
+            );
+        }
+
         StageLoadingManager.Instance.LoadScene(
             "Test_Stage",
             InitializeMultiplayerStageRoutine,
@@ -474,7 +497,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         isInMultiStage = true;
 
-        PlayerSystem.SpawnPlayer(Vector3.zero, true);
+        Vector3 spawnPos = PhotonNetwork.IsMasterClient
+            ? MASTER_PLAYER_SPAWN_POSITION
+            : CLIENT_PLAYER_SPAWN_POSITION;
+        PlayerSystem.SpawnPlayer(spawnPos, true);
 
         while (!networkSystem.AreAllPlayersSpawned())
         {
@@ -510,15 +536,33 @@ public class GameManager : Singleton<GameManager>, IInitializable
         startDspTime = startTime;
         isPlaying = true;
 
-        print(
+        Debug.Log(
             $"[GameManager] StartGamePlayback Called \n"
-                + $"NotMap : {noteMap} \n"
+                + $"NoteMap : {(noteMap != null ? "Valid" : "Null")} \n"
                 + $"Track : {currentTrack.trackName} \n"
                 + $"StartTime : {startTime} \n"
                 + $"PreRollTime : {preRollTime}"
         );
 
-        noteSpawner.StartSpawn(startDspTime, preRollTime);
+        if (noteMap != null)
+        {
+            Debug.Log(
+                $"[GameManager] NoteMap Details before StartSpawn - BPM: {noteMap.bpm}, BeatsPerBar: {noteMap.beatsPerBar}, Notes: {(noteMap.notes != null ? noteMap.notes.Count : 0)}"
+            );
+        }
+        else
+        {
+            Debug.LogError("[GameManager] NoteMap is null when trying to start game playback!");
+        }
+
+        if (noteSpawner != null)
+        {
+            noteSpawner.StartSpawn(startDspTime, preRollTime);
+        }
+        else
+        {
+            Debug.LogError("[GameManager] NoteSpawner is null when trying to start spawn!");
+        }
 
         if (musicSource != null && musicSource.clip != null)
         {

@@ -30,20 +30,9 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
         {
             if (GameManager.Instance.IsInMultiStage)
             {
-                Vector3 SpawnPosition;
-
-                if (PhotonNetwork.IsMasterClient)
-                {
-                    SpawnPosition = new Vector3(0, 2.1f, 0.58f);
-                }
-                else
-                {
-                    SpawnPosition = new Vector3(15f, 2.1f, -0.58f);
-                }
-
                 GameObject playerObj = PhotonNetwork.Instantiate(
                     PLAYER_PREFAB,
-                    SpawnPosition,
+                    spawnPosition,
                     Quaternion.identity
                 );
 
