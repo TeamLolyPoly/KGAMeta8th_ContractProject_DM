@@ -525,7 +525,6 @@ GameObject:
   - component: {fileID: 2449993611664923817}
   - component: {fileID: 2705729013444238635}
   - component: {fileID: 7181110948401962525}
-  - component: {fileID: 8417264306481202490}
   m_Layer: 2
   m_Name: XRPlayer
   m_TagString: Untagged
@@ -583,28 +582,6 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &8417264306481202490
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2449993611664923818}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ObservedComponentsFoldoutOpen: 1
-  Group: 0
-  prefixField: -1
-  Synchronization: 3
-  OwnershipTransfer: 0
-  observableSearch: 2
-  ObservedComponents: []
-  sceneViewId: 0
-  InstantiationId: 0
-  isRuntimeInstantiated: 0
 --- !u!1 &2520025311127121599
 GameObject:
   m_ObjectHideFlags: 0
@@ -2090,6 +2067,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4208581104582584320}
   - component: {fileID: 6589479172768235573}
+  - component: {fileID: 9138708716668080461}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -2139,6 +2117,28 @@ MonoBehaviour:
   - {fileID: 6279811074086488218}
   - {fileID: 1115222469463397410}
   - {fileID: 7487102753219942534}
+--- !u!114 &9138708716668080461
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4208581104582584321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &4208581104721396200
 GameObject:
   m_ObjectHideFlags: 0
