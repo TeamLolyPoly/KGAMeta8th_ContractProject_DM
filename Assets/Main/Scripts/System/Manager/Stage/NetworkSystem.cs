@@ -474,6 +474,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             {
                 if (photonView != null && photonView.ViewID > 0)
                 {
+                    Debug.Log("[NetworkSystem] StartGame RPC called");
                     photonView.RPC(nameof(StartGame), RpcTarget.All);
                 }
                 else
@@ -482,8 +483,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                         "[NetworkSystem] Invalid PhotonView when trying to call StartGame RPC. ViewID: "
                             + (photonView != null ? photonView.ViewID.ToString() : "null")
                     );
-
-                    StartGame();
                 }
             }
         }
