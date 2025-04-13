@@ -1,7 +1,7 @@
 using Photon.Pun;
 using UnityEngine;
 
-public class PlayerVrRig : MonoBehaviourPun
+public class PlayerVrRig : MonoBehaviourPun, IPunObservable
 {
     [Header("로컬/리모트 VR 대상")]
     public VrMap head;
