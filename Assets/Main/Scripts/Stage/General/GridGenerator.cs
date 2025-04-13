@@ -52,14 +52,7 @@ public class GridGenerator : MonoBehaviour
 
         isMultiplayerMode = multiplayerMode;
 
-        if (multiplayerMode)
-        {
-            CreateMultiplayerGrids();
-        }
-        else
-        {
-            CreateGrids(new Vector3(0, 3.3f, gridDistance), new Vector3(0, 3.3f, 0));
-        }
+        CreateGrids(new Vector3(0, 3.3f, gridDistance), new Vector3(0, 3.3f, 0));
 
         isInitialized = true;
     }
@@ -74,24 +67,6 @@ public class GridGenerator : MonoBehaviour
             Destroy(secondSourceOrigin.gameObject);
             Destroy(secondTargetOrigin.gameObject);
         }
-    }
-
-    private void CreateMultiplayerGrids()
-    {
-        CreateGrids(new Vector3(0, 3.3f, gridDistance), new Vector3(0, 3.3f, 0));
-
-        GameObject secondSourceObj = new GameObject("SecondSourceGrid");
-        secondSourceOrigin = secondSourceObj.transform;
-        secondSourceOrigin.parent = transform;
-        secondSourceOrigin.localPosition = new Vector3(multiPlayerGridOffset, 3.3f, gridDistance);
-        secondSourceOrigin.localRotation = Quaternion.Euler(0, 0, 0);
-
-        GameObject secondTargetObj = new GameObject("SecondTargetGrid");
-        secondTargetOrigin = secondTargetObj.transform;
-        secondTargetOrigin.parent = transform;
-        secondTargetOrigin.localPosition = new Vector3(multiPlayerGridOffset, 3.3f, 0);
-        secondTargetOrigin.localRotation = Quaternion.Euler(0, 0, 0);
-        CreateGrids(secondSourceOrigin.position, secondTargetOrigin.position);
     }
 
     private void CreateGrids(Vector3 sourcePosition, Vector3 targetPosition)
@@ -109,6 +84,27 @@ public class GridGenerator : MonoBehaviour
         targetOrigin.localPosition = targetPosition;
         targetOrigin.localRotation = Quaternion.Euler(0, 0, 0);
         CreateGrid(targetOrigin);
+
+        if (isMultiplayerMode)
+        {
+            GameObject secondSourceObj = new GameObject("SecondSourceGrid");
+            secondSourceOrigin = secondSourceObj.transform;
+            secondSourceOrigin.parent = transform;
+            secondSourceOrigin.localPosition = new Vector3(
+                multiPlayerGridOffset,
+                3.3f,
+                gridDistance
+            );
+            secondSourceOrigin.localRotation = Quaternion.Euler(0, 0, 0);
+            CreateGrid(secondSourceOrigin);
+
+            GameObject secondTargetObj = new GameObject("SecondTargetGrid");
+            secondTargetOrigin = secondTargetObj.transform;
+            secondTargetOrigin.parent = transform;
+            secondTargetOrigin.localPosition = new Vector3(multiPlayerGridOffset, 3.3f, 0);
+            secondTargetOrigin.localRotation = Quaternion.Euler(0, 0, 0);
+            CreateGrid(secondTargetOrigin);
+        }
 
         SetCellVisible(false);
     }
