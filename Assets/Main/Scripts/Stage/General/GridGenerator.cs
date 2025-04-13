@@ -85,14 +85,13 @@ public class GridGenerator : MonoBehaviour
         secondSourceOrigin.parent = transform;
         secondSourceOrigin.localPosition = new Vector3(multiPlayerGridOffset, 3.3f, gridDistance);
         secondSourceOrigin.localRotation = Quaternion.Euler(0, 0, 0);
-        CreateGrid(secondSourceOrigin);
 
         GameObject secondTargetObj = new GameObject("SecondTargetGrid");
         secondTargetOrigin = secondTargetObj.transform;
         secondTargetOrigin.parent = transform;
         secondTargetOrigin.localPosition = new Vector3(multiPlayerGridOffset, 3.3f, 0);
         secondTargetOrigin.localRotation = Quaternion.Euler(0, 0, 0);
-        CreateGrid(secondTargetOrigin);
+        CreateGrids(secondSourceOrigin.position, secondTargetOrigin.position);
     }
 
     private void CreateGrids(Vector3 sourcePosition, Vector3 targetPosition)
