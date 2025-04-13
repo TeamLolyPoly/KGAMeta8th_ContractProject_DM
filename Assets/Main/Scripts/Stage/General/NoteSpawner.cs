@@ -24,12 +24,19 @@ public class NoteSpawner : MonoBehaviour
 
     private Vector3 sourceCenter;
     private Vector3 targetCenter;
+    private Vector3 secondSourceCenter;
+    private Vector3 secondTargetCenter;
+
     private List<Vector3> sourcePoints = new List<Vector3>();
     private List<Vector3> targetPoints = new List<Vector3>();
+    private List<Vector3> secondSourcePoints = new List<Vector3>();
+    private List<Vector3> secondTargetPoints = new List<Vector3>();
+
     private float noteSpeed;
     private double startDspTime;
 
     private GridGenerator gridGenerator;
+    private bool isMultiplayerMode = false;
 
     private Note shortNotePrefab;
     private LongNote longNotePrefab;
@@ -46,6 +53,7 @@ public class NoteSpawner : MonoBehaviour
             SetPrefabs();
             isInitialized = true;
         }
+
         SetGrids(gridGen, noteMap);
         GenerateCirclePoints();
         CalculateNoteSpeed();
@@ -62,6 +70,7 @@ public class NoteSpawner : MonoBehaviour
     {
         gridGenerator = gridGen;
         this.noteMap = noteMap;
+        isMultiplayerMode = gridGenerator.IsMultiplayerMode;
 
         Vector3 sourceGridCenter = gridGenerator.GetHandGridCenter(
             gridGenerator.sourceOrigin,
@@ -74,12 +83,29 @@ public class NoteSpawner : MonoBehaviour
 
         sourceCenter = sourceGridCenter + circleOffset;
         targetCenter = targetGridCenter + circleOffset;
+
+        if (isMultiplayerMode)
+        {
+            Vector3 secondSourceGridCenter = gridGenerator.GetHandGridCenter(
+                gridGenerator.secondSourceOrigin,
+                false
+            );
+            Vector3 secondTargetGridCenter = gridGenerator.GetHandGridCenter(
+                gridGenerator.secondTargetOrigin,
+                false
+            );
+
+            secondSourceCenter = secondSourceGridCenter + circleOffset;
+            secondTargetCenter = secondTargetGridCenter + circleOffset;
+        }
     }
 
     private void GenerateCirclePoints()
     {
         sourcePoints.Clear();
         targetPoints.Clear();
+        secondSourcePoints.Clear();
+        secondTargetPoints.Clear();
 
         float angleStep = 360f / segmentCount;
 
@@ -106,6 +132,25 @@ public class NoteSpawner : MonoBehaviour
                     targetCenter.z
                 )
             );
+
+            if (isMultiplayerMode)
+            {
+                secondSourcePoints.Add(
+                    new Vector3(
+                        secondSourceCenter.x + sourceRadius * x,
+                        secondSourceCenter.y + sourceRadius * y,
+                        secondSourceCenter.z
+                    )
+                );
+
+                secondTargetPoints.Add(
+                    new Vector3(
+                        secondTargetCenter.x + targetRadius * x,
+                        secondTargetCenter.y + targetRadius * y,
+                        secondTargetCenter.z
+                    )
+                );
+            }
         }
 
         Debug.Log($"[NoteSpawner] 원형 경로 생성 완료: {segmentCount}개의 포인트");
@@ -202,9 +247,17 @@ public class NoteSpawner : MonoBehaviour
         {
             case NoteType.Short:
                 SpawnShortNote(noteData);
+                if (isMultiplayerMode)
+                {
+                    SpawnShortNote(noteData, true);
+                }
                 break;
             case NoteType.Long:
                 SpawnLongNote(noteData);
+                if (isMultiplayerMode)
+                {
+                    SpawnLongNote(noteData, true);
+                }
                 break;
             default:
                 Debug.LogError($"[NoteSpawner] 지원하지 않는 노트 타입: {noteData.noteType}");
@@ -212,33 +265,49 @@ public class NoteSpawner : MonoBehaviour
         }
     }
 
-    private void SpawnShortNote(NoteData noteData)
+    private void SpawnShortNote(NoteData noteData, bool isSecondGrid = false)
     {
         if (noteData.TargetCell == Vector2.zero)
         {
             noteData.TargetCell = noteData.StartCell;
         }
 
+        NoteData clonedData = new NoteData();
+        clonedData.noteType = noteData.noteType;
+        clonedData.StartCell = noteData.StartCell;
+        clonedData.TargetCell = noteData.TargetCell;
+        clonedData.noteColor = noteData.noteColor;
+        clonedData.noteSpeed = noteData.noteSpeed;
+        clonedData.bar = noteData.bar;
+        clonedData.beat = noteData.beat;
+        clonedData.gridGenerator = noteData.gridGenerator;
+        clonedData.direction = noteData.direction;
+        clonedData.noteAxis = noteData.noteAxis;
+
+        if (isSecondGrid)
+        {
+            clonedData.useSecondGrid = true;
+        }
+
         ShortNote noteObj = PoolManager.Instance.Spawn<ShortNote>(
             shortNotePrefab.gameObject,
-            noteData.GetStartPosition(),
+            isSecondGrid ? clonedData.GetStartPosition() : noteData.GetStartPosition(),
             Quaternion.identity
         );
 
-        noteObj.Initialize(noteData);
-
         if (noteObj != null)
         {
+            noteObj.Initialize(isSecondGrid ? clonedData : noteData);
             noteObj.SetNoteColor(noteData.noteColor);
-        }
 
-        if (noteObj != null && hitFXPrefab != null)
-        {
-            noteObj.SetHitFX(hitFXPrefab);
+            if (hitFXPrefab != null)
+            {
+                noteObj.SetHitFX(hitFXPrefab);
+            }
         }
     }
 
-    private void SpawnLongNote(NoteData noteData)
+    private void SpawnLongNote(NoteData noteData, bool isSecondGrid = false)
     {
         if (noteData.noteType != NoteType.Long)
         {
@@ -277,25 +346,66 @@ public class NoteSpawner : MonoBehaviour
             }
         }
 
-        StartCoroutine(
-            SpawnSegments(noteData, startIndex, endIndex, false, arcLength, totalDurationSeconds)
-        );
+        if (isSecondGrid)
+        {
+            StartCoroutine(
+                SpawnSegments(
+                    noteData,
+                    startIndex,
+                    endIndex,
+                    false,
+                    arcLength,
+                    totalDurationSeconds,
+                    true
+                )
+            );
+        }
+        else
+        {
+            StartCoroutine(
+                SpawnSegments(
+                    noteData,
+                    startIndex,
+                    endIndex,
+                    false,
+                    arcLength,
+                    totalDurationSeconds
+                )
+            );
+        }
 
         if (noteData.isSymmetric)
         {
             int symmetricStartIndex = (startIndex + segmentCount / 2) % segmentCount;
             int symmetricEndIndex = (endIndex + segmentCount / 2) % segmentCount;
 
-            StartCoroutine(
-                SpawnSegments(
-                    noteData,
-                    symmetricStartIndex,
-                    symmetricEndIndex,
-                    true,
-                    arcLength,
-                    totalDurationSeconds
-                )
-            );
+            if (isSecondGrid)
+            {
+                StartCoroutine(
+                    SpawnSegments(
+                        noteData,
+                        symmetricStartIndex,
+                        symmetricEndIndex,
+                        true,
+                        arcLength,
+                        totalDurationSeconds,
+                        true
+                    )
+                );
+            }
+            else
+            {
+                StartCoroutine(
+                    SpawnSegments(
+                        noteData,
+                        symmetricStartIndex,
+                        symmetricEndIndex,
+                        true,
+                        arcLength,
+                        totalDurationSeconds
+                    )
+                );
+            }
         }
     }
 
@@ -305,7 +415,8 @@ public class NoteSpawner : MonoBehaviour
         int endIndex,
         bool isSymmetric,
         int arcLength,
-        float totalDurationSeconds
+        float totalDurationSeconds,
+        bool isSecondGrid = false
     )
     {
         if (arcLength <= 0)
@@ -356,8 +467,19 @@ public class NoteSpawner : MonoBehaviour
         for (int i = 0; i < pathIndices.Count; i++)
         {
             int index = pathIndices[i];
-            Vector3 sourcePos = sourcePoints[index];
-            Vector3 targetPos = targetPoints[index];
+            Vector3 sourcePos,
+                targetPos;
+
+            if (isSecondGrid)
+            {
+                sourcePos = secondSourcePoints[index];
+                targetPos = secondTargetPoints[index];
+            }
+            else
+            {
+                sourcePos = sourcePoints[index];
+                targetPos = targetPoints[index];
+            }
 
             NoteData segmentData = new NoteData
             {
@@ -414,6 +536,15 @@ public class NoteSpawner : MonoBehaviour
         Gizmos.color = Color.red;
         DrawCircle(targetCenter, targetRadius);
 
+        if (isMultiplayerMode)
+        {
+            Gizmos.color = Color.green;
+            DrawCircle(secondSourceCenter, sourceRadius);
+
+            Gizmos.color = Color.red;
+            DrawCircle(secondTargetCenter, targetRadius);
+        }
+
         if (sourcePoints != null && targetPoints != null)
         {
             Gizmos.color = Color.yellow;
@@ -426,6 +557,21 @@ public class NoteSpawner : MonoBehaviour
             foreach (Vector3 point in targetPoints)
             {
                 Gizmos.DrawSphere(point, 0.1f);
+            }
+
+            if (isMultiplayerMode && secondSourcePoints != null && secondTargetPoints != null)
+            {
+                Gizmos.color = Color.yellow;
+                foreach (Vector3 point in secondSourcePoints)
+                {
+                    Gizmos.DrawSphere(point, 0.1f);
+                }
+
+                Gizmos.color = Color.cyan;
+                foreach (Vector3 point in secondTargetPoints)
+                {
+                    Gizmos.DrawSphere(point, 0.1f);
+                }
             }
         }
     }

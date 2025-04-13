@@ -359,7 +359,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         this.noteMap = noteMap;
 
         StageLoadingManager.Instance.LoadScene(
-            "Test_Stage",
+            "Test_MultiStage",
             InitializeMultiplayerStageRoutine,
             () =>
             {

@@ -58,16 +58,19 @@ public class NoteData
     [JsonIgnore]
     public GridGenerator gridGenerator;
 
+    [JsonIgnore]
+    public bool useSecondGrid = false;
+
     public Vector3 GetStartPosition()
     {
         if (gridGenerator == null)
             return Vector3.zero;
 
-        return gridGenerator.GetCellPosition(
-            gridGenerator.sourceOrigin,
-            (int)StartCell.x,
-            (int)StartCell.y
-        );
+        Transform sourceOrigin = useSecondGrid
+            ? gridGenerator.secondSourceOrigin
+            : gridGenerator.sourceOrigin;
+
+        return gridGenerator.GetCellPosition(sourceOrigin, (int)StartCell.x, (int)StartCell.y);
     }
 
     public Vector3 GetTargetPosition()
@@ -75,11 +78,11 @@ public class NoteData
         if (gridGenerator == null)
             return Vector3.zero;
 
-        return gridGenerator.GetCellPosition(
-            gridGenerator.targetOrigin,
-            (int)TargetCell.x,
-            (int)TargetCell.y
-        );
+        Transform targetOrigin = useSecondGrid
+            ? gridGenerator.secondTargetOrigin
+            : gridGenerator.targetOrigin;
+
+        return gridGenerator.GetCellPosition(targetOrigin, (int)TargetCell.x, (int)TargetCell.y);
     }
 
     public int CalculateArcLength(int segmentCount, float bpm, int beatsPerBar, float spawnInterval)

@@ -1,6 +1,6 @@
+using Photon.Pun;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
-using Photon.Pun;
 
 public class NoteInteractor : MonoBehaviour
 {
@@ -21,12 +21,11 @@ public class NoteInteractor : MonoBehaviour
     {
         controller.SendHapticImpulse(1.0f, 0.1f);
     }
+
     public void TriggerHitEffect(Vector3 position)
     {
-        // 본인 로컬 이펙트
         PlayHitEffect(position);
 
-        // 다른 클라이언트에 이펙트 전달
         if (photonView.IsMine)
         {
             photonView.RPC(nameof(RPC_PlayHitEffect), RpcTarget.Others, position);
@@ -43,7 +42,11 @@ public class NoteInteractor : MonoBehaviour
     {
         if (hitFXPrefab != null)
         {
-            var effect = PoolManager.Instance.Spawn<ParticleSystem>(hitFXPrefab, position, Quaternion.identity);
+            var effect = PoolManager.Instance.Spawn<ParticleSystem>(
+                hitFXPrefab,
+                position,
+                Quaternion.identity
+            );
             effect.Play();
             PoolManager.Instance.Despawn(effect, 2.0f);
         }

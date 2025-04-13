@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class GridGenerator : MonoBehaviour, IInitializable
+public class GridGenerator : MonoBehaviour
 {
     [SerializeField]
     private int totalHorizontalCells = 5;
@@ -20,12 +20,18 @@ public class GridGenerator : MonoBehaviour, IInitializable
     [SerializeField]
     private float gridDistance = 30f;
 
+    [SerializeField]
+    private float multiPlayerGridOffset = 15f;
+
     private Material LeftGridMaterial;
     private Material RightGridMaterial;
     private Material OverlapGridMaterial;
 
     public Transform sourceOrigin { get; private set; }
     public Transform targetOrigin { get; private set; }
+
+    public Transform secondSourceOrigin { get; private set; }
+    public Transform secondTargetOrigin { get; private set; }
 
     public int TotalHorizontalCells => totalHorizontalCells;
     public int VerticalCells => verticalCells;
@@ -34,14 +40,27 @@ public class GridGenerator : MonoBehaviour, IInitializable
     public float GridDistance => gridDistance;
 
     private bool isInitialized = false;
+    private bool isMultiplayerMode = false;
     public bool IsInitialized => isInitialized;
+    public bool IsMultiplayerMode => isMultiplayerMode;
 
-    public void Initialize()
+    public void Initialize(bool multiplayerMode = false)
     {
         LeftGridMaterial = Resources.Load<Material>("Materials/Stage/LeftGrid");
         RightGridMaterial = Resources.Load<Material>("Materials/Stage/RightGrid");
         OverlapGridMaterial = Resources.Load<Material>("Materials/Stage/OverlapGrid");
-        CreateGrids(new Vector3(0, 3.3f, gridDistance), new Vector3(0, 3.3f, 0));
+
+        isMultiplayerMode = multiplayerMode;
+
+        if (multiplayerMode)
+        {
+            CreateMultiplayerGrids();
+        }
+        else
+        {
+            CreateGrids(new Vector3(0, 3.3f, gridDistance), new Vector3(0, 3.3f, 0));
+        }
+
         isInitialized = true;
     }
 
@@ -49,6 +68,31 @@ public class GridGenerator : MonoBehaviour, IInitializable
     {
         Destroy(sourceOrigin.gameObject);
         Destroy(targetOrigin.gameObject);
+
+        if (isMultiplayerMode)
+        {
+            Destroy(secondSourceOrigin.gameObject);
+            Destroy(secondTargetOrigin.gameObject);
+        }
+    }
+
+    private void CreateMultiplayerGrids()
+    {
+        CreateGrids(new Vector3(0, 3.3f, gridDistance), new Vector3(0, 3.3f, 0));
+
+        GameObject secondSourceObj = new GameObject("SecondSourceGrid");
+        secondSourceOrigin = secondSourceObj.transform;
+        secondSourceOrigin.parent = transform;
+        secondSourceOrigin.localPosition = new Vector3(multiPlayerGridOffset, 3.3f, gridDistance);
+        secondSourceOrigin.localRotation = Quaternion.Euler(0, 0, 0);
+        CreateGrid(secondSourceOrigin);
+
+        GameObject secondTargetObj = new GameObject("SecondTargetGrid");
+        secondTargetOrigin = secondTargetObj.transform;
+        secondTargetOrigin.parent = transform;
+        secondTargetOrigin.localPosition = new Vector3(multiPlayerGridOffset, 3.3f, 0);
+        secondTargetOrigin.localRotation = Quaternion.Euler(0, 0, 0);
+        CreateGrid(secondTargetOrigin);
     }
 
     private void CreateGrids(Vector3 sourcePosition, Vector3 targetPosition)
@@ -123,6 +167,12 @@ public class GridGenerator : MonoBehaviour, IInitializable
     {
         targetOrigin.gameObject.SetActive(visible);
         sourceOrigin.gameObject.SetActive(visible);
+
+        if (isMultiplayerMode)
+        {
+            secondTargetOrigin.gameObject.SetActive(visible);
+            secondSourceOrigin.gameObject.SetActive(visible);
+        }
     }
 
     public bool IsLeftHand(int x)
