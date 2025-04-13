@@ -33,7 +33,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
     private bool isInMultiStage = false;
 
     public bool IsInitialized => isInitialized;
-    public bool IsPlaying => isPlaying;
     public bool IsInMultiStage => isInMultiStage;
     public bool isEditMode = false;
 
@@ -439,6 +438,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         Vector3 spawnPos = PhotonNetwork.IsMasterClient
             ? MASTER_PLAYER_SPAWN_POSITION
             : CLIENT_PLAYER_SPAWN_POSITION;
+
         PlayerSystem.SpawnPlayer(spawnPos, true);
 
         while (!networkSystem.AreAllPlayersSpawned())

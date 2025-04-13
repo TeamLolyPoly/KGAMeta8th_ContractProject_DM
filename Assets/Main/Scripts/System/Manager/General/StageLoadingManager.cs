@@ -208,10 +208,7 @@ public class StageLoadingManager : Singleton<StageLoadingManager>
         Action onComplete
     )
     {
-        if (GameManager.Instance.PlayerSystem.XRPlayer != null)
-        {
-            GameManager.Instance.PlayerSystem.DespawnPlayer();
-        }
+        GameManager.Instance.PlayerSystem.DespawnPlayer();
 
         yield return new WaitUntil(() => !GameManager.Instance.PlayerSystem.IsSpawned);
 

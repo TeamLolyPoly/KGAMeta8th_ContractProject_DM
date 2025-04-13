@@ -44,7 +44,11 @@ public class XRPlayer : MonoBehaviourPun
 
     public void Initialize(bool isStage)
     {
-        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        if (
+            PhotonNetwork.IsConnected
+            && PhotonNetwork.InRoom
+            && GameManager.Instance.IsInMultiStage
+        )
         {
             if (photonView.IsMine)
             {

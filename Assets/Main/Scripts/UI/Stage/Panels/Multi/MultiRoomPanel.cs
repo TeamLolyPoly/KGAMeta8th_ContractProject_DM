@@ -75,8 +75,6 @@ public class MultiRoomPanel : Panel
     private NetworkSystem networkSystem;
     private TrackData localSelectedTrack;
 
-    private bool isTrackSelected = false;
-
     public override void Open()
     {
         base.Open();
