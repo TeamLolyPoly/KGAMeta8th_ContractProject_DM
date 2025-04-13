@@ -397,7 +397,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         gridGenerator = new GameObject("GridGenerator").AddComponent<GridGenerator>();
         gridGenerator.transform.SetParent(transform);
-        gridGenerator.Initialize();
+        gridGenerator.Initialize(true);
 
         StageLoadingManager.Instance.SetLoadingText("점수 시스템 초기화 중...");
         progress += progressStep;
