@@ -81,7 +81,6 @@ public class Note : MonoBehaviour, IInitializable
             {
                 HandleCollision();
                 noteInteractor?.SendImpulse();
-                noteInteractor?.TriggerHitEffect(transform.position);
             }
             else
             {
