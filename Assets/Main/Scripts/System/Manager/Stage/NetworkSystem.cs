@@ -70,6 +70,11 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         IsInitialized = true;
     }
 
+    public bool IsMasterClient()
+    {
+        return PhotonNetwork.IsMasterClient;
+    }
+
     private IEnumerator ReconnectAfterDisconnect()
     {
         while (PhotonNetwork.IsConnected)
@@ -442,6 +447,17 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                 }
             }
         }
+    }
+
+    public void SetRemoteBandAnims(Engagement engagement, int num)
+    {
+        photonView.RPC(nameof(RPC_RemoteBandAnim), RpcTarget.Others, engagement, num);
+    }
+
+    [PunRPC]
+    public void RPC_RemoteBandAnim(Engagement engagement, int num)
+    {
+        GameManager.Instance.UnitAnimationSystem.RemoteBandAnimationClipChange(engagement, num);
     }
 
     private void OnDestroy()
