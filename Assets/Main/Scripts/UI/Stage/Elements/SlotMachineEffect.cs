@@ -33,7 +33,10 @@ public class SlotMachineEffect : MonoBehaviour
     private GameObject particlePrefab;
 
     [SerializeField]
-    private Vector3 particleOffset = new Vector3(0, 0, -1f);
+    private Vector3[] particlePositions; // 여러 위치에 대한 오프셋 배열
+
+    [SerializeField]
+    private Vector3 particleRotation = new Vector3(0, 0, 0); // 회전값 설정
 
     [Header("화면 구조 설정")]
     [SerializeField]
@@ -123,13 +126,51 @@ public class SlotMachineEffect : MonoBehaviour
 
     private void SpawnSelectionParticle(bool isLeftPanel)
     {
-        if (particlePrefab != null)
+        if (particlePrefab != null && particlePositions != null && particlePositions.Length > 0)
         {
+            // 선택된 패널의 위치 가져오기
             RectTransform selectedPanel = isLeftPanel
                 ? (isLocalPanelOnLeft ? localPlayerBG.rectTransform : remotePlayerBG.rectTransform)
                 : (isLocalPanelOnLeft ? remotePlayerBG.rectTransform : localPlayerBG.rectTransform);
 
-            Instantiate(particlePrefab, selectedPanel.position + particleOffset, Quaternion.identity, transform);
+            // 각 위치에 파티클 생성
+            foreach (Vector3 position in particlePositions)
+            {
+                // 파티클 생성 위치 계산
+                Vector3 spawnPosition = selectedPanel.position + position;
+
+                // Inspector에서 설정한 회전값 사용
+                Quaternion specificRotation = Quaternion.Euler(particleRotation);
+                GameObject particleObj = Instantiate(particlePrefab, spawnPosition, specificRotation, transform);
+
+                // 파티클 시스템 설정 수정
+                var particleSystem = particleObj.GetComponent<ParticleSystem>();
+                if (particleSystem != null)
+                {
+                    // 파티클 시스템의 회전 설정
+                    var main = particleSystem.main;
+                    main.startRotation3D = true;
+                    main.startRotationX = 0;
+                    main.startRotationY = 0;
+                    main.startRotationZ = 90; // Z축 회전 90도
+
+                    // 중력 설정 (위로 올라가는 효과를 위해)
+                    main.gravityModifier = -1f; // 중력을 위쪽으로 설정
+
+                    // 파티클 방향 설정
+                    var emission = particleSystem.emission;
+                    emission.rateOverTime = 0; // 연속 방출 비활성화
+
+                    // 파티클 모양 설정
+                    var shape = particleSystem.shape;
+                    shape.shapeType = ParticleSystemShapeType.Cone;
+                    shape.angle = 15f; // 방출 각도 설정
+                    shape.rotation = new Vector3(0, 0, 90); // 모양의 회전 설정
+
+                    // 파티클 재생이 끝나면 자동으로 제거
+                    Destroy(particleObj, particleSystem.main.duration);
+                }
+            }
         }
     }
 
