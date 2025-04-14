@@ -229,6 +229,7 @@ public class ShortNote : Note, IPoolable
                     // hitFXInstance.Play();
                     // PoolManager.Instance.Despawn(hitFXInstance, 2.0f);
                     noteInteractor?.SendImpulse();
+                    noteInteractor?.TriggerHitEffect(transform.position);
                     HitScore(hitdis);
                 }
                 else
