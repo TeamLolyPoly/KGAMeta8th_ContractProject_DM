@@ -80,7 +80,8 @@ public class Note : MonoBehaviour, IInitializable
             if (noteInteractor.noteColor == noteData.noteColor)
             {
                 HandleCollision();
-                noteInteractor.SendImpulse();
+                noteInteractor?.SendImpulse();
+                noteInteractor?.TriggerHitEffect(transform.position);
             }
             else
             {
