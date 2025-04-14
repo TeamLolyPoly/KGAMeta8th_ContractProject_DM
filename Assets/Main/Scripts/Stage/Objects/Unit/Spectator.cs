@@ -1,4 +1,3 @@
-
 using System.Collections;
 using UnityEngine;
 
@@ -10,7 +9,9 @@ public class Spectator : Unit
 
         unitAnimationSystem.SpectatorDefaultAnimationChange(SetAnimationClip);
 
-        unitAnimationSystem.SpectatorAnimationClipChange(GameManager.Instance.ScoreSystem.currentSpectatorEngagement);
+        unitAnimationSystem.SpectatorAnimationClipChange(
+            GameManager.Instance.ScoreSystem.currentSpectatorEngagement
+        );
 
         StartCoroutine(AnimationPlayRoutine());
     }

@@ -38,7 +38,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     private readonly Vector3 SINGLE_PLAYER_SPAWN_POSITION = new Vector3(0, 2.1f, 0.58f);
     private readonly Vector3 MASTER_PLAYER_SPAWN_POSITION = new Vector3(0, 2.1f, 0.58f);
-    private readonly Vector3 CLIENT_PLAYER_SPAWN_POSITION = new Vector3(15f, 2.1f, -0.58f);
+    private readonly Vector3 CLIENT_PLAYER_SPAWN_POSITION = new Vector3(15f, 2.1f, 0.58f);
 
     #region Common
     private void Start()
@@ -157,7 +157,14 @@ public class GameManager : Singleton<GameManager>, IInitializable
                 && currentTime >= currentTrack.duration
             )
             {
-                StopGame();
+                if (isInMultiStage)
+                {
+                    StartCoroutine(Multi_StopGame());
+                }
+                else
+                {
+                    StopGame();
+                }
             }
         }
     }
@@ -424,7 +431,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         yield return new WaitForSeconds(0.5f);
 
         noteSpawner.Initialize(gridGenerator, noteMap);
-        StageUIManager.Instance.transform.position = new Vector3(0, 2, 0);
         StageLoadingManager.Instance.SetLoadingText("게임 시작 준비 중...");
         yield return new WaitForSeconds(0.5f);
     }
@@ -438,6 +444,14 @@ public class GameManager : Singleton<GameManager>, IInitializable
         Vector3 spawnPos = PhotonNetwork.IsMasterClient
             ? MASTER_PLAYER_SPAWN_POSITION
             : CLIENT_PLAYER_SPAWN_POSITION;
+        if (PhotonNetwork.IsMasterClient)
+        {
+            StageUIManager.Instance.transform.position = new Vector3(0, 2, 0);
+        }
+        else
+        {
+            StageUIManager.Instance.transform.position = new Vector3(15, 2, 0);
+        }
 
         PlayerSystem.SpawnPlayer(spawnPos, true);
 
@@ -459,6 +473,101 @@ public class GameManager : Singleton<GameManager>, IInitializable
         float preRollTime = noteTravelTime;
 
         StartGamePlayback(startDspTime, preRollTime);
+    }
+
+    public IEnumerator Multi_StopGame()
+    {
+        if (!isPlaying)
+            yield break;
+
+        isPlaying = false;
+
+        noteSpawner.StopSpawning();
+
+        if (musicSource != null)
+        {
+            musicSource.Stop();
+        }
+
+        MultiResultPanel resultPanel =
+            StageUIManager.Instance.OpenPanel(PanelType.Multi_Result) as MultiResultPanel;
+
+        networkSystem.SetResultData(scoreSystem.GetScoreData());
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            while (!networkSystem.IsStageDone())
+            {
+                yield return null;
+            }
+
+            if (networkSystem.DecideWinner())
+            {
+                resultPanel.Initialize(
+                    networkSystem.GetResultData(PhotonNetwork.LocalPlayer),
+                    networkSystem.GetResultData(PhotonNetwork.PlayerList[1]),
+                    true
+                );
+            }
+            else
+            {
+                resultPanel.Initialize(
+                    networkSystem.GetResultData(PhotonNetwork.PlayerList[1]),
+                    networkSystem.GetResultData(PhotonNetwork.LocalPlayer),
+                    false
+                );
+            }
+        }
+        else
+        {
+            while (!networkSystem.IsStageDone())
+            {
+                yield return null;
+            }
+
+            bool isWinner =
+                networkSystem.GetResultData(PhotonNetwork.LocalPlayer).Score
+                > networkSystem.GetResultData(PhotonNetwork.PlayerListOthers[0]).Score;
+
+            resultPanel.Initialize(
+                isWinner
+                    ? networkSystem.GetResultData(PhotonNetwork.LocalPlayer)
+                    : networkSystem.GetResultData(PhotonNetwork.PlayerListOthers[0]),
+                isWinner
+                    ? networkSystem.GetResultData(PhotonNetwork.PlayerListOthers[0])
+                    : networkSystem.GetResultData(PhotonNetwork.LocalPlayer),
+                isWinner
+            );
+        }
+
+        yield return new WaitForSeconds(3f);
+
+        playerSystem.XRPlayer.LeftRayInteractor.enabled = true;
+        playerSystem.XRPlayer.RightRayInteractor.enabled = true;
+    }
+
+    public void Multi_BackToTitle()
+    {
+        networkSystem.LeaveGame();
+        isInMultiStage = false;
+        StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
+        StageLoadingManager.Instance.LoadScene(
+            "Test_Editor",
+            Single_Cleanup,
+            () =>
+            {
+                PlayerSystem.SpawnPlayer(Vector3.zero, false);
+                StageUIManager.Instance.OpenPanel(PanelType.Mode);
+                networkSystem.LeaveGame();
+            }
+        );
+    }
+
+    public void Multi_BackToRoom()
+    {
+        isInMultiStage = false;
+        StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
+        StageLoadingManager.Instance.LoadScene("Test_Editor", Single_Cleanup, () => { });
     }
     #endregion
 

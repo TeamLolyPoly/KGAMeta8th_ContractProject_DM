@@ -185,6 +185,63 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         return Difficulty.Easy;
     }
 
+    public void SetResultData(ScoreData data)
+    {
+        Hashtable props = new Hashtable
+        {
+            { GameResultData.SCORE, data.Score },
+            { GameResultData.HIGH_COMBO, data.HighCombo },
+            { GameResultData.NOTE_HIT_COUNT, data.NoteHitCount },
+            { GameResultData.TOTAL_NOTE_COUNT, data.totalNoteCount },
+            { GameResultData.MISS_COUNT, data.RatingCount[NoteRatings.Miss] },
+            { GameResultData.GOOD_COUNT, data.RatingCount[NoteRatings.Good] },
+            { GameResultData.GREAT_COUNT, data.RatingCount[NoteRatings.Great] },
+            { GameResultData.PERFECT_COUNT, data.RatingCount[NoteRatings.Perfect] },
+        };
+
+        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+    }
+
+    public ScoreData GetResultData(Player player)
+    {
+        ScoreData data = new ScoreData(
+            (int)player.CustomProperties[GameResultData.SCORE],
+            (int)player.CustomProperties[GameResultData.HIGH_COMBO],
+            (int)player.CustomProperties[GameResultData.NOTE_HIT_COUNT],
+            (int)player.CustomProperties[GameResultData.TOTAL_NOTE_COUNT],
+            (int)player.CustomProperties[GameResultData.MISS_COUNT],
+            (int)player.CustomProperties[GameResultData.GOOD_COUNT],
+            (int)player.CustomProperties[GameResultData.GREAT_COUNT],
+            (int)player.CustomProperties[GameResultData.PERFECT_COUNT]
+        );
+
+        return data;
+    }
+
+    public bool DecideWinner()
+    {
+        var players = PhotonNetwork.PlayerList;
+
+        ScoreData masterPlayerScoreData = GetResultData(PhotonNetwork.LocalPlayer);
+        ScoreData otherPlayerScoreData = GetResultData(players[1]);
+
+        if (masterPlayerScoreData.Score > otherPlayerScoreData.Score)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public bool IsStageDone()
+    {
+        return PhotonNetwork.PlayerList.All(p =>
+            p.CustomProperties.ContainsKey(GameResultData.SCORE)
+        );
+    }
+
     public void DecideFinalTrack()
     {
         if (!PhotonNetwork.IsMasterClient)
