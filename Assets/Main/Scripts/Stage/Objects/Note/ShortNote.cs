@@ -221,15 +221,15 @@ public class ShortNote : Note, IPoolable
 
                 if (EnterAngle <= directionalRange)
                 {
-                    ParticleSystem hitFXInstance = PoolManager.Instance.Spawn<ParticleSystem>(
-                        hitFX.gameObject,
-                        transform.position,
-                        Quaternion.identity
-                    );
-                    hitFXInstance.Play();
-                    PoolManager.Instance.Despawn(hitFXInstance, 2.0f);
-
-                    noteInteractor.SendImpulse();
+                    // ParticleSystem hitFXInstance = PoolManager.Instance.Spawn<ParticleSystem>(
+                    //     hitFX.gameObject,
+                    //     transform.position,
+                    //     Quaternion.identity
+                    // );
+                    // hitFXInstance.Play();
+                    // PoolManager.Instance.Despawn(hitFXInstance, 2.0f);
+                    noteInteractor?.SendImpulse();
+                    noteInteractor?.TriggerHitEffect(transform.position);
                     HitScore(hitdis);
                 }
                 else
