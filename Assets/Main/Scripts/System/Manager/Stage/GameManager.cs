@@ -420,11 +420,11 @@ public class GameManager : Singleton<GameManager>, IInitializable
         yield return progress;
         yield return new WaitForSeconds(0.5f);
 
-        // unitAnimationManager = new GameObject(
-        //     "unitAnimationManager"
-        // ).AddComponent<AnimationSystem>();
-        // unitAnimationManager.transform.SetParent(transform);
-        // unitAnimationManager.Initialize();
+        unitAnimationManager = new GameObject(
+            "unitAnimationManager"
+        ).AddComponent<AnimationSystem>();
+        unitAnimationManager.transform.SetParent(transform);
+        unitAnimationManager.Initialize();
 
         progress += progressStep;
         yield return progress;
