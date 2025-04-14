@@ -2,11 +2,10 @@ using Photon.Pun;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 
-public class NoteInteractor : MonoBehaviour
+public class NoteInteractor : MonoBehaviourPunCallbacks
 {
     public NoteColor noteColor;
     private XRBaseController controller;
-    private PhotonView photonView;
 
     [SerializeField]
     private GameObject hitFXPrefab;
@@ -14,7 +13,6 @@ public class NoteInteractor : MonoBehaviour
     private void Awake()
     {
         controller = GetComponentInParent<XRBaseController>();
-        photonView = GetComponentInParent<PhotonView>();
     }
 
     public void SendImpulse()
@@ -22,14 +20,6 @@ public class NoteInteractor : MonoBehaviour
         if (controller != null)
         {
             controller.SendHapticImpulse(1.0f, 0.1f);
-        }
-    }
-
-    private void OnCollisionEnter(Collision other)
-    {
-        if (other.gameObject.TryGetComponent(out Note note))
-        {
-            TriggerHitEffect(note.transform.position);
         }
     }
 
