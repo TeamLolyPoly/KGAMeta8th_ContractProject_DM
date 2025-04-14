@@ -19,7 +19,10 @@ public class NoteInteractor : MonoBehaviour
 
     public void SendImpulse()
     {
-        controller.SendHapticImpulse(1.0f, 0.1f);
+        if (controller != null)
+        {
+            controller.SendHapticImpulse(1.0f, 0.1f);
+        }
     }
 
     public void TriggerHitEffect(Vector3 position)
