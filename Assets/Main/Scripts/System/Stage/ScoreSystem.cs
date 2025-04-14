@@ -1,8 +1,8 @@
+using Photon.Pun;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.SocialPlatforms.Impl;
 
 public class ScoreSystem : MonoBehaviour, IInitializable
 {
@@ -183,9 +183,9 @@ public class ScoreSystem : MonoBehaviour, IInitializable
                 currentBandEngagement,
                 bandActiveMember[currentBandEngagement]
             );
+            GameManager.Instance.NetworkSystem.SetRemoteBandAnims(currentBandEngagement, bandActiveMember[currentBandEngagement]);
         }
     }
-
     public string GetGameRank()
     {
         ratingCount.TryGetValue(NoteRatings.Miss, out int missValue);
