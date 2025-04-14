@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Xml;
 using Photon.Pun;
 using UnityEngine;
 
@@ -94,10 +95,19 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
     public IEnumerator DespawnPlayerRoutine()
     {
-        XRPlayer.LeftRayInteractor.enabled = false;
-        XRPlayer.RightRayInteractor.enabled = false;
-        XRPlayer.FadeOut(fadeTime);
-        yield return new WaitForSeconds(fadeTime + 2f);
+        if (XRPlayer != null)
+        {
+            if (XRPlayer.LeftRayInteractor != null)
+            {
+                XRPlayer.LeftRayInteractor.enabled = false;
+            }
+            if (XRPlayer.RightRayInteractor != null)
+            {
+                XRPlayer.RightRayInteractor.enabled = false;
+            }
+            XRPlayer.FadeOut(fadeTime);
+            yield return new WaitForSeconds(fadeTime + 2f);
+        }
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
             if (GameManager.Instance.IsInMultiStage)
