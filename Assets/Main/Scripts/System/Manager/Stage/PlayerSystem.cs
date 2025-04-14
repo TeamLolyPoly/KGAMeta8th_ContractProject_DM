@@ -95,34 +95,60 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
     public IEnumerator DespawnPlayerRoutine()
     {
-        if (XRPlayer != null)
+        if (XRPlayer == null || !isSpawned)
+        {
+            isSpawned = false;
+            yield break;
+        }
+
+        try
         {
             if (XRPlayer.LeftRayInteractor != null)
             {
                 XRPlayer.LeftRayInteractor.enabled = false;
             }
+
             if (XRPlayer.RightRayInteractor != null)
             {
                 XRPlayer.RightRayInteractor.enabled = false;
             }
+
             XRPlayer.FadeOut(fadeTime);
-            yield return new WaitForSeconds(fadeTime + 2f);
         }
-        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        catch (System.Exception e)
         {
-            if (GameManager.Instance.IsInMultiStage)
+            Debug.LogWarning("플레이어 페이드아웃 중 오류 발생: " + e.Message);
+        }
+
+        yield return new WaitForSeconds(fadeTime + 0.5f);
+
+        try
+        {
+            if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
             {
-                PhotonNetwork.Destroy(XRPlayer.gameObject);
+                if (
+                    GameManager.Instance.IsInMultiStage
+                    && XRPlayer != null
+                    && XRPlayer.gameObject != null
+                )
+                {
+                    PhotonNetwork.Destroy(XRPlayer.gameObject);
+                }
+                else if (XRPlayer != null && XRPlayer.gameObject != null)
+                {
+                    Destroy(XRPlayer.gameObject);
+                }
             }
-            else
+            else if (XRPlayer != null && XRPlayer.gameObject != null)
             {
                 Destroy(XRPlayer.gameObject);
             }
         }
-        else
+        catch (System.Exception e)
         {
-            Destroy(XRPlayer.gameObject);
+            Debug.LogWarning("플레이어 게임오브젝트 제거 중 오류 발생: " + e.Message);
         }
+
         XRPlayer = null;
         isSpawned = false;
     }

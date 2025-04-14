@@ -43,7 +43,7 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
     public void Initialize()
     {
         LoadResources();
-        logSystem.Initialize();
+        //logSystem.Initialize();
         foreach (var panel in debugPanels)
         {
             panel.SetBool("subOpen", false);

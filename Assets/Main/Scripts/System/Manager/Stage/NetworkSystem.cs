@@ -513,7 +513,12 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     [PunRPC]
     public void RPC_RemoteBandAnim(Engagement engagement, int num)
     {
-        GameManager.Instance.UnitAnimationSystem.RemoteBandAnimationClipChange(engagement, num);
+        Debug.Log("[NetworkSystem] RPC_RemoteBandAnim called");
+        Debug.Log($"UnitAnimationSystem: {GameManager.Instance.UnitAnimationSystem}");
+        if (GameManager.Instance.UnitAnimationSystem != null)
+        {
+            GameManager.Instance.UnitAnimationSystem.RemoteBandAnimationClipChange(engagement, num);
+        }
     }
 
     private void OnDestroy()

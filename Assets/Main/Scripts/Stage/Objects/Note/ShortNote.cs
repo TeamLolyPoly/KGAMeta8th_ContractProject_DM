@@ -150,6 +150,10 @@ public class ShortNote : Note, IPoolable
                 rotationX = -noteLookAtAngle / 2;
                 rotationY = noteLookAtAngle / 2;
                 break;
+            default:
+                rotationZ = 0f;
+                rotationX = -noteLookAtAngle;
+                break;
         }
 
         transform.rotation = Quaternion.Euler(rotationX, rotationY, rotationZ);

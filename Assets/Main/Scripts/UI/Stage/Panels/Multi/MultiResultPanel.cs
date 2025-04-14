@@ -1,4 +1,5 @@
 using System.Collections;
+using Michsky.UI.Heat;
 using ProjectDM.UI;
 using TMPro;
 using UnityEngine;
@@ -9,7 +10,7 @@ public class MultiResultPanel : Panel
     public override PanelType PanelType => PanelType.Multi_Result;
 
     [Header("UI Controls")]
-    public Button backToLobbyButton;
+    public ButtonManager backToLobbyButton;
 
     [Header("Winner")]
     public TextMeshProUGUI winnerNameText;
@@ -56,13 +57,37 @@ public class MultiResultPanel : Panel
         }
     }
 
+    public override void Close(bool objActive = true)
+    {
+        base.Close(objActive);
+
+        if (backToLobbyButton != null)
+        {
+            backToLobbyButton.onClick.RemoveAllListeners();
+        }
+    }
+
     private void OnBackToRoomClicked()
     {
+        // 버튼 중복 클릭 방지
+        if (backToLobbyButton != null)
+        {
+            backToLobbyButton.onClick.RemoveAllListeners();
+            backToLobbyButton.enabled = false;
+        }
+
         GameManager.Instance.Multi_BackToRoom();
     }
 
     private void OnBackToLobbyClicked()
     {
+        // 버튼 중복 클릭 방지
+        if (backToLobbyButton != null)
+        {
+            backToLobbyButton.onClick.RemoveAllListeners();
+            backToLobbyButton.enabled = false;
+        }
+
         GameManager.Instance.Multi_BackToTitle();
     }
 
@@ -143,8 +168,6 @@ public class MultiResultPanel : Panel
         winnerGoodCountText.text = targetGood.ToString();
         winnerGreatCountText.text = targetGreat.ToString();
         winnerPerfectCountText.text = targetPerfect.ToString();
-
-        Instantiate(GameManager.Instance.proceedDrum);
     }
 
     private IEnumerator AnimateScoreNumbers_Loser(ScoreData scoreData)
@@ -207,7 +230,5 @@ public class MultiResultPanel : Panel
         loserGoodCountText.text = targetGood.ToString();
         loserGreatCountText.text = targetGreat.ToString();
         loserPerfectCountText.text = targetPerfect.ToString();
-
-        Instantiate(GameManager.Instance.proceedDrum);
     }
 }

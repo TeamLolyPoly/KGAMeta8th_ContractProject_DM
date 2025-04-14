@@ -16,7 +16,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
     private GridGenerator gridGenerator;
     private ScoreSystem scoreSystem;
     private NoteSpawner noteSpawner;
-    private AnimationSystem unitAnimationManager;
+    private AnimationSystem unitAnimationSystem;
     public TrackData currentTrack;
     private NoteMap noteMap;
     private AudioSource musicSource;
@@ -25,7 +25,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
     public PlayerSystem PlayerSystem => playerSystem;
     public NoteMap NoteMap => noteMap;
     public ScoreSystem ScoreSystem => scoreSystem;
-    public AnimationSystem UnitAnimationSystem => unitAnimationManager;
+    public AnimationSystem UnitAnimationSystem => unitAnimationSystem;
     public ProceedDrum proceedDrum;
 
     private bool isInitialized = false;
@@ -121,7 +121,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         yield return new WaitForSeconds(1f);
         StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
 
-        Destroy(unitAnimationManager.gameObject);
+        Destroy(unitAnimationSystem.gameObject);
 
         progress += progressStep;
         yield return progress;
@@ -134,7 +134,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         noteSpawner = null;
         gridGenerator = null;
         scoreSystem = null;
-        unitAnimationManager = null;
+        unitAnimationSystem = null;
 
         progress += progressStep;
         yield return progress;
@@ -300,11 +300,11 @@ public class GameManager : Singleton<GameManager>, IInitializable
         yield return progress;
         yield return new WaitForSeconds(1f);
 
-        unitAnimationManager = new GameObject(
+        unitAnimationSystem = new GameObject(
             "unitAnimationManager"
         ).AddComponent<AnimationSystem>();
-        unitAnimationManager.transform.SetParent(transform);
-        unitAnimationManager.Initialize();
+        unitAnimationSystem.transform.SetParent(transform);
+        unitAnimationSystem.Initialize();
 
         progress += progressStep;
         yield return progress;
@@ -413,18 +413,18 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
         scoreSystem.transform.SetParent(transform);
-        scoreSystem.Initialize();
 
         StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(0.5f);
 
-        unitAnimationManager = new GameObject(
+        unitAnimationSystem = new GameObject(
             "unitAnimationManager"
         ).AddComponent<AnimationSystem>();
-        unitAnimationManager.transform.SetParent(transform);
-        unitAnimationManager.Initialize();
+        unitAnimationSystem.transform.SetParent(transform);
+        unitAnimationSystem.Initialize();
+        scoreSystem.Initialize();
 
         progress += progressStep;
         yield return progress;
@@ -542,8 +542,21 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         yield return new WaitForSeconds(3f);
 
-        playerSystem.XRPlayer.LeftRayInteractor.enabled = true;
-        playerSystem.XRPlayer.RightRayInteractor.enabled = true;
+        try
+        {
+            if (playerSystem != null && playerSystem.XRPlayer != null)
+            {
+                if (playerSystem.XRPlayer.LeftRayInteractor != null)
+                    playerSystem.XRPlayer.LeftRayInteractor.enabled = true;
+
+                if (playerSystem.XRPlayer.RightRayInteractor != null)
+                    playerSystem.XRPlayer.RightRayInteractor.enabled = true;
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning("레이 인터랙터 활성화 중 오류 발생: " + e.Message);
+        }
     }
 
     public void Multi_BackToTitle()
@@ -553,14 +566,61 @@ public class GameManager : Singleton<GameManager>, IInitializable
         StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
         StageLoadingManager.Instance.LoadScene(
             "Test_Editor",
-            Single_Cleanup,
+            Multi_Cleanup,
             () =>
             {
                 PlayerSystem.SpawnPlayer(Vector3.zero, false);
                 StageUIManager.Instance.OpenPanel(PanelType.Mode);
-                networkSystem.LeaveGame();
             }
         );
+    }
+
+    public IEnumerator Multi_Cleanup()
+    {
+        float progress = 0f;
+        float progressStep = 0.2f;
+
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("게임 초기화 중...");
+        Destroy(noteSpawner.gameObject);
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+
+        Destroy(gridGenerator.gameObject);
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("점수 시스템 초기화 중...");
+
+        Destroy(scoreSystem.gameObject);
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
+
+        Destroy(unitAnimationSystem.gameObject);
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("데이터 초기화중...");
+
+        currentBar = 0;
+        currentBeat = 0;
+        musicSource.clip = null;
+        noteSpawner = null;
+        gridGenerator = null;
+        scoreSystem = null;
+        unitAnimationSystem = null;
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("게임 초기화 완료");
     }
 
     public void Multi_BackToRoom()
@@ -569,7 +629,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
         StageLoadingManager.Instance.LoadScene(
             "Test_Editor",
-            Single_Cleanup,
+            Multi_Cleanup,
             () =>
             {
                 PlayerSystem.SpawnPlayer(Vector3.zero, false);
@@ -604,11 +664,11 @@ public class GameManager : Singleton<GameManager>, IInitializable
         scoreSystem.Initialize();
         noteSpawner.Initialize(gridGenerator, noteMap);
 
-        unitAnimationManager = new GameObject(
+        unitAnimationSystem = new GameObject(
             "unitAnimationManager"
         ).AddComponent<AnimationSystem>();
-        unitAnimationManager.transform.SetParent(transform);
-        unitAnimationManager.Initialize();
+        unitAnimationSystem.transform.SetParent(transform);
+        unitAnimationSystem.Initialize();
 
         StartCoroutine(SingleStageRoutine());
     }
