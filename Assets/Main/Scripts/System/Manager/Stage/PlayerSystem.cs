@@ -1,5 +1,5 @@
+using System;
 using System.Collections;
-using System.Xml;
 using Photon.Pun;
 using UnityEngine;
 
@@ -7,7 +7,8 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 {
     public const string PLAYER_PREFAB = "Prefabs/Stage/Player/Player";
 
-    public XRPlayer XRPlayer { get; private set; }
+    public XRPlayer XRPlayer;
+    public XRPlayer remotePlayer;
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
 
@@ -41,7 +42,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
                 multiPlayer.FadeIn(fadeTime);
                 yield return new WaitForSeconds(fadeTime);
-                XRPlayer = multiPlayer;
 
                 GameManager.Instance.NetworkSystem.SetPlayerSpawned();
             }
@@ -115,7 +115,7 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
             XRPlayer.FadeOut(fadeTime);
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
             Debug.LogWarning("플레이어 페이드아웃 중 오류 발생: " + e.Message);
         }
@@ -144,7 +144,7 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
                 Destroy(XRPlayer.gameObject);
             }
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
             Debug.LogWarning("플레이어 게임오브젝트 제거 중 오류 발생: " + e.Message);
         }

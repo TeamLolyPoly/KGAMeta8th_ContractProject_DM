@@ -1,7 +1,7 @@
-using Photon.Pun;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Photon.Pun;
 using UnityEngine;
 
 public class ScoreSystem : MonoBehaviour, IInitializable
@@ -183,10 +183,17 @@ public class ScoreSystem : MonoBehaviour, IInitializable
                 currentBandEngagement,
                 bandActiveMember[currentBandEngagement]
             );
-            GameManager.Instance.NetworkSystem.SetRemoteBandAnims(currentBandEngagement, bandActiveMember[currentBandEngagement]);
+            if (PhotonNetwork.InRoom)
+            {
+                GameManager.Instance.NetworkSystem.SetRemoteBandAnims(
+                    currentBandEngagement,
+                    bandActiveMember[currentBandEngagement]
+                );
+            }
         }
     }
-    public string GetGameRank()
+
+    public ResultRank GetGameRank()
     {
         ratingCount.TryGetValue(NoteRatings.Miss, out int missValue);
 
@@ -196,12 +203,14 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
         return rating switch
         {
-            var (miss, good) when miss == 0 && good == 0 && noteHitCount == totalNoteCount => "S+",
-            var (miss, good) when miss == 0 && good > 0 && noteHitCount == totalNoteCount => "S",
-            var (miss, good) when miss < totalNoteCount * 0.05 && good >= 0 => "A",
-            var (miss, good) when miss <= totalNoteCount * 0.5 && good >= 0 => "B",
-            var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => "C",
-            _ => "C",
+            var (miss, good) when miss == 0 && good == 0 && noteHitCount == totalNoteCount =>
+                ResultRank.Splus,
+            var (miss, good) when miss == 0 && good > 0 && noteHitCount == totalNoteCount =>
+                ResultRank.S,
+            var (miss, good) when miss < totalNoteCount * 0.05 && good >= 0 => ResultRank.A,
+            var (miss, good) when miss <= totalNoteCount * 0.5 && good >= 0 => ResultRank.B,
+            var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => ResultRank.C,
+            _ => ResultRank.C,
         };
     }
 

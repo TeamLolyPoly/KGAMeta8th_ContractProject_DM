@@ -69,7 +69,6 @@ public class MultiResultPanel : Panel
 
     private void OnBackToRoomClicked()
     {
-        // 버튼 중복 클릭 방지
         if (backToLobbyButton != null)
         {
             backToLobbyButton.onClick.RemoveAllListeners();

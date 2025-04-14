@@ -203,6 +203,7 @@ public class MultiTrackSelectPanel : Panel
         selectedTrack = null;
         selectedNoteMapData = null;
         trackInfoPanel.SetBool("subOpen", false);
+        StageUIManager.Instance.OpenPanel(PanelType.AlbumSelect);
         base.Close(objActive);
     }
 }

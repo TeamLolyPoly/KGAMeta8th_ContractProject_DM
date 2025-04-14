@@ -606,6 +606,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
         yield return new WaitForSeconds(1f);
         StageLoadingManager.Instance.SetLoadingText("데이터 초기화중...");
 
+        networkSystem.ClearPlayerProperties();
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("게임 초기화 중...");
+
         currentBar = 0;
         currentBeat = 0;
         musicSource.clip = null;

@@ -69,6 +69,31 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         IsInitialized = true;
     }
 
+    public void ClearPlayerProperties()
+    {
+        Hashtable props = new Hashtable
+        {
+            { LobbyData.TRACK_GUID, null },
+            { LobbyData.TRACK_DIFFICULTY, null },
+            { LobbyData.IS_PLAYER_READY, null },
+            { LobbyData.IS_SPAWNED, null },
+            { LobbyData.READY_TO_LOAD_GAME, null },
+        };
+
+        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            Hashtable roomProps = new Hashtable
+            {
+                { LobbyData.FINAL_TRACK_GUID, null },
+                { LobbyData.FINAL_TRACK_DIFFICULTY, null },
+                { "SelectedPlayerID", null },
+            };
+            PhotonNetwork.CurrentRoom.SetCustomProperties(roomProps);
+        }
+    }
+
     public bool IsMasterClient()
     {
         return PhotonNetwork.IsMasterClient;
@@ -391,6 +416,10 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                 );
             }
         }
+        else
+        {
+            print("[NetworkSystem] 정상 연결 해제");
+        }
     }
 
     public override void OnCreateRoomFailed(short returnCode, string message)
@@ -412,14 +441,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         if (isPlaying)
         {
             isPlaying = false;
-            if (PhotonNetwork.InRoom)
-            {
-                PhotonNetwork.LeaveRoom();
-            }
-            else
-            {
-                PhotonNetwork.Disconnect();
-            }
+            PhotonNetwork.Disconnect();
         }
     }
 

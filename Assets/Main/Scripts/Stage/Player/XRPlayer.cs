@@ -95,6 +95,7 @@ public class XRPlayer : MonoBehaviourPun
                 }
 
                 gameObject.name = "LocalPlayer";
+                GameManager.Instance.PlayerSystem.XRPlayer = this;
                 Debug.Log(
                     $"[XRPlayer] Local player initialized at position {transform.position}, name set to: {gameObject.name}"
                 );
@@ -126,6 +127,7 @@ public class XRPlayer : MonoBehaviourPun
                 }
 
                 gameObject.name = "RemotePlayer";
+                GameManager.Instance.PlayerSystem.remotePlayer = this;
                 Debug.Log(
                     $"[XRPlayer] Remote player initialized at position {transform.position}, name set to: {gameObject.name}"
                 );
