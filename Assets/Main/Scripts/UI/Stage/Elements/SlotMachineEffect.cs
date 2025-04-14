@@ -29,11 +29,8 @@ public class SlotMachineEffect : MonoBehaviour
     private AnimationCurve slowdownCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
     [Header("파티클 설정")]
-    [SerializeField]
-    private GameObject particlePrefab;
-
-    [SerializeField]
-    private Vector3 particleOffset = new Vector3(0, 0, -1f);
+    [SerializeField] private GameObject[] particlePrefabs; // 여러 파티클 프리팹 배열
+    [SerializeField] private Vector3[] particlePositions; // 여러 위치에 대한 오프셋 배열
 
     [Header("화면 구조 설정")]
     [SerializeField]
@@ -123,13 +120,29 @@ public class SlotMachineEffect : MonoBehaviour
 
     private void SpawnSelectionParticle(bool isLeftPanel)
     {
-        if (particlePrefab != null)
+        if (particlePrefabs != null && particlePositions != null &&
+            particlePrefabs.Length > 0 && particlePositions.Length > 0)
         {
+            // 선택된 패널의 위치 가져오기
             RectTransform selectedPanel = isLeftPanel
                 ? (isLocalPanelOnLeft ? localPlayerBG.rectTransform : remotePlayerBG.rectTransform)
                 : (isLocalPanelOnLeft ? remotePlayerBG.rectTransform : localPlayerBG.rectTransform);
 
-            Instantiate(particlePrefab, selectedPanel.position + particleOffset, Quaternion.identity, transform);
+            // 각 위치에 해당하는 파티클 생성
+            for (int i = 0; i < particlePositions.Length; i++)
+            {
+                // 파티클 생성 위치 계산
+                Vector3 spawnPosition = selectedPanel.position + particlePositions[i];
+
+                // 해당 위치에 맞는 파티클 프리팹 선택 (배열 범위 체크)
+                GameObject prefabToUse = i < particlePrefabs.Length ? particlePrefabs[i] : particlePrefabs[0];
+
+                // 90도 회전 적용
+                GameObject particleObj = Instantiate(prefabToUse, spawnPosition, Quaternion.Euler(90, 0, 0), transform);
+
+                // 파티클 재생이 끝나면 자동으로 제거
+                Destroy(particleObj, 2f); // 2초 후 제거 (파티클 시스템의 재생 시간에 따라 조정)
+            }
         }
     }
 

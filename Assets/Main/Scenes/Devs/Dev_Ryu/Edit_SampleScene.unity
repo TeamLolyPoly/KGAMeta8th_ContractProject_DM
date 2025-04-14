@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 26c294de8e774f74a98552c2e63e12ea, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 7416536dbe0334cfd888dd1beb75a9fb, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.38516277, g: 0.47246957, b: 0.6186635, a: 1}
+  m_IndirectSpecularColor: {r: 0.38219678, g: 0.4688205, b: 0.6140369, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -450,7 +450,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 168.51, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1765808548770456493
@@ -2190,16 +2190,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 2581646979982698702}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8582e99a397db14448a9cfb926971a25, type: 3}
+  m_Script: {fileID: 11500000, guid: b6d5974dca317f145ac866da019d2485, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  panel1Background: {fileID: 2581646981009208683}
-  panel2Background: {fileID: 2581646980533059857}
-  originalColor: {r: 0.9528302, g: 0.93934673, b: 0.93934673, a: 1}
-  blinkColor: {r: 0.6037736, g: 0.5952296, b: 0.5952296, a: 0.5882353}
+  localPlayerBG: {fileID: 2581646981009208683}
+  remotePlayerBG: {fileID: 2581646980533059857}
+  blinkColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   initialInterval: 0.05
   finalInterval: 0.5
-  totalDuration: 5
+  totalDuration: 3
   slowdownCurve:
     serializedVersion: 2
     m_Curve:
@@ -2224,8 +2223,11 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  particlePrefab: {fileID: 1978689737715041617, guid: bf3bc52df3c8c5746b6594394d66c214, type: 3}
-  particleOffset: {x: 0, y: 0, z: -1}
+  particlePrefab: {fileID: 8832710976538346180, guid: a4f4337cc571a3c4d9740ed5600c15d8, type: 3}
+  particlePositions:
+  - {x: 0, y: -0.1, z: -0.1}
+  particleRotation: {x: 90, y: 0, z: 0}
+  isLocalPanelOnLeft: 1
 --- !u!225 &2581646979984457761
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -15714,7 +15716,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 148.705, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2581646981507484322
