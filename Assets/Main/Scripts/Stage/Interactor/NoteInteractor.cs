@@ -25,6 +25,14 @@ public class NoteInteractor : MonoBehaviour
         }
     }
 
+    private void OnCollisionEnter(Collision other)
+    {
+        if (other.gameObject.TryGetComponent(out Note note))
+        {
+            TriggerHitEffect(note.transform.position);
+        }
+    }
+
     public void TriggerHitEffect(Vector3 position)
     {
         PlayHitEffect(position);
