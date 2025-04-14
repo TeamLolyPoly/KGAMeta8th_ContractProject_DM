@@ -75,16 +75,37 @@ public class Note : MonoBehaviour, IInitializable
     {
         if (!isInitialized)
             return;
-        if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
+        if (!GameManager.Instance.IsInMultiStage)
         {
-            if (noteInteractor.noteColor == noteData.noteColor)
+            if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
             {
-                HandleCollision();
-                noteInteractor?.SendImpulse();
+                if (noteInteractor.noteColor == noteData.noteColor)
+                {
+                    HandleCollision();
+                    noteInteractor?.SendImpulse();
+                }
+                else
+                {
+                    Miss();
+                }
             }
-            else
+        }
+        else
+        {
+            if (noteData.isInteractable)
             {
-                Miss();
+                if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
+                {
+                    if (noteInteractor.noteColor == noteData.noteColor)
+                    {
+                        HandleCollision();
+                        noteInteractor?.SendImpulse();
+                    }
+                    else
+                    {
+                        Miss();
+                    }
+                }
             }
         }
     }

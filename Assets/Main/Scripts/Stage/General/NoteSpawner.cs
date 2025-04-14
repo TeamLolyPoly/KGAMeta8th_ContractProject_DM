@@ -287,6 +287,16 @@ public class NoteSpawner : MonoBehaviour
         if (isSecondGrid)
         {
             clonedData.useSecondGrid = true;
+            if (PhotonNetwork.IsMasterClient)
+            {
+                clonedData.isInteractable = false;
+                noteData.isInteractable = true;
+            }
+            else
+            {
+                clonedData.isInteractable = true;
+                noteData.isInteractable = false;
+            }
         }
 
         ShortNote noteObj = PoolManager.Instance.Spawn<ShortNote>(

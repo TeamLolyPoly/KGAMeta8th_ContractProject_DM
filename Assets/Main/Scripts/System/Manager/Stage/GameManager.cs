@@ -484,6 +484,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         noteSpawner.StopSpawning();
 
+        gridGenerator.SetCellVisible(false);
+
+        yield return new WaitForSeconds(3f);
+
         if (musicSource != null)
         {
             musicSource.Stop();
@@ -542,20 +546,13 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         yield return new WaitForSeconds(3f);
 
-        try
+        if (playerSystem != null && playerSystem.XRPlayer != null)
         {
-            if (playerSystem != null && playerSystem.XRPlayer != null)
-            {
-                if (playerSystem.XRPlayer.LeftRayInteractor != null)
-                    playerSystem.XRPlayer.LeftRayInteractor.enabled = true;
+            if (playerSystem.XRPlayer.LeftRayInteractor != null)
+                playerSystem.XRPlayer.LeftRayInteractor.enabled = true;
 
-                if (playerSystem.XRPlayer.RightRayInteractor != null)
-                    playerSystem.XRPlayer.RightRayInteractor.enabled = true;
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogWarning("레이 인터랙터 활성화 중 오류 발생: " + e.Message);
+            if (playerSystem.XRPlayer.RightRayInteractor != null)
+                playerSystem.XRPlayer.RightRayInteractor.enabled = true;
         }
     }
 
