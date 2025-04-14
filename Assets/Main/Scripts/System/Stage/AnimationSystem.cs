@@ -159,6 +159,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             }
         }
     }
+
     public void RemoteBandAnimationClipChange(Engagement engagement, int numberOfUnits = 0)
     {
         if (defaultEngagement == null)

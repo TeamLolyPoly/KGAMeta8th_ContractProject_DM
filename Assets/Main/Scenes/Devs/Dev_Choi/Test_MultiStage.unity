@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.385163, g: 0.47246873, b: 0.6186622, a: 1}
+  m_IndirectSpecularColor: {r: 0.385163, g: 0.4724688, b: 0.61866236, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -533,7 +533,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1125373520}
   m_Layer: 0
-  m_Name: Base (1)
+  m_Name: HostBase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2497,6 +2497,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 1
   bandType: 2
 --- !u!1 &207790835875713155
 GameObject:
@@ -2548,6 +2549,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 1
   bandType: 2
 --- !u!1 &207791440659363121
 GameObject:
@@ -7697,7 +7699,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1664869619314291690}
   m_Layer: 0
-  m_Name: Base
+  m_Name: MasterBase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9427,6 +9429,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 1
   bandType: 0
 --- !u!1 &2135806498814913619
 GameObject:
@@ -9459,6 +9462,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 1
   bandType: 0
 --- !u!1 &2135806499442831387
 GameObject:
@@ -19758,6 +19762,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 1
   bandType: 1
 --- !u!4 &7730104150128635742
 Transform:
@@ -19967,6 +19972,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 1
   bandType: 1
 --- !u!1183024399 &7730104150228665407
 LookAtConstraint:
@@ -28852,6 +28858,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 1
   bandType: 3
 --- !u!1 &8615169814419534250
 GameObject:
@@ -28903,6 +28910,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 1
   bandType: 3
 --- !u!1 &8615169815030470852
 GameObject:
@@ -28935,6 +28943,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 1
   bandType: 3
 --- !u!114 &8615169815584172545
 MonoBehaviour:
@@ -28948,6 +28957,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 1
   bandType: 3
 --- !u!1 &8615169815584172558
 GameObject:

@@ -567,7 +567,15 @@ public class GameManager : Singleton<GameManager>, IInitializable
     {
         isInMultiStage = false;
         StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
-        StageLoadingManager.Instance.LoadScene("Test_Editor", Single_Cleanup, () => { });
+        StageLoadingManager.Instance.LoadScene(
+            "Test_Editor",
+            Single_Cleanup,
+            () =>
+            {
+                PlayerSystem.SpawnPlayer(Vector3.zero, false);
+                StageUIManager.Instance.OpenPanel(PanelType.Multi_Room);
+            }
+        );
     }
     #endregion
 

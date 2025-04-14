@@ -15812,7 +15812,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IsLoop: 1
   m_Duration: 1
-  m_Location: 0.33333334
+  m_Location: 0.6666667
   m_Width: 0.406
   m_Softness: 1
   m_Brightness: 0.486
@@ -41842,8 +41842,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  particlePrefab: {fileID: 0}
-  particleOffset: {x: 0, y: 0, z: -1}
+  particlePrefabs: []
+  particlePositions: []
   isLocalPanelOnLeft: 1
 --- !u!225 &6839907677693483525
 CanvasGroup:
@@ -50783,7 +50783,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7636890003196236464}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: -0, y: -0.0034179315, z: -0, w: 0.9999942}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -50791,7 +50791,7 @@ RectTransform:
   - {fileID: 7636890001640581443}
   m_Father: {fileID: 8649046072422803596}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -0.392, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -55774,6 +55774,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 6087792083866381093}
+  backToLobbyButton: {fileID: 0}
   winnerNameText: {fileID: 7636890003370191849}
   winnerTotalScoreText: {fileID: 7116994404359865644}
   winnerMostComboText: {fileID: 7681855441600989766}
