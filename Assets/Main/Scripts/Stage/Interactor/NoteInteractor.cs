@@ -35,11 +35,13 @@ public class NoteInteractor : MonoBehaviour
     [PunRPC]
     private void RPC_PlayHitEffect(Vector3 position)
     {
+        Debug.Log("[NoteInteractor] RPC_PlayHitEffect 호출함");
         PlayHitEffect(position);
     }
 
     private void PlayHitEffect(Vector3 position)
     {
+        Debug.Log("[NoteInteractor] PlayHitEffect 호출당함");
         if (hitFXPrefab != null)
         {
             var effect = PoolManager.Instance.Spawn<ParticleSystem>(
