@@ -5,6 +5,7 @@ using Michsky.UI.Heat;
 using ProjectDM.UI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SingleResultPanel : Panel
 {
@@ -23,6 +24,8 @@ public class SingleResultPanel : Panel
     public TextMeshProUGUI greatCountText;
 
     public TextMeshProUGUI perfectCountText;
+
+    public Image rankImage;
 
     public override void Open()
     {
@@ -94,6 +97,7 @@ public class SingleResultPanel : Panel
         goodCountText.text = targetGood.ToString();
         greatCountText.text = targetGreat.ToString();
         perfectCountText.text = targetPerfect.ToString();
+        rankImage.sprite = StageUIManager.Instance.GetRankImage(GameManager.Instance.ScoreSystem.GetGameRank());
 
         Instantiate(GameManager.Instance.proceedDrum);
     }

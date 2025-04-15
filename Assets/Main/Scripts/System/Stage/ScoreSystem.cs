@@ -215,6 +215,26 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             _ => ResultRank.C,
         };
     }
+    public ResultRank GetGameRank(ScoreData scoreData)
+    {
+        int missValue = scoreData.RatingCount[NoteRatings.Miss];
+        int goodValue = scoreData.RatingCount[NoteRatings.Good];
+        int hitCount = scoreData.NoteHitCount;
+
+        (int miss, int good) rating = (missValue, goodValue);
+
+        return rating switch
+        {
+            var (miss, good) when miss == 0 && good == 0 && hitCount == totalNoteCount =>
+                ResultRank.Splus,
+            var (miss, good) when miss == 0 && good > 0 && hitCount == totalNoteCount =>
+                ResultRank.S,
+            var (miss, good) when miss < totalNoteCount * 0.05 && good >= 0 => ResultRank.A,
+            var (miss, good) when miss <= totalNoteCount * 0.5 && good >= 0 => ResultRank.B,
+            var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => ResultRank.C,
+            _ => ResultRank.C,
+        };
+    }
 
     public ScoreData GetScoreData()
     {
