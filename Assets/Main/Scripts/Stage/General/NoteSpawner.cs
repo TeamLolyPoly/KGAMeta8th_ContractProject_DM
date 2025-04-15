@@ -152,8 +152,6 @@ public class NoteSpawner : MonoBehaviour
                 );
             }
         }
-
-        Debug.Log($"[NoteSpawner] 원형 경로 생성 완료: {segmentCount}개의 포인트");
     }
 
     private void CalculateNoteSpeed()

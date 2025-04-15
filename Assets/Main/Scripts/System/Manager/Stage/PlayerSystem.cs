@@ -39,9 +39,11 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
                 );
 
                 XRPlayer multiPlayer = playerObj.GetComponent<XRPlayer>();
-
-                multiPlayer.FadeIn(fadeTime);
-                yield return new WaitForSeconds(fadeTime);
+                if (multiPlayer.photonView.IsMine)
+                {
+                    multiPlayer.FadeIn(fadeTime);
+                    yield return new WaitForSeconds(fadeTime);
+                }
 
                 GameManager.Instance.NetworkSystem.SetPlayerSpawned();
             }

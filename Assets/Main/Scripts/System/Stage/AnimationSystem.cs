@@ -23,10 +23,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
 
     public IEnumerator InitializeRoutine()
     {
-        yield return new WaitUntil(
-            () =>
-                GameManager.Instance.ScoreSystem != null
-        );
+        yield return new WaitUntil(() => GameManager.Instance.ScoreSystem != null);
         Initialize();
     }
 
@@ -165,7 +162,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         {
             defaultEngagement = engagement;
         }
-        print($"defaultEngagement : {defaultEngagement.Value}");
+
         if (bands == null || bands.Count == 0)
             return;
 

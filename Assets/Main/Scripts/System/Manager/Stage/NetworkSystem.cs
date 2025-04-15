@@ -148,7 +148,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        Debug.Log("[NetworkSystem] Room joined: " + PhotonNetwork.CurrentRoom.Name);
         if (PhotonNetwork.IsMasterClient)
         {
             StartCoroutine(multiWaitingPanel.OnSearchFailed());
@@ -353,8 +352,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     [PunRPC]
     public void StartGame()
     {
-        Debug.Log("[NetworkSystem] StartGame RPC execution started");
-
         if (
             PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(
                 LobbyData.FINAL_TRACK_GUID,
@@ -511,15 +508,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             {
                 if (photonView != null && photonView.ViewID > 0)
                 {
-                    Debug.Log("[NetworkSystem] StartGame RPC called");
                     photonView.RPC(nameof(StartGame), RpcTarget.All);
-                }
-                else
-                {
-                    Debug.LogError(
-                        "[NetworkSystem] Invalid PhotonView when trying to call StartGame RPC. ViewID: "
-                            + (photonView != null ? photonView.ViewID.ToString() : "null")
-                    );
                 }
             }
         }
@@ -533,8 +522,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     [PunRPC]
     public void RPC_RemoteBandAnim(Engagement engagement, int num)
     {
-        Debug.Log("[NetworkSystem] RPC_RemoteBandAnim called");
-        Debug.Log($"UnitAnimationSystem: {GameManager.Instance.UnitAnimationSystem}");
         if (GameManager.Instance.UnitAnimationSystem != null)
         {
             GameManager.Instance.UnitAnimationSystem.RemoteBandAnimationClipChange(engagement, num);

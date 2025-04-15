@@ -186,6 +186,10 @@ public class XRPlayer : MonoBehaviourPun
                         RightController.uiPressAction.action.performed -= rightHaptic;
                     }
                 }
+                if (GameManager.Instance.PlayerSystem.XRPlayer == this)
+                {
+                    GameManager.Instance.PlayerSystem.XRPlayer = null;
+                }
             }
         }
         else
