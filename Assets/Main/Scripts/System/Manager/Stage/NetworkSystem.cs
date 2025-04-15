@@ -10,6 +10,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 {
     public static class LobbyData
     {
+        public const string IS_IN_MULTI_STAGE = "IsInMultiStage";
         public const string IS_SPAWNED = "IsSpawned";
         public const string IS_PLAYER_READY = "IsPlayerReady";
         public const string TRACK_GUID = "SelectedTrackGUID";
@@ -347,6 +348,20 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                 p.CustomProperties.ContainsKey(LobbyData.IS_PLAYER_READY)
                 && (bool)p.CustomProperties[LobbyData.IS_PLAYER_READY] == true
             );
+    }
+
+    public void SetIsInMultiStage(bool isInMultiStage)
+    {
+        Hashtable props = new Hashtable { { LobbyData.IS_IN_MULTI_STAGE, isInMultiStage } };
+        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+    }
+
+    public bool AreAllPlayersInMultiStage()
+    {
+        return PhotonNetwork.PlayerList.All(p =>
+            p.CustomProperties.ContainsKey(LobbyData.IS_IN_MULTI_STAGE)
+            && (bool)p.CustomProperties[LobbyData.IS_IN_MULTI_STAGE] == true
+        );
     }
 
     [PunRPC]
