@@ -10,7 +10,6 @@ public class HitSync : MonoBehaviour
     {
         if (other.gameObject.TryGetComponent(out Note note))
         {
-            print("[HitSync] 파티클 재생");
             var effect = PoolManager.Instance.Spawn<ParticleSystem>(
                 hitFX.gameObject,
                 transform.position,

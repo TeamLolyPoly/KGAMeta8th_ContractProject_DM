@@ -64,8 +64,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
         }
         else
         {
-            Debug.Log($"[PlayerSystem] Creating offline player via Instantiate");
-
             XRPlayer localPlayer = Instantiate(
                 Resources.Load<XRPlayer>(PLAYER_PREFAB),
                 spawnPosition,
@@ -73,7 +71,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
             );
 
             localPlayer.gameObject.name = "LocalPlayer";
-            Debug.Log($"[PlayerSystem] Created local player (offline) at {spawnPosition}");
 
             localPlayer.Initialize(isStage);
             localPlayer.FadeIn(fadeTime);
@@ -85,7 +82,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
         yield return new WaitForSeconds(0.5f);
 
         isSpawned = true;
-        Debug.Log($"[PlayerSystem] Player spawn complete, isSpawned set to {isSpawned}");
     }
 
     public void DespawnPlayer()

@@ -53,6 +53,9 @@ public class MultiResultPanel : Panel
     {
         base.Open();
 
+        winnerRankImage.gameObject.SetActive(false);
+        loserRankImage.gameObject.SetActive(false);
+
         if (backToLobbyButton != null)
         {
             backToLobbyButton.onClick.RemoveAllListeners();
@@ -83,7 +86,6 @@ public class MultiResultPanel : Panel
 
     private void OnBackToLobbyClicked()
     {
-        // 버튼 중복 클릭 방지
         if (backToLobbyButton != null)
         {
             backToLobbyButton.onClick.RemoveAllListeners();
@@ -170,7 +172,10 @@ public class MultiResultPanel : Panel
         winnerGoodCountText.text = targetGood.ToString();
         winnerGreatCountText.text = targetGreat.ToString();
         winnerPerfectCountText.text = targetPerfect.ToString();
-        winnerRankImage.sprite = StageUIManager.Instance.GetRankImage(GameManager.Instance.ScoreSystem.GetGameRank(scoreData));
+        winnerRankImage.sprite = StageUIManager.Instance.GetRankImage(
+            GameManager.Instance.ScoreSystem.GetGameRank(scoreData)
+        );
+        winnerRankImage.gameObject.SetActive(true);
     }
 
     private IEnumerator AnimateScoreNumbers_Loser(ScoreData scoreData)
@@ -233,6 +238,9 @@ public class MultiResultPanel : Panel
         loserGoodCountText.text = targetGood.ToString();
         loserGreatCountText.text = targetGreat.ToString();
         loserPerfectCountText.text = targetPerfect.ToString();
-        loserRankImage.sprite = StageUIManager.Instance.GetRankImage(GameManager.Instance.ScoreSystem.GetGameRank(scoreData));
+        loserRankImage.sprite = StageUIManager.Instance.GetRankImage(
+            GameManager.Instance.ScoreSystem.GetGameRank(scoreData)
+        );
+        loserRankImage.gameObject.SetActive(true);
     }
 }
