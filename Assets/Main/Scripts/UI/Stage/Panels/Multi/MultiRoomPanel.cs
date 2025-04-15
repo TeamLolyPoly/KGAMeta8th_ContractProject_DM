@@ -81,6 +81,17 @@ public class MultiRoomPanel : Panel
 
         networkSystem = GameManager.Instance.NetworkSystem;
 
+        RemotePlayerBox.SetBool("subOpen", false);
+        RemotePlayerSelectingBox.SetActive(false);
+        RemotePlayerOnReadyBox.SetActive(false);
+        RemoteTrackNameBox.SetActive(false);
+        RemoteTrackDifficultyBox.SetActive(false);
+        WaitingRemotePlayerBox.SetBool("subOpen", true);
+        TrackSelectButtonAnimator.SetBool("subOpen", false);
+        TrackSelectButton.gameObject.SetActive(false);
+        ReadyButtonAnimator.SetBool("subOpen", false);
+        ReadyButton.gameObject.SetActive(false);
+
         if (networkSystem != null)
         {
             networkSystem.SetMultiRoomPanel(this);
