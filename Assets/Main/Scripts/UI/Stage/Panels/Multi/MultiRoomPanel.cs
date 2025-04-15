@@ -81,13 +81,6 @@ public class MultiRoomPanel : Panel
 
         networkSystem = GameManager.Instance.NetworkSystem;
 
-        RemotePlayerBox.SetBool("subOpen", false);
-        RemotePlayerSelectingBox.SetActive(false);
-        RemotePlayerOnReadyBox.SetActive(false);
-        RemoteTrackNameBox.SetActive(false);
-        RemoteTrackDifficultyBox.SetActive(false);
-        WaitingRemotePlayerBox.SetBool("subOpen", true);
-
         if (networkSystem != null)
         {
             networkSystem.SetMultiRoomPanel(this);
@@ -201,11 +194,6 @@ public class MultiRoomPanel : Panel
         LocalTrackDifficultyBox.SetActive(false);
         PlayerButtonBox.SetActive(false);
         TrackSelectButton.gameObject.SetActive(true);
-        TrackSelectButtonAnimator.SetBool("subOpen", false);
-        TrackSelectButton.gameObject.SetActive(false);
-        ReadyButtonAnimator.SetBool("subOpen", false);
-        ReadyButton.gameObject.SetActive(true);
-        ReadyButton.Interactable(true);
         TrackSelectButton.Interactable(true);
     }
 
@@ -216,9 +204,6 @@ public class MultiRoomPanel : Panel
         PlayerButtonBox.SetActive(true);
         TrackSelectButton.gameObject.SetActive(true);
         TrackSelectButtonAnimator.SetBool("subOpen", true);
-        ReadyButtonAnimator.SetBool("subOpen", false);
-        ReadyButton.gameObject.SetActive(false);
-        ReadyButton.Interactable(true);
         TrackSelectButton.Interactable(true);
     }
 
@@ -230,6 +215,7 @@ public class MultiRoomPanel : Panel
         PlayerButtonBox.SetActive(true);
         TrackSelectButton.gameObject.SetActive(true);
         TrackSelectButtonAnimator.SetBool("subOpen", true);
+        TrackSelectButton.Interactable(true);
     }
 
     public void OnRemotePlayerLeft()
@@ -248,6 +234,11 @@ public class MultiRoomPanel : Panel
 
     public override void Close(bool objActive = true)
     {
+        ReadyButton.Interactable(true);
+        TrackSelectButton.Interactable(true);
+        ReadyButton.gameObject.SetActive(false);
+        TrackSelectButton.gameObject.SetActive(false);
+
         if (networkSystem != null)
         {
             networkSystem.OnTrackUpdated -= OnTrackUpdated;
