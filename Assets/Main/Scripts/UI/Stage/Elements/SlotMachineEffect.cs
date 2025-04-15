@@ -43,17 +43,8 @@ public class SlotMachineEffect : MonoBehaviour
     private bool isFinished = false;
     public bool IsFinished => isFinished;
 
-    private Color localPanelOriginalColor;
-    private Color remotePlayerOriginalColor;
-
-    private void Start()
-    {
-        if (localPlayerBG != null)
-            localPanelOriginalColor = localPlayerBG.color;
-
-        if (remotePlayerBG != null)
-            remotePlayerOriginalColor = remotePlayerBG.color;
-    }
+    private Color localPanelOriginalColor = Color.white;
+    private Color remotePlayerOriginalColor = Color.white;
 
     public void StartSpinningWithResult(bool selectLocal)
     {
@@ -73,16 +64,20 @@ public class SlotMachineEffect : MonoBehaviour
         isFinished = false;
         float elapsedTime = 0f;
 
-        // 패널 위치 설정
-        Image selectedPanel = selectLocal ? localPlayerBG : remotePlayerBG;
-        Image unselectedPanel = selectLocal ? remotePlayerBG : localPlayerBG;
+        // 패널 위치 설정 - 로컬/리모트 구분
+        Image localPanel = localPlayerBG;
+        Image remotePanel = remotePlayerBG;
+
+        // 선택 여부에 따라 패널 색상 설정
+        Image selectedPanel = selectLocal ? localPanel : remotePanel;
+        Image unselectedPanel = selectLocal ? remotePanel : localPanel;
 
         Color selectedOriginalColor = selectLocal ? localPanelOriginalColor : remotePlayerOriginalColor;
         Color unselectedOriginalColor = selectLocal ? remotePlayerOriginalColor : localPanelOriginalColor;
 
         // 초기 설정 - 두 패널 모두 원래 색상으로 설정
-        SetPanelColor(selectedPanel, selectedOriginalColor);
-        SetPanelColor(unselectedPanel, unselectedOriginalColor);
+        SetPanelColor(localPanel, localPanelOriginalColor);
+        SetPanelColor(remotePanel, remotePlayerOriginalColor);
 
         // 잠시 대기 후 효과 시작
         yield return new WaitForSeconds(0.1f);
@@ -110,8 +105,8 @@ public class SlotMachineEffect : MonoBehaviour
         }
 
         // 최종 선택 색상 고정
-        SetPanelColor(selectedPanel, selectedOriginalColor);
-        SetPanelColor(unselectedPanel, blinkColor);
+        SetPanelColor(selectedPanel, selectedOriginalColor);    // 선택된 패널은 원래 색상
+        SetPanelColor(unselectedPanel, blinkColor);            // 선택되지 않은 패널은 회색
 
         // 선택된 패널에 파티클 생성
         SpawnSelectionParticle(selectLocal);
