@@ -31,7 +31,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         public const string PERFECT_COUNT = "PerfectCount";
     }
 
-    private bool isPlaying = true;
+    private bool isMultiPlayer = true;
     public bool IsInitialized { get; private set; } = false;
     private MultiWaitingPanel multiWaitingPanel;
     private MultiRoomPanel multiRoomPanel;
@@ -67,6 +67,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         }
 
         IsInitialized = true;
+        isMultiPlayer = true;
     }
 
     public void ClearPlayerProperties()
@@ -134,7 +135,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             return;
         }
 
-        if (!isPlaying || !PhotonNetwork.IsConnectedAndReady)
+        if (!isMultiPlayer || !PhotonNetwork.IsConnectedAndReady)
             return;
 
         PhotonNetwork.JoinRandomRoom();
@@ -401,7 +402,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public override void OnDisconnected(DisconnectCause cause)
     {
-        if (isPlaying)
+        if (isMultiPlayer)
         {
             if (StageUIManager.Instance != null)
             {
@@ -415,10 +416,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                     }
                 );
             }
-        }
-        else
-        {
-            print("[NetworkSystem] 정상 연결 해제");
         }
     }
 
@@ -438,9 +435,10 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public void LeaveGame()
     {
-        if (isPlaying)
+        if (isMultiPlayer)
         {
-            isPlaying = false;
+            isMultiPlayer = false;
+            PhotonNetwork.LeaveRoom();
             PhotonNetwork.Disconnect();
         }
     }
@@ -545,7 +543,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     private void OnDestroy()
     {
-        isPlaying = false;
+        isMultiPlayer = false;
         PhotonNetwork.Disconnect();
     }
 }
