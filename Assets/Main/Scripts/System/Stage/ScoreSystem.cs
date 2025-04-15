@@ -93,6 +93,8 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         SetBandEngagement();
 
         onSpectatorEngagementChange?.Invoke(currentSpectatorEngagement = Engagement.First);
+
+        isInitialized = true;
     }
 
     public void SetScore(float score, NoteRatings ratings)
