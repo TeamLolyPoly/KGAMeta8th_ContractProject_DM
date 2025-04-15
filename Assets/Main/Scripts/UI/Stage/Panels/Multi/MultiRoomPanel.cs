@@ -202,8 +202,10 @@ public class MultiRoomPanel : Panel
         LocalPlayerBox.SetBool("subOpen", true);
         RemotePlayerBox.SetBool("subOpen", true);
         PlayerButtonBox.SetActive(true);
+        LocalTrackNameBox.SetActive(false);
+        LocalTrackDifficultyBox.SetActive(false);
+        PlayerButtonBox.SetActive(true);
         TrackSelectButton.gameObject.SetActive(true);
-        TrackSelectButtonAnimator.SetBool("subOpen", true);
         TrackSelectButton.Interactable(true);
     }
 
