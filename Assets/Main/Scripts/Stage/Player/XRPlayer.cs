@@ -52,10 +52,6 @@ public class XRPlayer : MonoBehaviourPun
         {
             if (photonView.IsMine)
             {
-                Debug.Log(
-                    $"[XRPlayer] This is MY player! Setting up local player components. IsStage={isStage}"
-                );
-
                 xrOrigin.SetActive(true);
 
                 foreach (var script in localOnlyScripts)
@@ -71,7 +67,6 @@ public class XRPlayer : MonoBehaviourPun
                 foreach (var obj in remoteOnlyObjects)
                 {
                     obj.SetActive(false);
-                    Debug.Log($"[XRPlayer] Disabled remote-only object: {obj.name}");
                 }
 
                 if (!isStage)
@@ -95,48 +90,33 @@ public class XRPlayer : MonoBehaviourPun
                 }
 
                 gameObject.name = "LocalPlayer";
-                Debug.Log(
-                    $"[XRPlayer] Local player initialized at position {transform.position}, name set to: {gameObject.name}"
-                );
+                GameManager.Instance.PlayerSystem.XRPlayer = this;
             }
             else
             {
-                Debug.Log(
-                    $"[XRPlayer] This is a REMOTE player! Setting up remote player components."
-                );
-
                 xrOrigin.SetActive(false);
 
                 foreach (var script in localOnlyScripts)
                 {
                     script.enabled = false;
-                    Debug.Log($"[XRPlayer] Disabled local-only script: {script.GetType().Name}");
                 }
 
                 foreach (var obj in localOnlyObjects)
                 {
                     obj.SetActive(false);
-                    Debug.Log($"[XRPlayer] Disabled local-only object: {obj.name}");
                 }
 
                 foreach (var obj in remoteOnlyObjects)
                 {
                     obj.SetActive(true);
-                    Debug.Log($"[XRPlayer] Enabled remote-only object: {obj.name}");
                 }
 
                 gameObject.name = "RemotePlayer";
-                Debug.Log(
-                    $"[XRPlayer] Remote player initialized at position {transform.position}, name set to: {gameObject.name}"
-                );
+                GameManager.Instance.PlayerSystem.remotePlayer = this;
             }
         }
         else
         {
-            Debug.Log(
-                $"[XRPlayer] Offline mode. Setting up single player components. IsStage={isStage}"
-            );
-
             xrOrigin.SetActive(true);
 
             foreach (var script in localOnlyScripts)
@@ -175,9 +155,6 @@ public class XRPlayer : MonoBehaviourPun
             }
 
             gameObject.name = "LocalPlayer";
-            Debug.Log(
-                $"[XRPlayer] Offline player initialized at position {transform.position}, name set to: {gameObject.name}"
-            );
         }
     }
 
@@ -193,36 +170,37 @@ public class XRPlayer : MonoBehaviourPun
 
     void OnDestroy()
     {
-        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
-        {
-            if (GameManager.Instance != null && GameManager.Instance.IsInMultiStage)
-            {
-                if (photonView.IsMine)
-                {
-                    if (LeftController != null)
-                    {
-                        LeftController.uiPressAction.action.performed -= leftHaptic;
-                    }
+        // if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        // {
+        //     if (GameManager.Instance != null && GameManager.Instance.IsInMultiStage)
+        //     {
+        //         if (photonView.IsMine)
+        //         {
+        //             if (LeftController != null)
+        //             {
+        //                 LeftController.uiPressAction.action.performed -= leftHaptic;
+        //             }
 
-                    if (RightController != null)
-                    {
-                        RightController.uiPressAction.action.performed -= rightHaptic;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if (LeftController != null)
-            {
-                LeftController.uiPressAction.action.performed -= leftHaptic;
-            }
+        //             if (RightController != null)
+        //             {
+        //                 RightController.uiPressAction.action.performed -= rightHaptic;
+        //             }
+        //         }
+        //         if(XRPlayer)
+        //     }
+        // }
+        // else
+        // {
+        //     if (LeftController != null)
+        //     {
+        //         LeftController.uiPressAction.action.performed -= leftHaptic;
+        //     }
 
-            if (RightController != null)
-            {
-                RightController.uiPressAction.action.performed -= rightHaptic;
-            }
-        }
+        //     if (RightController != null)
+        //     {
+        //         RightController.uiPressAction.action.performed -= rightHaptic;
+        //     }
+        // }
     }
 
     public void FadeOut(float duration)

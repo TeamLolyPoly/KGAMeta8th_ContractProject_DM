@@ -76,6 +76,7 @@ public class MultiTrackSelectPanel : Panel
     private void OnCloseButtonClick()
     {
         Close(true);
+        StageUIManager.Instance.OpenPanel(PanelType.AlbumSelect);
     }
 
     public void SelectTrack(TrackData track)

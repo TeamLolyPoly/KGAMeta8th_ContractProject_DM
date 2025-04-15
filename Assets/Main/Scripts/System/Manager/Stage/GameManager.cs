@@ -16,7 +16,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
     private GridGenerator gridGenerator;
     private ScoreSystem scoreSystem;
     private NoteSpawner noteSpawner;
-    private AnimationSystem unitAnimationManager;
+    private AnimationSystem unitAnimationSystem;
     public TrackData currentTrack;
     private NoteMap noteMap;
     private AudioSource musicSource;
@@ -25,7 +25,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
     public PlayerSystem PlayerSystem => playerSystem;
     public NoteMap NoteMap => noteMap;
     public ScoreSystem ScoreSystem => scoreSystem;
-    public AnimationSystem UnitAnimationSystem => unitAnimationManager;
+    public AnimationSystem UnitAnimationSystem => unitAnimationSystem;
     public ProceedDrum proceedDrum;
 
     private bool isInitialized = false;
@@ -38,7 +38,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     private readonly Vector3 SINGLE_PLAYER_SPAWN_POSITION = new Vector3(0, 2.1f, 0.58f);
     private readonly Vector3 MASTER_PLAYER_SPAWN_POSITION = new Vector3(0, 2.1f, 0.58f);
-    private readonly Vector3 CLIENT_PLAYER_SPAWN_POSITION = new Vector3(15f, 2.1f, -0.58f);
+    private readonly Vector3 CLIENT_PLAYER_SPAWN_POSITION = new Vector3(15f, 2.1f, 0.58f);
 
     #region Common
     private void Start()
@@ -121,7 +121,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         yield return new WaitForSeconds(1f);
         StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
 
-        Destroy(unitAnimationManager.gameObject);
+        Destroy(unitAnimationSystem.gameObject);
 
         progress += progressStep;
         yield return progress;
@@ -134,7 +134,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         noteSpawner = null;
         gridGenerator = null;
         scoreSystem = null;
-        unitAnimationManager = null;
+        unitAnimationSystem = null;
 
         progress += progressStep;
         yield return progress;
@@ -157,7 +157,14 @@ public class GameManager : Singleton<GameManager>, IInitializable
                 && currentTime >= currentTrack.duration
             )
             {
-                StopGame();
+                if (isInMultiStage)
+                {
+                    StartCoroutine(Multi_StopGame());
+                }
+                else
+                {
+                    StopGame();
+                }
             }
         }
     }
@@ -286,18 +293,18 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
         scoreSystem.transform.SetParent(transform);
-        scoreSystem.Initialize();
 
         StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(1f);
 
-        unitAnimationManager = new GameObject(
+        unitAnimationSystem = new GameObject(
             "unitAnimationManager"
         ).AddComponent<AnimationSystem>();
-        unitAnimationManager.transform.SetParent(transform);
-        unitAnimationManager.Initialize();
+        unitAnimationSystem.transform.SetParent(transform);
+        unitAnimationSystem.Initialize();
+        scoreSystem.Initialize();
 
         progress += progressStep;
         yield return progress;
@@ -406,25 +413,24 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
         scoreSystem.transform.SetParent(transform);
-        scoreSystem.Initialize();
 
         StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(0.5f);
 
-        // unitAnimationManager = new GameObject(
-        //     "unitAnimationManager"
-        // ).AddComponent<AnimationSystem>();
-        // unitAnimationManager.transform.SetParent(transform);
-        // unitAnimationManager.Initialize();
+        unitAnimationSystem = new GameObject(
+            "unitAnimationManager"
+        ).AddComponent<AnimationSystem>();
+        unitAnimationSystem.transform.SetParent(transform);
+        unitAnimationSystem.Initialize();
+        scoreSystem.Initialize();
 
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(0.5f);
 
         noteSpawner.Initialize(gridGenerator, noteMap);
-        StageUIManager.Instance.transform.position = new Vector3(0, 2, 0);
         StageLoadingManager.Instance.SetLoadingText("게임 시작 준비 중...");
         yield return new WaitForSeconds(0.5f);
     }
@@ -438,6 +444,14 @@ public class GameManager : Singleton<GameManager>, IInitializable
         Vector3 spawnPos = PhotonNetwork.IsMasterClient
             ? MASTER_PLAYER_SPAWN_POSITION
             : CLIENT_PLAYER_SPAWN_POSITION;
+        if (PhotonNetwork.IsMasterClient)
+        {
+            StageUIManager.Instance.transform.position = new Vector3(0, 2, 0);
+        }
+        else
+        {
+            StageUIManager.Instance.transform.position = new Vector3(15, 2, 0);
+        }
 
         PlayerSystem.SpawnPlayer(spawnPos, true);
 
@@ -459,6 +473,170 @@ public class GameManager : Singleton<GameManager>, IInitializable
         float preRollTime = noteTravelTime;
 
         StartGamePlayback(startDspTime, preRollTime);
+    }
+
+    public IEnumerator Multi_StopGame()
+    {
+        if (!isPlaying)
+            yield break;
+
+        isPlaying = false;
+
+        noteSpawner.StopSpawning();
+
+        gridGenerator.SetCellVisible(false);
+
+        yield return new WaitForSeconds(3f);
+
+        if (musicSource != null)
+        {
+            musicSource.Stop();
+        }
+
+        MultiResultPanel resultPanel =
+            StageUIManager.Instance.OpenPanel(PanelType.Multi_Result) as MultiResultPanel;
+
+        networkSystem.SetResultData(scoreSystem.GetScoreData());
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            while (!networkSystem.IsStageDone())
+            {
+                yield return null;
+            }
+
+            if (networkSystem.DecideWinner())
+            {
+                resultPanel.Initialize(
+                    networkSystem.GetResultData(PhotonNetwork.LocalPlayer),
+                    networkSystem.GetResultData(PhotonNetwork.PlayerList[1]),
+                    true
+                );
+            }
+            else
+            {
+                resultPanel.Initialize(
+                    networkSystem.GetResultData(PhotonNetwork.PlayerList[1]),
+                    networkSystem.GetResultData(PhotonNetwork.LocalPlayer),
+                    false
+                );
+            }
+        }
+        else
+        {
+            while (!networkSystem.IsStageDone())
+            {
+                yield return null;
+            }
+
+            bool isWinner =
+                networkSystem.GetResultData(PhotonNetwork.LocalPlayer).Score
+                > networkSystem.GetResultData(PhotonNetwork.PlayerListOthers[0]).Score;
+
+            resultPanel.Initialize(
+                isWinner
+                    ? networkSystem.GetResultData(PhotonNetwork.LocalPlayer)
+                    : networkSystem.GetResultData(PhotonNetwork.PlayerListOthers[0]),
+                isWinner
+                    ? networkSystem.GetResultData(PhotonNetwork.PlayerListOthers[0])
+                    : networkSystem.GetResultData(PhotonNetwork.LocalPlayer),
+                isWinner
+            );
+        }
+
+        yield return new WaitForSeconds(3f);
+
+        if (playerSystem != null && playerSystem.XRPlayer != null)
+        {
+            if (playerSystem.XRPlayer.LeftRayInteractor != null)
+                playerSystem.XRPlayer.LeftRayInteractor.enabled = true;
+
+            if (playerSystem.XRPlayer.RightRayInteractor != null)
+                playerSystem.XRPlayer.RightRayInteractor.enabled = true;
+        }
+    }
+
+    public void Multi_BackToTitle()
+    {
+        networkSystem.LeaveGame();
+        isInMultiStage = false;
+        StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
+        StageLoadingManager.Instance.LoadScene(
+            "Test_Editor",
+            Multi_Cleanup,
+            () =>
+            {
+                PlayerSystem.SpawnPlayer(Vector3.zero, false);
+                StageUIManager.Instance.OpenPanel(PanelType.Mode);
+            }
+        );
+    }
+
+    public IEnumerator Multi_Cleanup()
+    {
+        float progress = 0f;
+        float progressStep = 0.2f;
+
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("게임 초기화 중...");
+        Destroy(noteSpawner.gameObject);
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+
+        Destroy(gridGenerator.gameObject);
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("점수 시스템 초기화 중...");
+
+        Destroy(scoreSystem.gameObject);
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
+
+        Destroy(unitAnimationSystem.gameObject);
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("데이터 초기화중...");
+
+        networkSystem.ClearPlayerProperties();
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("게임 초기화 중...");
+
+        currentBar = 0;
+        currentBeat = 0;
+        musicSource.clip = null;
+        noteSpawner = null;
+        gridGenerator = null;
+        scoreSystem = null;
+        unitAnimationSystem = null;
+
+        progress += progressStep;
+        yield return progress;
+        yield return new WaitForSeconds(1f);
+        StageLoadingManager.Instance.SetLoadingText("게임 초기화 완료");
+    }
+
+    public void Multi_BackToRoom()
+    {
+        isInMultiStage = false;
+        StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
+        StageLoadingManager.Instance.LoadScene(
+            "Test_Editor",
+            Multi_Cleanup,
+            () =>
+            {
+                PlayerSystem.SpawnPlayer(Vector3.zero, false);
+                StageUIManager.Instance.OpenPanel(PanelType.Multi_Room);
+            }
+        );
     }
     #endregion
 
@@ -487,11 +665,11 @@ public class GameManager : Singleton<GameManager>, IInitializable
         scoreSystem.Initialize();
         noteSpawner.Initialize(gridGenerator, noteMap);
 
-        unitAnimationManager = new GameObject(
+        unitAnimationSystem = new GameObject(
             "unitAnimationManager"
         ).AddComponent<AnimationSystem>();
-        unitAnimationManager.transform.SetParent(transform);
-        unitAnimationManager.Initialize();
+        unitAnimationSystem.transform.SetParent(transform);
+        unitAnimationSystem.Initialize();
 
         StartCoroutine(SingleStageRoutine());
     }

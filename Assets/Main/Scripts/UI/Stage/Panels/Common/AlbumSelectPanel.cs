@@ -1,4 +1,5 @@
 using Michsky.UI.Heat;
+using Photon.Pun;
 using ProjectDM.UI;
 using UnityEngine;
 
@@ -33,6 +34,13 @@ public class AlbumSelectPanel : Panel
     private void OnCloseButtonClick()
     {
         Close(true);
-        StageUIManager.Instance.OpenPanel(PanelType.Mode);
+        if (PhotonNetwork.IsConnected)
+        {
+            StageUIManager.Instance.OpenPanel(PanelType.Multi_Room);
+        }
+        else
+        {
+            StageUIManager.Instance.OpenPanel(PanelType.Mode);
+        }
     }
 }

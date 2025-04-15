@@ -30,14 +30,14 @@ public class SlotMachineEffect : MonoBehaviour
 
     [Header("파티클 설정")]
     [SerializeField]
-    private GameObject particlePrefab;
+    private GameObject[] particlePrefabs;
 
     [SerializeField]
-    private Vector3 particleOffset = new Vector3(0, 0, -1f);
+    private Vector3[] particlePositions;
 
     [Header("화면 구조 설정")]
     [SerializeField]
-    private bool isLocalPanelOnLeft = true; // ✅ 왼쪽이 로컬 플레이어인지 설정
+    private bool isLocalPanelOnLeft = true;
 
     private bool isSpinning = false;
     private bool isFinished = false;
@@ -69,14 +69,16 @@ public class SlotMachineEffect : MonoBehaviour
         isFinished = false;
         float elapsedTime = 0f;
 
-        // 🔁 패널을 위치 기준으로 고정
         Image leftPanel = isLocalPanelOnLeft ? localPlayerBG : remotePlayerBG;
         Image rightPanel = isLocalPanelOnLeft ? remotePlayerBG : localPlayerBG;
 
-        Color leftOriginal = isLocalPanelOnLeft ? localPanelOriginalColor : remotePlayerOriginalColor;
-        Color rightOriginal = isLocalPanelOnLeft ? remotePlayerOriginalColor : localPanelOriginalColor;
+        Color leftOriginal = isLocalPanelOnLeft
+            ? localPanelOriginalColor
+            : remotePlayerOriginalColor;
+        Color rightOriginal = isLocalPanelOnLeft
+            ? remotePlayerOriginalColor
+            : localPanelOriginalColor;
 
-        // 초기 설정
         SetPanelColor(leftPanel, leftOriginal);
         SetPanelColor(rightPanel, blinkColor);
         bool currentSide = true;
@@ -84,7 +86,11 @@ public class SlotMachineEffect : MonoBehaviour
         while (elapsedTime < totalDuration)
         {
             float progress = elapsedTime / totalDuration;
-            float currentInterval = Mathf.Lerp(initialInterval, finalInterval, slowdownCurve.Evaluate(progress));
+            float currentInterval = Mathf.Lerp(
+                initialInterval,
+                finalInterval,
+                slowdownCurve.Evaluate(progress)
+            );
             currentSide = !currentSide;
 
             if (currentSide)
@@ -102,8 +108,8 @@ public class SlotMachineEffect : MonoBehaviour
             yield return new WaitForSeconds(currentInterval);
         }
 
-        // 최종 선택 색상 고정
-        bool isLeftSelected = (selectLocal && isLocalPanelOnLeft) || (!selectLocal && !isLocalPanelOnLeft);
+        bool isLeftSelected =
+            (selectLocal && isLocalPanelOnLeft) || (!selectLocal && !isLocalPanelOnLeft);
         if (isLeftSelected)
         {
             SetPanelColor(leftPanel, leftOriginal);
@@ -117,19 +123,41 @@ public class SlotMachineEffect : MonoBehaviour
 
         SpawnSelectionParticle(isLeftSelected);
 
+        yield return new WaitForSeconds(2f);
+
         isSpinning = false;
         isFinished = true;
     }
 
     private void SpawnSelectionParticle(bool isLeftPanel)
     {
-        if (particlePrefab != null)
+        if (
+            particlePrefabs != null
+            && particlePositions != null
+            && particlePrefabs.Length > 0
+            && particlePositions.Length > 0
+        )
         {
             RectTransform selectedPanel = isLeftPanel
                 ? (isLocalPanelOnLeft ? localPlayerBG.rectTransform : remotePlayerBG.rectTransform)
                 : (isLocalPanelOnLeft ? remotePlayerBG.rectTransform : localPlayerBG.rectTransform);
 
-            Instantiate(particlePrefab, selectedPanel.position + particleOffset, Quaternion.identity, transform);
+            for (int i = 0; i < particlePositions.Length; i++)
+            {
+                Vector3 spawnPosition = selectedPanel.position + particlePositions[i];
+
+                GameObject prefabToUse =
+                    i < particlePrefabs.Length ? particlePrefabs[i] : particlePrefabs[0];
+
+                GameObject particleObj = Instantiate(
+                    prefabToUse,
+                    spawnPosition,
+                    Quaternion.Euler(90, 0, 0),
+                    transform
+                );
+
+                Destroy(particleObj, 2f);
+            }
         }
     }
 
@@ -139,5 +167,14 @@ public class SlotMachineEffect : MonoBehaviour
         {
             panel.color = targetColor;
         }
+    }
+
+    public void CleanUp()
+    {
+        StopAllCoroutines();
+        isSpinning = false;
+        isFinished = false;
+        localPlayerBG.color = localPanelOriginalColor;
+        remotePlayerBG.color = remotePlayerOriginalColor;
     }
 }

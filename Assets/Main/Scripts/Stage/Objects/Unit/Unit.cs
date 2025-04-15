@@ -1,5 +1,5 @@
+using Photon.Pun;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Unit : MonoBehaviour
@@ -7,11 +7,13 @@ public class Unit : MonoBehaviour
     protected Animator animator;
     protected AnimationSystem unitAnimationSystem;
     protected bool isAnimating = false;
+    public bool isLeft;
 
     protected virtual IEnumerator Start()
     {
         yield return new WaitUntil(() => GameManager.Instance.UnitAnimationSystem != null);
         unitAnimationSystem = GameManager.Instance.UnitAnimationSystem;
+        yield return new WaitUntil(() => unitAnimationSystem.IsInitialized == true);
         Initialize();
     }
 
@@ -22,7 +24,36 @@ public class Unit : MonoBehaviour
         {
             animator = gameObject.AddComponent<Animator>();
         }
-        unitAnimationSystem.AddUnit(this);
+        if (PhotonNetwork.InRoom)
+        {
+            if (GameManager.Instance.NetworkSystem.IsMasterClient())
+            {
+                if (isLeft)
+                {
+                    unitAnimationSystem.AddUnit(this);
+                }
+                else
+                {
+                    unitAnimationSystem.AddRemoteUnit(this);
+                }
+            }
+            else
+            {
+                if (!isLeft)
+                {
+                    unitAnimationSystem.AddUnit(this);
+                }
+                else
+                {
+                    unitAnimationSystem.AddRemoteUnit(this);
+                }
+            }
+
+        }
+        else
+        {
+            unitAnimationSystem.AddUnit(this);
+        }
 
         unitAnimationSystem.AttachAnimation(animator);
     }

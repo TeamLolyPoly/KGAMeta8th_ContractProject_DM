@@ -31,7 +31,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         public const string PERFECT_COUNT = "PerfectCount";
     }
 
-    private bool isPlaying = true;
+    private bool isMultiPlayer = true;
     public bool IsInitialized { get; private set; } = false;
     private MultiWaitingPanel multiWaitingPanel;
     private MultiRoomPanel multiRoomPanel;
@@ -67,6 +67,37 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         }
 
         IsInitialized = true;
+        isMultiPlayer = true;
+    }
+
+    public void ClearPlayerProperties()
+    {
+        Hashtable props = new Hashtable
+        {
+            { LobbyData.TRACK_GUID, null },
+            { LobbyData.TRACK_DIFFICULTY, null },
+            { LobbyData.IS_PLAYER_READY, null },
+            { LobbyData.IS_SPAWNED, null },
+            { LobbyData.READY_TO_LOAD_GAME, null },
+        };
+
+        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            Hashtable roomProps = new Hashtable
+            {
+                { LobbyData.FINAL_TRACK_GUID, null },
+                { LobbyData.FINAL_TRACK_DIFFICULTY, null },
+                { "SelectedPlayerID", null },
+            };
+            PhotonNetwork.CurrentRoom.SetCustomProperties(roomProps);
+        }
+    }
+
+    public bool IsMasterClient()
+    {
+        return PhotonNetwork.IsMasterClient;
     }
 
     private IEnumerator ReconnectAfterDisconnect()
@@ -104,7 +135,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             return;
         }
 
-        if (!isPlaying || !PhotonNetwork.IsConnectedAndReady)
+        if (!isMultiPlayer || !PhotonNetwork.IsConnectedAndReady)
             return;
 
         PhotonNetwork.JoinRandomRoom();
@@ -117,7 +148,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        Debug.Log("[NetworkSystem] Room joined: " + PhotonNetwork.CurrentRoom.Name);
         if (PhotonNetwork.IsMasterClient)
         {
             StartCoroutine(multiWaitingPanel.OnSearchFailed());
@@ -183,6 +213,63 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             }
         }
         return Difficulty.Easy;
+    }
+
+    public void SetResultData(ScoreData data)
+    {
+        Hashtable props = new Hashtable
+        {
+            { GameResultData.SCORE, data.Score },
+            { GameResultData.HIGH_COMBO, data.HighCombo },
+            { GameResultData.NOTE_HIT_COUNT, data.NoteHitCount },
+            { GameResultData.TOTAL_NOTE_COUNT, data.totalNoteCount },
+            { GameResultData.MISS_COUNT, data.RatingCount[NoteRatings.Miss] },
+            { GameResultData.GOOD_COUNT, data.RatingCount[NoteRatings.Good] },
+            { GameResultData.GREAT_COUNT, data.RatingCount[NoteRatings.Great] },
+            { GameResultData.PERFECT_COUNT, data.RatingCount[NoteRatings.Perfect] },
+        };
+
+        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+    }
+
+    public ScoreData GetResultData(Player player)
+    {
+        ScoreData data = new ScoreData(
+            (int)player.CustomProperties[GameResultData.SCORE],
+            (int)player.CustomProperties[GameResultData.HIGH_COMBO],
+            (int)player.CustomProperties[GameResultData.NOTE_HIT_COUNT],
+            (int)player.CustomProperties[GameResultData.TOTAL_NOTE_COUNT],
+            (int)player.CustomProperties[GameResultData.MISS_COUNT],
+            (int)player.CustomProperties[GameResultData.GOOD_COUNT],
+            (int)player.CustomProperties[GameResultData.GREAT_COUNT],
+            (int)player.CustomProperties[GameResultData.PERFECT_COUNT]
+        );
+
+        return data;
+    }
+
+    public bool DecideWinner()
+    {
+        var players = PhotonNetwork.PlayerList;
+
+        ScoreData masterPlayerScoreData = GetResultData(PhotonNetwork.LocalPlayer);
+        ScoreData otherPlayerScoreData = GetResultData(players[1]);
+
+        if (masterPlayerScoreData.Score > otherPlayerScoreData.Score)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public bool IsStageDone()
+    {
+        return PhotonNetwork.PlayerList.All(p =>
+            p.CustomProperties.ContainsKey(GameResultData.SCORE)
+        );
     }
 
     public void DecideFinalTrack()
@@ -265,8 +352,6 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     [PunRPC]
     public void StartGame()
     {
-        Debug.Log("[NetworkSystem] StartGame RPC execution started");
-
         if (
             PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(
                 LobbyData.FINAL_TRACK_GUID,
@@ -314,7 +399,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public override void OnDisconnected(DisconnectCause cause)
     {
-        if (isPlaying)
+        if (isMultiPlayer)
         {
             if (StageUIManager.Instance != null)
             {
@@ -347,17 +432,11 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public void LeaveGame()
     {
-        if (isPlaying)
+        if (isMultiPlayer)
         {
-            isPlaying = false;
-            if (PhotonNetwork.InRoom)
-            {
-                PhotonNetwork.LeaveRoom();
-            }
-            else
-            {
-                PhotonNetwork.Disconnect();
-            }
+            isMultiPlayer = false;
+            PhotonNetwork.LeaveRoom();
+            PhotonNetwork.Disconnect();
         }
     }
 
@@ -429,23 +508,29 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             {
                 if (photonView != null && photonView.ViewID > 0)
                 {
-                    Debug.Log("[NetworkSystem] StartGame RPC called");
                     photonView.RPC(nameof(StartGame), RpcTarget.All);
-                }
-                else
-                {
-                    Debug.LogError(
-                        "[NetworkSystem] Invalid PhotonView when trying to call StartGame RPC. ViewID: "
-                            + (photonView != null ? photonView.ViewID.ToString() : "null")
-                    );
                 }
             }
         }
     }
 
+    public void SetRemoteBandAnims(Engagement engagement, int num)
+    {
+        photonView.RPC(nameof(RPC_RemoteBandAnim), RpcTarget.Others, engagement, num);
+    }
+
+    [PunRPC]
+    public void RPC_RemoteBandAnim(Engagement engagement, int num)
+    {
+        if (GameManager.Instance.UnitAnimationSystem != null)
+        {
+            GameManager.Instance.UnitAnimationSystem.RemoteBandAnimationClipChange(engagement, num);
+        }
+    }
+
     private void OnDestroy()
     {
-        isPlaying = false;
+        isMultiPlayer = false;
         PhotonNetwork.Disconnect();
     }
 }

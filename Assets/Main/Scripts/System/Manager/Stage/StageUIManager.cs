@@ -4,10 +4,16 @@ using System.Linq;
 using Michsky.UI.Heat;
 using ProjectDM.UI;
 using UnityEngine;
-using UnityEngine.Android;
 
 public class StageUIManager : Singleton<StageUIManager>, IInitializable
 {
+    [Serializable]
+    public class RankImage
+    {
+        public ResultRank resultRank;
+        public Sprite resultImage;
+    }
+
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
 
@@ -39,6 +45,9 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
     private LogSystem logSystem;
 
     public LogSystem LogSystem => logSystem;
+
+    [SerializeField]
+    private List<RankImage> rankImages = new List<RankImage>();
 
     public void Initialize()
     {
@@ -75,6 +84,7 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
         {
             defaultAlbumArt = Resources.Load<Sprite>("Textures/DefaultAlbumArt");
         }
+
     }
 
     public Panel OpenPanel(PanelType panelType)
@@ -154,5 +164,12 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
         {
             panel.SetBool("subOpen", !panel.GetBool("subOpen"));
         }
+    }
+
+    public Sprite GetRankImage(ResultRank Rank)
+    {
+        RankImage rank = rankImages.Find((rank) => rank.resultRank == Rank);
+
+        return rank.resultImage;
     }
 }

@@ -122,3 +122,12 @@ public enum Difficulty
     Normal = 1,
     Hard = 2,
 }
+
+public enum ResultRank
+{
+    Splus,
+    S,
+    A,
+    B,
+    C,
+}

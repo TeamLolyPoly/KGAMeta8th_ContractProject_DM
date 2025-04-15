@@ -2,7 +2,6 @@ using System.Collections;
 using Michsky.UI.Heat;
 using Photon.Pun;
 using ProjectDM.UI;
-using TMPro;
 using UnityEngine;
 
 public class MultiTrackDecisionPanel : Panel
@@ -54,5 +53,11 @@ public class MultiTrackDecisionPanel : Panel
         slotEffect.StartSpinningWithResult(isLocalTrackSelected);
         yield return new WaitUntil(() => slotEffect.IsFinished);
         GameManager.Instance.NetworkSystem.SetPlayerReadyToLoadGame();
+    }
+
+    public override void Close(bool objActive = true)
+    {
+        slotEffect.CleanUp();
+        base.Close(objActive);
     }
 }

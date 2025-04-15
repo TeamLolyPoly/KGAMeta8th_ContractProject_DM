@@ -1,5 +1,5 @@
+using System;
 using System.Collections;
-using System.Xml;
 using Photon.Pun;
 using UnityEngine;
 
@@ -7,7 +7,8 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 {
     public const string PLAYER_PREFAB = "Prefabs/Stage/Player/Player";
 
-    public XRPlayer XRPlayer { get; private set; }
+    public XRPlayer XRPlayer;
+    public XRPlayer remotePlayer;
     private bool isInitialized = false;
     public bool IsInitialized => isInitialized;
 
@@ -41,7 +42,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
                 multiPlayer.FadeIn(fadeTime);
                 yield return new WaitForSeconds(fadeTime);
-                XRPlayer = multiPlayer;
 
                 GameManager.Instance.NetworkSystem.SetPlayerSpawned();
             }
@@ -64,8 +64,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
         }
         else
         {
-            Debug.Log($"[PlayerSystem] Creating offline player via Instantiate");
-
             XRPlayer localPlayer = Instantiate(
                 Resources.Load<XRPlayer>(PLAYER_PREFAB),
                 spawnPosition,
@@ -73,7 +71,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
             );
 
             localPlayer.gameObject.name = "LocalPlayer";
-            Debug.Log($"[PlayerSystem] Created local player (offline) at {spawnPosition}");
 
             localPlayer.Initialize(isStage);
             localPlayer.FadeIn(fadeTime);
@@ -85,7 +82,6 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
         yield return new WaitForSeconds(0.5f);
 
         isSpawned = true;
-        Debug.Log($"[PlayerSystem] Player spawn complete, isSpawned set to {isSpawned}");
     }
 
     public void DespawnPlayer()
@@ -95,34 +91,60 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
     public IEnumerator DespawnPlayerRoutine()
     {
-        if (XRPlayer != null)
+        if (XRPlayer == null || !isSpawned)
+        {
+            isSpawned = false;
+            yield break;
+        }
+
+        try
         {
             if (XRPlayer.LeftRayInteractor != null)
             {
                 XRPlayer.LeftRayInteractor.enabled = false;
             }
+
             if (XRPlayer.RightRayInteractor != null)
             {
                 XRPlayer.RightRayInteractor.enabled = false;
             }
+
             XRPlayer.FadeOut(fadeTime);
-            yield return new WaitForSeconds(fadeTime + 2f);
         }
-        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        catch (Exception e)
         {
-            if (GameManager.Instance.IsInMultiStage)
+            Debug.LogWarning("플레이어 페이드아웃 중 오류 발생: " + e.Message);
+        }
+
+        yield return new WaitForSeconds(fadeTime + 0.5f);
+
+        try
+        {
+            if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
             {
-                PhotonNetwork.Destroy(XRPlayer.gameObject);
+                if (
+                    GameManager.Instance.IsInMultiStage
+                    && XRPlayer != null
+                    && XRPlayer.gameObject != null
+                )
+                {
+                    PhotonNetwork.Destroy(XRPlayer.gameObject);
+                }
+                else if (XRPlayer != null && XRPlayer.gameObject != null)
+                {
+                    Destroy(XRPlayer.gameObject);
+                }
             }
-            else
+            else if (XRPlayer != null && XRPlayer.gameObject != null)
             {
                 Destroy(XRPlayer.gameObject);
             }
         }
-        else
+        catch (Exception e)
         {
-            Destroy(XRPlayer.gameObject);
+            Debug.LogWarning("플레이어 게임오브젝트 제거 중 오류 발생: " + e.Message);
         }
+
         XRPlayer = null;
         isSpawned = false;
     }

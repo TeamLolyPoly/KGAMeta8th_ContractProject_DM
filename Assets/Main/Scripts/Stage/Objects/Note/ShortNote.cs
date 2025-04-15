@@ -95,7 +95,21 @@ public class ShortNote : Note, IPoolable
 
         if (progress >= 1f)
         {
-            Miss();
+            if (!GameManager.Instance.IsInMultiStage)
+            {
+                Miss();
+            }
+            else
+            {
+                if (noteData.isInteractable)
+                {
+                    Miss();
+                }
+                else
+                {
+                    PoolManager.Instance.Despawn(this);
+                }
+            }
         }
     }
 
@@ -149,6 +163,10 @@ public class ShortNote : Note, IPoolable
                 rotationZ = -45f;
                 rotationX = -noteLookAtAngle / 2;
                 rotationY = noteLookAtAngle / 2;
+                break;
+            default:
+                rotationZ = 0f;
+                rotationX = -noteLookAtAngle;
                 break;
         }
 
@@ -210,37 +228,82 @@ public class ShortNote : Note, IPoolable
 
     protected override void OnCollisionEnter(Collision other)
     {
-        if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
+        if (!GameManager.Instance.IsInMultiStage)
         {
-            if (noteInteractor.noteColor == noteData.noteColor)
+            if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
             {
-                Vector3 hitPoint = other.contacts[0].normal;
-                hitdis = HitPoint(other);
-                EnterAngle = Vector3.Angle(hitPoint, noteDownDirection);
-                Debug.DrawRay(transform.position, hitPoint, Color.blue, 0.5f);
-
-                if (EnterAngle <= directionalRange)
+                if (noteInteractor.noteColor == noteData.noteColor)
                 {
-                    // ParticleSystem hitFXInstance = PoolManager.Instance.Spawn<ParticleSystem>(
-                    //     hitFX.gameObject,
-                    //     transform.position,
-                    //     Quaternion.identity
-                    // );
-                    // hitFXInstance.Play();
-                    // PoolManager.Instance.Despawn(hitFXInstance, 2.0f);
-                    noteInteractor?.SendImpulse();
-                    noteInteractor?.TriggerHitEffect(transform.position);
-                    HitScore(hitdis);
+                    Vector3 hitPoint = other.contacts[0].normal;
+                    hitdis = HitPoint(other);
+                    EnterAngle = Vector3.Angle(hitPoint, noteDownDirection);
+                    Debug.DrawRay(transform.position, hitPoint, Color.blue, 0.5f);
+
+                    if (EnterAngle <= directionalRange)
+                    {
+                        ParticleSystem hitFXInstance = PoolManager.Instance.Spawn<ParticleSystem>(
+                            hitFX.gameObject,
+                            transform.position,
+                            Quaternion.identity
+                        );
+                        hitFXInstance.Play();
+                        PoolManager.Instance.Despawn(hitFXInstance, 2.0f);
+                        noteInteractor?.SendImpulse();
+                        HitScore(hitdis);
+                    }
+                    else
+                    {
+                        Miss();
+                    }
+                }
+                else
+                {
+                    print($"[ShortNote] HitObject 타입이 다름 : {other.gameObject.name}");
+                    Miss();
+                }
+            }
+        }
+        else
+        {
+            if (noteData.isInteractable)
+            {
+                if (other.gameObject.TryGetComponent(out NoteInteractor noteInteractor))
+                {
+                    if (noteInteractor.noteColor == noteData.noteColor)
+                    {
+                        Vector3 hitPoint = other.contacts[0].normal;
+                        hitdis = HitPoint(other);
+                        EnterAngle = Vector3.Angle(hitPoint, noteDownDirection);
+                        Debug.DrawRay(transform.position, hitPoint, Color.blue, 0.5f);
+
+                        if (EnterAngle <= directionalRange)
+                        {
+                            ParticleSystem hitFXInstance =
+                                PoolManager.Instance.Spawn<ParticleSystem>(
+                                    hitFX.gameObject,
+                                    transform.position,
+                                    Quaternion.identity
+                                );
+                            hitFXInstance.Play();
+                            PoolManager.Instance.Despawn(hitFXInstance, 2.0f);
+                            noteInteractor?.SendImpulse();
+                            HitScore(hitdis);
+                        }
+                        else
+                        {
+                            Miss();
+                        }
+                    }
+                    else
+                    {
+                        print($"[ShortNote] HitObject 타입이 다름 : {other.gameObject.name}");
+                        Miss();
+                    }
                 }
                 else
                 {
                     Miss();
                 }
-            }
-            else
-            {
-                print($"[ShortNote] HitObject 타입이 다름 : {other.gameObject.name}");
-                Miss();
             }
         }
     }

@@ -12,6 +12,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
 
     //씬위에 올라와있는 밴드와 관객
     private List<Band> bands = new List<Band>();
+    private List<Band> remoteBands = new List<Band>();
     private List<Spectator> spectators = new List<Spectator>();
 
     //디폴트 호응도
@@ -22,12 +23,7 @@ public class AnimationSystem : MonoBehaviour, IInitializable
 
     public IEnumerator InitializeRoutine()
     {
-        yield return new WaitUntil(
-            () =>
-                GameManager.Instance.ScoreSystem != null
-                && GameManager.Instance.ScoreSystem.IsInitialized
-        );
-
+        yield return new WaitUntil(() => GameManager.Instance.ScoreSystem != null);
         Initialize();
     }
 
@@ -61,6 +57,14 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         else if (unit is Spectator spectator)
         {
             spectators.Add(spectator);
+        }
+    }
+
+    public void AddRemoteUnit(Unit unit)
+    {
+        if (unit is Band band)
+        {
+            remoteBands.Add(band);
         }
     }
 
@@ -146,6 +150,47 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         else if (numberOfUnits == 0)
         {
             foreach (Band band in bands)
+            {
+                ChangeAnimation(band, engagement);
+            }
+        }
+    }
+
+    public void RemoteBandAnimationClipChange(Engagement engagement, int numberOfUnits = 0)
+    {
+        if (defaultEngagement == null)
+        {
+            defaultEngagement = engagement;
+        }
+
+        if (bands == null || bands.Count == 0)
+            return;
+
+        foreach (Band band in remoteBands)
+        {
+            ChangeAnimation(band, defaultEngagement.Value);
+        }
+
+        //var indices = Enumerable.Range(0, bands.Count).ToList();
+        List<int> randomBand = new List<int>();
+        if (numberOfUnits > 0)
+        {
+            for (int i = 0; i < remoteBands.Count; i++)
+            {
+                randomBand.Add(i);
+            }
+
+            for (int i = 0; i < numberOfUnits && randomBand.Count > 0; i++)
+            {
+                int randomIndex = Random.Range(0, randomBand.Count);
+                int selectedBandIndex = randomBand[randomIndex];
+                randomBand.RemoveAt(randomIndex);
+                ChangeAnimation(remoteBands[selectedBandIndex], engagement);
+            }
+        }
+        else if (numberOfUnits == 0)
+        {
+            foreach (Band band in remoteBands)
             {
                 ChangeAnimation(band, engagement);
             }

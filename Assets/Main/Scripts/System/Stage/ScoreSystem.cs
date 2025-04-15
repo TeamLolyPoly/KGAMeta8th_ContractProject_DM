@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Photon.Pun;
 using UnityEngine;
-using UnityEngine.SocialPlatforms.Impl;
 
 public class ScoreSystem : MonoBehaviour, IInitializable
 {
@@ -93,6 +93,8 @@ public class ScoreSystem : MonoBehaviour, IInitializable
         SetBandEngagement();
 
         onSpectatorEngagementChange?.Invoke(currentSpectatorEngagement = Engagement.First);
+
+        isInitialized = true;
     }
 
     public void SetScore(float score, NoteRatings ratings)
@@ -183,10 +185,17 @@ public class ScoreSystem : MonoBehaviour, IInitializable
                 currentBandEngagement,
                 bandActiveMember[currentBandEngagement]
             );
+            if (PhotonNetwork.InRoom)
+            {
+                GameManager.Instance.NetworkSystem.SetRemoteBandAnims(
+                    currentBandEngagement,
+                    bandActiveMember[currentBandEngagement]
+                );
+            }
         }
     }
 
-    public string GetGameRank()
+    public ResultRank GetGameRank()
     {
         ratingCount.TryGetValue(NoteRatings.Miss, out int missValue);
 
@@ -196,12 +205,34 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
         return rating switch
         {
-            var (miss, good) when miss == 0 && good == 0 && noteHitCount == totalNoteCount => "S+",
-            var (miss, good) when miss == 0 && good > 0 && noteHitCount == totalNoteCount => "S",
-            var (miss, good) when miss < totalNoteCount * 0.05 && good >= 0 => "A",
-            var (miss, good) when miss <= totalNoteCount * 0.5 && good >= 0 => "B",
-            var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => "C",
-            _ => "C",
+            var (miss, good) when miss == 0 && good == 0 && noteHitCount == totalNoteCount =>
+                ResultRank.Splus,
+            var (miss, good) when miss == 0 && good > 0 && noteHitCount == totalNoteCount =>
+                ResultRank.S,
+            var (miss, good) when miss < totalNoteCount * 0.05 && good >= 0 => ResultRank.A,
+            var (miss, good) when miss <= totalNoteCount * 0.5 && good >= 0 => ResultRank.B,
+            var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => ResultRank.C,
+            _ => ResultRank.C,
+        };
+    }
+    public ResultRank GetGameRank(ScoreData scoreData)
+    {
+        int missValue = scoreData.RatingCount[NoteRatings.Miss];
+        int goodValue = scoreData.RatingCount[NoteRatings.Good];
+        int hitCount = scoreData.NoteHitCount;
+
+        (int miss, int good) rating = (missValue, goodValue);
+
+        return rating switch
+        {
+            var (miss, good) when miss == 0 && good == 0 && hitCount == totalNoteCount =>
+                ResultRank.Splus,
+            var (miss, good) when miss == 0 && good > 0 && hitCount == totalNoteCount =>
+                ResultRank.S,
+            var (miss, good) when miss < totalNoteCount * 0.05 && good >= 0 => ResultRank.A,
+            var (miss, good) when miss <= totalNoteCount * 0.5 && good >= 0 => ResultRank.B,
+            var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => ResultRank.C,
+            _ => ResultRank.C,
         };
     }
 

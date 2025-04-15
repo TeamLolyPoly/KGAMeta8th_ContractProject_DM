@@ -74,6 +74,7 @@ public class MultiRoomPanel : Panel
 
     private NetworkSystem networkSystem;
     private TrackData localSelectedTrack;
+    private bool isRemotePlayerLeft;
 
     public override void Open()
     {
@@ -93,6 +94,8 @@ public class MultiRoomPanel : Panel
         TrackSelectButton.onClick.AddListener(OnTrackSelectButtonClicked);
         ReadyButton.onClick.AddListener(OnReadyButtonClicked);
         CloseButton.onClick.AddListener(OnCloseButtonClicked);
+
+        isRemotePlayerLeft = false;
     }
 
     private void OnTrackSelectButtonClicked()
@@ -128,7 +131,9 @@ public class MultiRoomPanel : Panel
 
     public void OnLocalTrackSelected(TrackData track, Difficulty difficulty)
     {
-        print($"OnLocalTrackSelected: {track.trackName} , {difficulty}");
+        if (isRemotePlayerLeft)
+            return;
+
         localSelectedTrack = track;
 
         LocalPlayerTrackNameText.text = $"{track.artistName} - {track.trackName}";
@@ -194,6 +199,7 @@ public class MultiRoomPanel : Panel
         LocalTrackDifficultyBox.SetActive(false);
         PlayerButtonBox.SetActive(false);
         TrackSelectButton.gameObject.SetActive(true);
+        TrackSelectButton.Interactable(true);
     }
 
     public void InitializeClient()
@@ -201,7 +207,11 @@ public class MultiRoomPanel : Panel
         LocalPlayerBox.SetBool("subOpen", true);
         RemotePlayerBox.SetBool("subOpen", true);
         PlayerButtonBox.SetActive(true);
+        LocalTrackNameBox.SetActive(false);
+        LocalTrackDifficultyBox.SetActive(false);
+        PlayerButtonBox.SetActive(true);
         TrackSelectButton.gameObject.SetActive(true);
+        TrackSelectButton.Interactable(true);
         TrackSelectButtonAnimator.SetBool("subOpen", true);
     }
 
@@ -213,10 +223,12 @@ public class MultiRoomPanel : Panel
         PlayerButtonBox.SetActive(true);
         TrackSelectButton.gameObject.SetActive(true);
         TrackSelectButtonAnimator.SetBool("subOpen", true);
+        TrackSelectButton.Interactable(true);
     }
 
     public void OnRemotePlayerLeft()
     {
+        isRemotePlayerLeft = true;
         RemotePlayerBox.SetBool("subOpen", false);
         RemotePlayerSelectingBox.SetActive(false);
         RemotePlayerOnReadyBox.SetActive(false);
@@ -231,6 +243,11 @@ public class MultiRoomPanel : Panel
 
     public override void Close(bool objActive = true)
     {
+        ReadyButton.Interactable(true);
+        TrackSelectButton.Interactable(true);
+        ReadyButton.gameObject.SetActive(false);
+        TrackSelectButton.gameObject.SetActive(false);
+
         if (networkSystem != null)
         {
             networkSystem.OnTrackUpdated -= OnTrackUpdated;

@@ -152,8 +152,6 @@ public class NoteSpawner : MonoBehaviour
                 );
             }
         }
-
-        Debug.Log($"[NoteSpawner] 원형 경로 생성 완료: {segmentCount}개의 포인트");
     }
 
     private void CalculateNoteSpeed()
@@ -287,6 +285,16 @@ public class NoteSpawner : MonoBehaviour
         if (isSecondGrid)
         {
             clonedData.useSecondGrid = true;
+            if (PhotonNetwork.IsMasterClient)
+            {
+                clonedData.isInteractable = false;
+                noteData.isInteractable = true;
+            }
+            else
+            {
+                clonedData.isInteractable = true;
+                noteData.isInteractable = false;
+            }
         }
 
         ShortNote noteObj = PoolManager.Instance.Spawn<ShortNote>(
@@ -470,31 +478,68 @@ public class NoteSpawner : MonoBehaviour
             Vector3 sourcePos,
                 targetPos;
 
+            NoteData segmentData;
+
             if (isSecondGrid)
             {
                 sourcePos = secondSourcePoints[index];
                 targetPos = secondTargetPoints[index];
+                segmentData = new NoteData
+                {
+                    noteType = NoteType.Long,
+                    noteColor = segmentColor,
+                    noteSpeed = noteSpeed,
+                    bar = noteData.bar,
+                    beat = noteData.beat,
+                    durationBars = noteData.durationBars,
+                    durationBeats = noteData.durationBeats,
+                    isClockwise = noteData.isClockwise,
+                    isSymmetric = isSymmetric,
+                    gridGenerator = gridGenerator,
+                    startIndex = index,
+                };
+                if (isMultiplayerMode)
+                {
+                    if (PhotonNetwork.IsMasterClient)
+                    {
+                        segmentData.isInteractable = false;
+                    }
+                    else
+                    {
+                        segmentData.isInteractable = true;
+                    }
+                }
             }
             else
             {
                 sourcePos = sourcePoints[index];
                 targetPos = targetPoints[index];
+                segmentData = new NoteData
+                {
+                    noteType = NoteType.Long,
+                    noteColor = segmentColor,
+                    noteSpeed = noteSpeed,
+                    bar = noteData.bar,
+                    beat = noteData.beat,
+                    durationBars = noteData.durationBars,
+                    durationBeats = noteData.durationBeats,
+                    isClockwise = noteData.isClockwise,
+                    isSymmetric = isSymmetric,
+                    gridGenerator = gridGenerator,
+                    startIndex = index,
+                };
+                if (isMultiplayerMode)
+                {
+                    if (PhotonNetwork.IsMasterClient)
+                    {
+                        segmentData.isInteractable = true;
+                    }
+                    else
+                    {
+                        segmentData.isInteractable = false;
+                    }
+                }
             }
-
-            NoteData segmentData = new NoteData
-            {
-                noteType = NoteType.Long,
-                noteColor = segmentColor,
-                noteSpeed = noteSpeed,
-                bar = noteData.bar,
-                beat = noteData.beat,
-                durationBars = noteData.durationBars,
-                durationBeats = noteData.durationBeats,
-                isClockwise = noteData.isClockwise,
-                isSymmetric = isSymmetric,
-                gridGenerator = gridGenerator,
-                startIndex = index,
-            };
 
             try
             {

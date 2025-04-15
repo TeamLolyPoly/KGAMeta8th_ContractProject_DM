@@ -52,14 +52,17 @@ public class NoteData
     public int durationBars;
     public int durationBeats;
 
-    [JsonIgnore]
+    [NonSerialized]
     public float noteSpeed;
 
-    [JsonIgnore]
+    [NonSerialized]
     public GridGenerator gridGenerator;
 
-    [JsonIgnore]
+    [NonSerialized]
     public bool useSecondGrid = false;
+
+    [NonSerialized]
+    public bool isInteractable = true;
 
     public Vector3 GetStartPosition()
     {

@@ -31,7 +31,21 @@ public class LongNote : Note, IPoolable
 
         if (progress >= 1.0f)
         {
-            Miss();
+            if (!GameManager.Instance.IsInMultiStage)
+            {
+                Miss();
+            }
+            else
+            {
+                if (noteData.isInteractable)
+                {
+                    Miss();
+                }
+                else
+                {
+                    PoolManager.Instance.Despawn(this);
+                }
+            }
         }
     }
 
