@@ -444,6 +444,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         Vector3 spawnPos = PhotonNetwork.IsMasterClient
             ? MASTER_PLAYER_SPAWN_POSITION
             : CLIENT_PLAYER_SPAWN_POSITION;
+
         if (PhotonNetwork.IsMasterClient)
         {
             StageUIManager.Instance.transform.position = new Vector3(0, 2, 0);
