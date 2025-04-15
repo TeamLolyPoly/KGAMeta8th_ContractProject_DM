@@ -30,6 +30,7 @@ public class SingleResultPanel : Panel
     public override void Open()
     {
         base.Open();
+        rankImage.gameObject.SetActive(false);
     }
 
     public void Initialize(ScoreData scoreData)
@@ -97,7 +98,10 @@ public class SingleResultPanel : Panel
         goodCountText.text = targetGood.ToString();
         greatCountText.text = targetGreat.ToString();
         perfectCountText.text = targetPerfect.ToString();
-        rankImage.sprite = StageUIManager.Instance.GetRankImage(GameManager.Instance.ScoreSystem.GetGameRank());
+        rankImage.sprite = StageUIManager.Instance.GetRankImage(
+            GameManager.Instance.ScoreSystem.GetGameRank()
+        );
+        rankImage.gameObject.SetActive(true);
 
         Instantiate(GameManager.Instance.proceedDrum);
     }
