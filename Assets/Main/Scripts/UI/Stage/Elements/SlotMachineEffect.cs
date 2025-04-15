@@ -56,6 +56,13 @@ public class SlotMachineEffect : MonoBehaviour
     {
         if (!isSpinning)
         {
+            // 이전 상태 초기화
+            isFinished = false;
+            StopAllCoroutines(); // 실행 중인 모든 코루틴 중지
+
+            // 파티클 시스템 초기화 (필요한 경우)
+            // ...
+
             StartCoroutine(SpinEffect(selectLocal));
         }
     }
@@ -72,6 +79,13 @@ public class SlotMachineEffect : MonoBehaviour
 
         Color leftOriginal = isLocalPanelOnLeft ? localPanelOriginalColor : remotePlayerOriginalColor;
         Color rightOriginal = isLocalPanelOnLeft ? remotePlayerOriginalColor : localPanelOriginalColor;
+
+        // 초기 설정 - 두 패널 모두 원래 색상으로 설정
+        SetPanelColor(leftPanel, leftOriginal);
+        SetPanelColor(rightPanel, rightOriginal);
+
+        // 잠시 대기 후 효과 시작
+        yield return new WaitForSeconds(0.1f);
 
         // 초기 설정
         SetPanelColor(leftPanel, leftOriginal);
