@@ -29,6 +29,8 @@ public class MultiResultPanel : Panel
 
     public TextMeshProUGUI winnerPerfectCountText;
 
+    public Image winnerRankImage;
+
     [Header("Loser")]
     public TextMeshProUGUI loserNameText;
 
@@ -45,6 +47,7 @@ public class MultiResultPanel : Panel
     public TextMeshProUGUI loserGreatCountText;
 
     public TextMeshProUGUI loserPerfectCountText;
+    public Image loserRankImage;
 
     public override void Open()
     {
@@ -167,6 +170,7 @@ public class MultiResultPanel : Panel
         winnerGoodCountText.text = targetGood.ToString();
         winnerGreatCountText.text = targetGreat.ToString();
         winnerPerfectCountText.text = targetPerfect.ToString();
+        winnerRankImage.sprite = StageUIManager.Instance.GetRankImage(GameManager.Instance.ScoreSystem.GetGameRank(scoreData));
     }
 
     private IEnumerator AnimateScoreNumbers_Loser(ScoreData scoreData)
@@ -229,5 +233,6 @@ public class MultiResultPanel : Panel
         loserGoodCountText.text = targetGood.ToString();
         loserGreatCountText.text = targetGreat.ToString();
         loserPerfectCountText.text = targetPerfect.ToString();
+        loserRankImage.sprite = StageUIManager.Instance.GetRankImage(GameManager.Instance.ScoreSystem.GetGameRank(scoreData));
     }
 }
