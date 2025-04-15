@@ -168,8 +168,6 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
 
     public Sprite GetRankImage(ResultRank Rank)
     {
-        RankImage rank = rankImages.Find((rank) => rank.resultRank == Rank);
-
-        return rank.resultImage;
+        return rankImages.Find((rank) => rank.resultRank == Rank).resultImage;
     }
 }

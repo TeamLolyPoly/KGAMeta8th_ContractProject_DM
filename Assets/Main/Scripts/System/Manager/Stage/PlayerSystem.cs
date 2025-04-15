@@ -32,13 +32,10 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
         {
             if (GameManager.Instance.IsInMultiStage)
             {
-                GameObject playerObj = PhotonNetwork.Instantiate(
-                    PLAYER_PREFAB,
-                    spawnPosition,
-                    Quaternion.identity
-                );
+                XRPlayer multiPlayer = PhotonNetwork
+                    .Instantiate(PLAYER_PREFAB, spawnPosition, Quaternion.identity)
+                    .GetComponent<XRPlayer>();
 
-                XRPlayer multiPlayer = playerObj.GetComponent<XRPlayer>();
                 if (multiPlayer.photonView.IsMine)
                 {
                     multiPlayer.FadeIn(fadeTime);
@@ -130,6 +127,7 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
                     && XRPlayer.gameObject != null
                 )
                 {
+                    remotePlayer = null;
                     PhotonNetwork.Destroy(XRPlayer.gameObject);
                 }
                 else if (XRPlayer != null && XRPlayer.gameObject != null)

@@ -90,6 +90,7 @@ public class XRPlayer : MonoBehaviourPun
                 }
 
                 gameObject.name = "LocalPlayer";
+                Debug.Log("[XRPlayer] 로컬 플레이어 초기화");
                 GameManager.Instance.PlayerSystem.XRPlayer = this;
             }
             else
@@ -112,6 +113,7 @@ public class XRPlayer : MonoBehaviourPun
                 }
 
                 gameObject.name = "RemotePlayer";
+                Debug.Log("[XRPlayer] 원격 플레이어 초기화");
                 GameManager.Instance.PlayerSystem.remotePlayer = this;
             }
         }
@@ -176,6 +178,7 @@ public class XRPlayer : MonoBehaviourPun
             {
                 if (photonView.IsMine)
                 {
+                    Debug.Log("[XRPlayer] 로컬 플레이어 Destroy");
                     if (LeftController != null)
                     {
                         LeftController.uiPressAction.action.performed -= leftHaptic;
@@ -185,6 +188,10 @@ public class XRPlayer : MonoBehaviourPun
                     {
                         RightController.uiPressAction.action.performed -= rightHaptic;
                     }
+                }
+                else
+                {
+                    Debug.Log("[XRPlayer] 원격 플레이어 Destroy");
                 }
                 if (GameManager.Instance.PlayerSystem.XRPlayer == this)
                 {

@@ -121,7 +121,6 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         {
             defaultEngagement = engagement;
         }
-        print($"defaultEngagement : {defaultEngagement.Value}");
         if (bands == null || bands.Count == 0)
             return;
 
@@ -130,7 +129,6 @@ public class AnimationSystem : MonoBehaviour, IInitializable
             ChangeAnimation(band, defaultEngagement.Value);
         }
 
-        //var indices = Enumerable.Range(0, bands.Count).ToList();
         List<int> randomBand = new List<int>();
         if (numberOfUnits > 0)
         {
