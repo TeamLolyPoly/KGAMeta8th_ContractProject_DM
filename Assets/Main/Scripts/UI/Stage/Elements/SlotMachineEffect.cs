@@ -50,9 +50,8 @@ public class SlotMachineEffect : MonoBehaviour
     {
         if (!isSpinning)
         {
-            // 이전 상태 초기화
             isFinished = false;
-            StopAllCoroutines(); // 실행 중인 모든 코루틴 중지
+            StopAllCoroutines();
 
             StartCoroutine(SpinEffect(selectLocal));
         }
@@ -72,21 +71,28 @@ public class SlotMachineEffect : MonoBehaviour
         Image selectedPanel = selectLocal ? localPanel : remotePanel;
         Image unselectedPanel = selectLocal ? remotePanel : localPanel;
 
-        Color selectedOriginalColor = selectLocal ? localPanelOriginalColor : remotePlayerOriginalColor;
-        Color unselectedOriginalColor = selectLocal ? remotePlayerOriginalColor : localPanelOriginalColor;
+        Color selectedOriginalColor = selectLocal
+            ? localPanelOriginalColor
+            : remotePlayerOriginalColor;
+        Color unselectedOriginalColor = selectLocal
+            ? remotePlayerOriginalColor
+            : localPanelOriginalColor;
 
         // 초기 설정 - 두 패널 모두 원래 색상으로 설정
         SetPanelColor(localPanel, localPanelOriginalColor);
         SetPanelColor(remotePanel, remotePlayerOriginalColor);
 
-        // 잠시 대기 후 효과 시작
         yield return new WaitForSeconds(0.1f);
 
         bool currentSide = true;
         while (elapsedTime < totalDuration)
         {
             float progress = elapsedTime / totalDuration;
-            float currentInterval = Mathf.Lerp(initialInterval, finalInterval, slowdownCurve.Evaluate(progress));
+            float currentInterval = Mathf.Lerp(
+                initialInterval,
+                finalInterval,
+                slowdownCurve.Evaluate(progress)
+            );
             currentSide = !currentSide;
 
             if (currentSide)
@@ -104,12 +110,12 @@ public class SlotMachineEffect : MonoBehaviour
             yield return new WaitForSeconds(currentInterval);
         }
 
-        // 최종 선택 색상 고정
-        SetPanelColor(selectedPanel, selectedOriginalColor);    // 선택된 패널은 원래 색상
-        SetPanelColor(unselectedPanel, blinkColor);            // 선택되지 않은 패널은 회색
+        SetPanelColor(selectedPanel, selectedOriginalColor);
+        SetPanelColor(unselectedPanel, blinkColor);
 
-        // 선택된 패널에 파티클 생성
         SpawnSelectionParticle(selectLocal);
+
+        yield return new WaitForSeconds(2f);
 
         isSpinning = false;
         isFinished = true;
@@ -117,11 +123,17 @@ public class SlotMachineEffect : MonoBehaviour
 
     private void SpawnSelectionParticle(bool isLocalPanel)
     {
-        if (particlePrefabs != null && particlePositions != null &&
-            particlePrefabs.Length > 0 && particlePositions.Length > 0)
+        if (
+            particlePrefabs != null
+            && particlePositions != null
+            && particlePrefabs.Length > 0
+            && particlePositions.Length > 0
+        )
         {
             // 선택된 패널의 위치 가져오기
-            RectTransform selectedPanel = isLocalPanel ? localPlayerBG.rectTransform : remotePlayerBG.rectTransform;
+            RectTransform selectedPanel = isLocalPanel
+                ? localPlayerBG.rectTransform
+                : remotePlayerBG.rectTransform;
 
             // 각 위치에 해당하는 파티클 생성
             for (int i = 0; i < particlePositions.Length; i++)
@@ -130,10 +142,16 @@ public class SlotMachineEffect : MonoBehaviour
                 Vector3 spawnPosition = selectedPanel.position + particlePositions[i];
 
                 // 해당 위치에 맞는 파티클 프리팹 선택 (배열 범위 체크)
-                GameObject prefabToUse = i < particlePrefabs.Length ? particlePrefabs[i] : particlePrefabs[0];
+                GameObject prefabToUse =
+                    i < particlePrefabs.Length ? particlePrefabs[i] : particlePrefabs[0];
 
                 // 파티클 생성
-                GameObject particleObj = Instantiate(prefabToUse, spawnPosition, Quaternion.Euler(0, 0, 0), transform);
+                GameObject particleObj = Instantiate(
+                    prefabToUse,
+                    spawnPosition,
+                    Quaternion.Euler(0, 0, 0),
+                    transform
+                );
 
                 // 파티클 재생이 끝나면 자동으로 제거
                 Destroy(particleObj, 2f);
