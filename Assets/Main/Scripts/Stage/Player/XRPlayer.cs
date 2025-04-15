@@ -170,36 +170,37 @@ public class XRPlayer : MonoBehaviourPun
 
     void OnDestroy()
     {
-        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
-        {
-            if (GameManager.Instance != null && GameManager.Instance.IsInMultiStage)
-            {
-                if (photonView.IsMine)
-                {
-                    if (LeftController != null)
-                    {
-                        LeftController.uiPressAction.action.performed -= leftHaptic;
-                    }
+        // if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        // {
+        //     if (GameManager.Instance != null && GameManager.Instance.IsInMultiStage)
+        //     {
+        //         if (photonView.IsMine)
+        //         {
+        //             if (LeftController != null)
+        //             {
+        //                 LeftController.uiPressAction.action.performed -= leftHaptic;
+        //             }
 
-                    if (RightController != null)
-                    {
-                        RightController.uiPressAction.action.performed -= rightHaptic;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if (LeftController != null)
-            {
-                LeftController.uiPressAction.action.performed -= leftHaptic;
-            }
+        //             if (RightController != null)
+        //             {
+        //                 RightController.uiPressAction.action.performed -= rightHaptic;
+        //             }
+        //         }
+        //         if(XRPlayer)
+        //     }
+        // }
+        // else
+        // {
+        //     if (LeftController != null)
+        //     {
+        //         LeftController.uiPressAction.action.performed -= leftHaptic;
+        //     }
 
-            if (RightController != null)
-            {
-                RightController.uiPressAction.action.performed -= rightHaptic;
-            }
-        }
+        //     if (RightController != null)
+        //     {
+        //         RightController.uiPressAction.action.performed -= rightHaptic;
+        //     }
+        // }
     }
 
     public void FadeOut(float duration)

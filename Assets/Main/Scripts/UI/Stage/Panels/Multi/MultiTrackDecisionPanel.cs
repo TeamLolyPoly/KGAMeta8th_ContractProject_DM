@@ -54,4 +54,10 @@ public class MultiTrackDecisionPanel : Panel
         yield return new WaitUntil(() => slotEffect.IsFinished);
         GameManager.Instance.NetworkSystem.SetPlayerReadyToLoadGame();
     }
+
+    public override void Close(bool objActive = true)
+    {
+        slotEffect.CleanUp();
+        base.Close(objActive);
+    }
 }
