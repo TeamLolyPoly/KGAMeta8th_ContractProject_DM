@@ -26,7 +26,6 @@ public class AnimationSystem : MonoBehaviour, IInitializable
         yield return new WaitUntil(
             () =>
                 GameManager.Instance.ScoreSystem != null
-                && GameManager.Instance.ScoreSystem.IsInitialized
         );
         Initialize();
     }

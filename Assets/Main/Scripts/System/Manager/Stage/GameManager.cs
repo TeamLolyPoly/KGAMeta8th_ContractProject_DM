@@ -293,7 +293,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         scoreSystem = new GameObject("ScoreSystem").AddComponent<ScoreSystem>();
         scoreSystem.transform.SetParent(transform);
-        scoreSystem.Initialize();
 
         StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
         progress += progressStep;
@@ -305,6 +304,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         ).AddComponent<AnimationSystem>();
         unitAnimationSystem.transform.SetParent(transform);
         unitAnimationSystem.Initialize();
+        scoreSystem.Initialize();
 
         progress += progressStep;
         yield return progress;

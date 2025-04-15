@@ -1,7 +1,3 @@
-using Photon.Pun;
-using System.Collections;
-using UnityEngine;
-
 public class Band : Unit
 {
     public BandType bandType;
@@ -10,5 +6,6 @@ public class Band : Unit
     {
         base.Initialize();
         unitAnimationSystem.BandDefaultAnimationChange(this, SetAnimationClip);
+        unitAnimationSystem.ChangeAnimation(this, GameManager.Instance.ScoreSystem.currentBandEngagement);
     }
 }
