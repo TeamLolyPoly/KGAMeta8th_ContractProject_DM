@@ -13,6 +13,7 @@ public class Unit : MonoBehaviour
     {
         yield return new WaitUntil(() => GameManager.Instance.UnitAnimationSystem != null);
         unitAnimationSystem = GameManager.Instance.UnitAnimationSystem;
+        yield return new WaitUntil(() => unitAnimationSystem.IsInitialized == true);
         Initialize();
     }
 
