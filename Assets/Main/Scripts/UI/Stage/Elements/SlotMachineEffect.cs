@@ -59,6 +59,10 @@ public class SlotMachineEffect : MonoBehaviour
     {
         if (!isSpinning)
         {
+            // 이전 상태 초기화
+            isFinished = false;
+            StopAllCoroutines(); // 실행 중인 모든 코루틴 중지
+
             StartCoroutine(SpinEffect(selectLocal));
         }
     }
@@ -69,61 +73,47 @@ public class SlotMachineEffect : MonoBehaviour
         isFinished = false;
         float elapsedTime = 0f;
 
-        Image leftPanel = isLocalPanelOnLeft ? localPlayerBG : remotePlayerBG;
-        Image rightPanel = isLocalPanelOnLeft ? remotePlayerBG : localPlayerBG;
+        // 패널 위치 설정
+        Image selectedPanel = selectLocal ? localPlayerBG : remotePlayerBG;
+        Image unselectedPanel = selectLocal ? remotePlayerBG : localPlayerBG;
 
-        Color leftOriginal = isLocalPanelOnLeft
-            ? localPanelOriginalColor
-            : remotePlayerOriginalColor;
-        Color rightOriginal = isLocalPanelOnLeft
-            ? remotePlayerOriginalColor
-            : localPanelOriginalColor;
+        Color selectedOriginalColor = selectLocal ? localPanelOriginalColor : remotePlayerOriginalColor;
+        Color unselectedOriginalColor = selectLocal ? remotePlayerOriginalColor : localPanelOriginalColor;
 
-        SetPanelColor(leftPanel, leftOriginal);
-        SetPanelColor(rightPanel, blinkColor);
+        // 초기 설정 - 두 패널 모두 원래 색상으로 설정
+        SetPanelColor(selectedPanel, selectedOriginalColor);
+        SetPanelColor(unselectedPanel, unselectedOriginalColor);
+
+        // 잠시 대기 후 효과 시작
+        yield return new WaitForSeconds(0.1f);
+
         bool currentSide = true;
-
         while (elapsedTime < totalDuration)
         {
             float progress = elapsedTime / totalDuration;
-            float currentInterval = Mathf.Lerp(
-                initialInterval,
-                finalInterval,
-                slowdownCurve.Evaluate(progress)
-            );
+            float currentInterval = Mathf.Lerp(initialInterval, finalInterval, slowdownCurve.Evaluate(progress));
             currentSide = !currentSide;
 
             if (currentSide)
             {
-                SetPanelColor(leftPanel, leftOriginal);
-                SetPanelColor(rightPanel, blinkColor);
+                SetPanelColor(selectedPanel, selectedOriginalColor);
+                SetPanelColor(unselectedPanel, blinkColor);
             }
             else
             {
-                SetPanelColor(leftPanel, blinkColor);
-                SetPanelColor(rightPanel, rightOriginal);
+                SetPanelColor(selectedPanel, blinkColor);
+                SetPanelColor(unselectedPanel, unselectedOriginalColor);
             }
 
             elapsedTime += currentInterval;
             yield return new WaitForSeconds(currentInterval);
         }
 
-        bool isLeftSelected =
-            (selectLocal && isLocalPanelOnLeft) || (!selectLocal && !isLocalPanelOnLeft);
-        if (isLeftSelected)
-        {
-            SetPanelColor(leftPanel, leftOriginal);
-            SetPanelColor(rightPanel, blinkColor);
-        }
-        else
-        {
-            SetPanelColor(leftPanel, blinkColor);
-            SetPanelColor(rightPanel, rightOriginal);
-        }
+        // 최종 선택 색상 고정
+        SetPanelColor(selectedPanel, selectedOriginalColor);    // 선택된 패널은 원래 색상
+        SetPanelColor(unselectedPanel, blinkColor);            // 선택되지 않은 패널은 회색
 
-        SpawnSelectionParticle(isLeftSelected);
-
-        yield return new WaitForSeconds(2f);
+        SpawnSelectionParticle(selectedPanel == localPlayerBG);
 
         isSpinning = false;
         isFinished = true;
