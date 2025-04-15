@@ -454,6 +454,13 @@ public class GameManager : Singleton<GameManager>, IInitializable
             StageUIManager.Instance.transform.position = new Vector3(15, 2, 0);
         }
 
+        networkSystem.SetIsInMultiStage(true);
+
+        while (!networkSystem.AreAllPlayersInMultiStage())
+        {
+            yield return null;
+        }
+
         PlayerSystem.SpawnPlayer(spawnPos, true);
 
         while (!networkSystem.AreAllPlayersSpawned())
