@@ -480,31 +480,68 @@ public class NoteSpawner : MonoBehaviour
             Vector3 sourcePos,
                 targetPos;
 
+            NoteData segmentData;
+
             if (isSecondGrid)
             {
                 sourcePos = secondSourcePoints[index];
                 targetPos = secondTargetPoints[index];
+                segmentData = new NoteData
+                {
+                    noteType = NoteType.Long,
+                    noteColor = segmentColor,
+                    noteSpeed = noteSpeed,
+                    bar = noteData.bar,
+                    beat = noteData.beat,
+                    durationBars = noteData.durationBars,
+                    durationBeats = noteData.durationBeats,
+                    isClockwise = noteData.isClockwise,
+                    isSymmetric = isSymmetric,
+                    gridGenerator = gridGenerator,
+                    startIndex = index,
+                };
+                if (isMultiplayerMode)
+                {
+                    if (PhotonNetwork.IsMasterClient)
+                    {
+                        segmentData.isInteractable = false;
+                    }
+                    else
+                    {
+                        segmentData.isInteractable = true;
+                    }
+                }
             }
             else
             {
                 sourcePos = sourcePoints[index];
                 targetPos = targetPoints[index];
+                segmentData = new NoteData
+                {
+                    noteType = NoteType.Long,
+                    noteColor = segmentColor,
+                    noteSpeed = noteSpeed,
+                    bar = noteData.bar,
+                    beat = noteData.beat,
+                    durationBars = noteData.durationBars,
+                    durationBeats = noteData.durationBeats,
+                    isClockwise = noteData.isClockwise,
+                    isSymmetric = isSymmetric,
+                    gridGenerator = gridGenerator,
+                    startIndex = index,
+                };
+                if (isMultiplayerMode)
+                {
+                    if (PhotonNetwork.IsMasterClient)
+                    {
+                        segmentData.isInteractable = true;
+                    }
+                    else
+                    {
+                        segmentData.isInteractable = false;
+                    }
+                }
             }
-
-            NoteData segmentData = new NoteData
-            {
-                noteType = NoteType.Long,
-                noteColor = segmentColor,
-                noteSpeed = noteSpeed,
-                bar = noteData.bar,
-                beat = noteData.beat,
-                durationBars = noteData.durationBars,
-                durationBeats = noteData.durationBeats,
-                isClockwise = noteData.isClockwise,
-                isSymmetric = isSymmetric,
-                gridGenerator = gridGenerator,
-                startIndex = index,
-            };
 
             try
             {
