@@ -74,6 +74,7 @@ public class MultiRoomPanel : Panel
 
     private NetworkSystem networkSystem;
     private TrackData localSelectedTrack;
+    private bool isRemotePlayerLeft;
 
     public override void Open()
     {
@@ -93,6 +94,8 @@ public class MultiRoomPanel : Panel
         TrackSelectButton.onClick.AddListener(OnTrackSelectButtonClicked);
         ReadyButton.onClick.AddListener(OnReadyButtonClicked);
         CloseButton.onClick.AddListener(OnCloseButtonClicked);
+
+        isRemotePlayerLeft = false;
     }
 
     private void OnTrackSelectButtonClicked()
@@ -128,7 +131,9 @@ public class MultiRoomPanel : Panel
 
     public void OnLocalTrackSelected(TrackData track, Difficulty difficulty)
     {
-        print($"OnLocalTrackSelected: {track.trackName} , {difficulty}");
+        if (isRemotePlayerLeft)
+            return;
+
         localSelectedTrack = track;
 
         LocalPlayerTrackNameText.text = $"{track.artistName} - {track.trackName}";
@@ -207,6 +212,7 @@ public class MultiRoomPanel : Panel
         PlayerButtonBox.SetActive(true);
         TrackSelectButton.gameObject.SetActive(true);
         TrackSelectButton.Interactable(true);
+        TrackSelectButtonAnimator.SetBool("subOpen", true);
     }
 
     public void OnRemotePlayerJoined()
@@ -222,6 +228,7 @@ public class MultiRoomPanel : Panel
 
     public void OnRemotePlayerLeft()
     {
+        isRemotePlayerLeft = true;
         RemotePlayerBox.SetBool("subOpen", false);
         RemotePlayerSelectingBox.SetActive(false);
         RemotePlayerOnReadyBox.SetActive(false);
