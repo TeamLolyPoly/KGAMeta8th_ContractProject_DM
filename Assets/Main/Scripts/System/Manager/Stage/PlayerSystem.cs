@@ -32,15 +32,33 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
         {
             if (GameManager.Instance.IsInMultiStage)
             {
+                Debug.Log(
+                    $"[PlayerSystem] 멀티플레이어 생성 시작 - 위치: {spawnPosition}, 방 인원: {PhotonNetwork.CurrentRoom.PlayerCount}"
+                );
                 XRPlayer multiPlayer = PhotonNetwork
                     .Instantiate(PLAYER_PREFAB, spawnPosition, Quaternion.identity)
                     .GetComponent<XRPlayer>();
+
+                Debug.Log(
+                    $"[PlayerSystem] 플레이어 생성됨 - ID: {multiPlayer.photonView.ViewID}, IsMine: {multiPlayer.photonView.IsMine}"
+                );
 
                 if (multiPlayer.photonView.IsMine)
                 {
                     multiPlayer.FadeIn(fadeTime);
                     yield return new WaitForSeconds(fadeTime);
                 }
+
+                Debug.Log("[PlayerSystem] 플레이어 대기 시작...");
+                yield return new WaitUntil(() => XRPlayer != null);
+                Debug.Log(
+                    $"[PlayerSystem] 로컬 플레이어 설정됨: {(XRPlayer != null ? XRPlayer.name : "null")}"
+                );
+
+                yield return new WaitUntil(() => remotePlayer != null);
+                Debug.Log(
+                    $"[PlayerSystem] 원격 플레이어 설정됨: {(remotePlayer != null ? remotePlayer.name : "null")}"
+                );
 
                 GameManager.Instance.NetworkSystem.SetPlayerSpawned();
             }
@@ -147,5 +165,21 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
 
         XRPlayer = null;
         isSpawned = false;
+    }
+
+    public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
+    {
+        base.OnPlayerEnteredRoom(newPlayer);
+        Debug.Log(
+            $"[PlayerSystem] 새 플레이어 입장: {newPlayer.NickName}, ActorNumber: {newPlayer.ActorNumber}"
+        );
+    }
+
+    public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)
+    {
+        base.OnPlayerLeftRoom(otherPlayer);
+        Debug.Log(
+            $"[PlayerSystem] 플레이어 퇴장: {otherPlayer.NickName}, ActorNumber: {otherPlayer.ActorNumber}"
+        );
     }
 }

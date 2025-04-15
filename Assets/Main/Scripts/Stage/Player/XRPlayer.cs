@@ -110,10 +110,15 @@ public class XRPlayer : MonoBehaviourPun
                 foreach (var obj in remoteOnlyObjects)
                 {
                     obj.SetActive(true);
+                    Debug.Log(
+                        $"[XRPlayer] 원격 플레이어 오브젝트 활성화: {obj.name}, 활성화 상태: {obj.activeSelf}, 부모 활성화 상태: {(obj.transform.parent != null ? obj.transform.parent.gameObject.activeSelf : true)}"
+                    );
                 }
 
                 gameObject.name = "RemotePlayer";
-                Debug.Log("[XRPlayer] 원격 플레이어 초기화");
+                Debug.Log(
+                    $"[XRPlayer] 원격 플레이어 초기화 - 위치: {transform.position}, 활성화: {gameObject.activeSelf}, 레이어: {gameObject.layer}"
+                );
                 GameManager.Instance.PlayerSystem.remotePlayer = this;
             }
         }
