@@ -87,10 +87,6 @@ public class MultiRoomPanel : Panel
         RemoteTrackNameBox.SetActive(false);
         RemoteTrackDifficultyBox.SetActive(false);
         WaitingRemotePlayerBox.SetBool("subOpen", true);
-        TrackSelectButtonAnimator.SetBool("subOpen", false);
-        TrackSelectButton.gameObject.SetActive(false);
-        ReadyButtonAnimator.SetBool("subOpen", false);
-        ReadyButton.gameObject.SetActive(false);
 
         if (networkSystem != null)
         {
@@ -205,6 +201,12 @@ public class MultiRoomPanel : Panel
         LocalTrackDifficultyBox.SetActive(false);
         PlayerButtonBox.SetActive(false);
         TrackSelectButton.gameObject.SetActive(true);
+        TrackSelectButtonAnimator.SetBool("subOpen", false);
+        TrackSelectButton.gameObject.SetActive(false);
+        ReadyButtonAnimator.SetBool("subOpen", false);
+        ReadyButton.gameObject.SetActive(true);
+        ReadyButton.Interactable(true);
+        TrackSelectButton.Interactable(true);
     }
 
     public void InitializeClient()
@@ -214,6 +216,10 @@ public class MultiRoomPanel : Panel
         PlayerButtonBox.SetActive(true);
         TrackSelectButton.gameObject.SetActive(true);
         TrackSelectButtonAnimator.SetBool("subOpen", true);
+        ReadyButtonAnimator.SetBool("subOpen", false);
+        ReadyButton.gameObject.SetActive(false);
+        ReadyButton.Interactable(true);
+        TrackSelectButton.Interactable(true);
     }
 
     public void OnRemotePlayerJoined()
