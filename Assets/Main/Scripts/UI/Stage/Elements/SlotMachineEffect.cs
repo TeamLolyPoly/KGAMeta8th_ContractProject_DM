@@ -110,42 +110,37 @@ public class SlotMachineEffect : MonoBehaviour
         }
 
         // 최종 선택 색상 고정
-        SetPanelColor(selectedPanel, selectedOriginalColor);    // 선택된 패널은 원래 색상
-        SetPanelColor(unselectedPanel, blinkColor);            // 선택되지 않은 패널은 회색
+        SetPanelColor(selectedPanel, selectedOriginalColor);
+        SetPanelColor(unselectedPanel, blinkColor);
 
-        SpawnSelectionParticle(selectedPanel == localPlayerBG);
+        // 선택된 패널에 파티클 생성
+        SpawnSelectionParticle(selectLocal);
 
         isSpinning = false;
         isFinished = true;
     }
 
-    private void SpawnSelectionParticle(bool isLeftPanel)
+    private void SpawnSelectionParticle(bool isLocalPanel)
     {
-        if (
-            particlePrefabs != null
-            && particlePositions != null
-            && particlePrefabs.Length > 0
-            && particlePositions.Length > 0
-        )
+        if (particlePrefabs != null && particlePositions != null &&
+            particlePrefabs.Length > 0 && particlePositions.Length > 0)
         {
-            RectTransform selectedPanel = isLeftPanel
-                ? (isLocalPanelOnLeft ? localPlayerBG.rectTransform : remotePlayerBG.rectTransform)
-                : (isLocalPanelOnLeft ? remotePlayerBG.rectTransform : localPlayerBG.rectTransform);
+            // 선택된 패널의 위치 가져오기
+            RectTransform selectedPanel = isLocalPanel ? localPlayerBG.rectTransform : remotePlayerBG.rectTransform;
 
+            // 각 위치에 해당하는 파티클 생성
             for (int i = 0; i < particlePositions.Length; i++)
             {
+                // 파티클 생성 위치 계산
                 Vector3 spawnPosition = selectedPanel.position + particlePositions[i];
 
-                GameObject prefabToUse =
-                    i < particlePrefabs.Length ? particlePrefabs[i] : particlePrefabs[0];
+                // 해당 위치에 맞는 파티클 프리팹 선택 (배열 범위 체크)
+                GameObject prefabToUse = i < particlePrefabs.Length ? particlePrefabs[i] : particlePrefabs[0];
 
-                GameObject particleObj = Instantiate(
-                    prefabToUse,
-                    spawnPosition,
-                    Quaternion.Euler(90, 0, 0),
-                    transform
-                );
+                // 파티클 생성
+                GameObject particleObj = Instantiate(prefabToUse, spawnPosition, Quaternion.Euler(0, 0, 0), transform);
 
+                // 파티클 재생이 끝나면 자동으로 제거
                 Destroy(particleObj, 2f);
             }
         }
