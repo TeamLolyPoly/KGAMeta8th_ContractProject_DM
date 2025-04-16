@@ -1,5 +1,6 @@
 using System.Collections;
 using Photon.Pun;
+using Photon.Pun.UtilityScripts;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -170,7 +171,7 @@ public class XRPlayer : MonoBehaviourPun
         rightController.SendHapticImpulse(0.7f, 0.2f);
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
@@ -190,14 +191,11 @@ public class XRPlayer : MonoBehaviourPun
                         RightRayInteractor.enableUIInteraction = false;
                         RightController.uiPressAction.action.performed -= rightHaptic;
                     }
+                    GameManager.Instance.PlayerSystem.XRPlayer = null;
                 }
                 else
                 {
                     Debug.Log("[XRPlayer] 원격 플레이어 Destroy");
-                }
-                if (GameManager.Instance.PlayerSystem.XRPlayer == this)
-                {
-                    GameManager.Instance.PlayerSystem.XRPlayer = null;
                 }
             }
         }

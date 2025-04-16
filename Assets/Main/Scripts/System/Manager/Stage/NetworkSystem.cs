@@ -469,7 +469,20 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         );
     }
 
-    public void LeaveGame()
+    public IEnumerator LeaveMultiStage()
+    {
+        if (isMultiPlayer)
+        {
+            yield return new WaitUntil(() => GameManager.Instance.PlayerSystem.IsSpawned == false);
+            isMultiPlayer = false;
+            PhotonNetwork.LeaveRoom();
+            PhotonNetwork.Disconnect();
+        }
+
+        yield return null;
+    }
+
+    public void LeaveLobby()
     {
         if (isMultiPlayer)
         {

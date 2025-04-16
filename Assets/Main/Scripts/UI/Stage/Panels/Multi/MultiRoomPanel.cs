@@ -122,7 +122,7 @@ public class MultiRoomPanel : Panel
     {
         if (networkSystem != null)
         {
-            networkSystem.LeaveGame();
+            networkSystem.LeaveLobby();
         }
 
         Close(true);
