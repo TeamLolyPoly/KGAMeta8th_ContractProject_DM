@@ -94,7 +94,9 @@ public class XRPlayer : MonoBehaviourPun
             }
             else
             {
-                xrOrigin.SetActive(false);
+                Destroy(xrOrigin);
+
+                xrOrigin = null;
 
                 foreach (var script in localOnlyScripts)
                 {
@@ -168,7 +170,7 @@ public class XRPlayer : MonoBehaviourPun
         rightController.SendHapticImpulse(0.7f, 0.2f);
     }
 
-    void OnDestroy()
+    private void OnDisable()
     {
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
@@ -179,11 +181,13 @@ public class XRPlayer : MonoBehaviourPun
                     Debug.Log("[XRPlayer] 로컬 플레이어 Destroy");
                     if (LeftController != null)
                     {
+                        LeftRayInteractor.enableUIInteraction = false;
                         LeftController.uiPressAction.action.performed -= leftHaptic;
                     }
 
                     if (RightController != null)
                     {
+                        RightRayInteractor.enableUIInteraction = false;
                         RightController.uiPressAction.action.performed -= rightHaptic;
                     }
                 }
@@ -201,11 +205,13 @@ public class XRPlayer : MonoBehaviourPun
         {
             if (LeftController != null)
             {
+                LeftRayInteractor.enableUIInteraction = false;
                 LeftController.uiPressAction.action.performed -= leftHaptic;
             }
 
             if (RightController != null)
             {
+                RightRayInteractor.enableUIInteraction = false;
                 RightController.uiPressAction.action.performed -= rightHaptic;
             }
         }

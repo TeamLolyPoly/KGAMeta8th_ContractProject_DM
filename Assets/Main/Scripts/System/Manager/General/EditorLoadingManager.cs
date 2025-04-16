@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 
 public class EditorLoadingManager : Singleton<EditorLoadingManager>
 {
-    public const string LOADING_SCENE_NAME = "Loading_Editor";
+    public const string LOADING_SCENE_NAME = "Editor_Loading";
     public float minimumLoadingTime = 0.5f;
 
     private EditorLoadingPanel loadingUI;
