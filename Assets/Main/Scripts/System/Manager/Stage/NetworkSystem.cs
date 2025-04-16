@@ -89,6 +89,20 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
         PhotonNetwork.LocalPlayer.SetCustomProperties(playerProps);
 
+        Hashtable resultProps = new Hashtable
+        {
+            { GameResultData.SCORE, null },
+            { GameResultData.HIGH_COMBO, null },
+            { GameResultData.NOTE_HIT_COUNT, null },
+            { GameResultData.TOTAL_NOTE_COUNT, null },
+            { GameResultData.MISS_COUNT, null },
+            { GameResultData.GOOD_COUNT, null },
+            { GameResultData.GREAT_COUNT, null },
+            { GameResultData.PERFECT_COUNT, null },
+        };
+
+        PhotonNetwork.LocalPlayer.SetCustomProperties(resultProps);
+
         if (PhotonNetwork.IsMasterClient)
         {
             Hashtable roomProps = new Hashtable
