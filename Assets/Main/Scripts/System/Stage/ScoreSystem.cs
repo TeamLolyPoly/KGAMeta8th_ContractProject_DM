@@ -154,7 +154,6 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
         if (currentSpectatorEngagement != newThreshold.engagement)
         {
-            print($"관객 이벤트 발생: {newThreshold.engagement}");
             currentSpectatorEngagement = newThreshold.engagement;
             onSpectatorEngagementChange?.Invoke(currentSpectatorEngagement);
         }
@@ -215,6 +214,7 @@ public class ScoreSystem : MonoBehaviour, IInitializable
             _ => ResultRank.C,
         };
     }
+
     public ResultRank GetGameRank(ScoreData scoreData)
     {
         int missValue = scoreData.RatingCount[NoteRatings.Miss];

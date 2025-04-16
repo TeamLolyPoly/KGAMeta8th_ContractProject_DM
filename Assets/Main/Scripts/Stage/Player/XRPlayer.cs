@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit;
 
-public class XRPlayer : MonoBehaviourPun, IPunInstantiateMagicCallback
+public class XRPlayer : MonoBehaviourPun
 {
     [SerializeField]
     private ActionBasedController leftController;
@@ -36,56 +36,14 @@ public class XRPlayer : MonoBehaviourPun, IPunInstantiateMagicCallback
 
     private void Awake()
     {
-        Debug.Log(
-            $"[XRPlayer] Awake 호출 - IsMine: {photonView.IsMine}, IsConnected: {PhotonNetwork.IsConnected}, InRoom: {PhotonNetwork.InRoom}"
-        );
-
-        if (gameObject.tag != "Player")
-        {
-            gameObject.tag = "Player";
-            Debug.Log("[XRPlayer] Player 태그 설정됨");
-        }
-
         if (GameManager.Instance.IsInMultiStage)
         {
             Initialize(true);
-
-            if (photonView.IsMine)
-            {
-                GameManager.Instance.PlayerSystem.XRPlayer = this;
-            }
-            else
-            {
-                GameManager.Instance.PlayerSystem.remotePlayer = this;
-            }
-        }
-    }
-
-    public void OnPhotonInstantiate(PhotonMessageInfo info)
-    {
-        Debug.Log(
-            $"[XRPlayer] OnPhotonInstantiate 호출 - IsMine: {photonView.IsMine}, Sender: {info.Sender.NickName}"
-        );
-
-        if (GameManager.Instance.IsInMultiStage)
-        {
-            if (photonView.IsMine)
-            {
-                gameObject.name = "LocalPlayer";
-            }
-            else
-            {
-                gameObject.name = "RemotePlayer";
-            }
         }
     }
 
     public void Initialize(bool isStage)
     {
-        Debug.Log(
-            $"[XRPlayer] Initialize 호출 - IsMine: {(PhotonNetwork.IsConnected ? photonView.IsMine.ToString() : "Not Connected")}, IsStage: {isStage}"
-        );
-
         if (
             PhotonNetwork.IsConnected
             && PhotonNetwork.InRoom
@@ -132,7 +90,6 @@ public class XRPlayer : MonoBehaviourPun, IPunInstantiateMagicCallback
                 }
 
                 gameObject.name = "LocalPlayer";
-                Debug.Log("[XRPlayer] 로컬 플레이어 초기화");
                 GameManager.Instance.PlayerSystem.XRPlayer = this;
             }
             else
@@ -152,15 +109,9 @@ public class XRPlayer : MonoBehaviourPun, IPunInstantiateMagicCallback
                 foreach (var obj in remoteOnlyObjects)
                 {
                     obj.SetActive(true);
-                    Debug.Log(
-                        $"[XRPlayer] 원격 플레이어 오브젝트 활성화: {obj.name}, 활성화 상태: {obj.activeSelf}, 부모 활성화 상태: {(obj.transform.parent != null ? obj.transform.parent.gameObject.activeSelf : true)}"
-                    );
                 }
 
                 gameObject.name = "RemotePlayer";
-                Debug.Log(
-                    $"[XRPlayer] 원격 플레이어 초기화 - 위치: {transform.position}, 활성화: {gameObject.activeSelf}, 레이어: {gameObject.layer}"
-                );
                 GameManager.Instance.PlayerSystem.remotePlayer = this;
             }
         }
