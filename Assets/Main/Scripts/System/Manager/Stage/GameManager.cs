@@ -566,7 +566,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
     public void Multi_BackToTitle()
     {
-        networkSystem.LeaveGame();
+        StartCoroutine(networkSystem.LeaveMultiStage());
         isInMultiStage = false;
         StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
         StageLoadingManager.Instance.LoadScene(
