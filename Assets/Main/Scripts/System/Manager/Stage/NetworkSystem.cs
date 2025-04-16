@@ -8,15 +8,19 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class NetworkSystem : MonoBehaviourPunCallbacks
 {
-    public static class LobbyData
+    public static class RoomData
+    {
+        public const string FINAL_TRACK_GUID = "FinalTrackGUID";
+        public const string FINAL_TRACK_DIFFICULTY = "FinalTrackDiff";
+    }
+
+    public static class MultiPlayerData
     {
         public const string IS_IN_MULTI_STAGE = "IsInMultiStage";
         public const string IS_SPAWNED = "IsSpawned";
         public const string IS_PLAYER_READY = "IsPlayerReady";
         public const string TRACK_GUID = "SelectedTrackGUID";
         public const string TRACK_DIFFICULTY = "SelectedTrackDiff";
-        public const string FINAL_TRACK_GUID = "FinalTrackGUID";
-        public const string FINAL_TRACK_DIFFICULTY = "FinalTrackDiff";
         public const string READY_TO_LOAD_GAME = "ReadyToLoadGame";
     }
 
@@ -73,23 +77,24 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public void ClearPlayerProperties()
     {
-        Hashtable props = new Hashtable
+        Hashtable playerProps = new Hashtable
         {
-            { LobbyData.TRACK_GUID, null },
-            { LobbyData.TRACK_DIFFICULTY, null },
-            { LobbyData.IS_PLAYER_READY, null },
-            { LobbyData.IS_SPAWNED, null },
-            { LobbyData.READY_TO_LOAD_GAME, null },
+            { MultiPlayerData.TRACK_GUID, null },
+            { MultiPlayerData.TRACK_DIFFICULTY, null },
+            { MultiPlayerData.IS_PLAYER_READY, false },
+            { MultiPlayerData.IS_SPAWNED, false },
+            { MultiPlayerData.READY_TO_LOAD_GAME, false },
+            { MultiPlayerData.IS_IN_MULTI_STAGE, false },
         };
 
-        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+        PhotonNetwork.LocalPlayer.SetCustomProperties(playerProps);
 
         if (PhotonNetwork.IsMasterClient)
         {
             Hashtable roomProps = new Hashtable
             {
-                { LobbyData.FINAL_TRACK_GUID, null },
-                { LobbyData.FINAL_TRACK_DIFFICULTY, null },
+                { RoomData.FINAL_TRACK_GUID, null },
+                { RoomData.FINAL_TRACK_DIFFICULTY, null },
                 { "SelectedPlayerID", null },
             };
             PhotonNetwork.CurrentRoom.SetCustomProperties(roomProps);
@@ -184,17 +189,17 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
         string guidStr = trackGuid.ToString();
         int diffInt = (int)difficulty;
 
-        Hashtable props = new Hashtable
+        Hashtable playerProps = new Hashtable
         {
-            { LobbyData.TRACK_GUID, guidStr },
-            { LobbyData.TRACK_DIFFICULTY, diffInt },
+            { MultiPlayerData.TRACK_GUID, guidStr },
+            { MultiPlayerData.TRACK_DIFFICULTY, diffInt },
         };
-        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+        PhotonNetwork.LocalPlayer.SetCustomProperties(playerProps);
     }
 
     public TrackData GetTrackData(Player player)
     {
-        if (player.CustomProperties.TryGetValue(LobbyData.TRACK_GUID, out object guidObj))
+        if (player.CustomProperties.TryGetValue(MultiPlayerData.TRACK_GUID, out object guidObj))
         {
             if (guidObj is string guidStr && Guid.TryParse(guidStr, out Guid trackGuid))
             {
@@ -206,7 +211,12 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public Difficulty GetDifficulty(Player player)
     {
-        if (player.CustomProperties.TryGetValue(LobbyData.TRACK_DIFFICULTY, out object diffObj))
+        if (
+            player.CustomProperties.TryGetValue(
+                MultiPlayerData.TRACK_DIFFICULTY,
+                out object diffObj
+            )
+        )
         {
             if (diffObj is int diffInt)
             {
@@ -218,7 +228,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public void SetResultData(ScoreData data)
     {
-        Hashtable props = new Hashtable
+        Hashtable resultProps = new Hashtable
         {
             { GameResultData.SCORE, data.Score },
             { GameResultData.HIGH_COMBO, data.HighCombo },
@@ -230,7 +240,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             { GameResultData.PERFECT_COUNT, data.RatingCount[NoteRatings.Perfect] },
         };
 
-        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+        PhotonNetwork.LocalPlayer.SetCustomProperties(resultProps);
     }
 
     public ScoreData GetResultData(Player player)
@@ -294,8 +304,8 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
         Hashtable roomProps = new Hashtable
         {
-            { LobbyData.FINAL_TRACK_GUID, chosenTrack.id.ToString() },
-            { LobbyData.FINAL_TRACK_DIFFICULTY, (int)chosenDiff },
+            { RoomData.FINAL_TRACK_GUID, chosenTrack.id.ToString() },
+            { RoomData.FINAL_TRACK_DIFFICULTY, (int)chosenDiff },
             { "SelectedPlayerID", chosen.ActorNumber },
         };
 
@@ -305,8 +315,8 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
         if (
-            propertiesThatChanged.ContainsKey(LobbyData.FINAL_TRACK_GUID)
-            || propertiesThatChanged.ContainsKey(LobbyData.FINAL_TRACK_DIFFICULTY)
+            propertiesThatChanged.ContainsKey(RoomData.FINAL_TRACK_GUID)
+            || propertiesThatChanged.ContainsKey(RoomData.FINAL_TRACK_DIFFICULTY)
         )
         {
             int selectedPlayerID = 0;
@@ -336,7 +346,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.InRoom)
         {
-            Hashtable props = new Hashtable { { LobbyData.IS_PLAYER_READY, true } };
+            Hashtable props = new Hashtable { { MultiPlayerData.IS_PLAYER_READY, true } };
             PhotonNetwork.LocalPlayer.SetCustomProperties(props);
         }
     }
@@ -345,22 +355,22 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     {
         return PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.PlayerList.Length
             && PhotonNetwork.PlayerList.All(p =>
-                p.CustomProperties.ContainsKey(LobbyData.IS_PLAYER_READY)
-                && (bool)p.CustomProperties[LobbyData.IS_PLAYER_READY] == true
+                p.CustomProperties.ContainsKey(MultiPlayerData.IS_PLAYER_READY)
+                && (bool)p.CustomProperties[MultiPlayerData.IS_PLAYER_READY] == true
             );
     }
 
     public void SetIsInMultiStage(bool isInMultiStage)
     {
-        Hashtable props = new Hashtable { { LobbyData.IS_IN_MULTI_STAGE, isInMultiStage } };
+        Hashtable props = new Hashtable { { MultiPlayerData.IS_IN_MULTI_STAGE, isInMultiStage } };
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
     }
 
     public bool AreAllPlayersInMultiStage()
     {
         return PhotonNetwork.PlayerList.All(p =>
-            p.CustomProperties.ContainsKey(LobbyData.IS_IN_MULTI_STAGE)
-            && (bool)p.CustomProperties[LobbyData.IS_IN_MULTI_STAGE] == true
+            p.CustomProperties.ContainsKey(MultiPlayerData.IS_IN_MULTI_STAGE)
+            && (bool)p.CustomProperties[MultiPlayerData.IS_IN_MULTI_STAGE] == true
         );
     }
 
@@ -369,11 +379,11 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
     {
         if (
             PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(
-                LobbyData.FINAL_TRACK_GUID,
+                RoomData.FINAL_TRACK_GUID,
                 out object guidObj
             )
             && PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(
-                LobbyData.FINAL_TRACK_DIFFICULTY,
+                RoomData.FINAL_TRACK_DIFFICULTY,
                 out object diffObj
             )
         )
@@ -457,29 +467,29 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
 
     public void SetPlayerReadyToLoadGame()
     {
-        Hashtable props = new Hashtable { { LobbyData.READY_TO_LOAD_GAME, true } };
+        Hashtable props = new Hashtable { { MultiPlayerData.READY_TO_LOAD_GAME, true } };
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
     }
 
     public void SetPlayerSpawned()
     {
-        Hashtable props = new Hashtable { { LobbyData.IS_SPAWNED, true } };
+        Hashtable props = new Hashtable { { MultiPlayerData.IS_SPAWNED, true } };
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
     }
 
     public bool AreAllPlayersReadyToStartGame()
     {
         return PhotonNetwork.PlayerList.All(p =>
-            p.CustomProperties.ContainsKey(LobbyData.READY_TO_LOAD_GAME)
-            && (bool)p.CustomProperties[LobbyData.READY_TO_LOAD_GAME] == true
+            p.CustomProperties.ContainsKey(MultiPlayerData.READY_TO_LOAD_GAME)
+            && (bool)p.CustomProperties[MultiPlayerData.READY_TO_LOAD_GAME] == true
         );
     }
 
     public bool AreAllPlayersSpawned()
     {
         return PhotonNetwork.PlayerList.All(p =>
-            p.CustomProperties.ContainsKey(LobbyData.IS_SPAWNED)
-            && (bool)p.CustomProperties[LobbyData.IS_SPAWNED]
+            p.CustomProperties.ContainsKey(MultiPlayerData.IS_SPAWNED)
+            && (bool)p.CustomProperties[MultiPlayerData.IS_SPAWNED]
         );
     }
 
@@ -489,8 +499,8 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
             return;
 
         if (
-            changedProps.ContainsKey(LobbyData.TRACK_GUID)
-            || changedProps.ContainsKey(LobbyData.TRACK_DIFFICULTY)
+            changedProps.ContainsKey(MultiPlayerData.TRACK_GUID)
+            || changedProps.ContainsKey(MultiPlayerData.TRACK_DIFFICULTY)
         )
         {
             var track = GetTrackData(targetPlayer);
@@ -500,9 +510,9 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                 OnTrackUpdated?.Invoke(targetPlayer.ActorNumber, track, diff);
             }
         }
-        if (changedProps.ContainsKey(LobbyData.IS_PLAYER_READY))
+        if (changedProps.ContainsKey(MultiPlayerData.IS_PLAYER_READY))
         {
-            if (changedProps[LobbyData.IS_PLAYER_READY] is bool isReady && isReady)
+            if (changedProps[MultiPlayerData.IS_PLAYER_READY] is bool isReady && isReady)
             {
                 OnPlayerReadyStatusChanged?.Invoke(targetPlayer);
 
@@ -517,7 +527,7 @@ public class NetworkSystem : MonoBehaviourPunCallbacks
                 DecideFinalTrack();
             }
         }
-        if (changedProps.ContainsKey(LobbyData.READY_TO_LOAD_GAME))
+        if (changedProps.ContainsKey(MultiPlayerData.READY_TO_LOAD_GAME))
         {
             if (AreAllPlayersReadyToStartGame())
             {

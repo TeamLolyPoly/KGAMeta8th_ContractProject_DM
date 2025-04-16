@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.6057932, g: 0.54958856, b: 0.64553595, a: 1}
+  m_IndirectSpecularColor: {r: 0.61107665, g: 0.55461204, b: 0.65123695, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1069,6 +1069,7 @@ MonoBehaviour:
     duration: 0
     bpm: 120
     noteMapData: []
+  proceedDrum: {fileID: 0}
   isEditMode: 0
 --- !u!1 &2099231317
 GameObject:
@@ -6875,6 +6876,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 0
   bandType: 2
 --- !u!1 &3430059040013434525
 GameObject:
@@ -6926,6 +6928,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 0
   bandType: 2
 --- !u!1 &3430059679159687983
 GameObject:
@@ -13518,6 +13521,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 0
   bandType: 0
 --- !u!1 &3520641308767180344
 GameObject:
@@ -13550,6 +13554,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 0
   bandType: 0
 --- !u!1 &3520656923517110840
 GameObject:
@@ -21022,6 +21027,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 0
   bandType: 1
 --- !u!1183024399 &5061734720074126647
 LookAtConstraint:
@@ -21185,6 +21191,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 0
   bandType: 1
 --- !u!4 &5061734720175357526
 Transform:
@@ -28544,6 +28551,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 0
   bandType: 3
 --- !u!1 &6554715896030421468
 GameObject:
@@ -28576,6 +28584,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 0
   bandType: 3
 --- !u!1 &6554715896138965679
 GameObject:
@@ -28627,6 +28636,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 0
   bandType: 3
 --- !u!1 &6554715897766400101
 GameObject:
@@ -28659,6 +28669,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ce161ac701c8594fa31a74465b49edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isLeft: 0
   bandType: 3
 --- !u!1 &6554746386258138287
 GameObject:

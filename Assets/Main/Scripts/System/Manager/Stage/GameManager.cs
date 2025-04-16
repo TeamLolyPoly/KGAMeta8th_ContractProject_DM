@@ -91,7 +91,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
             StageUIManager.Instance.OpenPanel(PanelType.Title);
         };
 
-        StageLoadingManager.Instance.LoadScene("Test_Editor", initOperations, AfterInit);
+        StageLoadingManager.Instance.LoadScene("Main_Title", initOperations, AfterInit);
     }
 
     public IEnumerator Single_Cleanup()
@@ -246,7 +246,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         }
 
         StageLoadingManager.Instance.LoadScene(
-            "Test_Stage",
+            "Main_SingleStage",
             InitializeSingleStageRoutine,
             () =>
             {
@@ -343,7 +343,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
     {
         StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
         StageLoadingManager.Instance.LoadScene(
-            "Test_Editor",
+            "Main_Title",
             Single_Cleanup,
             () =>
             {
@@ -366,7 +366,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         this.noteMap = noteMap;
 
         StageLoadingManager.Instance.LoadScene(
-            "Test_MultiStage",
+            "Main_MultiStage",
             InitializeMultiplayerStageRoutine,
             () =>
             {
@@ -570,7 +570,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         isInMultiStage = false;
         StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
         StageLoadingManager.Instance.LoadScene(
-            "Test_Editor",
+            "Main_Title",
             Multi_Cleanup,
             () =>
             {
@@ -637,7 +637,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
         isInMultiStage = false;
         StageUIManager.Instance.transform.position = new Vector3(0, 0, 0);
         StageLoadingManager.Instance.LoadScene(
-            "Test_Editor",
+            "Main_Title",
             Multi_Cleanup,
             () =>
             {

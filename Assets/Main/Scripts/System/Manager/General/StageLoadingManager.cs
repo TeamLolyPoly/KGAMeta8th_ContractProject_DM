@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 
 public class StageLoadingManager : Singleton<StageLoadingManager>
 {
-    private const string LOADING_SCENE_NAME = "Loading_Stage";
+    private const string LOADING_SCENE_NAME = "Main_Loading";
     private const float MINIMUM_LOADING_TIME = 3f;
 
     private StageLoadingPanel loadingUI;
