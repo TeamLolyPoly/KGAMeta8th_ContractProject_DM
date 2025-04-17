@@ -35,6 +35,10 @@ public class SlotMachineEffect : MonoBehaviour
     [SerializeField]
     private Vector3[] particlePositions;
 
+    [Header("화면 구조 설정")]
+    [SerializeField]
+    private bool isLocalPanelOnLeft = true;
+
     private bool isSpinning = false;
     private bool isFinished = false;
     public bool IsFinished => isFinished;

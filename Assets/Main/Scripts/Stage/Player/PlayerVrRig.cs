@@ -83,26 +83,21 @@ public class PlayerVrRig : MonoBehaviourPun, IPunObservable
         }
         else
         {
-            if (head != null)
-            {
-                Vector3 targetPos = head.vrTarget.position + cameraOffset;
-                targetPos.y += -1.45f;
+            Vector3 targetPos = head.vrTarget.position + cameraOffset;
+            targetPos.y += -1.45f;
 
-                transform.position = Vector3.Lerp(transform.position, targetPos, 0.05f);
+            transform.position = Vector3.Lerp(transform.position, targetPos, 0.05f);
 
-                float yaw = head.vrTarget.eulerAngles.y;
-                transform.rotation = Quaternion.Lerp(
-                    transform.rotation,
-                    Quaternion.Euler(0, yaw, 0),
-                    turnSmoothness
-                );
-                head.Map();
-            }
-            if (leftHand != null && rightHand != null)
-            {
-                leftHand.Map();
-                rightHand.Map();
-            }
+            float yaw = head.vrTarget.eulerAngles.y;
+            transform.rotation = Quaternion.Lerp(
+                transform.rotation,
+                Quaternion.Euler(0, yaw, 0),
+                turnSmoothness
+            );
+
+            head.Map();
+            leftHand.Map();
+            rightHand.Map();
         }
     }
 

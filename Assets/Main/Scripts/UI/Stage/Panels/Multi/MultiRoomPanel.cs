@@ -122,7 +122,7 @@ public class MultiRoomPanel : Panel
     {
         if (networkSystem != null)
         {
-            networkSystem.LeaveLobby();
+            networkSystem.LeaveGame();
         }
 
         Close(true);
@@ -247,17 +247,6 @@ public class MultiRoomPanel : Panel
         TrackSelectButton.Interactable(true);
         ReadyButton.gameObject.SetActive(false);
         TrackSelectButton.gameObject.SetActive(false);
-
-        foreach (var difficulty in RemotePlayerSelectedDifficulty)
-        {
-            difficulty.SetActive(false);
-        }
-
-        RemotePlayerTrackText.text = "";
-        RemoteTrackNameBox.SetActive(false);
-        RemoteTrackDifficultyBox.SetActive(false);
-        RemotePlayerSelectingBox.SetActive(false);
-        RemotePlayerOnReadyBox.SetActive(false);
 
         if (networkSystem != null)
         {

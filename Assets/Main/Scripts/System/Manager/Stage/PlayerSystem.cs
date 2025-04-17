@@ -96,28 +96,26 @@ public class PlayerSystem : MonoBehaviourPunCallbacks, IInitializable
             yield break;
         }
 
-        if (XRPlayer.LeftRayInteractor != null)
+        try
         {
-            XRPlayer.LeftRayInteractor.gameObject.SetActive(false);
-        }
+            if (XRPlayer.LeftRayInteractor != null)
+            {
+                XRPlayer.LeftRayInteractor.enabled = false;
+            }
 
-        if (XRPlayer.RightRayInteractor != null)
+            if (XRPlayer.RightRayInteractor != null)
+            {
+                XRPlayer.RightRayInteractor.enabled = false;
+            }
+
+            XRPlayer.FadeOut(fadeTime);
+        }
+        catch (Exception e)
         {
-            XRPlayer.RightRayInteractor.gameObject.SetActive(false);
+            Debug.LogWarning("플레이어 페이드아웃 중 오류 발생: " + e.Message);
         }
-
-        yield return new WaitForSeconds(0.5f);
-
-        XRPlayer.FadeOut(fadeTime);
 
         yield return new WaitForSeconds(fadeTime + 0.5f);
-
-        GameObject XRManagers = GameObject.Find("XR Managers");
-
-        if (XRManagers != null)
-        {
-            Destroy(XRManagers);
-        }
 
         try
         {

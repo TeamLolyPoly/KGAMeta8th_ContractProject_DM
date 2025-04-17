@@ -295,6 +295,7 @@ public class ShortNote : Note, IPoolable
                     }
                     else
                     {
+                        print($"[ShortNote] HitObject 타입이 다름 : {other.gameObject.name}");
                         Miss();
                     }
                 }

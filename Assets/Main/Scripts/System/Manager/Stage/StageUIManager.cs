@@ -36,10 +36,15 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
     public Canvas MainCanvas => mainCanvas;
 
     [SerializeField]
-    private GameObject debugPanel;
+    public List<Animator> debugPanels = new List<Animator>();
 
     [SerializeField]
     private ButtonManager debugButton;
+
+    [SerializeField]
+    private LogSystem logSystem;
+
+    public LogSystem LogSystem => logSystem;
 
     [SerializeField]
     private List<RankImage> rankImages = new List<RankImage>();
@@ -47,8 +52,11 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
     public void Initialize()
     {
         LoadResources();
-
-        debugPanel.SetActive(false);
+        logSystem.Initialize();
+        foreach (var panel in debugPanels)
+        {
+            panel.SetBool("subOpen", false);
+        }
 
         isInitialized = true;
     }
@@ -76,6 +84,7 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
         {
             defaultAlbumArt = Resources.Load<Sprite>("Textures/DefaultAlbumArt");
         }
+
     }
 
     public Panel OpenPanel(PanelType panelType)
@@ -151,7 +160,10 @@ public class StageUIManager : Singleton<StageUIManager>, IInitializable
 
     public void ToggleDebugUI()
     {
-        debugPanel.SetActive(!debugPanel.activeSelf);
+        foreach (var panel in debugPanels)
+        {
+            panel.SetBool("subOpen", !panel.GetBool("subOpen"));
+        }
     }
 
     public Sprite GetRankImage(ResultRank Rank)
