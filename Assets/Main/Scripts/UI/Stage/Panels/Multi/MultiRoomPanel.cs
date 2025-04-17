@@ -248,6 +248,17 @@ public class MultiRoomPanel : Panel
         ReadyButton.gameObject.SetActive(false);
         TrackSelectButton.gameObject.SetActive(false);
 
+        foreach (var difficulty in RemotePlayerSelectedDifficulty)
+        {
+            difficulty.SetActive(false);
+        }
+
+        RemotePlayerTrackText.text = "";
+        RemoteTrackNameBox.SetActive(false);
+        RemoteTrackDifficultyBox.SetActive(false);
+        RemotePlayerSelectingBox.SetActive(false);
+        RemotePlayerOnReadyBox.SetActive(false);
+
         if (networkSystem != null)
         {
             networkSystem.OnTrackUpdated -= OnTrackUpdated;

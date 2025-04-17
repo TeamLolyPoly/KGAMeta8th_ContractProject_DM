@@ -2,15 +2,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Photon.Pun;
-using Photon.Realtime;
 using UnityEngine;
 
 public class GameManager : Singleton<GameManager>, IInitializable
 {
-    public int currentBar { get; private set; } = 0;
-    public int currentBeat { get; private set; } = 0;
+    public int CurrentBar { get; private set; } = 0;
+    public int CurrentBeat { get; private set; } = 0;
     private float startDelay = 1f;
     private double startDspTime;
+    public double StartDspTime => startDspTime;
+
     private NetworkSystem networkSystem;
     private PlayerSystem playerSystem;
     private GridGenerator gridGenerator;
@@ -31,6 +32,8 @@ public class GameManager : Singleton<GameManager>, IInitializable
     private bool isInitialized = false;
     private bool isPlaying = false;
     private bool isInMultiStage = false;
+
+    public bool IsPlaying => isPlaying;
 
     public bool IsInitialized => isInitialized;
     public bool IsInMultiStage => isInMultiStage;
@@ -119,17 +122,14 @@ public class GameManager : Singleton<GameManager>, IInitializable
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(1f);
-        StageLoadingManager.Instance.SetLoadingText("애니메이션 시스템 초기화 중...");
-
-        Destroy(unitAnimationSystem.gameObject);
 
         progress += progressStep;
         yield return progress;
         yield return new WaitForSeconds(1f);
         StageLoadingManager.Instance.SetLoadingText("데이터 초기화중...");
 
-        currentBar = 0;
-        currentBeat = 0;
+        CurrentBar = 0;
+        CurrentBeat = 0;
         musicSource.clip = null;
         noteSpawner = null;
         gridGenerator = null;
@@ -222,10 +222,10 @@ public class GameManager : Singleton<GameManager>, IInitializable
         int newBar = Mathf.FloorToInt(totalBeats / noteMap.beatsPerBar);
         int newBeat = Mathf.FloorToInt(totalBeats % noteMap.beatsPerBar);
 
-        if (newBar != currentBar || newBeat != currentBeat)
+        if (newBar != CurrentBar || newBeat != CurrentBeat)
         {
-            currentBar = newBar;
-            currentBeat = newBeat;
+            CurrentBar = newBar;
+            CurrentBeat = newBeat;
         }
     }
 
@@ -299,11 +299,6 @@ public class GameManager : Singleton<GameManager>, IInitializable
         yield return progress;
         yield return new WaitForSeconds(1f);
 
-        unitAnimationSystem = new GameObject(
-            "unitAnimationManager"
-        ).AddComponent<AnimationSystem>();
-        unitAnimationSystem.transform.SetParent(transform);
-        unitAnimationSystem.Initialize();
         scoreSystem.Initialize();
 
         progress += progressStep;
@@ -618,8 +613,8 @@ public class GameManager : Singleton<GameManager>, IInitializable
         yield return new WaitForSeconds(1f);
         StageLoadingManager.Instance.SetLoadingText("게임 초기화 중...");
 
-        currentBar = 0;
-        currentBeat = 0;
+        CurrentBar = 0;
+        CurrentBeat = 0;
         musicSource.clip = null;
         noteSpawner = null;
         gridGenerator = null;
@@ -689,7 +684,7 @@ public class GameManager : Singleton<GameManager>, IInitializable
 
         double currentDspTime = AudioSettings.dspTime;
         GUILayout.BeginArea(new Rect(10, 10, 300, 150));
-        GUILayout.Label($"현재 위치: 마디 {currentBar + 1}, 비트 {currentBeat + 1}");
+        GUILayout.Label($"현재 위치: 마디 {CurrentBar + 1}, 비트 {CurrentBeat + 1}");
         GUILayout.Label($"DSP 경과 시간: {(currentDspTime - startDspTime):F3}초");
         GUILayout.Label($"현재 점수: {scoreSystem.currentScore}");
         GUILayout.Label($"콤보: {scoreSystem.combo}");

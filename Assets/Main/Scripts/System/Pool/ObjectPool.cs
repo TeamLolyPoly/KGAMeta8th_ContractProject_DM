@@ -11,11 +11,11 @@ public class ObjectPool : MonoBehaviour
     private Dictionary<string, Transform> poolParents;
     private Dictionary<string, PoolStats> poolStats;
 
-    private const int DEFAULT_POOL_SIZE = 1000;
-    private const int EXPAND_SIZE = 1000;
+    private const int DEFAULT_POOL_SIZE = 500;
+    private const int EXPAND_SIZE = 100;
     private const int MAX_POOL_SIZE = 1000;
-    private const float CLEANUP_INTERVAL = 3000f;
-    private const float UNUSED_THRESHOLD = 3000f;
+    private const float CLEANUP_INTERVAL = 300f;
+    private const float UNUSED_THRESHOLD = 300f;
 
     [System.Serializable]
     private class PoolStats
