@@ -143,6 +143,11 @@ public class NoteMap
                     calculatedArcLength = Mathf.Max(1, calculatedArcLength);
                     calculatedArcLength = Mathf.Min(calculatedArcLength, segmentCount - 1);
 
+                    if (note.isSymmetric)
+                    {
+                        calculatedArcLength *= 2;
+                    }
+
                     count += calculatedArcLength;
                 }
                 else
@@ -150,6 +155,7 @@ public class NoteMap
                     count++;
                 }
             }
+            Debug.Log($"롱노트 개수: {count}");
             return count;
         }
     }

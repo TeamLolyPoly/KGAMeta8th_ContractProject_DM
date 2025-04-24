@@ -79,40 +79,6 @@ public class ShortNote : Note, IPoolable
         }
     }
 
-    private void Update()
-    {
-        if (!isInitialized)
-            return;
-
-        double elapsedTime = AudioSettings.dspTime - spawnDspTime;
-
-        float totalDistance = Vector3.Distance(startPosition, targetPosition);
-        float currentDistance = noteData.noteSpeed * (float)elapsedTime;
-
-        float progress = Mathf.Clamp01(currentDistance / totalDistance);
-
-        transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
-
-        if (progress >= 1f)
-        {
-            if (!GameManager.Instance.IsInMultiStage)
-            {
-                Miss();
-            }
-            else
-            {
-                if (noteData.isInteractable)
-                {
-                    Miss();
-                }
-                else
-                {
-                    PoolManager.Instance.Despawn(this);
-                }
-            }
-        }
-    }
-
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
@@ -200,6 +166,9 @@ public class ShortNote : Note, IPoolable
 
     protected void HitScore(float hitdis)
     {
+        if (!isHit)
+            return;
+        isHit = true;
         NoteRatings ratings;
         int score = noteScore;
         if (noteDistance * accuracyPoint[0] >= hitdis)
@@ -297,10 +266,6 @@ public class ShortNote : Note, IPoolable
                     {
                         Miss();
                     }
-                }
-                else
-                {
-                    Miss();
                 }
             }
         }

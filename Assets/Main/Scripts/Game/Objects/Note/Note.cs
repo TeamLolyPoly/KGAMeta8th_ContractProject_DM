@@ -56,6 +56,40 @@ public class Note : MonoBehaviour, IInitializable
         }
     }
 
+    private void Update()
+    {
+        if (!isInitialized)
+            return;
+
+        double elapsedTime = AudioSettings.dspTime - spawnDspTime;
+
+        float totalDistance = Vector3.Distance(startPosition, targetPosition);
+        float currentDistance = noteData.noteSpeed * (float)elapsedTime;
+
+        float progress = Mathf.Clamp01(currentDistance / totalDistance);
+
+        transform.position = Vector3.Lerp(startPosition, targetPosition, progress);
+
+        if (progress >= 1.0f)
+        {
+            if (!GameManager.Instance.IsInMultiStage)
+            {
+                Miss();
+            }
+            else
+            {
+                if (noteData.isInteractable)
+                {
+                    Miss();
+                }
+                else
+                {
+                    PoolManager.Instance.Despawn(this);
+                }
+            }
+        }
+    }
+
     public virtual void Initialize(NoteData data)
     {
         noteData = data;
@@ -112,6 +146,9 @@ public class Note : MonoBehaviour, IInitializable
 
     private void HandleCollision()
     {
+        if (!isInitialized || isHit)
+            return;
+
         isHit = true;
 
         if (hitFX != null)

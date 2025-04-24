@@ -76,14 +76,14 @@ public class GridGenerator : MonoBehaviour
         sourceOrigin.parent = transform;
         sourceOrigin.localPosition = sourcePosition;
         sourceOrigin.localRotation = Quaternion.Euler(0, 0, 0);
-        CreateGrid(sourceOrigin);
+        CreateGrid(sourceOrigin, false);
 
         GameObject targetObj = new GameObject("TargetGrid");
         targetOrigin = targetObj.transform;
         targetOrigin.parent = transform;
         targetOrigin.localPosition = targetPosition;
         targetOrigin.localRotation = Quaternion.Euler(0, 0, 0);
-        CreateGrid(targetOrigin);
+        CreateGrid(targetOrigin, true);
 
         if (isMultiplayerMode)
         {
@@ -96,20 +96,20 @@ public class GridGenerator : MonoBehaviour
                 gridDistance
             );
             secondSourceOrigin.localRotation = Quaternion.Euler(0, 0, 0);
-            CreateGrid(secondSourceOrigin);
+            CreateGrid(secondSourceOrigin, false);
 
             GameObject secondTargetObj = new GameObject("SecondTargetGrid");
             secondTargetOrigin = secondTargetObj.transform;
             secondTargetOrigin.parent = transform;
             secondTargetOrigin.localPosition = new Vector3(multiPlayerGridOffset, 3.3f, 0);
             secondTargetOrigin.localRotation = Quaternion.Euler(0, 0, 0);
-            CreateGrid(secondTargetOrigin);
+            CreateGrid(secondTargetOrigin, true);
         }
 
         SetCellVisible(false);
     }
 
-    private void CreateGrid(Transform gridParent)
+    private void CreateGrid(Transform gridParent, bool isTarget)
     {
         float totalWidth =
             (totalHorizontalCells * cellSize) + ((totalHorizontalCells - 1) * cellSpacing);
@@ -121,12 +121,19 @@ public class GridGenerator : MonoBehaviour
         {
             for (int y = 0; y < verticalCells; y++)
             {
-                CreateCell(gridParent, x, y, startX, startY);
+                CreateCell(gridParent, x, y, startX, startY, isTarget);
             }
         }
     }
 
-    private void CreateCell(Transform parent, int x, int y, float startX, float startY)
+    private void CreateCell(
+        Transform parent,
+        int x,
+        int y,
+        float startX,
+        float startY,
+        bool isTarget
+    )
     {
         GameObject cell = new GameObject($"Cell[{x}|{y}]");
         cell.transform.parent = parent;
@@ -139,6 +146,8 @@ public class GridGenerator : MonoBehaviour
         visual.transform.parent = cell.transform;
         visual.transform.localPosition = Vector3.zero;
         visual.transform.localScale = new Vector3(cellSize, cellSize, cellSize);
+        SphereCollider coll = visual.GetComponent<SphereCollider>();
+        coll.enabled = false;
 
         MeshRenderer renderer = visual.GetComponent<MeshRenderer>();
         if (x < leftGridSize)
