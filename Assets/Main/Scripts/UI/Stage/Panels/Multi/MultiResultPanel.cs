@@ -79,7 +79,7 @@ public class MultiResultPanel : Panel
 
     public void CleanUp()
     {
-        winnerNameText.text = "플레이어";
+        winnerNameText.text = "나";
         loserNameText.text = "상대방";
         winnerTotalScoreText.text = "0";
         loserTotalScoreText.text = "0";
@@ -123,13 +123,13 @@ public class MultiResultPanel : Panel
     {
         if (isWinner)
         {
-            winnerNameText.text = "플레이어";
+            winnerNameText.text = "나";
             loserNameText.text = "상대방";
         }
         else
         {
             winnerNameText.text = "상대방";
-            loserNameText.text = "플레이어";
+            loserNameText.text = "나";
         }
 
         StartCoroutine(AnimateScoreNumbers_Winner(winnerScoreData));
