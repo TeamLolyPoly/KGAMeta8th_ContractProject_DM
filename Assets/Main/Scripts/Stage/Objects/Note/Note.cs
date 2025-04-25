@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.VFX;
 
 public class Note : MonoBehaviour, IInitializable
 {
@@ -153,15 +154,12 @@ public class Note : MonoBehaviour, IInitializable
 
         if (hitFX != null)
         {
-            ParticleSystem hitFXInstance = PoolManager.Instance.Spawn<ParticleSystem>(
-                hitFX.gameObject,
+            VisualEffect hitFXInstance = PoolManager.Instance.Spawn<VisualEffect>(
+                hitFX,
                 transform.position,
                 Quaternion.identity
             );
-
-            hitFXInstance.Play();
-
-            PoolManager.Instance.Despawn(hitFXInstance, 2.0f);
+            PoolManager.Instance.Despawn(hitFXInstance, 0.5f);
         }
 
         scoreSystem.SetScore(noteScore, NoteRatings.Success);
