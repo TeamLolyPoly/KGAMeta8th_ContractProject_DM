@@ -167,8 +167,10 @@ public class ShortNote : Note, IPoolable
 
     protected void HitScore(float hitdis)
     {
-        if (!isHit)
+        if (isHit)
+        {
             return;
+        }
         isHit = true;
         NoteRatings ratings;
         int score = noteScore;
@@ -217,9 +219,9 @@ public class ShortNote : Note, IPoolable
                             Quaternion.identity
                         );
 
-                        PoolManager.Instance.Despawn(hitFXInstance, 0.5f);
-                        noteInteractor?.SendImpulse();
                         HitScore(hitdis);
+                        noteInteractor?.SendImpulse();
+                        PoolManager.Instance.Despawn(hitFXInstance, 0.5f);
                     }
                     else
                     {
@@ -253,9 +255,9 @@ public class ShortNote : Note, IPoolable
                                 Quaternion.identity
                             );
 
-                            PoolManager.Instance.Despawn(hitFXInstance, 0.5f);
-                            noteInteractor?.SendImpulse();
                             HitScore(hitdis);
+                            noteInteractor?.SendImpulse();
+                            PoolManager.Instance.Despawn(hitFXInstance, 0.5f);
                         }
                         else
                         {
