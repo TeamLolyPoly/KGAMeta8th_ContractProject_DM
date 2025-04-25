@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : Singleton<GameManager>, IInitializable
 {
@@ -20,6 +21,9 @@ public class GameManager : Singleton<GameManager>, IInitializable
     public TrackData currentTrack;
     private NoteMap noteMap;
     private AudioSource musicSource;
+
+    [SerializeField]
+    private AudioSource bgmSource;
 
     public NetworkSystem NetworkSystem => networkSystem;
     public PlayerSystem PlayerSystem => playerSystem;
@@ -44,6 +48,19 @@ public class GameManager : Singleton<GameManager>, IInitializable
     private void Start()
     {
         Initialize();
+        SceneManager.sceneLoaded += toggleBGM;
+    }
+
+    public void toggleBGM(Scene scene, LoadSceneMode loadSceneMode)
+    {
+        if (scene.name != "Main_Title")
+        {
+            bgmSource.Stop();
+        }
+        else
+        {
+            bgmSource.Play();
+        }
     }
 
     public void Initialize()
