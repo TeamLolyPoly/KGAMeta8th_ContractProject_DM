@@ -204,11 +204,9 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
         return rating switch
         {
-            var (miss, good) when miss == 0 && good == 0 && noteHitCount == totalNoteCount =>
-                ResultRank.Splus,
-            var (miss, good) when miss == 0 && good > 0 && noteHitCount == totalNoteCount =>
-                ResultRank.S,
-            var (miss, good) when miss < totalNoteCount * 0.05 && good >= 0 => ResultRank.A,
+            var (miss, good) when miss <= 10 && good == 0 => ResultRank.Splus,
+            var (miss, good) when miss <= 15 && good > 0 => ResultRank.S,
+            var (miss, good) when miss < totalNoteCount * 0.2 && good >= 0 => ResultRank.A,
             var (miss, good) when miss <= totalNoteCount * 0.5 && good >= 0 => ResultRank.B,
             var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => ResultRank.C,
             _ => ResultRank.C,
@@ -225,11 +223,9 @@ public class ScoreSystem : MonoBehaviour, IInitializable
 
         return rating switch
         {
-            var (miss, good) when miss == 0 && good == 0 && hitCount == totalNoteCount =>
-                ResultRank.Splus,
-            var (miss, good) when miss == 0 && good > 0 && hitCount == totalNoteCount =>
-                ResultRank.S,
-            var (miss, good) when miss < totalNoteCount * 0.05 && good >= 0 => ResultRank.A,
+            var (miss, good) when miss <= 5 && good == 0 => ResultRank.Splus,
+            var (miss, good) when miss <= 10 && good > 0 => ResultRank.S,
+            var (miss, good) when miss < totalNoteCount * 0.2 && good >= 0 => ResultRank.A,
             var (miss, good) when miss <= totalNoteCount * 0.5 && good >= 0 => ResultRank.B,
             var (miss, good) when miss > totalNoteCount * 0.5 && good >= 0 => ResultRank.C,
             _ => ResultRank.C,

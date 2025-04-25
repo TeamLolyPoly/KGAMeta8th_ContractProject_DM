@@ -56,6 +56,8 @@ public class MultiResultPanel : Panel
         winnerRankImage.gameObject.SetActive(false);
         loserRankImage.gameObject.SetActive(false);
 
+        backToLobbyButton.Interactable(true);
+
         if (backToLobbyButton != null)
         {
             backToLobbyButton.onClick.RemoveAllListeners();
@@ -67,10 +69,32 @@ public class MultiResultPanel : Panel
     {
         base.Close(objActive);
 
+        CleanUp();
+
         if (backToLobbyButton != null)
         {
             backToLobbyButton.onClick.RemoveAllListeners();
         }
+    }
+
+    public void CleanUp()
+    {
+        winnerNameText.text = "나";
+        loserNameText.text = "상대방";
+        winnerTotalScoreText.text = "0";
+        loserTotalScoreText.text = "0";
+        winnerMostComboText.text = "0";
+        loserMostComboText.text = "0";
+        winnerNoteHitCountText.text = "0";
+        loserNoteHitCountText.text = "0";
+        winnerMissCountText.text = "0";
+        loserMissCountText.text = "0";
+        winnerGoodCountText.text = "0";
+        loserGoodCountText.text = "0";
+        winnerGreatCountText.text = "0";
+        loserGreatCountText.text = "0";
+        winnerPerfectCountText.text = "0";
+        loserPerfectCountText.text = "0";
     }
 
     private void OnBackToRoomClicked()
@@ -89,7 +113,7 @@ public class MultiResultPanel : Panel
         if (backToLobbyButton != null)
         {
             backToLobbyButton.onClick.RemoveAllListeners();
-            backToLobbyButton.enabled = false;
+            backToLobbyButton.Interactable(false);
         }
 
         GameManager.Instance.Multi_BackToTitle();
@@ -99,13 +123,13 @@ public class MultiResultPanel : Panel
     {
         if (isWinner)
         {
-            winnerNameText.text = "플레이어";
+            winnerNameText.text = "나";
             loserNameText.text = "상대방";
         }
         else
         {
             winnerNameText.text = "상대방";
-            loserNameText.text = "플레이어";
+            loserNameText.text = "나";
         }
 
         StartCoroutine(AnimateScoreNumbers_Winner(winnerScoreData));
